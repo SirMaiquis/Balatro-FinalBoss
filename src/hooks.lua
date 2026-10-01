@@ -42,4 +42,15 @@ function love.keypressed(key, ...)
   return orig_keypressed(key, ...)
 end
 
+-- Showdown schedule (spec §8). The vanilla result is OR'd in, so the win-ante boss is always a showdown.
+-- In smods 26.829.0 this function is the only showdown eligibility switch (src/utils/weights.lua).
+local orig_is_showdown_ante = SMODS.is_showdown_ante
+SMODS.is_showdown_ante = function(...)
+  local vanilla = orig_is_showdown_ante(...)
+  local sd = FinalBoss.config.showdown
+  if vanilla or not (sd and sd.enabled) or not G.GAME then return vanilla end
+  local ok, extra = pcall(FinalBoss.logic.is_extra_showdown, G.GAME.round_resets.ante, sd.start_ante, sd.every)
+  return ok and extra or false
+end
+
 return H
