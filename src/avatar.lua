@@ -5,8 +5,10 @@ V.SIZE = 2.1
 V.ROAM_MIN, V.ROAM_MAX = 6, 9
 V.KNOCKBACK = 0.5
 V.PERCH_COUNT = 4
+V.HUD_EASE = 0.3
 V.DISSOLVE = {[0] = 0, [1] = 0.12, [2] = 0.25}
 V.obj = nil
+V.hud_blind = nil -- the blind whose HUD chip is dissolved while the avatar is out
 V.perch = 2
 V.next_roam = 0
 V.talking = false
@@ -20,6 +22,13 @@ local function reduced() return G.SETTINGS.reduced_motion end
 local function after(delay, fn)
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = delay, timer = 'REAL', blocking = false,
     blockable = false, func = function() FinalBoss.util.guard('avatar_timer', fn); return true end}))
+end
+
+--- Ease a table field (REAL timer, non-blocking), or set it at once.
+local function ease_field(ref, field, to, duration)
+  if not duration or duration <= 0 then ref[field] = to; return end
+  G.E_MANAGER:add_event(Event({trigger = 'ease', ref_table = ref, ref_value = field, ease_to = to,
+    delay = duration, timer = 'REAL', blocking = false, blockable = false, func = function(t) return t end}))
 end
 
 local Avatar = Moveable:extend()
@@ -124,6 +133,7 @@ end
 
 function V.spawn(blind, opts)
   opts = opts or {}
+  V.hud_blind = nil -- a respawn keeps the chip dissolved: no restore ease to fight the new one
   V.remove()
   local proto = blind and blind.config and blind.config.blind
   if not proto then return end
@@ -140,6 +150,11 @@ function V.spawn(blind, opts)
   end
   V.obj = Avatar(x, start_y, V.SIZE, V.SIZE, sprite, {c[1], c[2], c[3], 1})
   V.obj:hard_set_VT()
+  -- The boss "steps out": dissolve its HUD chip while the avatar is on the table. The blind's own
+  -- dissolve field is what Blind:draw reads; states.visible is re-shown every frame by the HUD.
+  V.hud_blind = blind
+  blind.dissolve_colours = {G.C.BLACK, c}
+  ease_field(blind, 'dissolve', 1, not reduced() and V.HUD_EASE or 0)
   go_to(2, not opts.fall)
   V.next_roam = now() + math.random(V.ROAM_MIN, V.ROAM_MAX)
 end
@@ -213,9 +228,7 @@ end
 function V.set_dissolve(amount, duration)
   local o = V.obj
   if not o then return end
-  if not duration or duration <= 0 then o.dissolve = amount; return end
-  G.E_MANAGER:add_event(Event({trigger = 'ease', ref_table = o, ref_value = 'dissolve', ease_to = amount,
-    delay = duration, timer = 'REAL', blocking = false, blockable = false, func = function(t) return t end}))
+  ease_field(o, 'dissolve', amount, duration)
 end
 
 function V.fade_out(duration)
@@ -240,9 +253,22 @@ function V.snap()
   end
 end
 
+--- Bring the HUD chip back (not when the encounter ended: vanilla's defeat dissolve or the
+--- game-over screen owns the chip then). Never errors: it runs from teardown.
+local function restore_hud_blind()
+  local b = V.hud_blind
+  V.hud_blind = nil
+  if not b or not G.GAME or b ~= G.GAME.blind then return end
+  if not (b.config and b.config.blind and b.config.blind.key) then return end
+  local enc = G.GAME.FinalBoss and G.GAME.FinalBoss.encounter
+  if not enc or enc.ended then return end
+  ease_field(b, 'dissolve', 0, not reduced() and V.HUD_EASE or 0)
+end
+
 function V.remove()
   local o = V.obj
   V.obj = nil
+  restore_hud_blind()
   V.talking, V.fading, V.tremble, V.wound = false, false, false, 0
   if o then o:remove() end
 end
