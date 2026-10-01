@@ -52,4 +52,28 @@ T['arena_params: darker and faster each stage'] = function()
   assert(a.spin_mult < b.spin_mult and b.spin_mult < c.spin_mult, 'spin must increase')
 end
 
+T['score_landed: positive hand waits for the round score to tick up'] = function()
+  eq(logic.score_landed(100, 100, 50, 'Flush', 0.5), false)
+  eq(logic.score_landed(100, 101, 50, 'Flush', 0.5), true)
+  eq(logic.score_landed(100, 150, 50, '', 0.5), true)
+end
+T['score_landed: positive hand ignores the hand name'] = function()
+  eq(logic.score_landed(100, 100, 50, '', 0.5), false)
+end
+T['score_landed: zero or negative hand waits for the hand name to clear'] = function()
+  eq(logic.score_landed(100, 100, 0, 'Pair', 0.5), false)
+  eq(logic.score_landed(100, 100, 0, '', 0.5), true)
+  eq(logic.score_landed(100, 100, -5, '', 0.5), true)
+  eq(logic.score_landed(100, 100, 0, nil, 0.5), false)
+end
+T['score_landed: safety after 6 seconds'] = function()
+  eq(logic.score_landed(100, 100, 50, 'Flush', 5.99), false)
+  eq(logic.score_landed(100, 100, 50, 'Flush', 6), true)
+  eq(logic.score_landed(100, 100, 0, 'Pair', 6), true)
+end
+T['score_landed: missing numbers are treated as zero'] = function()
+  eq(logic.score_landed(nil, nil, nil, '', nil), true)
+  eq(logic.score_landed(nil, nil, nil, 'Pair', nil), false)
+end
+
 return T

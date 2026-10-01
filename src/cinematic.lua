@@ -7,6 +7,7 @@ C.phase = nil      -- 'intro' | 'dialogue' | 'finale' | nil
 C.bars = nil       -- {top = UIBox, bottom = UIBox}
 C.leaving = {}     -- bars sliding out, removed by a timer (or by reset if the queue is cleared)
 C.title = nil
+C.title_texts = nil -- {sub, name} DynaTexts of the title band (pop out before removal)
 C.on_done, C.blind = nil, nil
 
 local function reduced() return G.SETTINGS.reduced_motion end
@@ -45,23 +46,53 @@ end
 
 local function remove_title()
   if C.title then C.title:remove(); C.title = nil end
+  C.title_texts = nil
+end
+
+--- Centre the title band in the free strip between the joker row and the play area. Vanilla's
+--- boss-effect text (Blind:alert_debuff) is centred 1 unit above the play area's centre, so a band
+--- that ends above G.play never overlaps it. Offset is from the centre of G.ROOM_ATTACH.
+C.TITLE_Y = -1.8 -- fallback offset (vanilla layout: (2.61 + 5.29) / 2 - 11.5 / 2)
+
+local function title_offset_y()
+  local j, p = G.jokers and G.jokers.T, G.play and G.play.T
+  if j and p then return (j.y + j.h + p.y) / 2 - G.ROOM.T.h / 2 end
+  return C.TITLE_Y
 end
 
 local function show_title(blind)
   local c = (blind.config.blind and blind.config.blind.boss_colour) or G.C.RED
   local name = blind.loc_name or (blind.config.blind and blind.config.blind.name) or ''
+  local band = mix_colours(c, G.C.BLACK, 0.25)
+  band[4] = 0.85
+  local sub = DynaText({string = {localize('fb_showdown_title')},
+    colours = {G.C.WHITE}, scale = 0.6, shadow = true, pop_in = 0, pop_in_rate = 4, silent = true})
+  local big = DynaText({string = {name}, colours = {c}, scale = 1.4,
+    shadow = true, bump = true, pop_in = 0.2, pop_in_rate = 3, silent = true})
   C.title = UIBox{
-    definition = {n = G.UIT.ROOT, config = {align = 'cm', colour = G.C.CLEAR, padding = 0.1}, nodes = {
-      {n = G.UIT.R, config = {align = 'cm'}, nodes = {
-        {n = G.UIT.O, config = {object = DynaText({string = {localize('fb_showdown_title')},
-          colours = {G.C.WHITE}, scale = 0.6, shadow = true, pop_in = 0, pop_in_rate = 4, silent = true})}}}},
-      {n = G.UIT.R, config = {align = 'cm'}, nodes = {
-        {n = G.UIT.O, config = {object = DynaText({string = {name}, colours = {c}, scale = 1.4,
-          shadow = true, bump = true, pop_in = 0.2, pop_in_rate = 3, silent = true})}}}},
-    }},
-    config = {major = G.ROOM_ATTACH, align = 'cm', offset = {x = 0, y = -1}, bond = 'Weak', can_collide = false},
+    definition = {n = G.UIT.ROOT, config = {align = 'cm', colour = band, minw = G.ROOM.T.w, padding = 0.15, r = 0},
+      nodes = {
+        {n = G.UIT.R, config = {align = 'cm'}, nodes = {{n = G.UIT.O, config = {object = sub}}}},
+        {n = G.UIT.R, config = {align = 'cm'}, nodes = {{n = G.UIT.O, config = {object = big}}}},
+      }},
+    config = {major = G.ROOM_ATTACH, align = 'cm', offset = {x = 0, y = title_offset_y()}, bond = 'Weak',
+      can_collide = false},
   }
   C.title.attention_text = true -- drawn in vanilla's late pass, above the cards (the bars stay under)
+  C.title_texts = {sub = sub, name = big}
+  -- Slam: shake + pop (not under reduced motion); the background flash always runs (needs fx).
+  if not reduced() then
+    G.ROOM.jiggle = G.ROOM.jiggle + 6
+    big:juice_up(0.6, 0.4)
+  end
+  FinalBoss.fx.play('flash', blind)
+end
+
+local function pop_out_title()
+  local t = C.title_texts
+  if not t then return end
+  t.sub:pop_out(4)
+  t.name:pop_out(3)
 end
 
 local function spawn_stage(fall)
@@ -108,12 +139,13 @@ function C.play_intro(blind, on_done)
     play_sound('gong', 0.9, 0.5)
     play_sound('timpani', 1, 0.5)
   end)
-  after(1.6, token, function()
+  after(2.6, token, pop_out_title) -- title held ~2.2 s, then the letters pop out
+  after(2.9, token, function()
     remove_title()
     spawn_stage(not reduced())
   end)
-  after(1.95, token, land)
-  after(2.4, token, finish_intro)
+  after(3.25, token, land)
+  after(3.7, token, finish_intro)
 end
 
 function C.active() return C.phase == 'intro' end

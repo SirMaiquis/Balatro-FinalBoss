@@ -59,3 +59,4 @@ Journal of every step of the overhaul (developed under the working label 2.0, re
 - 2026-10-01 README updated for 1.0.0; release zip FinalBoss-v1.0.0.zip built.
 - 2026-10-01 Final review fixes: no double defeat effect after the finale, live HP at avatar spawn, trail drain over 0.35 s, vignette/arena revert at the finale's end, Continue/toggle fixes.
 - 2026-10-01 Playtest C feedback: HUD chip steps out while the avatar is on the table; HP bar rebuilt on vanilla progress bars (pixel style) and drawn under cards.
+- 2026-10-01 Playtest D feedback: title band with slam and longer hold; avatar perches in open space (home right-middle above the deck, ringside during scoring); boss reacts when the score lands.

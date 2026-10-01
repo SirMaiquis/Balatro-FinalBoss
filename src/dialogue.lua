@@ -78,6 +78,15 @@ function D.show(blind, key, vars, pitch)
   babble(host, 5, pitch)
 end
 
+--- The avatar moved (e.g. to ringside mid-line): the bubble follows it through its Weak bond, so
+--- only its side needs updating, or a bubble on the outer side would leave the screen.
+function D.follow_avatar()
+  local b = D.avatar_bubble
+  if not b or not FinalBoss.avatar then return end
+  local want = (FinalBoss.avatar.side() == 'right') and 'cl' or 'cr'
+  if b.alignment.type ~= want then b:set_alignment({type = want}) end
+end
+
 local function enable_chip_skip(blind)
   D.saved_click_can = blind.states.click.can
   blind.states.click.can = true

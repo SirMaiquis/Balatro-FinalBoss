@@ -5,12 +5,15 @@ V.SIZE = 2.1
 V.ROAM_MIN, V.ROAM_MAX = 6, 9
 V.KNOCKBACK = 0.5
 V.PERCH_COUNT = 4
+V.RINGSIDE = 1   -- home: spawn, landing, scoring, and the only spot under reduced motion
+V.HP_BOX_H = 1.05 -- estimated HP box height incl. its 0.05 gap, until the real box exists
 V.HUD_EASE = 0.3
 V.DISSOLVE = {[0] = 0, [1] = 0.12, [2] = 0.25}
 V.obj = nil
 V.hud_blind = nil -- the blind whose HUD chip is dissolved while the avatar is out
-V.perch = 2
+V.perch = V.RINGSIDE
 V.next_roam = 0
+V.scoring = false -- parked at ringside while a played hand resolves
 V.talking = false
 V.fading = false
 V.tremble = false
@@ -103,25 +106,28 @@ function Avatar:remove()
   Moveable.remove(self)
 end
 
---- Perch positions (top-left of the avatar) from the live table layout; fixed fallback.
+local function area(a)
+  return a and a.T and {x = a.T.x, y = a.T.y, w = a.T.w, h = a.T.h} or nil
+end
+
+--- The HP box hanging under the avatar: measured once it exists, estimated before.
+local function hp_box()
+  local H = FinalBoss.hpbar
+  local ui = H and H.ui
+  if ui and ui.T and ui.T.h and ui.T.h > 0 then return ui.T.w, ui.T.h + 0.05 end -- 0.05 = its y offset
+  return ((H and H.W) or 3) + 0.1, V.HP_BOX_H
+end
+
+--- Perch positions (top-left of the avatar) from the live table layout, chosen so the chip and
+--- its HP box stay clear of cards (logic.perch_rect); fixed fallback.
 local function perch_xy(i)
   local S = V.SIZE
-  local p
-  if i == 1 and G.consumeables then
-    local a = G.consumeables.T
-    p = {x = a.x + a.w / 2 - S / 2, y = a.y + a.h + 0.3}
-  elseif i == 2 and G.play then
-    local a = G.play.T
-    p = {x = a.x + a.w + 0.6, y = a.y + a.h / 2 - S / 2}
-  elseif i == 3 and G.deck then
-    local a = G.deck.T
-    p = {x = a.x + a.w - S * 0.6, y = a.y - S - 0.2}
-  elseif i == 4 and G.play then
-    local a = G.play.T
-    p = {x = a.x + a.w / 2 - S / 2, y = a.y - S * 0.5}
-  end
-  if not p then p = {x = G.ROOM.T.w * 0.72, y = G.ROOM.T.h * 0.35} end
-  return math.max(0, math.min(p.x, G.ROOM.T.w - V.SIZE)), p.y
+  local bw, bh = hp_box()
+  local r = FinalBoss.logic.perch_rect(i, {play = area(G.play), jokers = area(G.jokers),
+    consumeables = area(G.consumeables), deck = area(G.deck), hand = area(G.hand),
+    room = {x = 0, y = 0, w = G.ROOM.T.w, h = G.ROOM.T.h}}, S, bh, bw)
+  if r then return r.x + (r.w - S) / 2, r.y end
+  return math.max(0, math.min(G.ROOM.T.w * 0.72, G.ROOM.T.w - S)), G.ROOM.T.h * 0.35
 end
 
 local function go_to(i, instant)
@@ -130,6 +136,8 @@ local function go_to(i, instant)
   V.perch = i
   o.T.x, o.T.y = perch_xy(i)
   if instant then o:hard_set_VT() end
+  -- The avatar bubble follows the avatar (Weak bond): keep it on the inner side after a move.
+  if FinalBoss.dialogue and FinalBoss.dialogue.follow_avatar then FinalBoss.dialogue.follow_avatar() end
 end
 
 function V.spawn(blind, opts)
@@ -139,7 +147,7 @@ function V.spawn(blind, opts)
   local proto = blind and blind.config and blind.config.blind
   if not proto then return end
   local c = proto.boss_colour or G.C.RED
-  local x, y = perch_xy(2)
+  local x, y = perch_xy(V.RINGSIDE)
   local start_y = opts.fall and (y - G.ROOM.T.h - V.SIZE) or y
   local sprite_pos = copy_table(proto.pos or {x = 0, y = 0})
   local sprite
@@ -156,7 +164,7 @@ function V.spawn(blind, opts)
   V.hud_blind = blind
   blind.dissolve_colours = {G.C.BLACK, c}
   ease_field(blind, 'dissolve', 1, not reduced() and V.HUD_EASE or 0)
-  go_to(2, not opts.fall)
+  go_to(V.RINGSIDE, not opts.fall)
   V.next_roam = now() + math.random(V.ROAM_MIN, V.ROAM_MAX)
 end
 
@@ -175,7 +183,19 @@ function V.position()
 end
 
 function V.tick(dt)
-  if not V.obj or V.talking or V.fading or reduced() then return end
+  if not V.obj or V.fading or reduced() then return end
+  -- Played cards fill the play area: park at ringside until the hand resolves. The bubble follows
+  -- the avatar, so this move also happens mid-line.
+  if G.STATES and G.STATE == G.STATES.HAND_PLAYED then
+    V.scoring = true
+    if V.perch ~= V.RINGSIDE then go_to(V.RINGSIDE, false) end
+    return
+  end
+  if V.scoring then
+    V.scoring = false
+    V.next_roam = now() + V.ROAM_MIN
+  end
+  if V.talking then return end
   if now() >= V.next_roam then
     go_to(FinalBoss.logic.pick_variant(V.PERCH_COUNT, V.perch, math.random), false)
     V.next_roam = now() + math.random(V.ROAM_MIN, V.ROAM_MAX)
@@ -270,7 +290,8 @@ function V.remove()
   local o = V.obj
   V.obj = nil
   restore_hud_blind()
-  V.talking, V.fading, V.tremble, V.wound = false, false, false, 0
+  V.talking, V.fading, V.tremble, V.wound, V.scoring = false, false, false, 0, false
+  V.perch = V.RINGSIDE
   if o then o:remove() end
 end
 

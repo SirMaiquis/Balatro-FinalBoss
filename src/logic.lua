@@ -135,6 +135,49 @@ function logic.hit_size(delta, required)
   return 'normal'
 end
 
+--- Avatar perches. Each rectangle covers the chip (S x S, top-left at the perch) plus the HP box
+--- hanging centred under it (box_w x box_h), so the whole thing can be kept clear of cards.
+--- areas: {play, jokers, consumeables, deck, hand, room} as {x, y, w, h} (room optional: clamp).
+--- 1 ringside (home: spawn, landing, scoring) right of the play area, above the deck;
+--- 2 left-middle, 3 upper-centre band, 4 upper band under the consumables (2-4 idle only).
+logic.PERCH_RINGSIDE = 1
+logic.PERCH_GAP = 0.35 -- below the joker row for the upper-band perches
+
+function logic.perch_rect(i, areas, S, box_h, box_w)
+  local play, jok, cons = areas.play, areas.jokers, areas.consumeables
+  local x, y
+  if i == 1 and play then
+    x, y = play.x + play.w + 0.6, play.y + play.h / 2 - S / 2
+  elseif i == 2 and play then
+    x, y = play.x - 0.2, play.y - 0.1
+  elseif i == 3 and play and jok then
+    x, y = play.x + play.w / 2 - S / 2, jok.y + jok.h + logic.PERCH_GAP
+  elseif i == 4 and cons and jok then
+    x, y = cons.x + cons.w / 2 - S / 2, jok.y + jok.h + logic.PERCH_GAP
+  else
+    return nil
+  end
+  local w, h = math.max(S, box_w or S), S + (box_h or 0)
+  local rx = x + S / 2 - w / 2
+  local room = areas.room
+  if room then
+    rx = math.max(room.x, math.min(rx, room.x + room.w - w))
+    y = math.max(room.y, math.min(y, room.y + room.h - h))
+  end
+  return {x = rx, y = y, w = w, h = h}
+end
+
+--- Whether a scored hand has visibly landed (so the boss may react without spoiling it).
+--- delta > 0: the round score has started ticking up (vanilla's chips2 moment);
+--- delta <= 0: vanilla has cleared the hand name; any case: elapsed (real seconds) >= the safety.
+logic.SCORE_LAND_SAFETY = 6
+
+function logic.score_landed(start, chips, delta, handname, elapsed)
+  if (elapsed or 0) >= logic.SCORE_LAND_SAFETY then return true end
+  if (delta or 0) > 0 then return (chips or 0) > (start or 0) end
+  return handname == ''
+end
+
 local ARENA = {
   [0] = {black_mix = 0.45, contrast = 3.0, spin_mult = 1.0, pitch = 1.0},
   [1] = {black_mix = 0.60, contrast = 3.8, spin_mult = 1.5, pitch = 1.0},

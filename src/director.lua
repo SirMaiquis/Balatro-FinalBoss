@@ -1,6 +1,7 @@
 --- The director: turns game events into encounter decisions and drives dialogue, music and FX.
 local Dir = {}
 Dir.INTRO_DELAY = 1.5 -- seconds after the blind is set, so the chip has landed
+Dir.pending = nil     -- reaction to the last scored hand, waiting for the score to land (never saved)
 
 --- Scores may be Talisman big numbers (tables); logic.lua only ever sees plain numbers.
 local function num(x)
@@ -109,6 +110,7 @@ end
 
 --- Runs after vanilla's end-of-round event, so Mr. Bones saves are resolved.
 function Dir.on_round_end()
+  Dir.flush_pending()
   local st = FinalBoss.util.state()
   local enc = st.encounter
   if not enc then return end
@@ -169,10 +171,42 @@ function Dir.on_hand_after()
   if hands_left == 0 and total < required then st.lost_to = enc.key end
   local moment = FinalBoss.logic.detect_moments{delta = delta, total = total, required = required,
     hands_left = hands_left, fired = enc.fired, tier = enc.tier, reactions = enc.reactions}
-  if enc.tier == 'full' and enc.showdown then
-    Dir.stage_hit(enc, blind, delta, total, required, moment)
+  -- The reaction waits until the game shows the score (Dir.tick -> logic.score_landed), or the
+  -- boss would spoil it. Everything above is decided now.
+  Dir.flush_pending()
+  Dir.pending = {start = chips, delta = delta, total = total, required = required, moment = moment,
+    enc = enc, blind = blind, t0 = FinalBoss.util.now()}
+end
+
+--- The deferred reaction to a scored hand; dropped if its encounter is gone or over.
+local function react(p)
+  local enc, blind = current()
+  if not enc or enc ~= p.enc or enc.ended then return end
+  if FinalBoss.config.dev_mode then
+    FinalBoss.util.log('info', ('dev: score landed chips=%s after %.2fs'):format(
+      tostring(G.GAME.chips), FinalBoss.util.now() - p.t0))
   end
-  if moment then Dir.fire(moment) end
+  if enc.tier == 'full' and enc.showdown then
+    Dir.stage_hit(enc, blind, p.delta, p.total, p.required, p.moment)
+  end
+  if p.moment then Dir.fire(p.moment) end
+end
+
+--- Run a pending reaction now (blind defeated, round end: keeps the finale / game-over order).
+function Dir.flush_pending()
+  local p = Dir.pending
+  if not p then return end
+  Dir.pending = nil
+  react(p)
+end
+
+local function check_pending()
+  local p = Dir.pending
+  local hand = G.GAME.current_round and G.GAME.current_round.current_hand
+  if not FinalBoss.logic.score_landed(p.start, num(G.GAME.chips), p.delta, hand and hand.handname,
+      FinalBoss.util.now() - p.t0) then return end
+  Dir.pending = nil
+  FinalBoss.util.guard('score_landed', react, p)
 end
 
 --- Stage reactions to a scored hand in a showdown (arena always; avatar when cinematic).
@@ -199,6 +233,7 @@ function Dir.on_blind_disabled()
 end
 
 function Dir.on_blind_defeated()
+  Dir.flush_pending()
   local enc, blind = current()
   if not enc then return end
   enc.ended = true
@@ -217,10 +252,11 @@ function Dir.on_blind_defeated()
   FinalBoss.arena.stop()
 end
 
---- Per-frame tick (hooks: Game:update wrap). Cheap when nothing is on stage.
+--- Per-frame tick (hooks: Game:update wrap). Cheap when nothing is on stage or pending.
 function Dir.tick(dt)
   local A, V, H = FinalBoss.arena, FinalBoss.avatar, FinalBoss.hpbar
-  if not (A.active() or V.exists() or H.exists()) then return end
+  if not (Dir.pending or A.active() or V.exists() or H.exists()) then return end
+  if Dir.pending then check_pending() end
   V.tick(dt)
   H.tick(dt)
   A.tick(dt)
@@ -231,6 +267,7 @@ end
 local resetting = false -- re-entrancy guard: a failing step must not recurse via util.guard
 
 function Dir.reset_stage()
+  Dir.pending = nil -- dropped, never run
   if resetting then return end
   resetting = true
   local ok, err = pcall(function()
