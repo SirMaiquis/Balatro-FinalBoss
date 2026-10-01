@@ -8,6 +8,7 @@ M.POOL = {}
 function M.bid(sound)
   if not FinalBoss.config.music then return nil end
   local st = G.GAME and G.GAME.FinalBoss
+  if st and st.disabled_for_run then return nil end
   local enc = st and st.encounter
   if enc and enc.tier == 'full' and not enc.ended and enc.track == sound.key then return M.BID end
   return nil
