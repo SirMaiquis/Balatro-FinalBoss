@@ -63,6 +63,7 @@ end
 
 --- Continuing a saved run: restore FX for an unfinished full encounter, never replay the intro.
 function Dir.on_blind_loaded(blind)
+  FinalBoss.dialogue.reset(blind) -- a loaded blind never has a live bubble
   local enc = (G.GAME.FinalBoss or {}).encounter
   if not enc or enc.tier ~= 'full' or enc.ended then return end
   if blind.config.blind and blind.config.blind.key == enc.key then FinalBoss.fx.resume(blind) end
@@ -82,7 +83,7 @@ function Dir.on_round_end()
   FinalBoss.dialogue.end_intro()
   local blind = G.GAME.blind
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = 3, timer = 'REAL', blocking = false, blockable = false,
-    func = function() FinalBoss.dialogue.hide(blind); return true end}))
+    func = function() FinalBoss.util.guard('hide_bubble', FinalBoss.dialogue.hide, blind); return true end}))
 end
 
 return Dir

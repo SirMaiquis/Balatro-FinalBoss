@@ -12,7 +12,8 @@ D.saved_click_can = nil
 
 local function after(delay, fn)
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = delay, timer = 'REAL',
-    blocking = false, blockable = false, func = function() fn(); return true end}))
+    blocking = false, blockable = false,
+    func = function() FinalBoss.util.guard('dialogue_timer', fn); return true end}))
 end
 
 local function babble(blind, n, pitch)
@@ -55,6 +56,16 @@ local function disable_chip_skip(blind)
   D.saved_click_can = nil
 end
 
+--- Run teardown (menu, new run) clears the event queue but not our state: forget an intro whose
+--- blind is gone. Never touches the old blind's children or click handler.
+local function drop_stale_intro()
+  if D.intro and D.intro.blind ~= (G.GAME and G.GAME.blind) then
+    D.intro = nil
+    D.token = D.token + 1
+    D.saved_click_can = nil
+  end
+end
+
 local function advance(token)
   local it = D.intro
   if not it or it.token ~= token then return end
@@ -83,11 +94,13 @@ function D.end_intro()
 end
 
 function D.intro_active()
+  drop_stale_intro()
   return D.intro ~= nil
 end
 
 --- First press: next line now. Second press within DOUBLE_SKIP: end the intro.
 function D.skip()
+  drop_stale_intro()
   local it = D.intro
   if not it then return end
   local now = FinalBoss.util.now()
