@@ -10,3 +10,6 @@ tools/out/
 Thumbs.db
 .DS_Store
 .vscode/
+
+# Private planning docs (specs/plans) — local only, never pushed
+docs/superpowers/
