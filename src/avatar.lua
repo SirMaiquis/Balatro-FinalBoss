@@ -8,6 +8,7 @@ V.PERCH_COUNT = 4
 V.RINGSIDE = 1   -- home: spawn, landing, scoring, and the only spot under reduced motion
 V.HP_BOX_H = 1.05 -- estimated HP box height incl. its 0.05 gap, until the real box exists
 V.HUD_EASE = 0.3
+V.ROOM_MARGIN = 0.5 -- the window always shows at least this much of the room padding per side
 V.DISSOLVE = {[0] = 0, [1] = 0.12, [2] = 0.25}
 V.obj = nil
 V.hud_blind = nil -- the blind whose HUD chip is dissolved while the avatar is out
@@ -125,7 +126,7 @@ local function perch_xy(i)
   local bw, bh = hp_box()
   local r = FinalBoss.logic.perch_rect(i, {play = area(G.play), jokers = area(G.jokers),
     consumeables = area(G.consumeables), deck = area(G.deck), hand = area(G.hand),
-    room = {x = 0, y = 0, w = G.ROOM.T.w, h = G.ROOM.T.h}}, S, bh, bw)
+    room = {x = -V.ROOM_MARGIN, y = 0, w = G.ROOM.T.w + 2 * V.ROOM_MARGIN, h = G.ROOM.T.h}}, S, bh, bw)
   if r then return r.x + (r.w - S) / 2, r.y end
   return math.max(0, math.min(G.ROOM.T.w * 0.72, G.ROOM.T.w - S)), G.ROOM.T.h * 0.35
 end

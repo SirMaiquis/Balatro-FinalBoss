@@ -147,7 +147,7 @@ function logic.perch_rect(i, areas, S, box_h, box_w)
   local play, jok, cons = areas.play, areas.jokers, areas.consumeables
   local x, y
   if i == 1 and play then
-    x, y = play.x + play.w + 0.6, play.y + play.h / 2 - S / 2
+    x, y = play.x + play.w + 1.2, play.y + play.h / 2 - S / 2 - 0.8 -- clear of the hand's right edge
   elseif i == 2 and play then
     x, y = play.x - 0.2, play.y - 0.1
   elseif i == 3 and play and jok then

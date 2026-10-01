@@ -9,7 +9,7 @@ local AREAS = {
   jokers = rect(4.76, 0, 14.8, 2.61),
   consumeables = rect(15.0, 0, 19.7, 2.61),
   deck = rect(17.25, 8.89, 19.5, 11.5),
-  room = rect(0, 0, 20, 11.5),
+  room = rect(-0.5, 0, 20.5, 11.5), -- G.ROOM plus the 0.5 margin avatar.lua allows
 }
 local HUD_RIGHT = 4.6
 local S = 2.1
@@ -35,7 +35,7 @@ end
 T['perch_rect: every perch stays inside the room'] = function()
   each_perch(function(i, r)
     local room = AREAS.room
-    assert(r.x >= room.x and r.y >= room.y and r.x + r.w <= room.w and r.y + r.h <= room.h,
+    assert(r.x >= room.x and r.y >= room.y and r.x + r.w <= room.x + room.w and r.y + r.h <= room.y + room.h,
       'perch ' .. i .. ' leaves the room: ' .. fmt(r))
   end)
 end
@@ -66,8 +66,8 @@ T['perch_rect: chip sits at the top, HP box centred under it'] = function()
   local r = logic.perch_rect(1, AREAS, S, 1, BOX_W)
   local play = AREAS.play
   local ax = r.x + (r.w - S) / 2
-  assert(math.abs(ax - (play.x + play.w + 0.6)) < 1e-9, 'ringside x')
-  assert(math.abs(r.y - (play.y + play.h / 2 - S / 2)) < 1e-9, 'ringside y')
+  assert(math.abs(ax - (play.x + play.w + 1.2)) < 1e-9, 'ringside x')
+  assert(math.abs(r.y - (play.y + play.h / 2 - S / 2 - 0.8)) < 1e-9, 'ringside y')
   assert(math.abs(r.h - (S + 1)) < 1e-9, 'height is chip + box')
   assert(r.w == BOX_W, 'width is the wider of chip and box')
 end
@@ -82,7 +82,7 @@ end
 T['perch_rect: clamped into the room'] = function()
   local areas = {play = rect(15, 5, 19.5, 7.6), room = AREAS.room}
   local r = logic.perch_rect(1, areas, S, 1, BOX_W)
-  assert(r.x + r.w <= 20 + 1e-9, 'clamped right: ' .. fmt(r))
+  assert(r.x + r.w <= 20.5 + 1e-9, 'clamped right: ' .. fmt(r))
 end
 
 T['perch_rect: unknown perch or missing area is nil'] = function()
