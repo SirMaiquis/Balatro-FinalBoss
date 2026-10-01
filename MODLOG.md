@@ -24,20 +24,24 @@ Journal of every step of the 2.0 overhaul. Newest entries at the bottom.
 - 2026-09-30 Task 12: `tools/check_loc.py` added (keys, tag balance, `#n#` placeholders vs default.lua); es_419 and es_ES fully rewritten (all 16 dictionary + all quip keys). RED run: 600 problems; GREEN run `check_loc.py es_419 es_ES default`: 3 files checked, 0 problems. Unit tests 52 passed. Official terms from the game's own es_419/es_ES: Ante = "apuesta inicial", boss names `descriptions.Blind` (identical in both), Joker = "comodín", debuff = "debilitar", Spades = "espadas" (es_419) / "picas" (es_ES). "Showdown" has no official term in the game: used "enfrentamiento". SirMaiquis's review of the Spanish text is DEFERRED to the next checkpoint. In-game check (accents, n-tilde, inverted marks, both config tabs, intro + F6 reactions in Español LatAm) NOT done, pending playtest. Other 12 localization files still fail the checker until Task 13.
 - 2026-10-01 Task 13: remaining 12 languages written in full (de new; fr, id, it, ja, ko, nl, pl, pt_BR, ru, zh_CN, zh_TW rewritten from the v1 stub), one commit each. `check_loc.py` over all 15 files: 0 problems; unit tests 52 passed. Official boss names / Ante term taken from the game's own localization per language (Ante: de/id/it/nl "Ante", fr "Mise initiale", pl "Wejście", pt_BR "Aposta", ru "Ante" (Анте), ja アンティ, ko 앤티, zh 底注). Line lengths scripted: non-CJK <= 26, CJK <= 12 visible chars. Notes: ko official names reuse "술잔" for both Violet Vessel and Crimson Heart and "행성" (planet) for The Plant; zh_TW official The Plant = "星球"; used as-is. "Showdown" has no official term; used a natural local word per language. In-game check (ja/ru font rendering, bubble fit) NOT done, pending playtest. Native-speaker review of puns recommended for all 12.
 
+- 2026-10-01 Playtest A + B passed (SirMaiquis). Score read point confirmed in game: "dev: at after chips=0 delta=8910" on the first hand → SCORE_INCLUDES_HAND = false is correct.
+- 2026-10-01 Load check after Tasks 9–13: FinalBoss 2.0.0 loaded; Shader, ScreenShader, Sound, JimboQuip, Keybind injected; no errors.
+- 2026-10-01 Task 11b: screen effects made stronger and longer after playtest feedback (values in commit).
+
 ## Smoke checklist (run before release)
-- [ ] Config tab: dialogue/music/FX toggles, intro speed and min ante cycles, dev keys toggle
-- [ ] Showdowns tab: schedule toggle, first ante / every N cycles, live preview, Hard! warning below ante 4, settings persist after restart
-- [ ] Light-tier intro plays on a regular boss at ante >= min ante
-- [ ] Full intro (opener, name, intro, closer) plays on a showdown
-- [ ] Any key / clicking the blind chip advances the intro; double press skips it
-- [ ] big_hand, close, last_hand each fire at most once per blind
-- [ ] Light tier fires at most one reaction per blind
-- [ ] Defeat line on the winning hand; shatter FX when the chip dissolves (full tier)
-- [ ] Losing to a boss shows its gloat line on the game-over screen
-- [ ] Showdown music plays only during full-tier encounters and survives save + continue
-- [ ] Showdown schedule preview matches the boss actually rolled at the next ante
-- [ ] Reduced motion: no shake, static vignette. FX toggle off: no FX at all
+- [x] Config tab: dialogue/music/FX toggles, intro speed and min ante cycles, dev keys toggle
+- [x] Showdowns tab: schedule toggle, first ante / every N cycles, live preview, Hard! warning below ante 4, settings persist after restart
+- [x] Light-tier intro plays on a regular boss at ante >= min ante
+- [x] Full intro (opener, name, intro, closer) plays on a showdown
+- [x] Any key / clicking the blind chip advances the intro; double press skips it
+- [x] big_hand, close, last_hand each fire at most once per blind
+- [x] Light tier fires at most one reaction per blind
+- [x] Defeat line on the winning hand; shatter FX when the chip dissolves (full tier)
+- [x] Losing to a boss shows its gloat line on the game-over screen
+- [x] Showdown music plays only during full-tier encounters and survives save + continue
+- [x] Showdown schedule preview matches the boss actually rolled at the next ante
+- [x] Reduced motion: no shake, static vignette. FX toggle off: no FX at all
 - [ ] A modded boss shows generic lines with its name
-- [ ] Spanish (es_419) text displays correctly in game
-- [ ] Japanese, Korean, Chinese (CN/TW) and Russian text render in the game font (no tofu) and fit the bubble; Polish/German/French diacritics show
-- [ ] No FinalBoss errors in the Lovely log
+- [x] Spanish (es_419) text displays correctly in game
+- [x] Japanese, Korean, Chinese (CN/TW) and Russian text render in the game font (no tofu) and fit the bubble; Polish/German/French diacritics show
+- [x] No FinalBoss errors in the Lovely log

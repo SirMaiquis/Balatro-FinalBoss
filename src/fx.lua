@@ -1,8 +1,8 @@
 --- Screen effects for full-tier encounters. Respects config.fx and the game's reduced-motion
 --- setting (screen-shake strength is already scaled by vanilla from G.SETTINGS.screenshake).
 local F = {}
-F.PEAK = 0.8   -- vignette intensity during the intro
-F.HOLD = 0.35  -- vignette intensity for the rest of the fight
+F.PEAK = 1.0   -- vignette intensity during the intro
+F.HOLD = 0.6   -- vignette intensity for the rest of the fight
 F.vignette = {intensity = 0}
 F.tint = {1, 1, 1}
 F.gen = 0      -- bumped by stop() to cancel pending eases
@@ -48,13 +48,13 @@ function EFFECTS.pulse(blind)
   set_tint(blind)
   if reduced() then F.vignette.intensity = F.HOLD; return end
   local gen = F.gen
-  ease_vignette(F.PEAK, 1.0)
-  later(2.5, gen, function() ease_vignette(F.HOLD, 1.5) end)
+  ease_vignette(F.PEAK, 1.5)
+  later(4.0, gen, function() ease_vignette(F.HOLD, 2.0) end)
 end
 
 function EFFECTS.shake(blind)
   if reduced() then return end
-  G.ROOM.jiggle = G.ROOM.jiggle + 1.5
+  G.ROOM.jiggle = G.ROOM.jiggle + 4
 end
 
 -- `restore_as` is vanilla's blind_override for the colour to go back to ('' = neutral Small Blind
@@ -64,7 +64,7 @@ end
 function EFFECTS.flash(blind, restore_as)
   local c = boss_colour(blind)
   ease_background_colour{new_colour = lighten(c, 0.2), special_colour = darken(c, 0.4), contrast = 2}
-  G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.5, timer = 'REAL', blocking = false, blockable = false,
+  G.E_MANAGER:add_event(Event({trigger = 'after', delay = 1.2, timer = 'REAL', blocking = false, blockable = false,
     func = function()
       local ok, err = pcall(ease_background_colour_blind, G.STATE, restore_as)
       if not ok then FinalBoss.util.log('warn', 'flash restore failed: ' .. tostring(err)) end
@@ -74,14 +74,14 @@ end
 
 function EFFECTS.shatter(blind)
   if not blind then return end
-  local p = Particles(1, 1, 0, 0, {timer = 0.01, scale = 0.3, speed = 4, lifespan = 1.2, attach = blind,
+  local p = Particles(1, 1, 0, 0, {timer = 0.01, scale = 0.45, speed = 6, lifespan = 2.0, attach = blind,
     colours = {G.C.WHITE, boss_colour(blind)}, fill = true})
   play_sound('glass1', 0.9, 0.6)
   EFFECTS.flash(blind, '')
   -- Unconditional (not gated by F.gen): the director calls stop() right after shatter.
-  G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.6, timer = 'REAL', blocking = false, blockable = false,
+  G.E_MANAGER:add_event(Event({trigger = 'after', delay = 1.2, timer = 'REAL', blocking = false, blockable = false,
     func = function() p:fade(0.5); return true end}))
-  G.E_MANAGER:add_event(Event({trigger = 'after', delay = 1.4, timer = 'REAL', blocking = false, blockable = false,
+  G.E_MANAGER:add_event(Event({trigger = 'after', delay = 2.4, timer = 'REAL', blocking = false, blockable = false,
     func = function() p:remove(); return true end}))
 end
 
@@ -92,7 +92,7 @@ function EFFECTS.phase_shift(blind)
   if reduced() then F.vignette.intensity = F.HOLD; return end
   local gen = F.gen
   ease_vignette(1.0, 0.3)
-  later(0.8, gen, function() ease_vignette(F.HOLD, 1.0) end)
+  later(1.2, gen, function() ease_vignette(F.HOLD, 1.5) end)
 end
 
 function F.play(name, blind)
@@ -102,7 +102,7 @@ end
 
 function F.stop()
   F.gen = F.gen + 1
-  if reduced() then F.vignette.intensity = 0 else ease_vignette(0, 1.0) end
+  if reduced() then F.vignette.intensity = 0 else ease_vignette(0, 1.5) end
 end
 
 --- Leaving a run (menu, restart, new run): vanilla clears the event queue, so reset the state here.
