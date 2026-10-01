@@ -28,6 +28,7 @@ Journal of every step of the 2.0 overhaul. Newest entries at the bottom.
 - 2026-10-01 Load check after Tasks 9–13: FinalBoss 2.0.0 loaded; Shader, ScreenShader, Sound, JimboQuip, Keybind injected; no errors.
 - 2026-10-01 Task 11b: screen effects made stronger and longer after playtest feedback (values in commit).
 - 2026-10-01 Task 14 skipped by SirMaiquis (ships with the 2 existing tracks, no custom icon). Task 14b: applied all reviewer-flagged EN/ES line fixes.
+- 2026-10-01 Task 15: README written; tests 52 passed, check_loc 15 files 0 problems; `um publish check .` 0 failures (8 warnings, all absolute-path mentions in git-ignored planning docs, not shipped). Release zip built (`dist/FinalBoss-v2.0.0.zip`, 41 files, runtime files only, git-ignored) and load-tested as a real install (junction swapped for the extracted zip): log `lovely-2026.10.01-01.50.49.log`: `FinalBoss 2.0.0 loaded`, 0 error/traceback/warn lines. Junction restored afterwards. Still open: modded-boss generic-lines check, CJK/Russian render check, look of the stronger FX. Tag v2.0.0 not created yet.
 
 ## Smoke checklist (run before release)
 - [x] Config tab: dialogue/music/FX toggles, intro speed and min ante cycles, dev keys toggle
