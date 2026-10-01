@@ -1,0 +1,39 @@
+--- The ONLY file that hooks game or smods functions. Each hook keeps the original
+--- behaviour and runs FinalBoss code inside util.guard, so FinalBoss can never break a run.
+local U = FinalBoss.util
+local H = {}
+
+local function director() return FinalBoss.director end
+
+FinalBoss.mod.calculate = function(self, context)
+  if not G.GAME or not director().enabled() then return end
+  if context.setting_blind then
+    U.guard('setting_blind', director().on_blind_set, G.GAME.blind)
+  end
+end
+
+local orig_blind_load = Blind.load
+function Blind:load(blind_table)
+  local ret = orig_blind_load(self, blind_table)
+  if G.GAME and director().enabled() then U.guard('blind_load', director().on_blind_loaded, self) end
+  return ret
+end
+
+local orig_end_round = end_round
+function end_round(...)
+  local ret = orig_end_round(...)
+  -- Queued after vanilla's own end-of-round event, so game over / Mr. Bones is decided.
+  G.E_MANAGER:add_event(Event({func = function()
+    if director().enabled() then U.guard('end_round', director().on_round_end) end
+    return true
+  end}))
+  return ret
+end
+
+local orig_keypressed = love.keypressed
+function love.keypressed(key, ...)
+  if FinalBoss.dialogue.intro_active() then U.guard('skip', FinalBoss.dialogue.skip) end
+  return orig_keypressed(key, ...)
+end
+
+return H

@@ -11,7 +11,7 @@ local function load_file(path)
 end
 
 -- Order matters: util and logic first; hooks last (it wires everything together).
-local MODULES = {'util', 'logic', 'registry', 'music', 'fx', 'ui'}
+local MODULES = {'util', 'logic', 'registry', 'music', 'fx', 'ui', 'dialogue', 'director', 'devtools', 'hooks'}
 
 for _, name in ipairs(MODULES) do
   FinalBoss[name] = load_file('src/' .. name .. '.lua')

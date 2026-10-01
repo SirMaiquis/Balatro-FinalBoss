@@ -1,0 +1,121 @@
+--- Speech bubbles on the blind chip: one-off lines, intro sequences, skipping.
+--- Replaces v1's global Blind:add_speech_bubble/say_stuff overrides; the bubble lives
+--- in blind.children.fb_bubble.
+local D = {}
+D.REACTION_GAP = 2   -- seconds between non-intro lines
+D.DOUBLE_SKIP = 0.3  -- second key press within this window skips the whole intro
+D.token = 0          -- bumped to cancel pending timers
+D.intro = nil        -- {blind, steps, index, duration, pitch, token}
+D.last_line_at = -1e9
+D.last_skip_at = -1e9
+D.saved_click_can = nil
+
+local function after(delay, fn)
+  G.E_MANAGER:add_event(Event({trigger = 'after', delay = delay, timer = 'REAL',
+    blocking = false, blockable = false, func = function() fn(); return true end}))
+end
+
+local function babble(blind, n, pitch)
+  if n <= 0 then return end
+  play_sound('voice' .. math.random(1, 11), (pitch or 1) * (math.random() * 0.2 + 1), 0.5)
+  blind:juice_up()
+  after(0.13, function() babble(blind, n - 1, pitch) end)
+end
+
+function D.hide(blind)
+  if blind and blind.children and blind.children.fb_bubble then
+    blind.children.fb_bubble:remove()
+    blind.children.fb_bubble = nil
+  end
+end
+
+function D.show(blind, key, vars, pitch)
+  D.hide(blind)
+  local loc_vars = {quip = true}
+  for i, v in ipairs(vars or {}) do loc_vars[i] = v end
+  local bubble = UIBox{definition = G.UIDEF.speech_bubble(key, loc_vars),
+    config = {align = 'bm', offset = {x = 0, y = 0}, parent = blind}}
+  bubble:set_role{role_type = 'Minor', xy_bond = 'Weak', r_bond = 'Strong', major = blind}
+  bubble.states.visible = false -- appear once aligned, like v1
+  blind.children.fb_bubble = bubble
+  after(0.1, function() if blind.children.fb_bubble == bubble then bubble.states.visible = true end end)
+  D.last_line_at = FinalBoss.util.now()
+  babble(blind, 5, pitch)
+end
+
+local function enable_chip_skip(blind)
+  D.saved_click_can = blind.states.click.can
+  blind.states.click.can = true
+  blind.click = function() FinalBoss.util.guard('chip_skip', D.skip) end
+end
+
+local function disable_chip_skip(blind)
+  blind.click = nil -- falls back to the class method
+  if D.saved_click_can ~= nil then blind.states.click.can = D.saved_click_can end
+  D.saved_click_can = nil
+end
+
+local function advance(token)
+  local it = D.intro
+  if not it or it.token ~= token then return end
+  it.index = it.index + 1
+  local step = it.steps[it.index]
+  if not step then return D.end_intro() end
+  D.show(it.blind, step.key, step.vars, it.pitch)
+  after(it.duration, function() advance(token) end)
+end
+
+function D.play_sequence(blind, steps, duration, pitch)
+  D.end_intro()
+  D.token = D.token + 1
+  D.intro = {blind = blind, steps = steps, index = 0, duration = duration, pitch = pitch, token = D.token}
+  enable_chip_skip(blind)
+  advance(D.token)
+end
+
+function D.end_intro()
+  local it = D.intro
+  if not it then return end
+  D.intro = nil
+  D.token = D.token + 1
+  disable_chip_skip(it.blind)
+  D.hide(it.blind)
+end
+
+function D.intro_active()
+  return D.intro ~= nil
+end
+
+--- First press: next line now. Second press within DOUBLE_SKIP: end the intro.
+function D.skip()
+  local it = D.intro
+  if not it then return end
+  local now = FinalBoss.util.now()
+  local double = now - D.last_skip_at < D.DOUBLE_SKIP
+  D.last_skip_at = now
+  if double then return D.end_intro() end
+  D.token = D.token + 1
+  it.token = D.token
+  advance(it.token)
+end
+
+--- A one-off line (reactions, defeat). Dropped during the cooldown unless opts.force.
+function D.say(blind, key, vars, pitch, opts)
+  opts = opts or {}
+  if not opts.force and FinalBoss.util.now() - D.last_line_at < D.REACTION_GAP then return false end
+  D.end_intro()
+  D.token = D.token + 1
+  local token = D.token
+  D.show(blind, key, vars, pitch)
+  after(opts.duration or 4, function() if D.token == token then D.hide(blind) end end)
+  return true
+end
+
+--- Clear everything (new blind).
+function D.reset(blind)
+  D.end_intro()
+  D.token = D.token + 1
+  D.hide(blind)
+end
+
+return D
