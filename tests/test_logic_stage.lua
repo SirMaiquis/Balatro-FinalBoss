@@ -24,15 +24,53 @@ T['wound_stage: thresholds at 50% and 25%'] = function()
   eq(logic.wound_stage(0), 2)
 end
 
-T['hit_size: weak below 5%'] = function()
-  eq(logic.hit_size(4, 100), 'weak')
-  eq(logic.hit_size(5, 100), 'normal')
+T['hit_size: weak below 10%'] = function()
+  eq(logic.hit_size(9, 100), 'weak')
+  eq(logic.hit_size(10, 100), 'normal')
 end
 T['hit_size: big at 30% or more'] = function()
   eq(logic.hit_size(30, 100), 'big')
   eq(logic.hit_size(29, 100), 'normal')
 end
 T['hit_size: zero requirement is normal'] = function() eq(logic.hit_size(10, 0), 'normal') end
+
+T['laugh_pitch: steps down from 1.35 to 1.0'] = function()
+  local L = logic.LAUGH
+  eq(logic.laugh_pitch(0), 1.35)
+  eq(logic.laugh_pitch(L.beats - 1), 1.0)
+  for i = 1, L.beats - 1 do
+    if not (logic.laugh_pitch(i) < logic.laugh_pitch(i - 1)) then error('pitch must fall every beat') end
+  end
+end
+T['laugh_duration: beats plus the closing shake'] = function()
+  local L = logic.LAUGH
+  eq(logic.laugh_duration(), L.beats * L.step + L.shake)
+end
+T['laugh_motion: hops on every beat and returns to the perch between beats'] = function()
+  local L = logic.LAUGH
+  for b = 0, L.beats - 1 do
+    local hop = logic.laugh_motion(b * L.step)
+    if math.abs(hop) > 1e-9 then error('beat start hop ' .. tostring(hop)) end
+    local peak = logic.laugh_motion((b + 0.5) * L.step)
+    if math.abs(peak - L.hop) > 1e-9 then error('hop peak ' .. tostring(peak)) end
+  end
+end
+T['laugh_motion: tilt alternates per beat'] = function()
+  local L = logic.LAUGH
+  local _, t0 = logic.laugh_motion(0.5 * L.step)
+  local _, t1 = logic.laugh_motion(1.5 * L.step)
+  if not (t0 > 0 and t1 < 0) then error('tilt must alternate: ' .. t0 .. ' / ' .. t1) end
+end
+T['laugh_motion: shakes at the end, then everything is exactly zero'] = function()
+  local L = logic.LAUGH
+  local hop, tilt, shake = logic.laugh_motion(L.beats * L.step + 0.01)
+  eq(hop, 0); eq(tilt, 0)
+  if not (shake > 0) then error('expected a shake') end
+  local h, t, s = logic.laugh_motion(logic.laugh_duration())
+  eq(h, 0); eq(t, 0); eq(s, 0)
+  h, t, s = logic.laugh_motion(-1)
+  eq(h, 0); eq(t, 0); eq(s, 0)
+end
 
 T['arena_params: stage 0'] = function()
   local p = logic.arena_params(0)

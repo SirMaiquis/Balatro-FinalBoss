@@ -8,6 +8,9 @@ V.PERCH_COUNT = 4
 V.RINGSIDE = 1   -- home: spawn, landing, scoring, and the only spot under reduced motion
 V.HP_BOX_H = 1.05 -- estimated HP box height incl. its 0.05 gap, until the real box exists
 V.HUD_EASE = 0.3
+V.LAUGH_DURATION = FinalBoss.logic.laugh_duration() -- the director schedules the line after it
+V.LAUGH_VOLUME = 0.75   -- louder than talking (0.5)
+V.LAUGH_ACCENT = {sound = 'multhit1', pitch = 0.6, volume = 0.3} -- one low thud as the laugh starts
 V.ROOM_MARGIN = 0.5 -- the window always shows at least this much of the room padding per side
 V.DISSOLVE = {[0] = 0, [1] = 0.12, [2] = 0.25}
 V.obj = nil
@@ -19,6 +22,7 @@ V.talking = false
 V.fading = false
 V.tremble = false
 V.wound = 0
+V.laugh_start, V.laugh_until = 0, 0 -- REAL-time window the update reads for hops, tilt and shake
 
 local function now() return FinalBoss.util.now() end
 local function reduced() return G.SETTINGS.reduced_motion end
@@ -69,6 +73,17 @@ function Avatar:move(dt)
   s.T.y = self.T.y + (calm and 0 or 0.08 * math.sin(t * speed * 2 * math.pi / 2.2)) + jy
   s.T.r = calm and 0 or 0.05 * math.sin(t * speed * 1.3)
   s.T.w, s.T.h = self.T.w, self.T.h
+  -- Laughing: hop on every "ha", tilt back and forth, shake at the end. Applied to the sprite only
+  -- (the avatar's own T is the perch, so roaming glides never fight it) and straight onto its
+  -- drawn position, since the sprite's spring would smooth a 0.1 s hop away. All offsets are zero
+  -- outside the window, so the chip ends exactly on its bob.
+  if not calm and now() < V.laugh_until then
+    local hop, tilt, shake = FinalBoss.logic.laugh_motion(now() - V.laugh_start)
+    s.T.x = s.T.x + (shake > 0 and (math.random() - 0.5) * 2 * shake or 0)
+    s.T.y = s.T.y - hop + (shake > 0 and (math.random() - 0.5) * 2 * shake or 0)
+    s.T.r = s.T.r + tilt
+    s.VT.x, s.VT.y, s.VT.r = s.T.x, s.T.y, s.T.r
+  end
 end
 
 function Avatar:juice_up(amount, rot_amt)
@@ -200,7 +215,7 @@ function V.tick(dt)
     V.scoring = false
     V.next_roam = now() + V.ROAM_MIN
   end
-  if V.talking then return end
+  if V.talking or now() < V.laugh_until then return end
   if now() >= V.next_roam then
     go_to(FinalBoss.logic.pick_variant(V.PERCH_COUNT, V.perch, math.random), false)
     V.next_roam = now() + math.random(V.ROAM_MIN, V.ROAM_MAX)
@@ -211,24 +226,39 @@ function V.hit(size)
   local o = V.obj
   if not o then return end
   o.flash_until = now() + 0.15
-  o:juice_up(size == 'big' and 0.6 or 0.4, 0.15)
-  if reduced() then return end
+  o:juice_up(size == 'big' and 0.6 or (size == 'weak' and 0.25 or 0.4), 0.15)
+  if reduced() or size == 'weak' then return end -- a weak hit is a soft flinch: no knockback
   local dir = V.side() == 'right' and 1 or -1
   o.T.x = o.T.x + dir * V.KNOCKBACK * (size == 'big' and 1.6 or 1)
   local perch = V.perch
   after(0.3, function() if V.obj == o and V.perch == perch then go_to(perch, false) end end)
 end
 
+--- Laugh: ONE syllable (fixed for the whole laugh) repeated LAUGH.beats times at an even, fast
+--- cadence, pitch stepping down, louder than talking, after a low accent. Not reduced: the chip hops,
+--- tilts and shakes (see Avatar:move). Reduced: sound and a single small juice pulse.
+--- Returns the laugh's total duration in seconds.
 function V.laugh(pitch)
   local o = V.obj
-  if not o then return end
-  for i = 0, 2 do
-    after(i * 0.14, function()
+  if not o then return V.LAUGH_DURATION end
+  local L = FinalBoss.logic.LAUGH
+  local syllable = 'voice' .. math.random(1, 11)
+  local calm = reduced()
+  if not calm then
+    V.laugh_start = now()
+    V.laugh_until = V.laugh_start + V.LAUGH_DURATION
+  end
+  V.next_roam = math.max(V.next_roam, now() + V.LAUGH_DURATION + 1.5) -- no glide mid-laugh
+  local a = V.LAUGH_ACCENT
+  play_sound(a.sound, a.pitch, a.volume)
+  for i = 0, L.beats - 1 do
+    after(i * L.step, function()
       if V.obj ~= o then return end
-      play_sound('voice' .. math.random(1, 11), (pitch or 1) * 1.15, 0.5)
-      o:juice_up(0.2, (i % 2 == 0) and 0.3 or -0.3)
+      play_sound(syllable, (pitch or 1) * FinalBoss.logic.laugh_pitch(i), V.LAUGH_VOLUME)
+      if i == 0 and calm then o:juice_up(0.2, 0.2) end
     end)
   end
+  return V.LAUGH_DURATION
 end
 
 function V.set_wound(stage)
@@ -296,6 +326,7 @@ function V.remove()
   V.obj = nil
   restore_hud_blind()
   V.talking, V.fading, V.tremble, V.wound, V.scoring = false, false, false, 0, false
+  V.laugh_start, V.laugh_until = 0, 0
   V.perch = V.RINGSIDE
   if o then o:remove() end
 end

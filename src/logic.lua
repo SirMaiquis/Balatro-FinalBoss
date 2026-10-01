@@ -110,7 +110,7 @@ function logic.resolve_prefix(blind_key, moment, count_of)
 end
 
 -- Showdown stage maths.
-logic.WEAK_HIT_RATIO = 0.05 -- a hand under 5% of the boss's max HP makes the avatar laugh
+logic.WEAK_HIT_RATIO = 0.10 -- a hand under 10% of the boss's max HP is shrugged off: a flinch, then a laugh
 
 --- Remaining boss health as a fraction of the requirement, clamped to [0, 1].
 function logic.hp_fraction(total, required)
@@ -133,6 +133,39 @@ function logic.hit_size(delta, required)
   if delta >= logic.BIG_HAND_RATIO * required then return 'big' end
   if delta < logic.WEAK_HIT_RATIO * required then return 'weak' end
   return 'normal'
+end
+
+--- The avatar's laugh: LAUGH.beats "ha"s at an even cadence, the pitch falling from pitch_hi to
+--- pitch_lo, the chip hopping and tilting on every beat, then a short decaying shake.
+logic.LAUGH = {beats = 5, step = 0.095, hop = 0.25, tilt = 0.2, shake = 0.25, shake_amp = 0.07,
+  pitch_hi = 1.35, pitch_lo = 1.0}
+
+--- Total length of the laugh in seconds (the beats plus the closing shake).
+function logic.laugh_duration()
+  return logic.LAUGH.beats * logic.LAUGH.step + logic.LAUGH.shake
+end
+
+--- Pitch multiplier of beat i (0-based): steps down evenly from pitch_hi to pitch_lo.
+function logic.laugh_pitch(i)
+  local L = logic.LAUGH
+  if L.beats <= 1 then return L.pitch_hi end
+  return L.pitch_hi - (L.pitch_hi - L.pitch_lo) * i / (L.beats - 1)
+end
+
+--- Offsets of the chip `elapsed` seconds into the laugh: (hop, tilt, shake). hop is how far up (>= 0,
+--- table units), tilt the rotation (alternating direction per beat), shake the jitter amplitude.
+--- All zero outside [0, duration): the chip is back exactly on its perch when the laugh is over.
+function logic.laugh_motion(elapsed)
+  local L = logic.LAUGH
+  if not elapsed or elapsed < 0 or elapsed >= logic.laugh_duration() then return 0, 0, 0 end
+  local beats_end = L.beats * L.step
+  if elapsed < beats_end then
+    local x = elapsed / L.step
+    local b = math.floor(x)
+    local lift = math.sin(math.pi * (x - b))
+    return L.hop * lift, ((b % 2 == 0) and 1 or -1) * L.tilt * lift, 0
+  end
+  return 0, 0, L.shake_amp * (1 - (elapsed - beats_end) / L.shake)
 end
 
 --- Avatar perches. Each rectangle covers the chip (S x S, top-left at the perch) plus the HP box

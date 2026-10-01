@@ -230,8 +230,8 @@ function C.game_over(pitch)
   C.phase = nil
   FinalBoss.hpbar.remove()
   if not FinalBoss.avatar.exists() then return end
-  FinalBoss.avatar.laugh(pitch)
-  later(0.5, function() FinalBoss.avatar.fade_out(0.8) end)
+  local laugh_time = FinalBoss.avatar.laugh(pitch)
+  later(math.max(0.5, laugh_time), function() FinalBoss.avatar.fade_out(0.8) end)
 end
 
 function C.reset()

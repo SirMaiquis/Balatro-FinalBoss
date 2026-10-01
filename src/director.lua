@@ -1,6 +1,7 @@
 --- The director: turns game events into encounter decisions and drives dialogue, music and FX.
 local Dir = {}
 Dir.INTRO_DELAY = 1.5 -- seconds after the blind is set, so the chip has landed
+Dir.WEAK_LAUGH_DELAY = 0.5 -- seconds between the flinch of a weak hit and the laugh
 Dir.pending = nil     -- reaction to the last scored hand, waiting for the score to land (never saved)
 
 --- Scores may be Talisman big numbers (tables); logic.lua only ever sees plain numbers.
@@ -195,10 +196,20 @@ local function react(p)
     FinalBoss.util.log('info', ('dev: score landed chips=%s after %.2fs'):format(
       tostring(G.GAME.chips), FinalBoss.util.now() - p.t0))
   end
+  local wait = 0 -- a laugh is coming: the line must not overlap it
   if enc.tier == 'full' and enc.showdown then
-    Dir.stage_hit(enc, blind, p.delta, p.total, p.required, p.moment)
+    wait = Dir.stage_hit(enc, blind, p.delta, p.total, p.required, p.moment)
   end
-  if p.moment then Dir.fire(p.moment) end
+  if not p.moment then return end
+  if wait <= 0 then Dir.fire(p.moment); return end
+  G.E_MANAGER:add_event(Event({trigger = 'after', delay = wait, timer = 'REAL', blocking = false,
+    blockable = false, func = function()
+      FinalBoss.util.guard('moment_after_laugh', function()
+        local e = current()
+        if e and e == enc and not e.ended then Dir.fire(p.moment) end
+      end)
+      return true
+    end}))
 end
 
 --- Run a pending reaction now (blind defeated, round end: keeps the finale / game-over order).
@@ -219,10 +230,11 @@ local function check_pending()
 end
 
 --- Stage reactions to a scored hand in a showdown (arena always; avatar when cinematic).
+--- Returns the seconds before the hand's dialogue line may start (0 unless the avatar laughs).
 function Dir.stage_hit(enc, blind, delta, total, required, moment)
   local stage = stage_of(total, required)
   FinalBoss.arena.on_hit(stage)
-  if not enc.cinematic then return end
+  if not enc.cinematic then return 0 end
   local size = FinalBoss.logic.hit_size(delta, required)
   FinalBoss.hpbar.update(total, required)
   FinalBoss.hpbar.damage(delta, size)
@@ -231,10 +243,24 @@ function Dir.stage_hit(enc, blind, delta, total, required, moment)
     -- The defeat line (fired next) shows during the shake. The flag is plain data on the saved
     -- encounter: on_blind_defeated runs seconds later, so the finale's phase is no use there.
     enc.finale = FinalBoss.cinematic.play_finale(blind) and true or nil
-    return
+    return 0
   end
   FinalBoss.avatar.hit(size)
-  if size == 'weak' then FinalBoss.avatar.laugh(FinalBoss.registry.get(enc.key).voice.pitch) end
+  if size ~= 'weak' then return 0 end
+  -- Hit first, then laugh: a soft flinch now, the laugh WEAK_LAUGH_DELAY later (only if this very
+  -- avatar is still on the table and the fight is still going).
+  local V = FinalBoss.avatar
+  local o = V.anchor()
+  G.E_MANAGER:add_event(Event({trigger = 'after', delay = Dir.WEAK_LAUGH_DELAY, timer = 'REAL',
+    blocking = false, blockable = false, func = function()
+      FinalBoss.util.guard('weak_laugh', function()
+        local e = current()
+        if not o or V.anchor() ~= o or not e or e ~= enc or e.ended then return end
+        V.laugh(FinalBoss.registry.get(enc.key).voice.pitch)
+      end)
+      return true
+    end}))
+  return Dir.WEAK_LAUGH_DELAY + V.LAUGH_DURATION
 end
 
 function Dir.on_blind_disabled()

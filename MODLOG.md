@@ -60,3 +60,4 @@ Journal of every step of the overhaul (developed under the working label 2.0, re
 - 2026-10-01 Final review fixes: no double defeat effect after the finale, live HP at avatar spawn, trail drain over 0.35 s, vignette/arena revert at the finale's end, Continue/toggle fixes.
 - 2026-10-01 Playtest C feedback: HUD chip steps out while the avatar is on the table; HP bar rebuilt on vanilla progress bars (pixel style) and drawn under cards.
 - 2026-10-01 Playtest D feedback: title band with slam and longer hold; avatar perches in open space, home ringside (right of the play area, above the deck), parked there during scoring; boss reacts when the score lands.
+- 2026-10-01 Laugh feedback: weak hit under 10% of boss HP; hit first, then a distinct laugh (one syllable, ha-ha rhythm, hops and tilt); the line waits for the laugh.
