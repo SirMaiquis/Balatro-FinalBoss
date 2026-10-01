@@ -8,6 +8,8 @@ local function num(x)
   return tonumber(x) or 0
 end
 
+Dir.num = num
+
 local function fight_numbers(blind)
   return num(G.GAME.chips), num(blind.chips)
 end
@@ -58,8 +60,7 @@ function Dir.on_blind_set(blind)
     FinalBoss.fx.play(entry.fx.intro, blind)
     if is_showdown then FinalBoss.arena.start(blind, 0) end
     if st.encounter.cinematic then
-      local total, required = fight_numbers(blind)
-      FinalBoss.cinematic.play_intro(blind, {total = total, required = required},
+      FinalBoss.cinematic.play_intro(blind,
         function() FinalBoss.util.guard('intro', Dir.play_intro, proto.key) end)
       return
     end
@@ -96,9 +97,10 @@ function Dir.on_blind_loaded(blind)
   FinalBoss.fx.resume(blind)
   if not enc.showdown then return end
   local total, required = fight_numbers(blind)
+  if total >= required then return end -- saved in the round summary: the fight is already won
   local stage = stage_of(total, required)
   FinalBoss.arena.resume(blind, stage)
-  if enc.cinematic then
+  if enc.cinematic and FinalBoss.config.cinematic then
     FinalBoss.avatar.spawn(blind, {fall = false})
     FinalBoss.avatar.set_wound(stage)
     FinalBoss.hpbar.create(FinalBoss.avatar.anchor(), blind, total, required)
@@ -183,7 +185,9 @@ function Dir.stage_hit(enc, blind, delta, total, required, moment)
   FinalBoss.hpbar.damage(delta, size)
   FinalBoss.avatar.set_wound(stage)
   if moment == 'defeat' then
-    FinalBoss.cinematic.play_finale(blind) -- the defeat line (fired next) shows during the shake
+    -- The defeat line (fired next) shows during the shake. The flag is plain data on the saved
+    -- encounter: on_blind_defeated runs seconds later, so the finale's phase is no use there.
+    enc.finale = FinalBoss.cinematic.play_finale(blind) and true or nil
     return
   end
   FinalBoss.avatar.hit(size)
@@ -201,7 +205,7 @@ function Dir.on_blind_defeated()
   if enc.tier ~= 'full' then return end
   if enc.cinematic then
     -- The finale (started on the winning hand) owns the explosion; clean up if it never ran.
-    if FinalBoss.cinematic.phase ~= 'finale' then
+    if not enc.finale then
       FinalBoss.fx.play(FinalBoss.registry.get(enc.key).fx.defeat, blind)
       FinalBoss.hpbar.remove()
       FinalBoss.avatar.remove()

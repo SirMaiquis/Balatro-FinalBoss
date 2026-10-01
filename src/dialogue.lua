@@ -26,7 +26,8 @@ end
 local function babble(blind, n, pitch)
   if n <= 0 then return end
   play_sound('voice' .. math.random(1, 11), (pitch or 1) * (math.random() * 0.2 + 1), 0.5)
-  blind:juice_up()
+  if FinalBoss.avatar and blind == FinalBoss.avatar.anchor() then FinalBoss.avatar.talk_bump()
+  else blind:juice_up() end
   after(0.13, function() babble(blind, n - 1, pitch) end)
 end
 

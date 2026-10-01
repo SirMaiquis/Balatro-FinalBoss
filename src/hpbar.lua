@@ -6,7 +6,7 @@ H.GHOST_HOLD, H.GHOST_DRAIN = 0.4, 0.35
 H.DARKEN = {[0] = 0, [1] = 0.2, [2] = 0.4}
 H.bar, H.ui = nil, nil
 H.view = {text = ''}
-H.frac, H.ghost, H.ghost_until, H.flash_until, H.stage = 1, 1, 0, 0, 0
+H.frac, H.ghost, H.ghost_from, H.ghost_until, H.flash_until, H.stage = 1, 1, 1, 0, 0, 0
 H.colour = {1, 0, 0, 1}
 
 local function now() return FinalBoss.util.now() end
@@ -75,6 +75,7 @@ function H.update(total, required, instant)
   if stage ~= H.stage and not instant then H.flash_until = now() + 0.3 end
   H.stage, H.frac = stage, frac
   if instant then H.ghost = frac end
+  H.ghost_from = H.ghost -- the trail drains from here to the bar over GHOST_DRAIN
   H.ghost_until = now() + H.GHOST_HOLD
   local hp = math.max(0, (required or 0) - (total or 0))
   local text = number_format(hp) .. ' / ' .. number_format(required or 0)
@@ -105,7 +106,7 @@ end
 function H.tick(dt)
   if not H.bar then return end
   if H.ghost > H.frac and now() >= H.ghost_until then
-    H.ghost = math.max(H.frac, H.ghost - (dt or 0) / H.GHOST_DRAIN)
+    H.ghost = math.max(H.frac, H.ghost - (H.ghost_from - H.frac) * (dt or 0) / H.GHOST_DRAIN)
   end
 end
 
@@ -113,7 +114,7 @@ function H.remove()
   -- UIElement:remove removes the O node's config.object, so removing the box removes the bar once.
   if H.ui then H.ui:remove(); H.ui = nil end
   H.bar = nil
-  H.frac, H.ghost, H.stage = 1, 1, 0
+  H.frac, H.ghost, H.ghost_from, H.stage = 1, 1, 1, 0
   H.view.text, H.flash_until, H.ghost_until = '', 0, 0
 end
 

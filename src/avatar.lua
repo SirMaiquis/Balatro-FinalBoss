@@ -10,6 +10,7 @@ V.obj = nil
 V.perch = 2
 V.next_roam = 0
 V.talking = false
+V.fading = false
 V.tremble = false
 V.wound = 0
 
@@ -158,7 +159,7 @@ function V.position()
 end
 
 function V.tick(dt)
-  if not V.obj or V.talking or reduced() then return end
+  if not V.obj or V.talking or V.fading or reduced() then return end
   if now() >= V.next_roam then
     go_to(FinalBoss.logic.pick_variant(V.PERCH_COUNT, V.perch, math.random), false)
     V.next_roam = now() + math.random(V.ROAM_MIN, V.ROAM_MAX)
@@ -220,6 +221,7 @@ end
 function V.fade_out(duration)
   local o = V.obj
   if not o then return end
+  V.fading = true -- no more roaming while it fades
   V.set_dissolve(1, duration)
   after(duration + 0.05, function() if V.obj == o then V.remove() end end)
 end
@@ -241,7 +243,7 @@ end
 function V.remove()
   local o = V.obj
   V.obj = nil
-  V.talking, V.tremble, V.wound = false, false, 0
+  V.talking, V.fading, V.tremble, V.wound = false, false, false, 0
   if o then o:remove() end
 end
 

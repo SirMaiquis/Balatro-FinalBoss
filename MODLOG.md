@@ -57,3 +57,4 @@ Journal of every step of the overhaul (developed under the working label 2.0, re
 - 2026-10-01 Cinematic showdown intro: letterbox, SHOWDOWN title card, avatar fall-in, skippable.
 - 2026-10-01 Explosive showdown finale (slow motion via lovely/timescale.toml) and game-over exit.
 - 2026-10-01 README updated for 1.0.0; release zip FinalBoss-v1.0.0.zip built.
+- 2026-10-01 Final review fixes: no double defeat effect after the finale, live HP at avatar spawn, trail drain over 0.35 s, vignette/arena revert at the finale's end, Continue/toggle fixes.

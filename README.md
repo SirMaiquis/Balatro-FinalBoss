@@ -24,7 +24,7 @@ Every boss blind gets a tier. The tier decides how much of the show it gets.
 |---|---|---|
 | Intro | 1 line (the boss's threat) | opener, boss name, threat, closer |
 | Reactions (big hand, close call, last hand, boss disabled) | at most 1 per blind | each once per blind |
-| Defeat | a line | a line and the shatter effect |
+| Defeat | a line | a line and the shatter effect (the explosive finale when `cinematic` is on) |
 | Music | vanilla | a FinalBoss showdown track |
 | Screen effects (vignette, shake, flash) | none | yes |
 | Gloat when you lose | yes | yes |

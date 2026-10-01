@@ -1,5 +1,5 @@
 --- Showdown cinematics: letterbox + title card + avatar fall-in before the
---- intro dialogue, and (Task 8) the slow-motion explosive finale. Owns FinalBoss.timescale.
+--- intro dialogue, and the slow-motion explosive finale. Owns FinalBoss.timescale.
 local C = {}
 C.BAR_H = 1.1
 C.token = 0        -- bumped to cancel pending intro beats
@@ -7,7 +7,7 @@ C.phase = nil      -- 'intro' | 'dialogue' | 'finale' | nil
 C.bars = nil       -- {top = UIBox, bottom = UIBox}
 C.leaving = {}     -- bars sliding out, removed by a timer (or by reset if the queue is cleared)
 C.title = nil
-C.on_done, C.blind, C.nums = nil, nil, nil
+C.on_done, C.blind = nil, nil
 
 local function reduced() return G.SETTINGS.reduced_motion end
 
@@ -66,8 +66,13 @@ end
 
 local function spawn_stage(fall)
   if FinalBoss.avatar.exists() or not C.blind then return end
+  -- Read the score live: the player can win (or lose) while the intro is still running.
+  local enc = (G.GAME.FinalBoss or {}).encounter
+  local num = FinalBoss.director.num
+  local total, required = num(G.GAME.chips), num(C.blind.chips)
+  if not enc or enc.ended or total >= required then return end
   FinalBoss.avatar.spawn(C.blind, {fall = fall})
-  FinalBoss.hpbar.create(FinalBoss.avatar.anchor(), C.blind, C.nums.total, C.nums.required)
+  FinalBoss.hpbar.create(FinalBoss.avatar.anchor(), C.blind, total, required)
 end
 
 local function land()
@@ -90,11 +95,11 @@ local function finish_intro()
   if cb then cb() end
 end
 
-function C.play_intro(blind, nums, on_done)
+function C.play_intro(blind, on_done)
   C.reset()
   C.token = C.token + 1
   local token = C.token
-  C.phase, C.on_done, C.blind, C.nums = 'intro', on_done, blind, nums
+  C.phase, C.on_done, C.blind = 'intro', on_done, blind
   C.bars = {top = make_bar(true), bottom = make_bar(false)}
   place_bars(C.bars, true)
   play_sound('whoosh_long', 1, 0.5)
@@ -158,8 +163,9 @@ local function explode(blind, calm)
 end
 
 --- Winning hand: slow motion, violent shake + flashes while the defeat line plays, then boom.
+--- Returns true when the finale started (the director then skips its own defeat effect).
 function C.play_finale(blind)
-  if not FinalBoss.avatar.exists() then return end
+  if not FinalBoss.avatar.exists() then return false end
   C.token = C.token + 1
   local token = C.token
   remove_title()
@@ -175,7 +181,12 @@ function C.play_finale(blind)
   end
   later(0.8, function() FinalBoss.timescale = 1 end) -- always restored, even if the token moves on
   after(1.2, token, function() explode(blind, calm) end)
-  later(1.6, function() if C.phase == 'finale' then C.phase = nil end end)
+  later(1.6, function()
+    if C.phase == 'finale' then C.phase = nil end
+    FinalBoss.fx.stop() -- vignette and arena revert with the explosion (spec 7.2); both are idempotent
+    FinalBoss.arena.stop()
+  end)
+  return true
 end
 
 --- The boss won: a last laugh, then the avatar fades away (the gloat quip plays as before).
@@ -198,7 +209,7 @@ function C.reset()
   if C.bars then for _, b in pairs(C.bars) do b:remove() end; C.bars = nil end
   for _, b in ipairs(C.leaving) do b:remove() end
   C.leaving = {}
-  C.phase, C.on_done, C.blind, C.nums = nil, nil, nil, nil
+  C.phase, C.on_done, C.blind = nil, nil, nil
 end
 
 return C
