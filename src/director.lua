@@ -52,7 +52,7 @@ function Dir.on_blind_set(blind)
     ante = G.GAME.round_resets.ante,
     min_ante = FinalBoss.config.min_ante,
   }
-  st.encounter = {key = proto.key, tier = tier, fired = {}, reactions = 0, phase = 1, track = nil,
+  st.encounter = {key = proto.key, tier = tier, fired = {}, reactions = 0, track = nil,
     last_variant = {}, ended = false, last_hand_seen = nil, showdown = is_showdown,
     cinematic = (tier == 'full' and is_showdown and FinalBoss.config.cinematic) and true or false}
   st.lost_to = nil
@@ -104,7 +104,7 @@ function Dir.on_blind_loaded(blind)
   local total, required = fight_numbers(blind)
   if total >= required then return end -- saved in the round summary: the fight is already won
   local stage = stage_of(total, required)
-  FinalBoss.arena.resume(blind, stage)
+  FinalBoss.arena.start(blind, stage)
   if enc.cinematic and FinalBoss.config.cinematic then
     FinalBoss.avatar.spawn(blind, {fall = false})
     FinalBoss.avatar.set_wound(stage)
@@ -135,10 +135,6 @@ function Dir.on_round_end()
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = 3, timer = 'REAL', blocking = false, blockable = false,
     func = function() FinalBoss.util.guard('hide_bubble', FinalBoss.dialogue.hide, blind); return true end}))
 end
-
--- Whether G.GAME.chips already includes the just-scored hand at context.after. False per smods source
--- (evaluate_play queues the chip ease; context.after runs before it); re-confirmed in game at playtest.
-Dir.SCORE_INCLUDES_HAND = false
 
 function Dir.fire(moment, opts)
   opts = opts or {}
@@ -173,7 +169,9 @@ function Dir.on_hand_after()
   enc.last_hand_seen = hands_played
   local delta = num(SMODS.last_hand_score)
   local chips = num(G.GAME.chips)
-  local total = Dir.SCORE_INCLUDES_HAND and chips or (chips + delta)
+  -- G.GAME.chips does not include this hand yet: evaluate_play queues the chip ease, and
+  -- context.after runs before it.
+  local total = chips + delta
   local required = num(blind.chips)
   local hands_left = G.GAME.current_round.hands_left
   -- Set before the game-over screen picks its quip; cleared in on_round_end if the run continues.

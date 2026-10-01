@@ -37,10 +37,4 @@ function M.pick_track(entry)
   return pool[idx]
 end
 
---- Phase-based music changes are an M3 feature; M1 only records the phase.
-function M.set_phase(n)
-  local enc = (G.GAME and G.GAME.FinalBoss or {}).encounter
-  if enc then enc.phase = n end
-end
-
 return M

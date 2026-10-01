@@ -24,6 +24,6 @@ for _, name in ipairs(MODULES) do
 end
 
 FinalBoss.register_encounter = FinalBoss.registry.register
-FinalBoss.encounters = {vanilla = load_file('src/encounters/vanilla.lua')}
+load_file('src/encounters/vanilla.lua') -- registers the vanilla bosses
 
 FinalBoss.util.log('info', 'FinalBoss ' .. tostring(FinalBoss.VERSION) .. ' loaded')

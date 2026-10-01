@@ -32,8 +32,6 @@ function A.start(blind, stage)
   A.apply()
 end
 
-function A.resume(blind, stage) A.start(blind, stage) end
-
 function A.on_hit(stage)
   local s = A.state
   if not s then return end

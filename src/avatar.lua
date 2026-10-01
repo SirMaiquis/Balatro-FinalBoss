@@ -5,7 +5,7 @@ V.SIZE = 2.1
 V.ROAM_MIN, V.ROAM_MAX = 6, 9
 V.KNOCKBACK = 0.5
 V.PERCH_COUNT = 4
-V.RINGSIDE = 1   -- home: spawn, landing, scoring, and the only spot under reduced motion
+V.RINGSIDE = FinalBoss.logic.PERCH_RINGSIDE -- home: spawn, landing, scoring, and the only spot under reduced motion
 V.HP_BOX_H = 1.05 -- estimated HP box height incl. its 0.05 gap, until the real box exists
 V.HUD_EASE = 0.3
 V.LAUGH_DURATION = FinalBoss.logic.laugh_duration() -- the director schedules the line after it
@@ -200,13 +200,9 @@ function V.spawn(blind, opts)
   local x, y = perch_xy(V.RINGSIDE)
   local start_y = opts.fall and (y - G.ROOM.T.h - V.SIZE) or y
   local sprite_pos = copy_table(proto.pos or {x = 0, y = 0})
-  local sprite
-  if SMODS and SMODS.create_sprite then -- exact art, frames and sprite class for modded bosses
-    sprite = SMODS.create_sprite(x, start_y, V.SIZE, V.SIZE, proto.atlas or 'blind_chips', sprite_pos, proto.sprite_args)
-  else
-    sprite = AnimatedSprite(x, start_y, V.SIZE, V.SIZE,
-      (proto.atlas and G.ANIMATION_ATLAS[proto.atlas]) or G.ANIMATION_ATLAS['blind_chips'], sprite_pos)
-  end
+  -- SMODS.create_sprite: exact art, frames and sprite class, also for modded bosses.
+  local sprite = SMODS.create_sprite(x, start_y, V.SIZE, V.SIZE, proto.atlas or 'blind_chips', sprite_pos,
+    proto.sprite_args)
   V.obj = Avatar(x, start_y, V.SIZE, V.SIZE, sprite, {c[1], c[2], c[3], 1})
   V.obj:hard_set_VT()
   -- The boss "steps out": dissolve its HUD chip while the avatar is on the table. The blind's own
