@@ -27,6 +27,7 @@ Journal of every step of the 2.0 overhaul. Newest entries at the bottom.
 - 2026-10-01 Playtest A + B passed (SirMaiquis). Score read point confirmed in game: "dev: at after chips=0 delta=8910" on the first hand → SCORE_INCLUDES_HAND = false is correct.
 - 2026-10-01 Load check after Tasks 9–13: FinalBoss 2.0.0 loaded; Shader, ScreenShader, Sound, JimboQuip, Keybind injected; no errors.
 - 2026-10-01 Task 11b: screen effects made stronger and longer after playtest feedback (values in commit).
+- 2026-10-01 Task 14 skipped by SirMaiquis (ships with the 2 existing tracks, no custom icon). Task 14b: applied all reviewer-flagged EN/ES line fixes.
 
 ## Smoke checklist (run before release)
 - [x] Config tab: dialogue/music/FX toggles, intro speed and min ante cycles, dev keys toggle

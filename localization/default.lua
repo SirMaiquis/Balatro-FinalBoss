@@ -69,7 +69,7 @@ return {
             fb_bl_ox_name_1 = {"But I'm The Ox"},
             fb_bl_ox_intro_1 = {"I'm taking", "all your money"},
             fb_bl_ox_intro_2 = {"Your favorite hand", "costs you it all."},
-            fb_bl_ox_big_hand_1 = {"Broke, and still", "winning?!"},
+            fb_bl_ox_big_hand_1 = {"Whoa! That hand", "was no bull!"},
             fb_bl_ox_close_1 = {"Hold your horses!", "...Mine too."},
             fb_bl_ox_last_hand_1 = {"Last hand. Spend", "it or lose it."},
             fb_bl_ox_disabled_1 = {"My horns!", "They went dull!"},
@@ -161,7 +161,7 @@ return {
             fb_bl_goad_close_1 = {"Don't you dare", "dig my grave!"},
             fb_bl_goad_last_hand_1 = {"Dig deep. It's", "your last hand."},
             fb_bl_goad_disabled_1 = {"I can't goad", "anyone now!"},
-            fb_bl_goad_defeat_1 = {"Goad-dang it,", "you won."},
+            fb_bl_goad_defeat_1 = {"Call a spade a spade:", "I got outplayed."},
             fb_bl_goad_gloat_1 = {"The Goad:", "\"Dig your own grave!\""},
 
             -- The Water: start with 0 discards
@@ -171,7 +171,7 @@ return {
             fb_bl_water_big_hand_1 = {"No discards and", "still won?!"},
             fb_bl_water_close_1 = {"I'm drowning!", "Throw me a line!"},
             fb_bl_water_last_hand_1 = {"Last hand. Sink", "or swim."},
-            fb_bl_water_disabled_1 = {"Discards are", "flowing again!"},
+            fb_bl_water_disabled_1 = {"My drought?!", "It's over?!"},
             fb_bl_water_defeat_1 = {"I'm all dried up..."},
             fb_bl_water_gloat_1 = {"The Water:", "\"You're all washed up!\""},
 
@@ -236,7 +236,7 @@ return {
             fb_bl_serpent_intro_2 = {"Play or discard,", "you draw only 3."},
             fb_bl_serpent_big_hand_1 = {"Three cards. And", "you still struck!"},
             fb_bl_serpent_close_1 = {"Don't snake out", "on me now!"},
-            fb_bl_serpent_last_hand_1 = {"Last strike.", "Three cards."},
+            fb_bl_serpent_last_hand_1 = {"Last hand. Strike", "now or never."},
             fb_bl_serpent_disabled_1 = {"My fangs! Hiss...", "No venom left!"},
             fb_bl_serpent_defeat_1 = {"Shed my skin...", "and my pride."},
             fb_bl_serpent_gloat_1 = {"The Serpent:", "\"Sss-ee you later!\""},
@@ -250,7 +250,7 @@ return {
             fb_bl_pillar_last_hand_1 = {"Last hand. Old", "cards are useless."},
             fb_bl_pillar_disabled_1 = {"My memory!", "It's... fading."},
             fb_bl_pillar_defeat_1 = {"A pillar of the", "community, fallen."},
-            fb_bl_pillar_gloat_1 = {"The Pillar:", "\"Still standing!\""},
+            fb_bl_pillar_gloat_1 = {"The Pillar:", "\"Past hands? Rubble!\""},
 
             -- The Needle: play only 1 hand
             fb_bl_needle_name_1 = {"But I'm The Needle"},
@@ -279,7 +279,7 @@ return {
             fb_bl_tooth_intro_1 = {"I'm into", "politics"},
             fb_bl_tooth_intro_2 = {"Every card you play", "costs you $1."},
             fb_bl_tooth_big_hand_1 = {"You paid and", "still won?!"},
-            fb_bl_tooth_close_1 = {"Don't make me", "pay the tooth fairy!"},
+            fb_bl_tooth_close_1 = {"Stop! You're", "pulling my teeth!"},
             fb_bl_tooth_last_hand_1 = {"Last hand,", "last dollars."},
             fb_bl_tooth_disabled_1 = {"My bite!", "It's gone!"},
             fb_bl_tooth_defeat_1 = {"Tooth and nail,", "I lost."},
@@ -288,7 +288,7 @@ return {
             -- The Flint: base Chips and Mult are halved
             fb_bl_flint_name_1 = {"But I'm The Flint"},
             fb_bl_flint_intro_1 = {"You must", "pay taxes"},
-            fb_bl_flint_intro_2 = {"Chips and Mult", "are halved."},
+            fb_bl_flint_intro_2 = {"Base Chips & Mult", "are halved."},
             fb_bl_flint_big_hand_1 = {"Half the power,", "still a hit?!"},
             fb_bl_flint_close_1 = {"You're sparking", "my downfall!"},
             fb_bl_flint_last_hand_1 = {"Last hand. Half", "the spark."},
@@ -359,7 +359,7 @@ return {
             fb_bl_final_bell_close_1 = {"The bell tolls...", "for me?!"},
             fb_bl_final_bell_last_hand_1 = {"Last hand. One", "card is forced."},
             fb_bl_final_bell_disabled_1 = {"My bell is silent!", "Cheater!"},
-            fb_bl_final_bell_defeat_1 = {"The bell tolls", "for me."},
+            fb_bl_final_bell_defeat_1 = {"Cerulean silence...", "I'm done ringing."},
             fb_bl_final_bell_gloat_1 = {"Cerulean Bell:", "\"Ding dong, you lost!\""},
         }
     }
