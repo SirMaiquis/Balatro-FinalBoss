@@ -164,11 +164,20 @@ end
 
 --- Remove every stage element and restore time, background and vignette (run teardown or a
 --- guard failure). Each step is isolated so one failure cannot skip the others.
+local resetting = false -- re-entrancy guard: a failing step must not recurse via util.guard
+
 function Dir.reset_stage()
-  for _, step in ipairs({FinalBoss.cinematic.reset, FinalBoss.hpbar.remove, FinalBoss.avatar.remove,
-      FinalBoss.arena.reset, FinalBoss.fx.reset}) do
-    pcall(step)
-  end
+  if resetting then return end
+  resetting = true
+  local ok, err = pcall(function()
+    for _, step in ipairs({FinalBoss.cinematic.reset, FinalBoss.hpbar.remove, FinalBoss.avatar.remove,
+        FinalBoss.arena.reset, FinalBoss.fx.reset}) do
+      local sok, serr = pcall(step)
+      if not sok then FinalBoss.util.log('error', 'reset_stage step failed: ' .. tostring(serr)) end
+    end
+  end)
+  resetting = false
+  if not ok then FinalBoss.util.log('error', 'reset_stage failed: ' .. tostring(err)) end
 end
 
 return Dir
