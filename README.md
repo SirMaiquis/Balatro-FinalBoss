@@ -1,6 +1,6 @@
 # Final Boss
 
-Bosses talk back. Every boss blind gets a short line of dialogue when it starts, reacts to your big hands, close calls and last hand, and gloats if you lose to it. Showdown bosses go further: a full intro, their own music, screen effects and a shattering defeat. You also decide when showdowns appear, so you can have a final boss every 8 antes like vanilla or much sooner.
+Bosses talk back. Every boss blind gets a short line of dialogue when it starts, reacts to your big hands, close calls and last hand, and gloats if you lose to it. Showdown bosses go further: a roaming boss avatar with an HP bar, a cinematic intro, their own music, screen effects and a slow-motion explosive finale. You also decide when showdowns appear, so you can have a final boss every 8 antes like vanilla or much sooner.
 
 ## Requirements
 
@@ -10,13 +10,9 @@ Bosses talk back. Every boss blind gets a short line of dialogue when it starts,
 
 ## Install
 
-1. Download `FinalBoss-v2.0.0.zip` from the [releases page](https://github.com/SirMaiquis/Balatro-FinalBoss/releases).
+1. Download `FinalBoss-v1.0.0.zip` from the [releases page](https://github.com/SirMaiquis/Balatro-FinalBoss/releases).
 2. Extract it into `%AppData%\Balatro\Mods\` so the files end up in `%AppData%\Balatro\Mods\FinalBoss\`.
 3. Start Balatro. The mod appears in the Mods menu as "Final Boss" with its own config tabs.
-
-### Upgrading from v1
-
-Delete the old `FinalBoss` folder first, then install v2. If you download the source from GitHub, make sure the extracted folder is not a second copy (for example `Balatro-FinalBoss-main`) sitting next to an old one in `Mods\`.
 
 ## Features
 
@@ -45,6 +41,18 @@ If several reactions would fire on the same hand, only one plays (last hand, the
 
 Regular bosses are light tier from the ante set in `min_ante` onward. Showdown bosses are always full tier. Mods can override the tier per boss (see below). An explicit `'light'` or `'full'` tier ignores `min_ante` and whether the boss is a showdown.
 
+### Showdown stage
+
+Showdowns (full tier) get a stage of their own. None of it appears for regular bosses.
+
+- **Roaming boss avatar.** A large chip with the boss's own art sits on the table. It bobs, glides between a few spots that stay clear of your hand and buttons, and stops while it talks. Its speech bubbles are drawn above your cards. Each hand makes it flash and flinch, a tiny hand makes it laugh, and it cracks and starts to tremble when it falls to 50% and 25% of its HP. Click it to skip an intro line.
+- **HP bar and damage numbers.** Under the avatar: the boss name, a bar in the boss's colour and `remaining / max`. Each hand drops the bar at once and leaves a white trail that drains, and a damage number pops up above the avatar (big hands bigger, tiny hands small and grey). The bar flashes at 50% and 25%.
+- **Cinematic intro.** Black bars slide in, a "SHOWDOWN" title card with the boss name slams in, and the avatar falls onto the table before it speaks. Press any key or click to jump straight to the avatar and its dialogue; a second press skips the dialogue as before. The title card draws above your cards. Continue never replays the intro.
+- **Slow-motion explosive finale.** The winning hand plays in slow motion for under a second while the avatar cracks and shows its defeat line, then it explodes into shards with a white flash. Losing to a showdown makes the avatar laugh and fade before the gloat.
+- **Living arena.** The background swirl takes the boss's colours, pulses on each hand, and darkens and spins faster as the boss gets wounded (below 50%, then below 25%). In the final stretch (below 25%) the music pitches up slightly. Everything returns to normal when the blind ends.
+
+Turn off the avatar side with `cinematic` (avatar, HP bar, damage numbers, intro and finale). The arena follows `fx` and the pitch follows `music`. If you quit or Continue mid-showdown the stage is rebuilt from the saved score, with no fall-in.
+
 ### Showdown schedule
 
 By default, showdowns appear exactly like vanilla (ante 8, 16, ...). Turn on the schedule in the Showdowns tab and pick a first ante and an interval to get extra showdowns, for example start 4 and every 4 gives antes 4, 8, 12 and so on. The win-ante boss is always a showdown. The tab shows a live preview of the next showdown antes and warns ("Hard!") when the first showdown is before ante 4. Changes apply from the next ante's boss roll.
@@ -57,6 +65,7 @@ Set in the Mods menu (Final Boss, Config and Showdowns tabs). Steamodded saves y
 |---|---|---|
 | `dialogue` | Boss and Jimbo lines (intros, reactions, defeat, gloat) | `true` |
 | `music` | FinalBoss showdown tracks during full-tier encounters | `true` |
+| `cinematic` | Showdown cinematics: avatar, HP bar, damage numbers, intro and finale. The arena follows `fx` and the music pitch follows `music` | `true` |
 | `fx` | Screen effects: vignette, shake, flash, shatter. They only run in full-tier encounters. Respects Balatro's reduced motion and screenshake settings. Under reduced motion the shake and the vignette animation are off (the vignette stays at a fixed strength), while the background flash and the defeat burst still run | `true` |
 | `intro_speed` | How long each intro line stays up: 1 slow (6 s), 2 normal (4 s), 3 fast (2.5 s) | `2` |
 | `min_ante` | First ante at which regular bosses get light-tier dialogue (1 to 8) | `1` |
@@ -65,7 +74,7 @@ Set in the Mods menu (Final Boss, Config and Showdowns tabs). Steamodded saves y
 | `showdown.every` | Interval between scheduled showdowns (1 to 8) | `8` |
 | `dev_mode` | Developer keys while in a run: F5 cycle the forced boss through the 5 vanilla showdowns (the 6th press clears it; press it during a round or in the shop, before the blind-select screen appears), F6 fire the next moment (cycles big hand, close, last hand, disabled, defeat), F7 dump state to the Lovely log | `false` |
 
-The dialogue, music and FX toggles are independent. Any combination works, for example music and effects with no dialogue.
+The dialogue, music, FX and cinematic toggles are independent. Any combination works, for example music and effects with no dialogue.
 
 ## For mod authors
 
@@ -139,7 +148,12 @@ Writing tips: each quip is 1 or 2 lines, and each line should stay under about 2
 ## Compatibility
 
 - Big-number scores (Talisman) are converted to plain numbers before FinalBoss compares them, but this path has not been playtested.
+- FinalBoss ships one Lovely patch (`lovely/timescale.toml`) for the finale's slow motion; if a game update moves its target line, the finale simply runs at normal speed.
 - Mods that replace (rather than wrap) `SMODS.is_showdown_ante` or `end_round` override FinalBoss's behaviour for the showdown schedule and the round-end handling.
+
+### Reduced motion
+
+With Balatro's reduced motion setting on, the stage keeps colours, flashes, the dissolve and the explosion, but drops the movement: no roaming, bob, knockback, slide, fall, slow motion or arena spin. The avatar and bars just appear, and the shake is smaller.
 
 ## Languages
 
@@ -148,5 +162,5 @@ English, German (`de`), Spanish Latin America (`es_419`), Spanish Spain (`es_ES`
 ## Credits
 
 - Author: SirMaiquis
-- Showdown music: the tracks from FinalBoss v1
+- Showdown music: the tracks from the original FinalBoss
 - Built on [Steamodded](https://github.com/Steamodded/smods) and [Lovely](https://github.com/ethangreen-dev/lovely-injector)
