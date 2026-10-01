@@ -20,6 +20,7 @@ Journal of every step of the 2.0 overhaul. Newest entries at the bottom.
 - 2026-09-30 Task 9: showdown schedule hook added (src/hooks.lua); wraps `SMODS.is_showdown_ante` to apply `FinalBoss.logic.is_extra_showdown` schedule when enabled. Unit tests 52 passed. In-game load and gameplay verification pending playtest.
 - 2026-09-30 Task 10: music module (src/music.lua); showdown_1.ogg and showdown_2.ogg assets renamed from music6/7. Bid-only during full-tier encounters; phase recording for M3. Unit tests 52 passed. In-game load check and gameplay verification pending playtest.
 - 2026-09-30 Task 11: fx module + vignette shader (assets/shaders/vignette.fs, src/fx.lua: SMODS.Shader + SMODS.ScreenShader vignette, shake, flash, shatter, phase_shift). Unit tests 52 passed. Load check (shader compile) and gameplay pending. Source-checked against smods/vanilla; two adaptations: vignette eases are cancelled by stop() via a gen check in the ease func, and the flash's background restore is unconditional (not cancelled by stop()) and restores to neutral after a defeat.
+- 2026-09-30 Task 11 fix round 1: `FinalBoss.fx.reset()` wired to a `Game:delete_run` wrapper in hooks.lua (vignette no longer survives leaving a run), vignette ScreenShader `order = 1`, flash-restore failures logged. Tests 52 passed. Load check and gameplay still pending.
 
 ## Smoke checklist (run before release)
 - [ ] Config tab: dialogue/music/FX toggles, intro speed and min ante cycles, dev keys toggle

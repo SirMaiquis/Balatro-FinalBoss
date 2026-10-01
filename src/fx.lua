@@ -10,6 +10,7 @@ F.gen = 0      -- bumped by stop() to cancel pending eases
 SMODS.Shader{key = 'vignette', path = 'vignette.fs'}
 SMODS.ScreenShader{
   key = 'vignette_screen',
+  order = 1, -- after vanilla's CRT pass (order 0)
   shader = FinalBoss.mod.prefix .. '_vignette',
   should_apply = function(self) return FinalBoss.config.fx and F.vignette.intensity > 0.001 end,
   send_vars = function(self) return {fb_intensity = F.vignette.intensity, fb_tint = {array = {F.tint}}} end,
@@ -64,7 +65,11 @@ function EFFECTS.flash(blind, restore_as)
   local c = boss_colour(blind)
   ease_background_colour{new_colour = lighten(c, 0.2), special_colour = darken(c, 0.4), contrast = 2}
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.5, timer = 'REAL', blocking = false, blockable = false,
-    func = function() pcall(ease_background_colour_blind, G.STATE, restore_as); return true end}))
+    func = function()
+      local ok, err = pcall(ease_background_colour_blind, G.STATE, restore_as)
+      if not ok then FinalBoss.util.log('warn', 'flash restore failed: ' .. tostring(err)) end
+      return true
+    end}))
 end
 
 function EFFECTS.shatter(blind)
@@ -98,6 +103,13 @@ end
 function F.stop()
   F.gen = F.gen + 1
   if reduced() then F.vignette.intensity = 0 else ease_vignette(0, 1.0) end
+end
+
+--- Leaving a run (menu, restart, new run): vanilla clears the event queue, so reset the state here.
+function F.reset()
+  F.gen = F.gen + 1
+  F.vignette.intensity = 0
+  F.tint = {1, 1, 1}
 end
 
 --- Continuing a saved run mid-showdown: put the vignette back at its hold level.

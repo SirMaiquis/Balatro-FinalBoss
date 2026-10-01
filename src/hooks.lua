@@ -62,4 +62,13 @@ SMODS.is_showdown_ante = function(...)
   return extra or false
 end
 
+-- Game:delete_run (menu, restart, new run) clears the event queue, so pending fx eases never finish:
+-- reset the vignette state here or it would draw on the menu and in the next run.
+local orig_delete_run = Game.delete_run
+function Game:delete_run(...)
+  local ret = orig_delete_run(self, ...)
+  U.guard('delete_run', FinalBoss.fx.reset)
+  return ret
+end
+
 return H
