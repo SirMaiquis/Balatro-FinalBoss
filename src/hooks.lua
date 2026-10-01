@@ -5,6 +5,8 @@ local H = {}
 
 local function director() return FinalBoss.director end
 
+local showdown_error_logged = false
+
 FinalBoss.mod.calculate = function(self, context)
   if not G.GAME or not director().enabled() then return end
   if context.setting_blind then
@@ -50,7 +52,14 @@ SMODS.is_showdown_ante = function(...)
   local sd = FinalBoss.config.showdown
   if vanilla or not (sd and sd.enabled) or not G.GAME then return vanilla end
   local ok, extra = pcall(FinalBoss.logic.is_extra_showdown, G.GAME.round_resets.ante, sd.start_ante, sd.every)
-  return ok and extra or false
+  if not ok then
+    if not showdown_error_logged then
+      U.log('error', 'showdown schedule failed: ' .. tostring(extra))
+      showdown_error_logged = true
+    end
+    return vanilla
+  end
+  return extra or false
 end
 
 return H
