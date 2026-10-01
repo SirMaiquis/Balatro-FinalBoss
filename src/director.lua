@@ -57,7 +57,11 @@ function Dir.on_blind_set(blind)
     st.encounter.track = FinalBoss.music.pick_track(entry)
     FinalBoss.fx.play(entry.fx.intro, blind)
     if is_showdown then FinalBoss.arena.start(blind, 0) end
-    if st.encounter.cinematic then FinalBoss.avatar.spawn(blind, {fall = false}) end
+    if st.encounter.cinematic then
+      FinalBoss.avatar.spawn(blind, {fall = false})
+      local total, required = fight_numbers(blind)
+      FinalBoss.hpbar.create(FinalBoss.avatar.anchor(), blind, total, required)
+    end
   end
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = Dir.INTRO_DELAY, timer = 'REAL',
     blocking = false, blockable = false,
@@ -94,6 +98,7 @@ function Dir.on_blind_loaded(blind)
   if enc.cinematic then
     FinalBoss.avatar.spawn(blind, {fall = false})
     FinalBoss.avatar.set_wound(stage)
+    FinalBoss.hpbar.create(FinalBoss.avatar.anchor(), blind, total, required)
   end
 end
 
@@ -106,7 +111,7 @@ function Dir.on_round_end()
     enc.ended = true
     FinalBoss.fx.stop()
     FinalBoss.arena.stop(true)
-    if enc.cinematic then FinalBoss.avatar.fade_out(0.8) end
+    if enc.cinematic then FinalBoss.hpbar.remove(); FinalBoss.avatar.fade_out(0.8) end
   else
     st.lost_to = nil
   end
@@ -171,6 +176,8 @@ function Dir.stage_hit(enc, blind, delta, total, required, moment)
   FinalBoss.arena.on_hit(stage)
   if not enc.cinematic then return end
   local size = FinalBoss.logic.hit_size(delta, required)
+  FinalBoss.hpbar.update(total, required)
+  FinalBoss.hpbar.damage(delta, size)
   FinalBoss.avatar.set_wound(stage)
   if moment == 'defeat' then return end
   FinalBoss.avatar.hit(size)
@@ -186,7 +193,7 @@ function Dir.on_blind_defeated()
   if not enc then return end
   enc.ended = true
   if enc.tier == 'full' then
-    if enc.cinematic then FinalBoss.avatar.fade_out(0.6) end
+    if enc.cinematic then FinalBoss.hpbar.remove(); FinalBoss.avatar.fade_out(0.6) end
     FinalBoss.fx.play(FinalBoss.registry.get(enc.key).fx.defeat, blind)
     FinalBoss.fx.stop()
     FinalBoss.arena.stop()
