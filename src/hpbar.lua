@@ -18,7 +18,7 @@ function Bar:init(W, Hh)
   self.children = {}
   self.states.collide.can = false
   self.states.hover.can = false
-  table.insert(G.I.MOVEABLE, self) -- Moveable.init only registers plain Moveables
+  -- Not registered in G.I.MOVEABLE: the text UIBox hosts the bar as an object node and draws it.
 end
 
 function Bar:draw()
@@ -46,11 +46,13 @@ local function text_ui(avatar, name)
     definition = {n = G.UIT.ROOT, config = {align = 'cm', colour = G.C.CLEAR, padding = 0.02}, nodes = {
       {n = G.UIT.R, config = {align = 'cm'}, nodes = {
         {n = G.UIT.T, config = {text = name, scale = 0.32, colour = G.C.WHITE, shadow = true}}}},
-      {n = G.UIT.R, config = {align = 'cm', minh = H.H + 0.14}, nodes = {}},
+      {n = G.UIT.R, config = {align = 'cm', padding = 0.05}, nodes = {
+        {n = G.UIT.O, config = {object = H.bar}}}},
       {n = G.UIT.R, config = {align = 'cm'}, nodes = {
         {n = G.UIT.T, config = {ref_table = H.view, ref_value = 'text', scale = 0.28, colour = G.C.WHITE, shadow = true}}}},
     }},
-    config = {major = avatar, align = 'bm', offset = {x = 0, y = 0.05}, bond = 'Weak'},
+    config = {major = avatar, align = 'bm', offset = {x = 0, y = 0.05}, bond = 'Weak', r_bond = 'Weak',
+      can_collide = false},
   }
 end
 
@@ -61,10 +63,10 @@ function H.create(avatar, blind, total, required)
   if not avatar or not blind then return end
   local c = (blind.config.blind and blind.config.blind.boss_colour) or G.C.RED
   H.colour = {c[1], c[2], c[3], 1}
+  H.update(total, required, true) -- first: the first layout must see the real text
+  H.bar = Bar(H.W, H.H) -- before the UI: the object node reads its size
   H.ui = text_ui(avatar, blind.loc_name or (blind.config.blind and blind.config.blind.name) or '')
-  H.bar = Bar(H.W, H.H)
-  H.bar:set_alignment{major = avatar, type = 'bm', offset = {x = 0, y = 0.45}, bond = 'Weak'}
-  H.update(total, required, true)
+  H.ui.attention_text = true -- drawn in vanilla's late pass, above cards (cf. boss_warning_text)
 end
 
 function H.update(total, required, instant)
@@ -75,7 +77,13 @@ function H.update(total, required, instant)
   if instant then H.ghost = frac end
   H.ghost_until = now() + H.GHOST_HOLD
   local hp = math.max(0, (required or 0) - (total or 0))
-  H.view.text = number_format(hp) .. ' / ' .. number_format(required or 0)
+  local text = number_format(hp) .. ' / ' .. number_format(required or 0)
+  local relayout = H.ui and #text ~= #H.view.text
+  H.view.text = text
+  if relayout then
+    H.ui:recalculate()
+    H.ui.alignment.prev_type = '' -- forces align_to_major to re-centre on the next move
+  end
 end
 
 function H.damage(delta, size)
@@ -102,9 +110,11 @@ function H.tick(dt)
 end
 
 function H.remove()
+  -- UIElement:remove removes the O node's config.object, so removing the box removes the bar once.
   if H.ui then H.ui:remove(); H.ui = nil end
-  if H.bar then H.bar:remove(); H.bar = nil end
+  H.bar = nil
   H.frac, H.ghost, H.stage = 1, 1, 0
+  H.view.text, H.flash_until, H.ghost_until = '', 0, 0
 end
 
 return H
