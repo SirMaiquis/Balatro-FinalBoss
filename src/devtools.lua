@@ -1,6 +1,7 @@
 --- Developer keys, active only when config.dev_mode is on and a run is in progress.
 ---   F5: cycle the forced boss through the vanilla showdowns (6th press clears it). Press it during a
 ---       round or in the shop, before the blind-select screen appears (that screen reads its own ref_table).
+---   F6: fire the next moment (big_hand, close, last_hand, disabled, defeat)
 ---   F7: dump FinalBoss state to the Lovely log
 local DT = {}
 DT.SHOWDOWNS = {'bl_final_acorn', 'bl_final_leaf', 'bl_final_vessel', 'bl_final_heart', 'bl_final_bell'}
@@ -29,6 +30,18 @@ SMODS.Keybind{key_pressed = 'f7', action = function()
   FinalBoss.util.log('info', ('dev: chips=%s blind.chips=%s last_hand_score=%s hands_left=%s'):format(
     tostring(G.GAME.chips), tostring(blind and blind.chips), tostring(SMODS.last_hand_score),
     tostring(G.GAME.current_round and G.GAME.current_round.hands_left)))
+end}
+
+DT.MOMENTS = {'big_hand', 'close', 'last_hand', 'disabled', 'defeat'}
+DT.moment_idx = 0
+
+--- F6: fire the next moment (forced, ignores once-per-blind and cooldown).
+SMODS.Keybind{key_pressed = 'f6', action = function()
+  if not DT.on() then return end
+  DT.moment_idx = DT.moment_idx % #DT.MOMENTS + 1
+  local moment = DT.MOMENTS[DT.moment_idx]
+  local fired = FinalBoss.director.fire(moment, {force = true})
+  FinalBoss.util.log('info', ('dev: fire %s -> %s'):format(moment, tostring(fired)))
 end}
 
 return DT

@@ -26,6 +26,7 @@ return {
             fb_closer_1 = {"You will not be", "able to beat me."},
             fb_closer_2 = {"This is where", "your run ends."},
             fb_closer_3 = {"Show me what", "you've got."},
+            fb_gloat = {"That boss was", "too much..."},
 
             -- Generic fallbacks for bosses without their own lines (#1# = boss name)
             fb_generic_name_1 = {"I am #1#!"},

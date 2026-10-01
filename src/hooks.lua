@@ -9,6 +9,12 @@ FinalBoss.mod.calculate = function(self, context)
   if not G.GAME or not director().enabled() then return end
   if context.setting_blind then
     U.guard('setting_blind', director().on_blind_set, G.GAME.blind)
+  elseif context.after or context.debuffed_hand then
+    U.guard('hand_after', director().on_hand_after)
+  elseif context.blind_disabled then
+    U.guard('blind_disabled', director().on_blind_disabled)
+  elseif context.blind_defeated then
+    U.guard('blind_defeated', director().on_blind_defeated)
   end
 end
 

@@ -86,4 +86,63 @@ function Dir.on_round_end()
     func = function() FinalBoss.util.guard('hide_bubble', FinalBoss.dialogue.hide, blind); return true end}))
 end
 
+-- Whether G.GAME.chips already includes the just-scored hand at context.after.
+-- Spec §5 expects false; confirmed in game in Task 8 Step 6.
+Dir.SCORE_INCLUDES_HAND = false
+
+function Dir.fire(moment, opts)
+  opts = opts or {}
+  local enc, blind = current()
+  if not enc then return false end
+  if not opts.force and not FinalBoss.logic.can_fire(moment, enc.tier, enc.fired, enc.reactions) then return false end
+  enc.fired[moment] = true
+  if FinalBoss.logic.REACTIONS[moment] then enc.reactions = enc.reactions + 1 end
+  if enc.tier == 'full' and (moment == 'big_hand' or moment == 'close') then
+    FinalBoss.fx.play('shake', blind)
+    FinalBoss.fx.play('flash', blind)
+  end
+  if not FinalBoss.config.dialogue then return true end
+  local key = FinalBoss.registry.resolve(enc.key, moment, enc.last_variant)
+  if not key then return true end
+  local entry = FinalBoss.registry.get(enc.key)
+  FinalBoss.dialogue.say(blind, key, Dir.vars(blind), entry.voice.pitch,
+    {force = opts.force or moment == 'defeat'})
+  return true
+end
+
+function Dir.on_hand_after()
+  local enc, blind, st = current()
+  if not enc or enc.ended then return end
+  local hands_played = G.GAME.current_round.hands_played
+  if enc.last_hand_seen == hands_played then return end -- context may arrive twice per hand
+  if FinalBoss.config.dev_mode then
+    FinalBoss.util.log('info', ('dev: at after chips=%s delta=%s'):format(
+      tostring(G.GAME.chips), tostring(SMODS.last_hand_score)))
+  end
+  enc.last_hand_seen = hands_played
+  local delta = tonumber(SMODS.last_hand_score) or 0
+  local total = Dir.SCORE_INCLUDES_HAND and G.GAME.chips or (G.GAME.chips + delta)
+  local required = blind.chips
+  local hands_left = G.GAME.current_round.hands_left
+  -- Set before the game-over screen picks its quip; cleared in on_round_end if the run continues.
+  if hands_left == 0 and total < required then st.lost_to = enc.key end
+  local moment = FinalBoss.logic.detect_moments{delta = delta, total = total, required = required,
+    hands_left = hands_left, fired = enc.fired, tier = enc.tier, reactions = enc.reactions}
+  if moment then Dir.fire(moment) end
+end
+
+function Dir.on_blind_disabled()
+  Dir.fire('disabled')
+end
+
+function Dir.on_blind_defeated()
+  local enc, blind = current()
+  if not enc then return end
+  enc.ended = true
+  if enc.tier == 'full' then
+    FinalBoss.fx.play(FinalBoss.registry.get(enc.key).fx.defeat, blind)
+    FinalBoss.fx.stop()
+  end
+end
+
 return Dir
