@@ -5,6 +5,8 @@ return {
             fb_cfg_dialogue = "Dialog boss",
             fb_cfg_music = "Musik duel final",
             fb_cfg_fx = "Efek layar",
+            fb_cfg_cinematic = "Sinematik duel final",
+            fb_showdown_title = "DUEL FINAL",
             fb_cfg_intro_speed = "Kecepatan intro",
             fb_speed_slow = "Lambat",
             fb_speed_normal = "Normal",

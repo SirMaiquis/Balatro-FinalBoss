@@ -5,6 +5,8 @@ return {
             fb_cfg_dialogue = "Dialoghi dei boss",
             fb_cfg_music = "Musica degli scontri",
             fb_cfg_fx = "Effetti sullo schermo",
+            fb_cfg_cinematic = "Cinematiche degli scontri",
+            fb_showdown_title = "SCONTRO FINALE",
             fb_cfg_intro_speed = "Velocità intro",
             fb_speed_slow = "Lenta",
             fb_speed_normal = "Normale",

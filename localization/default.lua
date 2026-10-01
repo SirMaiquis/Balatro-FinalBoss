@@ -5,6 +5,8 @@ return {
             fb_cfg_dialogue = "Boss dialogue",
             fb_cfg_music = "Showdown music",
             fb_cfg_fx = "Screen effects",
+            fb_cfg_cinematic = "Showdown cinematics",
+            fb_showdown_title = "SHOWDOWN",
             fb_cfg_intro_speed = "Intro speed",
             fb_speed_slow = "Slow",
             fb_speed_normal = "Normal",

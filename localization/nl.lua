@@ -5,6 +5,8 @@ return {
             fb_cfg_dialogue = "Baasdialogen",
             fb_cfg_music = "Showdown-muziek",
             fb_cfg_fx = "Schermeffecten",
+            fb_cfg_cinematic = "Showdown-filmpjes",
+            fb_showdown_title = "SHOWDOWN",
             fb_cfg_intro_speed = "Introsnelheid",
             fb_speed_slow = "Langzaam",
             fb_speed_normal = "Normaal",

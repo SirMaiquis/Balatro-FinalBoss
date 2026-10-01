@@ -50,6 +50,7 @@ function UI.encounters_tab()
     toggle('fb_cfg_dialogue', cfg, 'dialogue'),
     toggle('fb_cfg_music', cfg, 'music'),
     toggle('fb_cfg_fx', cfg, 'fx'),
+    toggle('fb_cfg_cinematic', cfg, 'cinematic'),
     cycle('fb_cfg_intro_speed', cfg, 'intro_speed', {1, 2, 3},
       {localize('fb_speed_slow'), localize('fb_speed_normal'), localize('fb_speed_fast')}),
     cycle('fb_cfg_min_ante', cfg, 'min_ante', ANTES),

@@ -1,4 +1,4 @@
---- FinalBoss 2.0 entry point: builds the FinalBoss namespace and loads src/ modules in order.
+--- FinalBoss 1.0 entry point: builds the FinalBoss namespace and loads src/ modules in order.
 FinalBoss = {}
 FinalBoss.mod = SMODS.current_mod
 FinalBoss.config = SMODS.current_mod.config
@@ -16,7 +16,7 @@ local MODULES = {'util', 'logic', 'registry', 'music', 'fx', 'ui', 'dialogue', '
 for _, name in ipairs(MODULES) do
   FinalBoss[name] = load_file('src/' .. name .. '.lua')
   if name == 'util' then
-    -- Saved configs from v1.0.0 or older 2.x builds may miss keys: fill them from defaults.
+    -- Saved configs from older builds may miss keys: fill them from defaults.
     FinalBoss.util.fill_defaults(FinalBoss.config, load_file('config.lua'))
   end
 end

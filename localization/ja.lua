@@ -5,6 +5,8 @@ return {
             fb_cfg_dialogue = "ボスのセリフ",
             fb_cfg_music = "決戦BGM",
             fb_cfg_fx = "画面エフェクト",
+            fb_cfg_cinematic = "決戦の演出",
+            fb_showdown_title = "決戦",
             fb_cfg_intro_speed = "イントロの速さ",
             fb_speed_slow = "遅い",
             fb_speed_normal = "普通",
