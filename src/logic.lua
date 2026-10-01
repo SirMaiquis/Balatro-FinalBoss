@@ -109,4 +109,40 @@ function logic.resolve_prefix(blind_key, moment, count_of)
   return nil
 end
 
+-- Showdown stage maths (spec 2026-10-01 §6, §8).
+logic.WEAK_HIT_RATIO = 0.05 -- a hand under 5% of the boss's max HP makes the avatar laugh
+
+--- Remaining boss health as a fraction of the requirement, clamped to [0, 1].
+function logic.hp_fraction(total, required)
+  if not required or required <= 0 then return 0 end
+  local f = 1 - (total or 0) / required
+  if f < 0 then return 0 end
+  if f > 1 then return 1 end
+  return f
+end
+
+--- 0 = healthy, 1 = below 50%, 2 = below 25% (avatar, HP bar and arena share these stages).
+function logic.wound_stage(fraction)
+  if fraction < 0.25 then return 2 end
+  if fraction < 0.5 then return 1 end
+  return 0
+end
+
+function logic.hit_size(delta, required)
+  if not required or required <= 0 then return 'normal' end
+  if delta >= logic.BIG_HAND_RATIO * required then return 'big' end
+  if delta < logic.WEAK_HIT_RATIO * required then return 'weak' end
+  return 'normal'
+end
+
+local ARENA = {
+  [0] = {black_mix = 0.45, contrast = 3.0, spin_mult = 1.0, pitch = 1.0},
+  [1] = {black_mix = 0.60, contrast = 3.8, spin_mult = 1.5, pitch = 1.0},
+  [2] = {black_mix = 0.75, contrast = 4.5, spin_mult = 2.0, pitch = 1.06},
+}
+
+function logic.arena_params(stage)
+  return ARENA[stage] or ARENA[0]
+end
+
 return logic
