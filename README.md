@@ -169,3 +169,7 @@ English, German (`de`), Spanish Latin America (`es_419`), Spanish Spain (`es_ES`
 - Author: SirMaiquis
 - Showdown music: the tracks from the original FinalBoss
 - Built on [Steamodded](https://github.com/Steamodded/smods) and [Lovely](https://github.com/ethangreen-dev/lovely-injector)
+
+## License
+
+FinalBoss is released under the [MIT License](LICENSE). See the [changelog](CHANGELOG.md) for what changed in each release.
