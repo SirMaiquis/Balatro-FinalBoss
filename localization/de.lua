@@ -112,7 +112,7 @@ return {
             -- The Arm: decrease level of played poker hand
             fb_bl_arm_name_1 = {"Aber ich bin", "Der Arm"},
             fb_bl_arm_intro_1 = {"Ich gleiche deine", "Macht aus"},
-            fb_bl_arm_intro_2 = {"Jede Hand, die du", "spielst, sinkt."},
+            fb_bl_arm_intro_2 = {"Jede gespielte Hand", "sinkt eine Stufe."},
             fb_bl_arm_big_hand_1 = {"Diese Hand hat", "Muskeln..."},
             fb_bl_arm_close_1 = {"Armdrücken? Ich", "verliere!"},
             fb_bl_arm_last_hand_1 = {"Letzte Hand. Spiel", "nicht den Muskelmann."},
@@ -239,7 +239,7 @@ return {
             fb_bl_serpent_last_hand_1 = {"Letzter Biss.", "Drei Karten."},
             fb_bl_serpent_disabled_1 = {"Meine Zähne! Zisch...", "Kein Gift mehr!"},
             fb_bl_serpent_defeat_1 = {"Haut abgestreift...", "und Stolz verloren."},
-            fb_bl_serpent_gloat_1 = {"Die Schlange:", "\"Ssss-ee ya!\""},
+            fb_bl_serpent_gloat_1 = {"Die Schlange:", "\"Auf Wiedersssehen!\""},
 
             -- The Pillar: cards played previously this ante are debuffed
             fb_bl_pillar_name_1 = {"Aber ich bin", "Die Säule"},
@@ -279,7 +279,7 @@ return {
             fb_bl_tooth_intro_1 = {"Ich steh auf", "Politik"},
             fb_bl_tooth_intro_2 = {"Jede gespielte Karte", "kostet dich $1."},
             fb_bl_tooth_big_hand_1 = {"Du hast gezahlt und", "trotzdem gewonnen?!"},
-            fb_bl_tooth_close_1 = {"Zwing mich nicht zur", "Zahnfee zu gehen!"},
+            fb_bl_tooth_close_1 = {"Zwing mich nicht,", "zur Zahnfee zu gehen!"},
             fb_bl_tooth_last_hand_1 = {"Letzte Hand,", "letzte Dollar."},
             fb_bl_tooth_disabled_1 = {"Mein Biss!", "Er ist weg!"},
             fb_bl_tooth_defeat_1 = {"Mit Zähnen und", "Klauen verloren."},

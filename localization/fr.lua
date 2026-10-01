@@ -56,7 +56,7 @@ return {
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Mais je suis", "L'hameçon"},
-            fb_bl_hook_intro_1 = {"Je prends quelques", "unes de tes cartes"},
+            fb_bl_hook_intro_1 = {"Je prends quelques-unes", "de tes cartes"},
             fb_bl_hook_intro_2 = {"Deux cartes en moins,", "à chaque main."},
             fb_bl_hook_big_hand_1 = {"Même avec moins", "de cartes ?!"},
             fb_bl_hook_close_1 = {"Lâche ces", "cartes !"},
@@ -96,7 +96,7 @@ return {
             fb_bl_wall_last_hand_1 = {"Plus rien", "à escalader."},
             fb_bl_wall_disabled_1 = {"Des fissures ! Mon", "mur se fissure !"},
             fb_bl_wall_defeat_1 = {"Le mur...", "s'écroule."},
-            fb_bl_wall_gloat_1 = {"Le mur :", "\"Mur à mur, perdu !\""},
+            fb_bl_wall_gloat_1 = {"Le mur :", "\"Tu fonces dans le mur !\""},
 
             -- The Wheel: 1 in 7 cards get drawn face down
             fb_bl_wheel_name_1 = {"Mais je suis", "La roue"},
@@ -115,7 +115,7 @@ return {
             fb_bl_arm_intro_2 = {"Chaque main jouée", "perd un niveau."},
             fb_bl_arm_big_hand_1 = {"Cette main a", "du muscle..."},
             fb_bl_arm_close_1 = {"Bras de fer ?", "Je perds !"},
-            fb_bl_arm_last_hand_1 = {"Dernière main.", "Ne bande pas."},
+            fb_bl_arm_last_hand_1 = {"Dernière main.", "Pas de zèle."},
             fb_bl_arm_disabled_1 = {"Mon bras est mou !", "Tricheur !"},
             fb_bl_arm_defeat_1 = {"Tu as vaincu", "mon bras fort."},
             fb_bl_arm_gloat_1 = {"Le bras :", "\"Rétrogradé !\""},
@@ -312,7 +312,7 @@ return {
             fb_bl_final_acorn_intro_1 = {"J'aime", "LE CHAOS !"},
             fb_bl_final_acorn_intro_2 = {"Jokers retournés,", "puis mélangés !"},
             fb_bl_final_acorn_big_hand_1 = {"Même dans le chaos,", "tu gagnes ?!"},
-            fb_bl_final_acorn_close_1 = {"C'est glandeur !", "Je craque !"},
+            fb_bl_final_acorn_close_1 = {"C'est dingue !", "Je me fissure !"},
             fb_bl_final_acorn_last_hand_1 = {"Dernière main. Où", "est ton joker ?"},
             fb_bl_final_acorn_disabled_1 = {"Mon gland !", "L'ordre revient ?!"},
             fb_bl_final_acorn_defeat_1 = {"Tu as brisé", "ma coquille..."},
@@ -327,7 +327,7 @@ return {
             fb_bl_final_leaf_last_hand_1 = {"Dernière main.", "Vendre un joker ?"},
             fb_bl_final_leaf_disabled_1 = {"Ma feuille !", "Elle a séché !"},
             fb_bl_final_leaf_defeat_1 = {"Je m'en vais...", "comme une feuille."},
-            fb_bl_final_leaf_gloat_1 = {"Feuille verte :", "\"Feuille-toi, perdu !\""},
+            fb_bl_final_leaf_gloat_1 = {"Feuille verte :", "\"Feuille morte !\""},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"Mais je suis", "Vase violet"},
@@ -338,7 +338,7 @@ return {
             fb_bl_final_vessel_last_hand_1 = {"Dernière main. Ce", "vase ne coulera pas."},
             fb_bl_final_vessel_disabled_1 = {"Mon vase !", "Il coule !"},
             fb_bl_final_vessel_defeat_1 = {"Le vase...", "a été vidé."},
-            fb_bl_final_vessel_gloat_1 = {"Vase violet :", "\"Vase-tement battu !\""},
+            fb_bl_final_vessel_gloat_1 = {"Vase violet :", "\"Naufrage total !\""},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"Mais je suis", "Cœur écarlate"},

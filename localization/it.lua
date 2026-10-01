@@ -316,7 +316,7 @@ return {
             fb_bl_final_acorn_last_hand_1 = {"Ultima mano. Dov'è", "il tuo jolly?"},
             fb_bl_final_acorn_disabled_1 = {"La mia ghianda!", "L'ordine torna?!"},
             fb_bl_final_acorn_defeat_1 = {"Hai rotto il", "mio guscio..."},
-            fb_bl_final_acorn_gloat_1 = {"Ghianda d'ambra:", "\"Sei ghiandato!\""},
+            fb_bl_final_acorn_gloat_1 = {"Ghianda d'ambra:", "\"Roba da matti!\""},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"Ma io sono", "Foglia verde"},

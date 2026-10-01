@@ -96,7 +96,7 @@ return {
             fb_bl_wall_last_hand_1 = {"Não há mais", "onde escalar."},
             fb_bl_wall_disabled_1 = {"Rachaduras! Meu muro", "está rachando!"},
             fb_bl_wall_defeat_1 = {"O muro...", "desaba."},
-            fb_bl_wall_gloat_1 = {"O Muro:", "\"Bateu na trave!\""},
+            fb_bl_wall_gloat_1 = {"O Muro:", "\"Deu de cara no muro!\""},
 
             -- The Wheel: 1 in 7 cards get drawn face down
             fb_bl_wheel_name_1 = {"Mas eu sou", "A Roda"},
@@ -105,7 +105,7 @@ return {
             fb_bl_wheel_big_hand_1 = {"A Dama Sorte gosta", "de você hoje."},
             fb_bl_wheel_close_1 = {"Minha roda está", "descontrolada!"},
             fb_bl_wheel_last_hand_1 = {"Último giro.", "Sentindo a sorte?"},
-            fb_bl_wheel_disabled_1 = {"A roda parou?", "Roubaram!"},
+            fb_bl_wheel_disabled_1 = {"A roda parou?", "Tá armado!"},
             fb_bl_wheel_defeat_1 = {"A roda da fortuna", "gira contra mim..."},
             fb_bl_wheel_gloat_1 = {"A Roda:", "\"A roda girou!\""},
 

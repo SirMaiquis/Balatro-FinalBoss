@@ -239,7 +239,7 @@ return {
             fb_bl_serpent_last_hand_1 = {"Laatste beet.", "Drie kaarten."},
             fb_bl_serpent_disabled_1 = {"Mijn giftanden! Sss...", "Geen gif meer!"},
             fb_bl_serpent_defeat_1 = {"Vervelde mijn huid...", "en mijn trots."},
-            fb_bl_serpent_gloat_1 = {"Het serpent:", "\"Sss-ee you later!\""},
+            fb_bl_serpent_gloat_1 = {"Het serpent:", "\"Tot sissens!\""},
 
             -- The Pillar: cards played previously this ante are debuffed
             fb_bl_pillar_name_1 = {"Maar ik ben", "De pilaar"},
