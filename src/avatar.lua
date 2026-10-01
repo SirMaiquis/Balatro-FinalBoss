@@ -27,6 +27,7 @@ end
 --- Ease a table field (REAL timer, non-blocking), or set it at once.
 local function ease_field(ref, field, to, duration)
   if not duration or duration <= 0 then ref[field] = to; return end
+  if ref[field] == nil then ref[field] = 0 end -- vanilla never initialises Blind.dissolve; ease reads it
   G.E_MANAGER:add_event(Event({trigger = 'ease', ref_table = ref, ref_value = field, ease_to = to,
     delay = duration, timer = 'REAL', blocking = false, blockable = false, func = function(t) return t end}))
 end
@@ -261,7 +262,7 @@ local function restore_hud_blind()
   if not b or not G.GAME or b ~= G.GAME.blind then return end
   if not (b.config and b.config.blind and b.config.blind.key) then return end
   local enc = G.GAME.FinalBoss and G.GAME.FinalBoss.encounter
-  if not enc or enc.ended then return end
+  if not enc or enc.ended or enc.finale then return end -- finale: Blind:defeat owns the chip
   ease_field(b, 'dissolve', 0, not reduced() and V.HUD_EASE or 0)
 end
 

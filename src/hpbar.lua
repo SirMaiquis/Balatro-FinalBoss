@@ -18,10 +18,10 @@ local function now() return FinalBoss.util.now() end
 --- colours are mutated in place. Padding 0 keeps the nested fill exactly over its parent.
 local function bar_row()
   return {n = G.UIT.R, config = {align = 'cm', padding = 0.03}, nodes = {
-    {n = G.UIT.C, config = {align = 'cl', padding = 0, minw = H.W, minh = H.H, r = 0.1, colour = G.C.BLACK, emboss = 0.05,
+    {n = G.UIT.C, config = {align = 'cl', padding = 0, minw = H.W, minh = H.H, r = 0.1, res = 0.6, colour = G.C.BLACK, emboss = 0.05,
       progress_bar = {max = 1, ref_table = H.view, ref_value = 'ghost', empty_col = G.C.BLACK, filled_col = H.trail_col}},
       nodes = {
-        {n = G.UIT.C, config = {align = 'cl', padding = 0, minw = H.W, minh = H.H, r = 0.1, colour = G.C.CLEAR,
+        {n = G.UIT.C, config = {align = 'cl', padding = 0, minw = H.W, minh = H.H, r = 0.1, res = 0.6, colour = G.C.BLACK, -- alpha > 0.01 or draw_self skips it
           progress_bar = {max = 1, ref_table = H.view, ref_value = 'frac', empty_col = G.C.CLEAR, filled_col = H.fill_col}},
           nodes = {}},
       }},
