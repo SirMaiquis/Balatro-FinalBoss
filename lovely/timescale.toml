@@ -1,0 +1,14 @@
+[manifest]
+version = "1.0.0"
+dump_lua = true
+priority = 0
+
+# FinalBoss: slow motion for the showdown finale. FinalBoss.timescale is 1 except during the
+# ~0.8 s finale and is never saved. If this pattern stops matching, the finale runs at normal speed.
+[[patches]]
+[patches.pattern]
+target = 'game.lua'
+pattern = 'self.SPEEDFACTOR = (G.STAGE == G.STAGES.RUN and not G.SETTINGS.paused and not G.screenwipe) and self.SETTINGS.GAMESPEED or 1'
+position = 'after'
+payload = 'self.SPEEDFACTOR = self.SPEEDFACTOR * ((FinalBoss and FinalBoss.timescale) or 1)'
+match_indent = true

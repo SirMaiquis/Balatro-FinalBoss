@@ -40,7 +40,8 @@ end
 
 local orig_keypressed = love.keypressed
 function love.keypressed(key, ...)
-  if FinalBoss.dialogue.intro_active() then U.guard('skip', FinalBoss.dialogue.skip) end
+  if FinalBoss.cinematic.active() then U.guard('cinematic_skip', FinalBoss.cinematic.skip)
+  elseif FinalBoss.dialogue.intro_active() then U.guard('skip', FinalBoss.dialogue.skip) end
   return orig_keypressed(key, ...)
 end
 
@@ -68,9 +69,17 @@ local orig_delete_run = Game.delete_run
 function Game:delete_run(...)
   local ret = orig_delete_run(self, ...)
   U.guard('delete_run', function()
-    FinalBoss.fx.reset()
+    director().reset_stage()
     FinalBoss.dialogue.drop_on_teardown()
   end)
+  return ret
+end
+
+-- Per-frame stage tick (avatar idle/roam, HP bar trail, arena music pitch).
+local orig_game_update = Game.update
+function Game:update(dt, ...)
+  local ret = orig_game_update(self, dt, ...)
+  if G.GAME and director().enabled() then U.guard('stage_tick', director().tick, dt) end
   return ret
 end
 

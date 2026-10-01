@@ -3,6 +3,7 @@ FinalBoss = {}
 FinalBoss.mod = SMODS.current_mod
 FinalBoss.config = SMODS.current_mod.config
 FinalBoss.VERSION = SMODS.current_mod.version
+FinalBoss.timescale = 1 -- slow-motion factor (lovely/timescale.toml); only cinematic.lua changes it
 
 local function load_file(path)
   local chunk, err = SMODS.load_file(path)
@@ -11,7 +12,8 @@ local function load_file(path)
 end
 
 -- Order matters: util and logic first; hooks last (it wires everything together).
-local MODULES = {'util', 'logic', 'registry', 'music', 'fx', 'ui', 'dialogue', 'director', 'quips', 'devtools', 'hooks'}
+local MODULES = {'util', 'logic', 'registry', 'music', 'fx', 'arena', 'avatar', 'hpbar', 'cinematic',
+  'ui', 'dialogue', 'director', 'quips', 'devtools', 'hooks'}
 
 for _, name in ipairs(MODULES) do
   FinalBoss[name] = load_file('src/' .. name .. '.lua')

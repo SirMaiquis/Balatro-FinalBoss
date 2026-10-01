@@ -153,4 +153,22 @@ function Dir.on_blind_defeated()
   end
 end
 
+--- Per-frame tick (hooks: Game:update wrap). Cheap when nothing is on stage.
+function Dir.tick(dt)
+  local A, V, H = FinalBoss.arena, FinalBoss.avatar, FinalBoss.hpbar
+  if not (A.active() or V.exists() or H.exists()) then return end
+  V.tick(dt)
+  H.tick(dt)
+  A.tick(dt)
+end
+
+--- Remove every stage element and restore time, background and vignette (run teardown or a
+--- guard failure). Each step is isolated so one failure cannot skip the others.
+function Dir.reset_stage()
+  for _, step in ipairs({FinalBoss.cinematic.reset, FinalBoss.hpbar.remove, FinalBoss.avatar.remove,
+      FinalBoss.arena.reset, FinalBoss.fx.reset}) do
+    pcall(step)
+  end
+end
+
 return Dir
