@@ -1,0 +1,12 @@
+# Save backups taken before testing — never commit
+backups/
+
+# Scratch / generated asset intermediates
+tools/out/
+*.tmp
+*.log
+
+# OS / editor
+Thumbs.db
+.DS_Store
+.vscode/

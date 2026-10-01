@@ -1,0 +1,14 @@
+{
+	"id": "FinalBoss",
+	"name": "Final Boss",
+	"display_name": "Final Boss",
+	"author": ["SirMaiquis"],
+	"description": "Final Boss is a mod to control the final boss in the game, you can manage the final boss when they can start appearing.",
+	"prefix": "FinalBoss",
+	"main_file": "mod.lua",
+	"priority": 20,
+	"badge_colour": "0ff5bf",
+	"badge_text_colour": "000000",
+	"version": "1.0.0",
+	"dependencies": []
+}
