@@ -43,5 +43,5 @@ Journal of every step of the 2.0 overhaul. Newest entries at the bottom.
 - [x] Reduced motion: no shake, static vignette. FX toggle off: no FX at all
 - [ ] A modded boss shows generic lines with its name
 - [x] Spanish (es_419) text displays correctly in game
-- [x] Japanese, Korean, Chinese (CN/TW) and Russian text render in the game font (no tofu) and fit the bubble; Polish/German/French diacritics show
+- [ ] Japanese, Korean, Chinese (CN/TW) and Russian text render in the game font (no tofu) and fit the bubble; Polish/German/French diacritics show
 - [x] No FinalBoss errors in the Lovely log
