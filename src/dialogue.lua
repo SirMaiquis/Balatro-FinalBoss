@@ -9,6 +9,12 @@ D.intro = nil        -- {blind, steps, index, duration, pitch, token}
 D.last_line_at = -1e9
 D.last_skip_at = -1e9
 D.saved_click_can = nil
+D.host = nil         -- the object the current bubble hangs from (blind chip or avatar)
+
+--- Bubbles come from the showdown avatar when it exists, otherwise from the HUD blind chip.
+local function host_for(blind)
+  return (FinalBoss.avatar and FinalBoss.avatar.anchor()) or blind
+end
 
 local function after(delay, fn)
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = delay, timer = 'REAL',
@@ -24,24 +30,33 @@ local function babble(blind, n, pitch)
 end
 
 function D.hide(blind)
-  if blind and blind.children and blind.children.fb_bubble then
-    blind.children.fb_bubble:remove()
-    blind.children.fb_bubble = nil
+  for _, h in ipairs({blind, D.host}) do
+    if h and h.children and h.children.fb_bubble then
+      h.children.fb_bubble:remove()
+      h.children.fb_bubble = nil
+    end
   end
+  D.host = nil
+  if FinalBoss.avatar then FinalBoss.avatar.set_talking(false) end
 end
 
 function D.show(blind, key, vars, pitch)
   D.hide(blind)
+  local host = host_for(blind)
+  local on_avatar = host ~= blind
+  local align = on_avatar and ((FinalBoss.avatar.side() == 'right') and 'cl' or 'cr') or 'bm'
   local loc_vars = {quip = true}
   for i, v in ipairs(vars or {}) do loc_vars[i] = v end
   local bubble = UIBox{definition = G.UIDEF.speech_bubble(key, loc_vars),
-    config = {align = 'bm', offset = {x = 0, y = 0}, parent = blind}}
-  bubble:set_role{role_type = 'Minor', xy_bond = 'Weak', r_bond = 'Strong', major = blind}
+    config = {align = align, offset = {x = 0, y = 0}, parent = host}}
+  bubble:set_role{role_type = 'Minor', xy_bond = 'Weak', r_bond = 'Strong', major = host}
   bubble.states.visible = false -- appear once aligned, like v1
-  blind.children.fb_bubble = bubble
-  after(0.1, function() if blind.children.fb_bubble == bubble then bubble.states.visible = true end end)
+  host.children.fb_bubble = bubble
+  D.host = host
+  if on_avatar then FinalBoss.avatar.set_talking(true) end
+  after(0.1, function() if host.children.fb_bubble == bubble then bubble.states.visible = true end end)
   D.last_line_at = FinalBoss.util.now()
-  babble(blind, 5, pitch)
+  babble(host, 5, pitch)
 end
 
 local function enable_chip_skip(blind)

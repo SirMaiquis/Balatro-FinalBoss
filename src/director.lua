@@ -49,13 +49,15 @@ function Dir.on_blind_set(blind)
     min_ante = FinalBoss.config.min_ante,
   }
   st.encounter = {key = proto.key, tier = tier, fired = {}, reactions = 0, phase = 1, track = nil,
-    last_variant = {}, ended = false, last_hand_seen = nil, showdown = is_showdown, cinematic = false}
+    last_variant = {}, ended = false, last_hand_seen = nil, showdown = is_showdown,
+    cinematic = (tier == 'full' and is_showdown and FinalBoss.config.cinematic) and true or false}
   st.lost_to = nil
   if tier == 'none' then return end
   if tier == 'full' then
     st.encounter.track = FinalBoss.music.pick_track(entry)
     FinalBoss.fx.play(entry.fx.intro, blind)
     if is_showdown then FinalBoss.arena.start(blind, 0) end
+    if st.encounter.cinematic then FinalBoss.avatar.spawn(blind, {fall = false}) end
   end
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = Dir.INTRO_DELAY, timer = 'REAL',
     blocking = false, blockable = false,
@@ -87,7 +89,12 @@ function Dir.on_blind_loaded(blind)
   FinalBoss.fx.resume(blind)
   if not enc.showdown then return end
   local total, required = fight_numbers(blind)
-  FinalBoss.arena.resume(blind, stage_of(total, required))
+  local stage = stage_of(total, required)
+  FinalBoss.arena.resume(blind, stage)
+  if enc.cinematic then
+    FinalBoss.avatar.spawn(blind, {fall = false})
+    FinalBoss.avatar.set_wound(stage)
+  end
 end
 
 --- Runs after vanilla's end-of-round event, so Mr. Bones saves are resolved.
@@ -99,6 +106,7 @@ function Dir.on_round_end()
     enc.ended = true
     FinalBoss.fx.stop()
     FinalBoss.arena.stop(true)
+    if enc.cinematic then FinalBoss.avatar.fade_out(0.8) end
   else
     st.lost_to = nil
   end
@@ -157,9 +165,16 @@ function Dir.on_hand_after()
   if moment then Dir.fire(moment) end
 end
 
---- Stage reactions to a scored hand in a showdown.
+--- Stage reactions to a scored hand in a showdown (arena always; avatar when cinematic).
 function Dir.stage_hit(enc, blind, delta, total, required, moment)
-  FinalBoss.arena.on_hit(stage_of(total, required))
+  local stage = stage_of(total, required)
+  FinalBoss.arena.on_hit(stage)
+  if not enc.cinematic then return end
+  local size = FinalBoss.logic.hit_size(delta, required)
+  FinalBoss.avatar.set_wound(stage)
+  if moment == 'defeat' then return end
+  FinalBoss.avatar.hit(size)
+  if size == 'weak' then FinalBoss.avatar.laugh(FinalBoss.registry.get(enc.key).voice.pitch) end
 end
 
 function Dir.on_blind_disabled()
@@ -171,6 +186,7 @@ function Dir.on_blind_defeated()
   if not enc then return end
   enc.ended = true
   if enc.tier == 'full' then
+    if enc.cinematic then FinalBoss.avatar.fade_out(0.6) end
     FinalBoss.fx.play(FinalBoss.registry.get(enc.key).fx.defeat, blind)
     FinalBoss.fx.stop()
     FinalBoss.arena.stop()
