@@ -157,6 +157,7 @@ function Dir.on_hand_after()
   if not enc or enc.ended then return end
   local hands_played = G.GAME.current_round.hands_played
   if enc.last_hand_seen == hands_played then return end -- defensive: one evaluation per hand
+  Dir.flush_pending() -- a previous hand's reaction updates enc.fired / reactions, read below
   if FinalBoss.config.dev_mode then
     FinalBoss.util.log('info', ('dev: at after chips=%s delta=%s'):format(
       tostring(G.GAME.chips), tostring(SMODS.last_hand_score)))
@@ -173,9 +174,17 @@ function Dir.on_hand_after()
     hands_left = hands_left, fired = enc.fired, tier = enc.tier, reactions = enc.reactions}
   -- The reaction waits until the game shows the score (Dir.tick -> logic.score_landed), or the
   -- boss would spoil it. Everything above is decided now.
-  Dir.flush_pending()
-  Dir.pending = {start = chips, delta = delta, total = total, required = required, moment = moment,
-    enc = enc, blind = blind, t0 = FinalBoss.util.now()}
+  local p = {start = chips, delta = delta, total = total, required = required, moment = moment,
+    enc = enc, blind = blind, t0 = FinalBoss.util.now(), queued_done = false}
+  Dir.pending = p
+  -- Completion signal in queue order: context.after runs inside evaluate_play after it has queued
+  -- delay(0.8), chips2, the G.GAME.chips ease, the blocking chip_total ease and the handname clear
+  -- (state_events.lua 1036-1066, before the after-loop at 1068), and add_event appends to the base
+  -- queue, so this event runs after all of them. Blocking ease + game-speed timing included.
+  G.E_MANAGER:add_event(Event({func = function()
+    FinalBoss.util.guard('score_queued', function() if Dir.pending == p then p.queued_done = true end end)
+    return true
+  end}))
 end
 
 --- The deferred reaction to a scored hand; dropped if its encounter is gone or over.
@@ -204,7 +213,7 @@ local function check_pending()
   local p = Dir.pending
   local hand = G.GAME.current_round and G.GAME.current_round.current_hand
   if not FinalBoss.logic.score_landed(p.start, num(G.GAME.chips), p.delta, hand and hand.handname,
-      FinalBoss.util.now() - p.t0) then return end
+      FinalBoss.util.now() - p.t0, p.queued_done) then return end
   Dir.pending = nil
   FinalBoss.util.guard('score_landed', react, p)
 end

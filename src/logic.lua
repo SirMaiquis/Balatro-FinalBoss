@@ -168,11 +168,14 @@ function logic.perch_rect(i, areas, S, box_h, box_w)
 end
 
 --- Whether a scored hand has visibly landed (so the boss may react without spoiling it).
+--- queued_done: an event queued behind vanilla's score display has run (always lands);
 --- delta > 0: the round score has started ticking up (vanilla's chips2 moment);
---- delta <= 0: vanilla has cleared the hand name; any case: elapsed (real seconds) >= the safety.
-logic.SCORE_LAND_SAFETY = 6
+--- delta <= 0: vanilla has cleared the hand name;
+--- elapsed (real seconds) >= SCORE_LAND_SAFETY: last resort only (queue stuck or cleared).
+logic.SCORE_LAND_SAFETY = 30
 
-function logic.score_landed(start, chips, delta, handname, elapsed)
+function logic.score_landed(start, chips, delta, handname, elapsed, queued_done)
+  if queued_done then return true end
   if (elapsed or 0) >= logic.SCORE_LAND_SAFETY then return true end
   if (delta or 0) > 0 then return (chips or 0) > (start or 0) end
   return handname == ''

@@ -183,7 +183,11 @@ function V.position()
 end
 
 function V.tick(dt)
-  if not V.obj or V.fading or reduced() then return end
+  if not V.obj or V.fading then return end
+  if reduced() then -- no roaming: live at ringside (snap there if the setting changed mid-fight)
+    if V.perch ~= V.RINGSIDE then go_to(V.RINGSIDE, true); V.snap() end -- snap: sprite too
+    return
+  end
   -- Played cards fill the play area: park at ringside until the hand resolves. The bubble follows
   -- the avatar, so this move also happens mid-line.
   if G.STATES and G.STATE == G.STATES.HAND_PLAYED then

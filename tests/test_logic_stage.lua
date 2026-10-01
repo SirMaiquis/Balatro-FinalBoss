@@ -66,10 +66,20 @@ T['score_landed: zero or negative hand waits for the hand name to clear'] = func
   eq(logic.score_landed(100, 100, -5, '', 0.5), true)
   eq(logic.score_landed(100, 100, 0, nil, 0.5), false)
 end
-T['score_landed: safety after 6 seconds'] = function()
-  eq(logic.score_landed(100, 100, 50, 'Flush', 5.99), false)
-  eq(logic.score_landed(100, 100, 50, 'Flush', 6), true)
-  eq(logic.score_landed(100, 100, 0, 'Pair', 6), true)
+T['score_landed: long scoring sequences are not cut short'] = function()
+  eq(logic.score_landed(100, 100, 50, 'Flush', 6), false)
+  eq(logic.score_landed(100, 100, 50, 'Flush', 29.99), false)
+end
+T['score_landed: last-resort wall clock at 30 seconds'] = function()
+  eq(logic.score_landed(100, 100, 50, 'Flush', 30), true)
+  eq(logic.score_landed(100, 100, 0, 'Pair', 30), true)
+end
+T['score_landed: queued completion always lands'] = function()
+  eq(logic.score_landed(100, 100, 50, 'Flush', 0.5, true), true)
+  eq(logic.score_landed(100, 100, 0, 'Pair', 0.5, true), true)
+  -- Talisman: a score converted to inf never satisfies chips > start
+  eq(logic.score_landed(math.huge, math.huge, math.huge, 'Flush', 0.5, false), false)
+  eq(logic.score_landed(math.huge, math.huge, math.huge, 'Flush', 0.5, true), true)
 end
 T['score_landed: missing numbers are treated as zero'] = function()
   eq(logic.score_landed(nil, nil, nil, '', nil), true)

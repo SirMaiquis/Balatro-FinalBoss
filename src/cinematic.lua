@@ -70,7 +70,7 @@ local function show_title(blind)
   local big = DynaText({string = {name}, colours = {c}, scale = 1.4,
     shadow = true, bump = true, pop_in = 0.2, pop_in_rate = 3, silent = true})
   C.title = UIBox{
-    definition = {n = G.UIT.ROOT, config = {align = 'cm', colour = band, minw = G.ROOM.T.w, padding = 0.15, r = 0},
+    definition = {n = G.UIT.ROOT, config = {align = 'cm', colour = band, minw = G.ROOM.T.w + 4, padding = 0.15, r = 0},
       nodes = {
         {n = G.UIT.R, config = {align = 'cm'}, nodes = {{n = G.UIT.O, config = {object = sub}}}},
         {n = G.UIT.R, config = {align = 'cm'}, nodes = {{n = G.UIT.O, config = {object = big}}}},
