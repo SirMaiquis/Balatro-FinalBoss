@@ -14,8 +14,11 @@ Journal of every step of the 2.0 overhaul. Newest entries at the bottom.
 - 2026-09-30 Task 0: environment set up. Steamodded 26.829.0 installed, repo junctioned, `um` CLI installed (v0.2.0). Lovely v0.10.0 (`winmm.dll`) copied into the Balatro folder by the controller after the first attempt was denied.
 - 2026-09-30 Task 0 baseline launch with v1.0.0 (log `lovely-2026.09.30-22.28.15.log`): Lovely injected, `SMODS :: Steamodded v26.829.0` loaded, `DefaultLogger :: Launching Final Boss!` printed, all object injections ran. No ERROR, traceback or Lua error lines. Only warnings: `Sound :: Object FinalBoss_music6 has the same key as an existing object, not registering` and the same for `FinalBoss_music7` (duplicate sound keys in v1.0.0). Also `Failed to connect to the debug server` (harmless, no debug server running). Game killed after ~40 s; the menu was not inspected visually.
 - 2026-09-30 Task 3: skeleton loads on smods 26.829.0 (log `lovely-2026.09.30-22.39.15.log`: `FinalBoss 2.0.0 loaded`, no errors/warnings, v1 `FinalBoss_music6/7` duplicate-key warnings gone). Mods-menu version check deferred to playtest.
+- 2026-09-30 Task 6: config menu implemented (src/ui.lua, main.lua MODULES updated, localization/default.lua dictionary added). In-game load verified (log `lovely-2026.09.30-22.49.44.log`: `FinalBoss 2.0.0 loaded`, no errors). Config and Showdowns tabs created and wired; menu has NOT been visually verified yet, pending playtest. **IMPORTANT:** dev_mode must be turned ON in game during playtest before Task 7 checks.
 
 ## Smoke checklist (run before release)
+- [ ] Config tab: dialogue/music/FX toggles, intro speed and min ante cycles, dev keys toggle
+- [ ] Showdowns tab: schedule toggle, first ante / every N cycles, live preview, Hard! warning below ante 4, settings persist after restart
 - [ ] Light-tier intro plays on a regular boss at ante >= min ante
 - [ ] Full intro (opener, name, intro, closer) plays on a showdown
 - [ ] Any key / clicking the blind chip advances the intro; double press skips it
