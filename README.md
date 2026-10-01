@@ -45,13 +45,15 @@ Regular bosses are light tier from the ante set in `min_ante` onward. Showdown b
 
 Showdowns (full tier) get a stage of their own. None of it appears for regular bosses.
 
-- **Roaming boss avatar.** A large chip with the boss's own art sits on the table. It bobs, glides between a few spots that stay clear of your hand and buttons, and stops while it talks. Its speech bubbles are drawn above your cards. Each hand makes it flash and flinch, a tiny hand makes it laugh, and it cracks and starts to tremble when it falls to 50% and 25% of its HP. Click it to skip an intro line.
+- **Roaming boss avatar.** A large chip with the boss's own art sits on the table. It bobs, glides between a few spots that stay away from your hand and buttons, and stops while it talks. Its speech bubbles are drawn above your cards. Each hand makes it flash and flinch, a tiny hand makes it laugh, and it gets wounded: below 50% it cracks and bobs faster, below 25% it cracks more and trembles. Click it to skip an intro line.
 - **HP bar and damage numbers.** Under the avatar: the boss name, a bar in the boss's colour and `remaining / max`. Each hand drops the bar at once and leaves a white trail that drains, and a damage number pops up above the avatar (big hands bigger, tiny hands small and grey). The bar flashes at 50% and 25%.
-- **Cinematic intro.** Black bars slide in, a "SHOWDOWN" title card with the boss name slams in, and the avatar falls onto the table before it speaks. Press any key or click to jump straight to the avatar and its dialogue; a second press skips the dialogue as before. The title card draws above your cards. Continue never replays the intro.
-- **Slow-motion explosive finale.** The winning hand plays in slow motion for under a second while the avatar cracks and shows its defeat line, then it explodes into shards with a white flash. Losing to a showdown makes the avatar laugh and fade before the gloat.
-- **Living arena.** The background swirl takes the boss's colours, pulses on each hand, and darkens and spins faster as the boss gets wounded (below 50%, then below 25%). In the final stretch (below 25%) the music pitches up slightly. Everything returns to normal when the blind ends.
+- **Cinematic intro.** Black bars slide in, a "SHOWDOWN" title card with the boss name slams in, and the avatar falls onto the table before it speaks. Press any key to jump straight to the avatar and its dialogue (a click works once the avatar has landed). Press again to advance a line; press twice quickly to skip the rest. The title card draws above your cards. Continue never replays the intro.
+- **Slow-motion explosive finale.** The winning hand plays in slow motion for under a second while the avatar cracks and shows its defeat line, then it explodes into shards with a flash in the boss's colour (the flash needs `fx`). Losing to a showdown makes the avatar laugh and fade before the gloat.
+- **Living arena.** The background swirl takes the boss's colours, pulses on each hand, and darkens and spins faster as the boss gets wounded (below 50%, then below 25%). In the final stretch (below 25%) the music pitches up slightly; the pitch-up needs both `fx` and `music`. Everything returns to normal when the blind ends.
 
-Turn off the avatar side with `cinematic` (avatar, HP bar, damage numbers, intro and finale). The arena follows `fx` and the pitch follows `music`. If you quit or Continue mid-showdown the stage is rebuilt from the saved score, with no fall-in.
+Turn off the avatar side with `cinematic` (avatar, HP bar, damage numbers, intro and finale). The arena follows `fx`, and the music pitch-up in the final stretch needs both `fx` and `music`. If you quit or Continue mid-showdown the stage is rebuilt from the saved score, with no fall-in.
+
+**Reduced motion.** With Balatro's reduced motion setting on, the stage keeps colours, flashes, the dissolve and the explosion, but drops the movement: no roaming, bob, tilt, tremble, knockback, slide/fall animations, slow motion, arena spin or arena pulses. The avatar and bars just appear, and screen shake is off (only the explosion keeps a small jiggle).
 
 ### Showdown schedule
 
@@ -65,8 +67,8 @@ Set in the Mods menu (Final Boss, Config and Showdowns tabs). Steamodded saves y
 |---|---|---|
 | `dialogue` | Boss and Jimbo lines (intros, reactions, defeat, gloat) | `true` |
 | `music` | FinalBoss showdown tracks during full-tier encounters | `true` |
-| `cinematic` | Showdown cinematics: avatar, HP bar, damage numbers, intro and finale. The arena follows `fx` and the music pitch follows `music` | `true` |
-| `fx` | Screen effects: vignette, shake, flash, shatter. They only run in full-tier encounters. Respects Balatro's reduced motion and screenshake settings. Under reduced motion the shake and the vignette animation are off (the vignette stays at a fixed strength), while the background flash and the defeat burst still run | `true` |
+| `cinematic` | Showdown cinematics: avatar, HP bar, damage numbers, intro and finale. The arena follows `fx`; the music pitch-up in the final stretch needs both `fx` and `music` | `true` |
+| `fx` | Screen effects: vignette, shake, flash, shatter. They only run in full-tier encounters. Also controls the boss-coloured arena of showdowns. Respects Balatro's reduced motion and screenshake settings. Under reduced motion the shake and the vignette animation are off (the vignette stays at a fixed strength), while the background flash and the defeat burst still run | `true` |
 | `intro_speed` | How long each intro line stays up: 1 slow (6 s), 2 normal (4 s), 3 fast (2.5 s) | `2` |
 | `min_ante` | First ante at which regular bosses get light-tier dialogue (1 to 8) | `1` |
 | `showdown.enabled` | Use the extra showdown schedule | `false` |
@@ -96,7 +98,7 @@ Always check that `FinalBoss` exists first so your mod still works without it. R
 | Field | Meaning | Default |
 |---|---|---|
 | `blind` | Required. Full blind key, for example `'bl_hook'` or your prefixed key | |
-| `tier` | `'auto'`, `'light'` or `'full'`. Auto means showdown bosses are full and the rest are light. An unknown value falls back to `'auto'` with a warning | `'auto'` |
+| `tier` | `'auto'`, `'light'` or `'full'`. Auto means showdown bosses are full and the rest are light. An unknown value falls back to `'auto'` with a warning. A forced `'full'` on a boss that is not a showdown gets full dialogue but not the showdown stage (avatar, HP bar, cinematics and arena are showdown-only) | `'auto'` |
 | `voice` | `{pitch = n}`: pitch of the vanilla voice blips for the boss's lines | `{pitch = 1.0}` |
 | `music` | `nil` uses the showdown pool. A full prefixed sound key string, or a list of them, picks from your own tracks (full tier only). See "Custom music" below | `nil` |
 | `fx` | `{intro = name, defeat = name}` with names from `pulse`, `shake`, `flash`, `shatter`, `phase_shift`. An unknown name is ignored with a warning. They only run in full-tier encounters | `{intro = 'pulse', defeat = 'shatter'}` |
@@ -148,12 +150,8 @@ Writing tips: each quip is 1 or 2 lines, and each line should stay under about 2
 ## Compatibility
 
 - Big-number scores (Talisman) are converted to plain numbers before FinalBoss compares them, but this path has not been playtested.
-- FinalBoss ships one Lovely patch (`lovely/timescale.toml`) for the finale's slow motion; if a game update moves its target line, the finale simply runs at normal speed.
+- FinalBoss ships one Lovely patch (`lovely/timescale.toml`) for the finale's slow motion; if a game update changes its target line, the finale simply runs at normal speed.
 - Mods that replace (rather than wrap) `SMODS.is_showdown_ante` or `end_round` override FinalBoss's behaviour for the showdown schedule and the round-end handling.
-
-### Reduced motion
-
-With Balatro's reduced motion setting on, the stage keeps colours, flashes, the dissolve and the explosion, but drops the movement: no roaming, bob, knockback, slide, fall, slow motion or arena spin. The avatar and bars just appear, and the shake is smaller.
 
 ## Languages
 

@@ -1,4 +1,4 @@
---- Living arena (spec 2026-10-01 §8): boss-coloured background swirl for showdowns, darker and
+--- Living arena: boss-coloured background swirl for showdowns, darker and
 --- faster as the boss loses HP, plus a final-stretch music pitch nudge. Vanilla hardcodes a
 --- blue/red background for every showdown; hooks.lua re-applies ours after each vanilla refresh.
 local A = {}

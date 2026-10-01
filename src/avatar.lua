@@ -1,4 +1,4 @@
---- Showdown boss avatar (spec 2026-10-01 §4): a free-roaming copy of the boss chip that talks,
+--- Showdown boss avatar: a free-roaming copy of the boss chip that talks,
 --- flinches, laughs and wears its wounds. Visual only: rebuilt on Continue, never saved.
 local V = {}
 V.SIZE = 2.1

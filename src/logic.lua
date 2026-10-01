@@ -109,7 +109,7 @@ function logic.resolve_prefix(blind_key, moment, count_of)
   return nil
 end
 
--- Showdown stage maths (spec 2026-10-01 §6, §8).
+-- Showdown stage maths.
 logic.WEAK_HIT_RATIO = 0.05 -- a hand under 5% of the boss's max HP makes the avatar laugh
 
 --- Remaining boss health as a fraction of the requirement, clamped to [0, 1].

@@ -1,4 +1,4 @@
---- Showdown cinematics (spec 2026-10-01 §7): letterbox + title card + avatar fall-in before the
+--- Showdown cinematics: letterbox + title card + avatar fall-in before the
 --- intro dialogue, and (Task 8) the slow-motion explosive finale. Owns FinalBoss.timescale.
 local C = {}
 C.BAR_H = 1.1

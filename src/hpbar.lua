@@ -1,4 +1,4 @@
---- Boss HP bar (spec 2026-10-01 §6): hangs under the avatar; damage trail, stage flashes and
+--- Boss HP bar: hangs under the avatar; damage trail, stage flashes and
 --- damage numbers. Numbers only — no localized text beyond the game's own boss name.
 local H = {}
 H.W, H.H = 3.0, 0.22

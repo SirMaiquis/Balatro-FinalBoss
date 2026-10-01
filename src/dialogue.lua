@@ -1,5 +1,5 @@
 --- Speech bubbles on the blind chip: one-off lines, intro sequences, skipping.
---- Replaces v1's global Blind:add_speech_bubble/say_stuff overrides; the bubble lives
+--- Replaces the old single-file version's global Blind:add_speech_bubble/say_stuff overrides; the bubble lives
 --- in blind.children.fb_bubble.
 local D = {}
 D.REACTION_GAP = 2   -- seconds between non-intro lines
@@ -60,7 +60,7 @@ function D.show(blind, key, vars, pitch)
   local bubble = UIBox{definition = G.UIDEF.speech_bubble(key, loc_vars),
     config = {align = align, offset = {x = 0, y = 0}, parent = (not on_avatar) and host or nil}}
   bubble:set_role{role_type = 'Minor', xy_bond = 'Weak', r_bond = 'Strong', major = host}
-  bubble.states.visible = false -- appear once aligned, like v1
+  bubble.states.visible = false -- appear once aligned, like the old single-file version
   if on_avatar then
     bubble.attention_text = true
     D.avatar_bubble = bubble
