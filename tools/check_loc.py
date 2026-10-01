@@ -4,7 +4,8 @@ Usage (repo root):
   uv run --with lupa tools/check_loc.py              # all files
   uv run --with lupa tools/check_loc.py es_419 es_ES # only these
 Checks: every misc.quips / misc.dictionary key of default.lua exists, no extra keys,
-colour tags {X:..}...{} balanced, #n# placeholders identical to English.
+colour tags {X:..}...{} balanced (scanned in order), no empty values, #n# placeholders
+identical to English. A name ending in .lua is used as a file path (default.lua stays the base).
 """
 import pathlib
 import re
@@ -17,44 +18,86 @@ except ImportError:
 
 ROOT = pathlib.Path(__file__).resolve().parent.parent
 LOC = ROOT / 'localization'
-TAG = re.compile(r'\{([^}]*)\}')
+TAG = re.compile(r'\{([^{}]*)\}')
 PLACEHOLDER = re.compile(r'#\d+#')
 SECTIONS = ('quips', 'dictionary')
 
 
 def load(lua, path):
+    """Return (key -> list of lines, list of problem strings). Raises on syntax errors."""
     table = lua.execute(path.read_text(encoding='utf-8'))
-    misc = table['misc'] if table is not None else None
-    out = {}
+    out, problems = {}, []
+    if table is None or lupa.lua_type(table) != 'table':
+        raise ValueError('file does not return a table')
+    misc = table['misc']
+    if misc is None or lupa.lua_type(misc) != 'table':
+        return out, problems
     for section in SECTIONS:
-        sec = misc[section] if misc is not None else None
-        if sec is None:
+        sec = misc[section]
+        if sec is None or lupa.lua_type(sec) != 'table':
             continue
         for key in sec.keys():
             val = sec[key]
-            lines = [val] if isinstance(val, str) else [val[i] for i in sorted(val.keys())]
-            out[f'{section}.{key}'] = lines
-    return out
+            name = f'{section}.{key}'
+            if isinstance(val, str):
+                lines = [val]
+            elif lupa.lua_type(val) == 'table':
+                lines = [val[i] for i in range(1, len(val) + 1)]
+            else:
+                problems.append(f'{name}: value must be a string or list of strings')
+                continue
+            if not lines:
+                problems.append(f'{name}: empty list')
+                continue
+            if not all(isinstance(x, str) for x in lines):
+                problems.append(f'{name}: value must be a string or list of strings')
+                continue
+            if any(not x.strip() for x in lines):
+                problems.append(f'{name}: empty line')
+            out[name] = lines
+    return out, problems
 
 
-def unbalanced(line):
-    tags = TAG.findall(line)
-    opens = sum(1 for t in tags if t.strip())
-    closes = sum(1 for t in tags if not t.strip())
-    return opens != closes
+def tag_problem(line):
+    """Scan {..} tags in order. {} closes; a non-empty tag may replace an open one."""
+    is_open = False
+    for m in TAG.finditer(line):
+        if m.group(1).strip():
+            is_open = True
+        elif is_open:
+            is_open = False
+        else:
+            return 'closing {} with nothing open'
+    if '{' in TAG.sub('', line) or '}' in TAG.sub('', line):
+        return 'stray brace'
+    if is_open:
+        return 'tag left open'
+    return None
 
 
 def main(names):
+    if hasattr(sys.stdout, 'reconfigure'):
+        sys.stdout.reconfigure(encoding='utf-8')
     lua = lupa.LuaRuntime(unpack_returned_tuples=True)
-    base = load(lua, LOC / 'default.lua')
-    paths = [LOC / f'{n}.lua' for n in names] if names else sorted(LOC.glob('*.lua'))
+    try:
+        base, base_problems = load(lua, LOC / 'default.lua')
+    except Exception as e:
+        print(f'default.lua: load error: {e}')
+        return 1
+    paths = [pathlib.Path(n) if n.endswith('.lua') else LOC / f'{n}.lua' for n in names]         if names else sorted(LOC.glob('*.lua'))
     errors = []
     for path in paths:
-        data = load(lua, path)
+        try:
+            data, problems = load(lua, path)
+        except Exception as e:
+            errors.append(f'{path.name}: load error: {e}')
+            continue
+        errors.extend(f'{path.name}: {p}' for p in problems)
         for key, lines in data.items():
             for line in lines:
-                if unbalanced(line):
-                    errors.append(f'{path.name}: {key}: unbalanced tags in {line!r}')
+                why = tag_problem(line)
+                if why:
+                    errors.append(f'{path.name}: {key}: {why} in {ascii(line)}')
         if path.name == 'default.lua':
             continue
         for key, base_lines in base.items():
