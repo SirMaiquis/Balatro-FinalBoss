@@ -119,8 +119,7 @@ function C.skip()
   C.token = C.token + 1
   remove_title()
   spawn_stage(false)
-  local a = FinalBoss.avatar.anchor() -- skipped mid-fall: land it instantly
-  if a then a:hard_set_VT() end
+  FinalBoss.avatar.snap() -- skipped mid-fall: land it instantly
   finish_intro()
 end
 
@@ -186,8 +185,8 @@ function C.game_over(pitch)
   remove_title()
   C.retract_bars()
   C.phase = nil
-  if not FinalBoss.avatar.exists() then return end
   FinalBoss.hpbar.remove()
+  if not FinalBoss.avatar.exists() then return end
   FinalBoss.avatar.laugh(pitch)
   later(0.5, function() FinalBoss.avatar.fade_out(0.8) end)
 end

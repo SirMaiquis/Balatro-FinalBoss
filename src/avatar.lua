@@ -224,6 +224,20 @@ function V.fade_out(duration)
   after(duration + 0.05, function() if V.obj == o then V.remove() end end)
 end
 
+--- Land instantly (cinematic skip mid-fall): no glide, no overshoot.
+function V.snap()
+  local o = V.obj
+  if not o then return end
+  o.velocity.x, o.velocity.y = 0, 0
+  o:hard_set_VT()
+  local s = o.children.sprite
+  if s then
+    s.T.x, s.T.y = o.T.x, o.T.y
+    s.velocity.x, s.velocity.y = 0, 0
+    s:hard_set_VT()
+  end
+end
+
 function V.remove()
   local o = V.obj
   V.obj = nil

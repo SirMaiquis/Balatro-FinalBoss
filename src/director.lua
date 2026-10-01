@@ -202,6 +202,7 @@ function Dir.on_blind_defeated()
   if enc.cinematic then
     -- The finale (started on the winning hand) owns the explosion; clean up if it never ran.
     if FinalBoss.cinematic.phase ~= 'finale' then
+      FinalBoss.fx.play(FinalBoss.registry.get(enc.key).fx.defeat, blind)
       FinalBoss.hpbar.remove()
       FinalBoss.avatar.remove()
     end
