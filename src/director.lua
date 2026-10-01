@@ -58,9 +58,10 @@ function Dir.on_blind_set(blind)
     FinalBoss.fx.play(entry.fx.intro, blind)
     if is_showdown then FinalBoss.arena.start(blind, 0) end
     if st.encounter.cinematic then
-      FinalBoss.avatar.spawn(blind, {fall = false})
       local total, required = fight_numbers(blind)
-      FinalBoss.hpbar.create(FinalBoss.avatar.anchor(), blind, total, required)
+      FinalBoss.cinematic.play_intro(blind, {total = total, required = required},
+        function() FinalBoss.util.guard('intro', Dir.play_intro, proto.key) end)
+      return
     end
   end
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = Dir.INTRO_DELAY, timer = 'REAL',
@@ -69,19 +70,20 @@ function Dir.on_blind_set(blind)
 end
 
 function Dir.play_intro(blind_key)
-  if not FinalBoss.config.dialogue then return end
   local enc, blind = current(blind_key)
-  if not enc then return end
-  if blind.disabled then return end -- Chicot/Luchador already fired the disabled line
+  -- In a cinematic showdown the letterbox retracts when the intro dialogue ends (or never starts).
+  local on_end = enc and enc.cinematic and FinalBoss.cinematic.retract_bars or nil
+  local function nothing_to_say() if on_end then on_end() end end
+  if not enc or not FinalBoss.config.dialogue or blind.disabled then return nothing_to_say() end
   local steps = {}
   for _, moment in ipairs(FinalBoss.logic.intro_sequence(enc.tier)) do
     local key = FinalBoss.registry.resolve(enc.key, moment, enc.last_variant)
     if key then steps[#steps + 1] = {key = key, vars = Dir.vars(blind)} end
   end
-  if #steps == 0 then return end
+  if #steps == 0 then return nothing_to_say() end
   local entry = FinalBoss.registry.get(enc.key)
   FinalBoss.dialogue.play_sequence(blind, steps,
-    FinalBoss.logic.line_duration(FinalBoss.config.intro_speed), entry.voice.pitch)
+    FinalBoss.logic.line_duration(FinalBoss.config.intro_speed), entry.voice.pitch, on_end)
 end
 
 --- Continuing a saved run: restore FX and stage for an unfinished full encounter, never replay the intro.

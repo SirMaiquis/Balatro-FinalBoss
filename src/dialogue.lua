@@ -109,10 +109,11 @@ local function advance(token)
   after(it.duration, function() advance(token) end)
 end
 
-function D.play_sequence(blind, steps, duration, pitch)
+function D.play_sequence(blind, steps, duration, pitch, on_end)
   D.end_intro()
   D.token = D.token + 1
-  D.intro = {blind = blind, steps = steps, index = 0, duration = duration, pitch = pitch, token = D.token}
+  D.intro = {blind = blind, steps = steps, index = 0, duration = duration, pitch = pitch, token = D.token,
+    on_end = on_end}
   enable_chip_skip(blind)
   advance(D.token)
 end
@@ -124,6 +125,7 @@ function D.end_intro()
   D.token = D.token + 1
   disable_chip_skip(it.blind)
   D.hide(it.blind)
+  if it.on_end then FinalBoss.util.guard('intro_end', it.on_end) end
 end
 
 function D.intro_active()
