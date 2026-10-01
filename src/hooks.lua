@@ -78,9 +78,19 @@ end
 -- Vanilla paints every showdown blue/red (common_events.lua ease_background_colour_blind) and
 -- re-runs it on every refresh, including fx.flash's restore: re-apply the arena palette after it.
 local orig_ease_bg_blind = ease_background_colour_blind
-function ease_background_colour_blind(...)
-  local ret = orig_ease_bg_blind(...)
-  if FinalBoss.arena.active() then U.guard('arena_apply', FinalBoss.arena.apply) end
+-- Shop and booster packs keep vanilla's palette, so those refreshes are not re-themed.
+local function neutral_state(state)
+  local S = G.STATES
+  if not (S and state) then return false end
+  return state == S.SHOP or state == S.TAROT_PACK or state == S.PLANET_PACK
+    or state == S.SPECTRAL_PACK or state == S.STANDARD_PACK or state == S.BUFFOON_PACK
+end
+
+function ease_background_colour_blind(state, ...)
+  local ret = orig_ease_bg_blind(state, ...)
+  if FinalBoss.arena.active() and not neutral_state(state) then
+    U.guard('arena_apply', FinalBoss.arena.apply)
+  end
   return ret
 end
 

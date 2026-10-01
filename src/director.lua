@@ -98,7 +98,7 @@ function Dir.on_round_end()
   if G.STATE == G.STATES.GAME_OVER then
     enc.ended = true
     FinalBoss.fx.stop()
-    FinalBoss.arena.stop()
+    FinalBoss.arena.stop(true)
   else
     st.lost_to = nil
   end

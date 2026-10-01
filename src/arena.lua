@@ -4,8 +4,7 @@
 local A = {}
 A.PULSE = 0.3        -- seconds of the per-hit contrast spike
 A.PULSE_BOOST = 1.0
-A.SHOWDOWN_SPIN = 0.5 -- vanilla G.ARGS.spin.real for a showdown (blind.lua set_blind)
-A.state = nil        -- {colour, stage, base_spin, pulse_until, last_spin}
+A.state = nil        -- {colour, stage, base_spin, pulse_until}
 
 local function reduced() return G.SETTINGS.reduced_motion end
 
@@ -22,25 +21,18 @@ function A.apply()
     tertiary_colour = darken(G.C.BLACK, 0.4),
     contrast = p.contrast + (pulsing and A.PULSE_BOOST or 0),
   }
-  if G.ARGS.spin and not reduced() then
-    s.last_spin = s.base_spin * p.spin_mult
-    G.ARGS.spin.real = s.last_spin
-  end
+  if G.ARGS.spin and not reduced() then G.ARGS.spin.real = s.base_spin * p.spin_mult end
 end
 
---- base_spin: vanilla's showdown spin. Read from G.ARGS.spin.real on a fresh blind (set_blind has
---- just written it); on Continue vanilla never sets it (Blind:load), so the caller passes the constant.
-function A.start(blind, stage, base_spin)
+function A.start(blind, stage)
   if not FinalBoss.config.fx then return end
   local c = (blind.config.blind and blind.config.blind.boss_colour) or G.C.RED
   A.state = {colour = {c[1], c[2], c[3], 1}, stage = stage or 0,
-    base_spin = base_spin or (G.ARGS.spin and G.ARGS.spin.real) or 0, pulse_until = 0}
+    base_spin = (G.ARGS.spin and G.ARGS.spin.real) or 0, pulse_until = 0}
   A.apply()
 end
 
-function A.resume(blind, stage)
-  A.start(blind, stage, reduced() and 0 or A.SHOWDOWN_SPIN)
-end
+function A.resume(blind, stage) A.start(blind, stage) end
 
 function A.on_hit(stage)
   local s = A.state
@@ -65,20 +57,19 @@ function A.tick(dt)
   if p.pitch ~= 1 then G.PITCH_MOD = p.pitch end
 end
 
---- Hand the spin back to vanilla, unless vanilla has since set its own (Blind:defeat sets the
---- win spin before blind_defeated fires: keep that).
 local function restore_spin(s)
-  if s and G.ARGS.spin and s.last_spin and G.ARGS.spin.real == s.last_spin then
-    G.ARGS.spin.real = s.base_spin
-  end
+  if s and G.ARGS.spin then G.ARGS.spin.real = s.base_spin end
 end
 
---- Encounter over (defeat or game over): hand the background back to vanilla.
-function A.stop()
+--- Encounter over (defeat or game over): hand the background back to vanilla. Only the game-over
+--- path repaints (repaint = true); after a win vanilla repaints neutral itself, and repainting here
+--- would flash blue/red over the defeat flash.
+function A.stop(repaint)
   local s = A.state
   if not s then return end
   A.state = nil
   restore_spin(s)
+  if not repaint then return end
   local ok, err = pcall(ease_background_colour_blind, G.STATE)
   if not ok then FinalBoss.util.log('warn', 'arena restore failed: ' .. tostring(err)) end
 end
