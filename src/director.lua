@@ -2,6 +2,12 @@
 local Dir = {}
 Dir.INTRO_DELAY = 1.5 -- seconds after the blind is set, so the chip has landed
 
+--- Scores may be Talisman big numbers (tables); logic.lua only ever sees plain numbers.
+local function num(x)
+  if type(x) == 'table' and type(to_number) == 'function' then return to_number(x) end
+  return tonumber(x) or 0
+end
+
 function Dir.enabled()
   local st = G.GAME and G.GAME.FinalBoss
   return not (st and st.disabled_for_run)
@@ -50,6 +56,7 @@ function Dir.play_intro(blind_key)
   if not FinalBoss.config.dialogue then return end
   local enc, blind = current(blind_key)
   if not enc then return end
+  if blind.disabled then return end -- Chicot/Luchador already fired the disabled line
   local steps = {}
   for _, moment in ipairs(FinalBoss.logic.intro_sequence(enc.tier)) do
     local key = FinalBoss.registry.resolve(enc.key, moment, enc.last_variant)
@@ -120,9 +127,10 @@ function Dir.on_hand_after()
       tostring(G.GAME.chips), tostring(SMODS.last_hand_score)))
   end
   enc.last_hand_seen = hands_played
-  local delta = tonumber(SMODS.last_hand_score) or 0
-  local total = Dir.SCORE_INCLUDES_HAND and G.GAME.chips or (G.GAME.chips + delta)
-  local required = blind.chips
+  local delta = num(SMODS.last_hand_score)
+  local chips = num(G.GAME.chips)
+  local total = Dir.SCORE_INCLUDES_HAND and chips or (chips + delta)
+  local required = num(blind.chips)
   local hands_left = G.GAME.current_round.hands_left
   -- Set before the game-over screen picks its quip; cleared in on_round_end if the run continues.
   if hands_left == 0 and total < required then st.lost_to = enc.key end

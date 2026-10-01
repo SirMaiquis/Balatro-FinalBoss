@@ -40,8 +40,8 @@ SMODS.Keybind{key_pressed = 'f6', action = function()
   if not DT.on() then return end
   DT.moment_idx = DT.moment_idx % #DT.MOMENTS + 1
   local moment = DT.MOMENTS[DT.moment_idx]
-  local fired = FinalBoss.director.fire(moment, {force = true})
-  FinalBoss.util.log('info', ('dev: fire %s -> %s'):format(moment, tostring(fired)))
+  local ok, fired = FinalBoss.util.guard('dev_f6', FinalBoss.director.fire, moment, {force = true})
+  FinalBoss.util.log('info', ('dev: fire %s -> %s'):format(moment, tostring(ok and fired)))
 end}
 
 return DT

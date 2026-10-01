@@ -48,3 +48,4 @@ Journal of every step of the 2.0 overhaul. Newest entries at the bottom.
 - [x] Spanish (es_419) text displays correctly in game
 - [ ] Japanese, Korean, Chinese (CN/TW) and Russian text render in the game font (no tofu) and fit the bubble; Polish/German/French diacritics show
 - [x] No FinalBoss errors in the Lovely log
+- 2026-10-01 Final review fixes: vignette cleared on guard failure, Talisman number conversion, README load order, dialogue reset on run teardown, registry input checks, reduced-motion static vignette 0.3, Chicot skips intro.

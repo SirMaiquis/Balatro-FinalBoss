@@ -131,4 +131,7 @@ function D.reset(blind)
   D.hide(blind)
 end
 
+--- Leaving a run: drop dialogue state without touching any blind (the run is gone).
+function D.drop_on_teardown() D.intro = nil; D.saved_click_can = nil; D.token = D.token + 1 end
+
 return D

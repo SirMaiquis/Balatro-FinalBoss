@@ -19,6 +19,8 @@ function U.guard(name, fn, ...)
   if not ok then
     U.log('error', ('%s failed: %s'):format(name, tostring(err)))
     if G and G.GAME then U.state().disabled_for_run = true end
+    -- fx is resolved at call time (util loads first); clear a vignette that stop() will never reach.
+    pcall(function() if FinalBoss.fx and FinalBoss.fx.reset then FinalBoss.fx.reset() end end)
   end
   return ok, err
 end

@@ -32,6 +32,18 @@ T['register rejects unknown tier and fx with warnings'] = function()
   eq(#warnings, 2)
 end
 
+T['register ignores a non-table voice and a non-numeric pitch'] = function()
+  local warnings = {}
+  local R = setup(nil, warnings)
+  local e1 = R.register{blind = 'bl_v1', voice = 'loud'}
+  eq(e1.voice.pitch, 1)
+  local e2 = R.register{blind = 'bl_v2', voice = {pitch = 'high'}}
+  eq(e2.voice.pitch, 1)
+  eq(#warnings, 1, 'one warn for the bad pitch')
+  local e3 = R.register{blind = 'bl_v3', voice = {pitch = 1.25}}
+  eq(e3.voice.pitch, 1.25)
+end
+
 T['register requires a blind key'] = function()
   local R = setup()
   assert(not pcall(R.register, {}), 'should error without blind')

@@ -3,17 +3,28 @@
 local F = {}
 F.PEAK = 1.0   -- vignette intensity during the intro
 F.HOLD = 0.6   -- vignette intensity for the rest of the fight
+F.STATIC = 0.3 -- fixed vignette intensity under reduced motion
 F.vignette = {intensity = 0}
 F.tint = {1, 1, 1}
 F.gen = 0      -- bumped by stop() to cancel pending eases
+
+local VARS = {fb_intensity = 0, fb_tint = {array = {F.tint}}} -- reused every frame
 
 SMODS.Shader{key = 'vignette', path = 'vignette.fs'}
 SMODS.ScreenShader{
   key = 'vignette_screen',
   order = 1, -- after vanilla's CRT pass (order 0)
   shader = FinalBoss.mod.prefix .. '_vignette',
-  should_apply = function(self) return FinalBoss.config.fx and F.vignette.intensity > 0.001 end,
-  send_vars = function(self) return {fb_intensity = F.vignette.intensity, fb_tint = {array = {F.tint}}} end,
+  should_apply = function(self)
+    if not FinalBoss.config.fx or F.vignette.intensity <= 0.001 then return false end
+    local st = G.GAME and G.GAME.FinalBoss
+    return not (st and st.disabled_for_run)
+  end,
+  send_vars = function(self)
+    VARS.fb_intensity = F.vignette.intensity
+    VARS.fb_tint.array[1] = F.tint
+    return VARS
+  end,
 }
 
 local function enabled() return FinalBoss.config.fx end
@@ -46,7 +57,7 @@ local EFFECTS = {}
 
 function EFFECTS.pulse(blind)
   set_tint(blind)
-  if reduced() then F.vignette.intensity = F.HOLD; return end
+  if reduced() then F.vignette.intensity = F.STATIC; return end
   local gen = F.gen
   ease_vignette(F.PEAK, 1.5)
   later(4.0, gen, function() ease_vignette(F.HOLD, 2.0) end)
@@ -89,7 +100,7 @@ function EFFECTS.phase_shift(blind)
   EFFECTS.flash(blind)
   EFFECTS.shake(blind)
   set_tint(blind)
-  if reduced() then F.vignette.intensity = F.HOLD; return end
+  if reduced() then F.vignette.intensity = F.STATIC; return end
   local gen = F.gen
   ease_vignette(1.0, 0.3)
   later(1.2, gen, function() ease_vignette(F.HOLD, 1.5) end)
@@ -116,7 +127,7 @@ end
 function F.resume(blind)
   if not enabled() then return end
   set_tint(blind)
-  F.vignette.intensity = F.HOLD
+  F.vignette.intensity = reduced() and F.STATIC or F.HOLD
 end
 
 return F

@@ -14,6 +14,10 @@ Bosses talk back. Every boss blind gets a short line of dialogue when it starts,
 2. Extract it into `%AppData%\Balatro\Mods\` so the files end up in `%AppData%\Balatro\Mods\FinalBoss\`.
 3. Start Balatro. The mod appears in the Mods menu as "Final Boss" with its own config tabs.
 
+### Upgrading from v1
+
+Delete the old `FinalBoss` folder first, then install v2. If you download the source from GitHub, make sure the extracted folder is not a second copy (for example `Balatro-FinalBoss-main`) sitting next to an old one in `Mods\`.
+
 ## Features
 
 ### Encounter tiers
@@ -47,19 +51,19 @@ By default, showdowns appear exactly like vanilla (ante 8, 16, ...). Turn on the
 
 ### Configuration
 
-Set in the Mods menu (Final Boss, Config and Showdowns tabs). The values live in `config.lua`.
+Set in the Mods menu (Final Boss, Config and Showdowns tabs). Steamodded saves your choices; `config.lua` only holds the defaults.
 
 | Key | What it does | Default |
 |---|---|---|
 | `dialogue` | Boss and Jimbo lines (intros, reactions, defeat, gloat) | `true` |
 | `music` | FinalBoss showdown tracks during full-tier encounters | `true` |
-| `fx` | Screen effects: vignette, shake, flash, shatter. They only run in full-tier encounters. Respects Balatro's reduced motion and screenshake settings | `true` |
+| `fx` | Screen effects: vignette, shake, flash, shatter. They only run in full-tier encounters. Respects Balatro's reduced motion and screenshake settings. Under reduced motion the shake and the vignette animation are off (the vignette stays at a fixed strength), while the background flash and the defeat burst still run | `true` |
 | `intro_speed` | How long each intro line stays up: 1 slow (6 s), 2 normal (4 s), 3 fast (2.5 s) | `2` |
 | `min_ante` | First ante at which regular bosses get light-tier dialogue (1 to 8) | `1` |
 | `showdown.enabled` | Use the extra showdown schedule | `false` |
 | `showdown.start_ante` | First scheduled showdown ante (1 to 8) | `8` |
 | `showdown.every` | Interval between scheduled showdowns (1 to 8) | `8` |
-| `dev_mode` | Developer keys while in a run: F5 cycle the forced boss through the 5 vanilla showdowns (the 6th press clears it), F6 fire the next moment (cycles big hand, close, last hand, disabled, defeat), F7 dump state to the Lovely log | `false` |
+| `dev_mode` | Developer keys while in a run: F5 cycle the forced boss through the 5 vanilla showdowns (the 6th press clears it; press it during a round or in the shop, before the blind-select screen appears), F6 fire the next moment (cycles big hand, close, last hand, disabled, defeat), F7 dump state to the Lovely log | `false` |
 
 The dialogue, music and FX toggles are independent. Any combination works, for example music and effects with no dialogue.
 
@@ -74,7 +78,7 @@ end
 -- localization: misc.quips.fb_bl_mymod_boss_intro_1 = {"My line", "here"}
 ```
 
-**Load order.** FinalBoss loads at priority -10. Keep your mod's priority above -10 (the default 0 is fine), or add FinalBoss as a dependency, so that `FinalBoss` exists when your main file runs.
+**Load order.** FinalBoss loads at priority -10, and Steamodded orders mods by priority and then id (dependencies do not change the load order). Keep your mod's priority above -10 (the default 0 is fine) so that `FinalBoss` exists when your main file runs, or register at runtime (for example from your own `calculate` or `setting_blind`) after checking that `FinalBoss` exists.
 
 Always check that `FinalBoss` exists first so your mod still works without it. Registering the same `blind` again overwrites the earlier entry (and logs it).
 
@@ -91,7 +95,7 @@ Always check that `FinalBoss` exists first so your mod still works without it. R
 
 ### Custom music
 
-FinalBoss only bids for its own tracks, so a custom track must be your own `SMODS.Sound` that bids for itself. The key must contain "music" (a Steamodded requirement), and you pass its full prefixed key in the `music` field.
+FinalBoss only bids for its own tracks, so a custom track must be your own `SMODS.Sound` that bids for itself. The key must contain "music" (a Steamodded requirement), and you pass its full prefixed key in the `music` field. The audio file lives in your mod's `assets/sounds/` folder.
 
 ```lua
 SMODS.Sound{
@@ -100,7 +104,7 @@ SMODS.Sound{
   volume = 0.6,
   pitch = 1,
   select_music_track = function(self)
-    local st = G.GAME.FinalBoss
+    local st = G.GAME and G.GAME.FinalBoss
     if st and st.encounter and st.encounter.track == self.key and not st.encounter.ended then
       return 10 -- beats vanilla boss music
     end
@@ -131,6 +135,11 @@ All text lives in `misc.quips` in your mod's localization. Each moment can have 
 `<blind>` is the full blind key, for example `bl_hook`. For each moment FinalBoss tries the boss-specific key first, then `fb_generic_<moment>_<n>`, and otherwise skips the moment. The shared `opener` and `closer` lines have no generic fallback: if none exist, they are skipped. A raw key is never shown to the player. Generic lines receive the boss name as `#1#`.
 
 Writing tips: each quip is 1 or 2 lines, and each line should stay under about 24 visible characters so it fits the speech bubble. A per-boss gloat line is spoken by Jimbo on the game-over screen and gets no placeholders, so name the boss in the text itself.
+
+## Compatibility
+
+- Big-number scores (Talisman) are converted to plain numbers before FinalBoss compares them, but this path has not been playtested.
+- Mods that replace (rather than wrap) `SMODS.is_showdown_ante` or `end_round` override FinalBoss's behaviour for the showdown schedule and the round-end handling.
 
 ## Languages
 

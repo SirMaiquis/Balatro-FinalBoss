@@ -84,7 +84,8 @@ def main(names):
     except Exception as e:
         print(f'default.lua: load error: {e}')
         return 1
-    paths = [pathlib.Path(n) if n.endswith('.lua') else LOC / f'{n}.lua' for n in names]         if names else sorted(LOC.glob('*.lua'))
+    paths = ([pathlib.Path(n) if n.endswith('.lua') else LOC / f'{n}.lua' for n in names]
+             if names else sorted(LOC.glob('*.lua')))
     errors = []
     for path in paths:
         try:

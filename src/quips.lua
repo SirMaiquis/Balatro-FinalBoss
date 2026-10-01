@@ -10,7 +10,7 @@ Q.gloat = SMODS.JimboQuip{
   filter = function(self, quip_type)
     if quip_type ~= 'loss' or not FinalBoss.config.dialogue then return false end
     local st = G.GAME and G.GAME.FinalBoss
-    if not st or not st.lost_to then return false end
+    if not st or st.disabled_for_run or not st.lost_to then return false end
     local key = FinalBoss.registry.resolve(st.lost_to, 'gloat', st.encounter and st.encounter.last_variant)
     if not key then return false end
     self.extra.text_key = key

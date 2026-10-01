@@ -21,8 +21,8 @@ FinalBoss.mod.calculate = function(self, context)
 end
 
 local orig_blind_load = Blind.load
-function Blind:load(blind_table)
-  local ret = orig_blind_load(self, blind_table)
+function Blind:load(...)
+  local ret = orig_blind_load(self, ...)
   if G.GAME and director().enabled() then U.guard('blind_load', director().on_blind_loaded, self) end
   return ret
 end
@@ -67,7 +67,10 @@ end
 local orig_delete_run = Game.delete_run
 function Game:delete_run(...)
   local ret = orig_delete_run(self, ...)
-  U.guard('delete_run', FinalBoss.fx.reset)
+  U.guard('delete_run', function()
+    FinalBoss.fx.reset()
+    FinalBoss.dialogue.drop_on_teardown()
+  end)
   return ret
 end
 

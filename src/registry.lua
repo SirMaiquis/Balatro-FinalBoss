@@ -17,7 +17,11 @@ function R.register(def)
     if VALID_TIERS[def.tier] then e.tier = def.tier
     else FinalBoss.util.log('warn', ('register_encounter %s: unknown tier %s, using auto'):format(def.blind, tostring(def.tier))) end
   end
-  if def.voice and def.voice.pitch then e.voice.pitch = def.voice.pitch end
+  if type(def.voice) == 'table' and def.voice.pitch ~= nil then
+    local pitch = tonumber(def.voice.pitch)
+    if pitch then e.voice.pitch = pitch
+    else FinalBoss.util.log('warn', ('register_encounter %s: bad voice pitch %s, using 1'):format(def.blind, tostring(def.voice.pitch))) end
+  end
   e.music = def.music
   for slot, name in pairs(def.fx or {}) do
     if VALID_FX[name] then e.fx[slot] = name
