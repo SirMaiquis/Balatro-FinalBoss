@@ -86,8 +86,8 @@ function Dir.on_round_end()
     func = function() FinalBoss.util.guard('hide_bubble', FinalBoss.dialogue.hide, blind); return true end}))
 end
 
--- Whether G.GAME.chips already includes the just-scored hand at context.after.
--- Spec §5 expects false; confirmed in game in Task 8 Step 6.
+-- Whether G.GAME.chips already includes the just-scored hand at context.after. False per smods source
+-- (evaluate_play queues the chip ease; context.after runs before it); re-confirmed in game at playtest.
 Dir.SCORE_INCLUDES_HAND = false
 
 function Dir.fire(moment, opts)
@@ -114,7 +114,7 @@ function Dir.on_hand_after()
   local enc, blind, st = current()
   if not enc or enc.ended then return end
   local hands_played = G.GAME.current_round.hands_played
-  if enc.last_hand_seen == hands_played then return end -- context may arrive twice per hand
+  if enc.last_hand_seen == hands_played then return end -- defensive: one evaluation per hand
   if FinalBoss.config.dev_mode then
     FinalBoss.util.log('info', ('dev: at after chips=%s delta=%s'):format(
       tostring(G.GAME.chips), tostring(SMODS.last_hand_score)))

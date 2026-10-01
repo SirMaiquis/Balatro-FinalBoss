@@ -14,7 +14,7 @@ Q.gloat = SMODS.JimboQuip{
     local key = FinalBoss.registry.resolve(st.lost_to, 'gloat', st.encounter and st.encounter.last_variant)
     if not key then return false end
     self.extra.text_key = key
-    return true, {weight = 100}
+    return true, {weight = 1e6}
   end,
 }
 
