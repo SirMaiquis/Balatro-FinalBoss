@@ -11,7 +11,7 @@ local function load_file(path)
 end
 
 -- Order matters: util and logic first; hooks last (it wires everything together).
-local MODULES = {'util', 'logic', 'music', 'fx'}
+local MODULES = {'util', 'logic', 'registry', 'music', 'fx'}
 
 for _, name in ipairs(MODULES) do
   FinalBoss[name] = load_file('src/' .. name .. '.lua')
@@ -20,5 +20,8 @@ for _, name in ipairs(MODULES) do
     FinalBoss.util.fill_defaults(FinalBoss.config, load_file('config.lua'))
   end
 end
+
+FinalBoss.register_encounter = FinalBoss.registry.register
+FinalBoss.encounters = {vanilla = load_file('src/encounters/vanilla.lua')}
 
 FinalBoss.util.log('info', 'FinalBoss ' .. tostring(FinalBoss.VERSION) .. ' loaded')

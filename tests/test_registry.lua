@@ -1,0 +1,99 @@
+local T = {}
+
+local function eq(actual, expected, msg)
+  if actual ~= expected then
+    error((msg or 'value') .. ': expected ' .. tostring(expected) .. ', got ' .. tostring(actual), 2)
+  end
+end
+
+-- Fresh registry with fake game globals.
+local function setup(quips, warnings)
+  _G.G = {SETTINGS = {language = 'en-us'}, localization = {misc = {quips = quips or {}}}}
+  _G.FinalBoss = {
+    util = {log = function(level, msg) if warnings then warnings[#warnings + 1] = level .. ':' .. msg end end},
+    logic = require('src.logic'),
+  }
+  package.loaded['src.registry'] = nil
+  return require('src.registry')
+end
+
+T['register normalizes defaults'] = function()
+  local R = setup()
+  local e = R.register{blind = 'bl_hook'}
+  eq(e.tier, 'auto'); eq(e.voice.pitch, 1); eq(e.fx.intro, 'pulse'); eq(e.fx.defeat, 'shatter')
+  eq(R.get('bl_hook'), e)
+end
+
+T['register rejects unknown tier and fx with warnings'] = function()
+  local warnings = {}
+  local R = setup(nil, warnings)
+  local e = R.register{blind = 'bl_x', tier = 'epic', fx = {intro = 'laser', defeat = 'flash'}}
+  eq(e.tier, 'auto'); eq(e.fx.intro, 'pulse'); eq(e.fx.defeat, 'flash')
+  eq(#warnings, 2)
+end
+
+T['register requires a blind key'] = function()
+  local R = setup()
+  assert(not pcall(R.register, {}), 'should error without blind')
+end
+
+T['get unknown blind returns auto default'] = function()
+  local R = setup()
+  local e = R.get('bl_some_mod_boss')
+  eq(e.blind, 'bl_some_mod_boss'); eq(e.tier, 'auto'); eq(e.voice.pitch, 1)
+end
+
+T['count probes consecutive variants'] = function()
+  local R = setup{fb_bl_hook_intro_1 = {'a'}, fb_bl_hook_intro_2 = {'b'}, fb_bl_hook_intro_4 = {'gap'}}
+  eq(R.count('fb_bl_hook_intro'), 2)
+  eq(R.count('fb_nothing'), 0)
+end
+
+T['count cache resets on language change'] = function()
+  local R = setup{fb_opener_1 = {'a'}}
+  eq(R.count('fb_opener'), 1)
+  G.localization.misc.quips.fb_opener_2 = {'b'}
+  eq(R.count('fb_opener'), 1, 'cached')
+  G.SETTINGS.language = 'es_419'
+  eq(R.count('fb_opener'), 2, 'after language change')
+end
+
+T['resolve picks boss-specific key and records variant'] = function()
+  local R = setup{fb_bl_hook_intro_1 = {'a'}}
+  local last = {}
+  eq(R.resolve('bl_hook', 'intro', last), 'fb_bl_hook_intro_1')
+  eq(last.fb_bl_hook_intro, 1)
+end
+
+T['resolve falls back to generic'] = function()
+  local R = setup{fb_generic_close_1 = {'a'}}
+  eq(R.resolve('bl_mod_boss', 'close', {}), 'fb_generic_close_1')
+end
+
+T['resolve returns nil when nothing exists'] = function()
+  local R = setup{}
+  eq(R.resolve('bl_mod_boss', 'close', {}), nil)
+end
+
+T['resolve does not repeat the last variant'] = function()
+  local R = setup{fb_opener_1 = {'a'}, fb_opener_2 = {'b'}}
+  local last = {}
+  local first = R.resolve('bl_hook', 'opener', last)
+  for _ = 1, 20 do
+    local nxt = R.resolve('bl_hook', 'opener', last)
+    assert(nxt ~= first, 'repeated ' .. nxt)
+    first = nxt
+  end
+end
+
+T['vanilla encounters list has 28 bosses'] = function()
+  _G.FinalBoss = nil
+  package.loaded['src.encounters.vanilla'] = nil
+  local bosses = require('src.encounters.vanilla')
+  local n = 0
+  for _ in pairs(bosses) do n = n + 1 end
+  eq(n, 28)
+  assert(bosses.bl_hook and bosses.bl_final_bell, 'missing expected keys')
+end
+
+return T
