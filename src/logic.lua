@@ -49,4 +49,64 @@ function logic.intro_sequence(tier)
   return {}
 end
 
+logic.BIG_HAND_RATIO = 0.30 -- one hand scoring >= 30% of the requirement
+logic.CLOSE_RATIO = 0.75    -- running total >= 75% of the requirement (not yet won)
+
+-- Mid-fight reactions: once each per blind, max one per blind in the light tier.
+logic.REACTIONS = {big_hand = true, close = true, last_hand = true, disabled = true}
+
+local PRIORITY = {'last_hand', 'close', 'big_hand'}
+
+--- args: {is_boss, is_showdown, entry_tier = 'auto'|'light'|'full', ante, min_ante}
+function logic.decide_tier(a)
+  if not a.is_boss then return 'none' end
+  if a.entry_tier == 'light' or a.entry_tier == 'full' then return a.entry_tier end
+  if a.is_showdown then return 'full' end
+  if a.ante >= a.min_ante then return 'light' end
+  return 'none'
+end
+
+function logic.can_fire(moment, tier, fired, reactions)
+  if tier ~= 'light' and tier ~= 'full' then return false end
+  if fired[moment] then return false end
+  if logic.REACTIONS[moment] and tier == 'light' and reactions >= 1 then return false end
+  return true
+end
+
+--- Decide which moment (if any) a just-scored hand triggers.
+--- a: {delta, total, required, hands_left, fired, tier, reactions}
+function logic.detect_moments(a)
+  if not a.required or a.required <= 0 then return nil end
+  if a.total >= a.required then
+    return logic.can_fire('defeat', a.tier, a.fired, a.reactions) and 'defeat' or nil
+  end
+  local hit = {
+    last_hand = a.hands_left == 0,
+    close = a.total >= logic.CLOSE_RATIO * a.required,
+    big_hand = a.delta >= logic.BIG_HAND_RATIO * a.required,
+  }
+  for _, moment in ipairs(PRIORITY) do
+    if hit[moment] and logic.can_fire(moment, a.tier, a.fired, a.reactions) then return moment end
+  end
+  return nil
+end
+
+logic.SHARED_MOMENTS = {opener = true, closer = true}
+
+--- Find the localization key prefix for a moment: boss-specific, then generic.
+--- count_of(prefix) returns how many variants (prefix_1, prefix_2, ...) exist.
+--- Returns prefix, is_generic  -- or nil when nothing exists.
+function logic.resolve_prefix(blind_key, moment, count_of)
+  if logic.SHARED_MOMENTS[moment] then
+    local shared = 'fb_' .. moment
+    if count_of(shared) > 0 then return shared, false end
+    return nil
+  end
+  local specific = 'fb_' .. blind_key .. '_' .. moment
+  if count_of(specific) > 0 then return specific, false end
+  local generic = 'fb_generic_' .. moment
+  if count_of(generic) > 0 then return generic, true end
+  return nil
+end
+
 return logic
