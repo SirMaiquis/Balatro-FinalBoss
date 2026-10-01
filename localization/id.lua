@@ -55,6 +55,9 @@ return {
             fb_generic_gloat_1 = {"Boss itu terlalu", "berat..."},
             fb_generic_gloat_2 = {"Bandar selalu", "menang."},
             fb_generic_gloat_3 = {"Semoga lebih hoki", "di run berikutnya."},
+            fb_generic_interrupted_1 = {"Pidatoku!"},
+            fb_generic_interrupted_2 = {"Oke... jadi", "begitu caranya."},
+            fb_generic_interrupted_3 = {"Tak ada salam?"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Tapi aku", "The Hook"},
@@ -66,6 +69,7 @@ return {
             fb_bl_hook_disabled_1 = {"Kailku!", "Patah!"},
             fb_bl_hook_defeat_1 = {"Baiklah... kamu", "kulepas."},
             fb_bl_hook_gloat_1 = {"Kena kail!"},
+            fb_bl_hook_interrupted_1 = {"Kurang ajar! Aku", "belum selesai bicara!"},
 
             -- The Ox: playing your most played hand sets money to $0
             fb_bl_ox_name_1 = {"Tapi aku", "The Ox"},
@@ -77,6 +81,7 @@ return {
             fb_bl_ox_disabled_1 = {"Tandukku!", "Jadi tumpul!"},
             fb_bl_ox_defeat_1 = {"Kamu memegang", "tanduk banteng..."},
             fb_bl_ox_gloat_1 = {"Sekarang", "kamu bokek!"},
+            fb_bl_ox_interrupted_1 = {"Oh, jadi BEGINI", "maumu, ya."},
 
             -- The House: first hand is drawn face down
             fb_bl_house_name_1 = {"Tapi aku", "The House"},
@@ -88,6 +93,7 @@ return {
             fb_bl_house_disabled_1 = {"Penutup mataku!", "Terlepas!"},
             fb_bl_house_defeat_1 = {"The House...", "telah runtuh."},
             fb_bl_house_gloat_1 = {"Bandar menang!"},
+            fb_bl_house_interrupted_1 = {"Aturan rumah:", "belum boleh main!"},
 
             -- The Wall: extra large blind
             fb_bl_wall_name_1 = {"Tapi aku", "The Wall"},
@@ -99,6 +105,7 @@ return {
             fb_bl_wall_disabled_1 = {"Retak! Tembokku", "retak!"},
             fb_bl_wall_defeat_1 = {"Tembok...", "pun runtuh."},
             fb_bl_wall_gloat_1 = {"Mentok, kan?"},
+            fb_bl_wall_interrupted_1 = {"Seperti bicara", "ke tembok... eh."},
 
             -- The Wheel: 1 in 7 cards get drawn face down
             fb_bl_wheel_name_1 = {"Tapi aku", "The Wheel"},
@@ -110,6 +117,7 @@ return {
             fb_bl_wheel_disabled_1 = {"Roda berhenti?", "Curang!"},
             fb_bl_wheel_defeat_1 = {"Roda nasib...", "berbalik padaku."},
             fb_bl_wheel_gloat_1 = {"Roda berputar,", "kalah!"},
+            fb_bl_wheel_interrupted_1 = {"Sabar! Aku masih", "berputar!"},
 
             -- The Arm: decrease level of played poker hand
             fb_bl_arm_name_1 = {"Tapi aku", "The Arm"},
@@ -121,6 +129,7 @@ return {
             fb_bl_arm_disabled_1 = {"Lenganku lemas!", "Curang!"},
             fb_bl_arm_defeat_1 = {"Kamu mengalahkan", "lengan kuatku."},
             fb_bl_arm_gloat_1 = {"Turun level!"},
+            fb_bl_arm_interrupted_1 = {"Lepaskan! Aku belum", "selesai pamer otot!"},
 
             -- The Club: all Club cards are debuffed
             fb_bl_club_name_1 = {"Tapi aku", "The Club"},
@@ -132,6 +141,7 @@ return {
             fb_bl_club_disabled_1 = {"Keritingku", "kehilangan taring!"},
             fb_bl_club_defeat_1 = {"Klub tutup.", "Saatnya pergi..."},
             fb_bl_club_gloat_1 = {"Klub tutup,", "kamu kalah!"},
+            fb_bl_club_interrupted_1 = {"Hei! Di klubku,", "aku bicara duluan."},
 
             -- The Fish: cards drawn face down after each hand played
             fb_bl_fish_name_1 = {"Tapi aku", "The Fish"},
@@ -143,6 +153,7 @@ return {
             fb_bl_fish_disabled_1 = {"Sisikku!", "Rontok semua!"},
             fb_bl_fish_defeat_1 = {"Tertangkap...", "oleh sang ahli."},
             fb_bl_fish_gloat_1 = {"Kamu basah kuyup!"},
+            fb_bl_fish_interrupted_1 = {"Kamu memotong", "tali pancingku!"},
 
             -- The Psychic: must play 5 cards
             fb_bl_psychic_name_1 = {"Tapi aku", "The Psychic"},
@@ -154,6 +165,7 @@ return {
             fb_bl_psychic_disabled_1 = {"Penglihatanku!", "Hilang semua!"},
             fb_bl_psychic_defeat_1 = {"Sudah kuduga.", "...Atau tidak?"},
             fb_bl_psychic_gloat_1 = {"Sudah kuduga!"},
+            fb_bl_psychic_interrupted_1 = {"Sudah kuduga.", "...Tetap tidak sopan."},
 
             -- The Goad: all Spade cards are debuffed
             fb_bl_goad_name_1 = {"Tapi aku", "The Goad"},
@@ -165,6 +177,7 @@ return {
             fb_bl_goad_disabled_1 = {"Sekarang aku tak", "bisa memanas-manasi!"},
             fb_bl_goad_defeat_1 = {"Sialan,", "kamu menang."},
             fb_bl_goad_gloat_1 = {"Gali kuburmu", "sendiri!"},
+            fb_bl_goad_interrupted_1 = {"Memancing AKU?", "Baiklah!"},
 
             -- The Water: start with 0 discards
             fb_bl_water_name_1 = {"Tapi aku", "The Water"},
@@ -176,6 +189,7 @@ return {
             fb_bl_water_disabled_1 = {"Discard mengalir", "lagi!"},
             fb_bl_water_defeat_1 = {"Aku kering kerontang..."},
             fb_bl_water_gloat_1 = {"Kamu hanyut!"},
+            fb_bl_water_interrupted_1 = {"Memotongku? Kamu", "akan tenggelam!"},
 
             -- The Window: all Diamond cards are debuffed
             fb_bl_window_name_1 = {"Tapi aku", "The Window"},
@@ -187,6 +201,7 @@ return {
             fb_bl_window_disabled_1 = {"Jendelaku pecah!", "Wajik bersinar!"},
             fb_bl_window_defeat_1 = {"Jendela peluangku", "tertutup."},
             fb_bl_window_gloat_1 = {"Wajik? Di-debuff!"},
+            fb_bl_window_interrupted_1 = {"Kata-kataku dibuang", "ke luar jendela?!"},
 
             -- The Manacle: -1 hand size
             fb_bl_manacle_name_1 = {"Tapi aku", "The Manacle"},
@@ -198,6 +213,7 @@ return {
             fb_bl_manacle_disabled_1 = {"Borgolnya!", "Terlepas!"},
             fb_bl_manacle_defeat_1 = {"Akhirnya bebas...", "dariku."},
             fb_bl_manacle_gloat_1 = {"Tanganmu", "terborgol!"},
+            fb_bl_manacle_interrupted_1 = {"Berhenti! Akan", "kurantai kamu!"},
 
             -- The Eye: no repeat hand types this round
             fb_bl_eye_name_1 = {"Tapi aku", "The Eye"},
@@ -209,6 +225,7 @@ return {
             fb_bl_eye_disabled_1 = {"Mataku! Siapa yang", "menusuk mataku?!"},
             fb_bl_eye_defeat_1 = {"Jauh di mata,", "jauh di hati..."},
             fb_bl_eye_gloat_1 = {"Sudah kubilang!"},
+            fb_bl_eye_interrupted_1 = {"Aku melihatnya!", "Tidak sopan."},
 
             -- The Mouth: play only 1 hand type this round
             fb_bl_mouth_name_1 = {"Tapi aku", "The Mouth"},
@@ -220,6 +237,7 @@ return {
             fb_bl_mouth_disabled_1 = {"Siapa yang", "membungkamku?!"},
             fb_bl_mouth_defeat_1 = {"Aku kehabisan kata..."},
             fb_bl_mouth_gloat_1 = {"Diam, pecundang!"},
+            fb_bl_mouth_interrupted_1 = {"Hei! Mulut ini", "masih bicara!"},
 
             -- The Plant: all face cards are debuffed
             fb_bl_plant_name_1 = {"Tapi aku", "The Plant"},
@@ -231,6 +249,7 @@ return {
             fb_bl_plant_disabled_1 = {"Kelopakku!", "Hilang semua!"},
             fb_bl_plant_defeat_1 = {"Layu...", "Aku akan tumbuh lagi."},
             fb_bl_plant_gloat_1 = {"Akui saja,", "kamu kalah!"},
+            fb_bl_plant_interrupted_1 = {"Biarkan aku tumbuh", "dulu, tak sabaran!"},
 
             -- The Serpent: after play or discard, always draw 3 cards
             fb_bl_serpent_name_1 = {"Tapi aku", "The Serpent"},
@@ -242,6 +261,7 @@ return {
             fb_bl_serpent_disabled_1 = {"Taringku! Sss...", "Bisaku habis!"},
             fb_bl_serpent_defeat_1 = {"Kulit kulepas...", "begitu juga harga diri."},
             fb_bl_serpent_gloat_1 = {"Sss-ampai jumpa!"},
+            fb_bl_serpent_interrupted_1 = {"Sss! Jangan", "potong omonganku!"},
 
             -- The Pillar: cards played previously this ante are debuffed
             fb_bl_pillar_name_1 = {"Tapi aku", "The Pillar"},
@@ -253,6 +273,7 @@ return {
             fb_bl_pillar_disabled_1 = {"Ingatanku!", "Memudar..."},
             fb_bl_pillar_defeat_1 = {"Pilar komunitas", "telah tumbang."},
             fb_bl_pillar_gloat_1 = {"Masih tegak!"},
+            fb_bl_pillar_interrupted_1 = {"Tak hormat pada", "yang lebih tua?"},
 
             -- The Needle: play only 1 hand
             fb_bl_needle_name_1 = {"Tapi aku", "The Needle"},
@@ -264,6 +285,7 @@ return {
             fb_bl_needle_disabled_1 = {"Jarumku!", "Tumpul!"},
             fb_bl_needle_defeat_1 = {"Permainan tajam.", "Kamu menang."},
             fb_bl_needle_gloat_1 = {"Intinya,", "kamu kalah!"},
+            fb_bl_needle_interrupted_1 = {"Tajam sekali.", "Aku belum selesai!"},
 
             -- The Head: all Heart cards are debuffed
             fb_bl_head_name_1 = {"Tapi aku", "The Head"},
@@ -275,6 +297,7 @@ return {
             fb_bl_head_disabled_1 = {"Kepalaku sakit!", "Hati aktif lagi?"},
             fb_bl_head_defeat_1 = {"Kehilangan kepala...", "gara-gara kamu."},
             fb_bl_head_gloat_1 = {"Tak punya", "hati, ya?"},
+            fb_bl_head_interrupted_1 = {"Hilang akal, ya?", "Aku sedang bicara!"},
 
             -- The Tooth: lose $1 per card played
             fb_bl_tooth_name_1 = {"Tapi aku", "The Tooth"},
@@ -286,6 +309,7 @@ return {
             fb_bl_tooth_disabled_1 = {"Gigitanku!", "Hilang!"},
             fb_bl_tooth_defeat_1 = {"Habis-habisan,", "aku kalah."},
             fb_bl_tooth_gloat_1 = {"Bayar,", "dasar bodoh!"},
+            fb_bl_tooth_interrupted_1 = {"Grr! Kamu akan", "membayarnya!"},
 
             -- The Flint: base Chips and Mult are halved
             fb_bl_flint_name_1 = {"Tapi aku", "The Flint"},
@@ -297,6 +321,7 @@ return {
             fb_bl_flint_disabled_1 = {"Kekuatan penuh?!", "Tidak adil!"},
             fb_bl_flint_defeat_1 = {"Percikanku", "padam."},
             fb_bl_flint_gloat_1 = {"Seru setengah!"},
+            fb_bl_flint_interrupted_1 = {"Jangan memercik!", "Aku sedang bicara!"},
 
             -- The Mark: all face cards are drawn face down
             fb_bl_mark_name_1 = {"Tapi aku", "The Mark"},
@@ -308,6 +333,7 @@ return {
             fb_bl_mark_disabled_1 = {"Wajah-wajahnya!", "Aku bisa lihat!"},
             fb_bl_mark_defeat_1 = {"Kamu meninggalkan", "tanda padaku."},
             fb_bl_mark_gloat_1 = {"Ditandai kalah!"},
+            fb_bl_mark_interrupted_1 = {"Dicatat. Kamu", "sudah kutandai."},
 
             -- Amber Acorn: flips and shuffles all Joker cards
             fb_bl_final_acorn_name_1 = {"Tapi aku", "Amber Acorn"},
@@ -319,6 +345,7 @@ return {
             fb_bl_final_acorn_disabled_1 = {"Acornku!", "Kembali teratur?!"},
             fb_bl_final_acorn_defeat_1 = {"Kamu memecahkan", "cangkangku..."},
             fb_bl_final_acorn_gloat_1 = {"Gila-gilaan!"},
+            fb_bl_final_acorn_interrupted_1 = {"Tunggu! Aku bahkan", "belum bertunas!"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"Tapi aku", "Verdant Leaf"},
@@ -330,6 +357,7 @@ return {
             fb_bl_final_leaf_disabled_1 = {"Daunku!", "Layu seketika!"},
             fb_bl_final_leaf_defeat_1 = {"Aku pergi...", "seperti daun gugur."},
             fb_bl_final_leaf_gloat_1 = {"Gugur, kamu kalah!"},
+            fb_bl_final_leaf_interrupted_1 = {"Baiklah. Lewati", "basa-basinya."},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"Tapi aku", "Violet Vessel"},
@@ -341,6 +369,7 @@ return {
             fb_bl_final_vessel_disabled_1 = {"Kapalku!", "Tenggelam!"},
             fb_bl_final_vessel_defeat_1 = {"Bejana ini...", "telah kosong."},
             fb_bl_final_vessel_gloat_1 = {"Kalah telak!"},
+            fb_bl_final_vessel_interrupted_1 = {"Berlayar sebelum", "pidatoku? Berani."},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"Tapi aku", "Crimson Heart"},
@@ -352,6 +381,7 @@ return {
             fb_bl_final_heart_disabled_1 = {"Hatiku! Detaknya", "terlewat."},
             fb_bl_final_heart_defeat_1 = {"Hatiku...", "patah."},
             fb_bl_final_heart_gloat_1 = {"Sudah patah hati?"},
+            fb_bl_final_heart_interrupted_1 = {"Memotongku?", "Tak punya hati!"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"Tapi aku", "Cerulean Bell"},
@@ -363,6 +393,7 @@ return {
             fb_bl_final_bell_disabled_1 = {"Loncengku bisu!", "Curang!"},
             fb_bl_final_bell_defeat_1 = {"Lonceng berdentang", "untukku."},
             fb_bl_final_bell_gloat_1 = {"Ting tong,", "kamu kalah!"},
+            fb_bl_final_bell_interrupted_1 = {"Diselamatkan bel?", "Tidak kali ini!"},
         }
     }
 }

@@ -75,4 +75,52 @@ T['resolve_prefix: shared opener and closer'] = function()
   eq(logic.resolve_prefix('bl_hook', 'closer', counts{}), nil)
 end
 
+T['resolve_prefix: interrupted is boss-specific, then generic'] = function()
+  eq(logic.resolve_prefix('bl_hook', 'interrupted', counts{fb_bl_hook_interrupted = 1, fb_generic_interrupted = 3}),
+    'fb_bl_hook_interrupted')
+  local p, generic = logic.resolve_prefix('bl_custom', 'interrupted', counts{fb_generic_interrupted = 3})
+  eq(p, 'fb_generic_interrupted'); eq(generic, true)
+end
+
+local function interrupt(over)
+  local a = {hand_played = true, cinematic_intro = false, dialogue_intro = true, tier = 'light', ended = false,
+    fired = {}}
+  for k, v in pairs(over or {}) do a[k] = v end
+  return logic.should_interrupt(a)
+end
+
+T['should_interrupt: playing during the intro lines'] = function() eq(interrupt(), true) end
+T['should_interrupt: playing during the cinematic beats'] = function()
+  eq(interrupt{cinematic_intro = true, dialogue_intro = false, tier = 'full'}, true)
+end
+T['should_interrupt: no hand played (discard, skip key) is not an interruption'] = function()
+  eq(interrupt{hand_played = false}, false)
+end
+T['should_interrupt: only while the intro runs'] = function()
+  eq(interrupt{cinematic_intro = false, dialogue_intro = false}, false)
+end
+T['should_interrupt: once per encounter'] = function() eq(interrupt{fired = {interrupted = true}}, false) end
+T['should_interrupt: not after the encounter ended or without a tier'] = function()
+  eq(interrupt{ended = true}, false)
+  eq(interrupt{tier = 'none'}, false)
+end
+T['should_interrupt: other fired moments do not block it'] = function()
+  eq(interrupt{fired = {big_hand = true, close = true}}, true)
+end
+
+T['moment_replaced: only the interrupting hand'] = function()
+  eq(logic.moment_replaced(0, 0), true)
+  eq(logic.moment_replaced(0, 1), false)
+  eq(logic.moment_replaced(nil, 0), false)
+  eq(logic.moment_replaced(2, nil), false)
+end
+
+T['interrupted is forced, not a reaction'] = function()
+  eq(logic.FORCED_MOMENTS.interrupted, true)
+  eq(logic.FORCED_MOMENTS.defeat, true)
+  eq(logic.REACTIONS.interrupted, nil)
+  eq(logic.can_fire('interrupted', 'light', {}, 1), true) -- a spent light-tier reaction does not block it
+  eq(logic.can_fire('interrupted', 'light', {interrupted = true}, 0), false)
+end
+
 return T

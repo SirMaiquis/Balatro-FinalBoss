@@ -55,6 +55,9 @@ return {
             fb_generic_gloat_1 = {"Ese jefe fue", "demasiado..."},
             fb_generic_gloat_2 = {"La casa", "siempre gana."},
             fb_generic_gloat_3 = {"Mejor suerte la", "próxima partida."},
+            fb_generic_interrupted_1 = {"¡Mi discurso!"},
+            fb_generic_interrupted_2 = {"Ok... así que", "así son las cosas."},
+            fb_generic_interrupted_3 = {"¿Ni un hola?"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Pero soy", "El garfio"},
@@ -66,6 +69,7 @@ return {
             fb_bl_hook_disabled_1 = {"¡Mi garfio!", "¡Se rompió!"},
             fb_bl_hook_defeat_1 = {"Está bien... te", "dejo ir."},
             fb_bl_hook_gloat_1 = {"¡Caíste en", "el garfio!"},
+            fb_bl_hook_interrupted_1 = {"¡Grosero! ¡Estaba", "a media frase!"},
 
             -- The Ox: playing your most played hand sets money to $0
             fb_bl_ox_name_1 = {"Pero soy", "El buey"},
@@ -77,6 +81,7 @@ return {
             fb_bl_ox_disabled_1 = {"¡Mis cuernos!", "¡Se desafilaron!"},
             fb_bl_ox_defeat_1 = {"Agarraste al toro", "por los cuernos..."},
             fb_bl_ox_gloat_1 = {"¡Ahora estás", "pelado!"},
+            fb_bl_ox_interrupted_1 = {"Ah, conque ASÍ", "van a ser las cosas."},
 
             -- The House: first hand is drawn face down
             fb_bl_house_name_1 = {"Pero soy", "La casa"},
@@ -88,6 +93,7 @@ return {
             fb_bl_house_disabled_1 = {"¡Mi venda!", "¡Se cayó!"},
             fb_bl_house_defeat_1 = {"La casa...", "ha caído."},
             fb_bl_house_gloat_1 = {"¡La casa gana!"},
+            fb_bl_house_interrupted_1 = {"Regla de la casa:", "¡aún no se juega!"},
 
             -- The Wall: extra large blind
             fb_bl_wall_name_1 = {"Pero soy", "El muro"},
@@ -99,6 +105,7 @@ return {
             fb_bl_wall_disabled_1 = {"¡Grietas! ¡Mi muro", "se agrieta!"},
             fb_bl_wall_defeat_1 = {"El muro...", "se derrumba."},
             fb_bl_wall_gloat_1 = {"¿Chocaste", "con el muro?"},
+            fb_bl_wall_interrupted_1 = {"Es como hablarle", "a la pared... oye."},
 
             -- The Wheel: 1 in 7 cards get drawn face down
             fb_bl_wheel_name_1 = {"Pero soy", "La rueda"},
@@ -110,6 +117,7 @@ return {
             fb_bl_wheel_disabled_1 = {"¿La rueda se detuvo?", "¡Trampa!"},
             fb_bl_wheel_defeat_1 = {"La rueda de la", "fortuna me abandona."},
             fb_bl_wheel_gloat_1 = {"¡A rodar,", "perdedor!"},
+            fb_bl_wheel_interrupted_1 = {"¡Epa, no tan rápido!", "¡Sigo girando!"},
 
             -- The Arm: decrease level of played poker hand
             fb_bl_arm_name_1 = {"Pero soy", "El brazo"},
@@ -121,6 +129,7 @@ return {
             fb_bl_arm_disabled_1 = {"¡Mi brazo quedó", "flojo! ¡Tramposo!"},
             fb_bl_arm_defeat_1 = {"Superaste a mi", "brazo fuerte."},
             fb_bl_arm_gloat_1 = {"¡Te bajé de nivel!"},
+            fb_bl_arm_interrupted_1 = {"¡Manos fuera! No", "terminé de lucirme."},
 
             -- The Club: all Club cards are debuffed
             fb_bl_club_name_1 = {"Pero soy", "El garrote"},
@@ -132,6 +141,7 @@ return {
             fb_bl_club_disabled_1 = {"¡Mis garrotes", "ya no pegan!"},
             fb_bl_club_defeat_1 = {"Se cierra el club.", "Hora de irme..."},
             fb_bl_club_gloat_1 = {"¡Te di con todo!"},
+            fb_bl_club_interrupted_1 = {"¡Oye! En mi club", "yo hablo primero."},
 
             -- The Fish: cards drawn face down after each hand played
             fb_bl_fish_name_1 = {"Pero soy", "El pez"},
@@ -143,6 +153,7 @@ return {
             fb_bl_fish_disabled_1 = {"¡Mis escamas!", "¡Se cayeron!"},
             fb_bl_fish_defeat_1 = {"Me pescaste...", "como un experto."},
             fb_bl_fish_gloat_1 = {"¡Estás frito!"},
+            fb_bl_fish_interrupted_1 = {"¡Me cortaste", "el sedal!"},
 
             -- The Psychic: must play 5 cards
             fb_bl_psychic_name_1 = {"Pero soy", "El psíquico"},
@@ -154,6 +165,7 @@ return {
             fb_bl_psychic_disabled_1 = {"¡Mis visiones!", "¡Se fueron!"},
             fb_bl_psychic_defeat_1 = {"Lo vi venir.", "...¿O no?"},
             fb_bl_psychic_gloat_1 = {"¡Lo vi venir!"},
+            fb_bl_psychic_interrupted_1 = {"Sabía que harías eso.", "...Igual es grosero."},
 
             -- The Goad: all Spade cards are debuffed
             fb_bl_goad_name_1 = {"Pero soy", "La provocación"},
@@ -165,6 +177,7 @@ return {
             fb_bl_goad_disabled_1 = {"¡Ya no puedo", "provocar a nadie!"},
             fb_bl_goad_defeat_1 = {"Mandé cavar hondo...", "y me enterré solo."},
             fb_bl_goad_gloat_1 = {"¡Cava tu", "propia tumba!"},
+            fb_bl_goad_interrupted_1 = {"¿Provocándome A MÍ?", "Muy bien."},
 
             -- The Water: start with 0 discards
             fb_bl_water_name_1 = {"Pero soy", "El agua"},
@@ -176,6 +189,7 @@ return {
             fb_bl_water_disabled_1 = {"¡Mi sequía!", "¡¿Se acabó?!"},
             fb_bl_water_defeat_1 = {"Me quedé seco..."},
             fb_bl_water_gloat_1 = {"¡Te llevó la", "corriente!"},
+            fb_bl_water_interrupted_1 = {"¿Me interrumpes?", "¡Te hundiste!"},
 
             -- The Window: all Diamond cards are debuffed
             fb_bl_window_name_1 = {"Pero soy", "La ventana"},
@@ -187,6 +201,7 @@ return {
             fb_bl_window_disabled_1 = {"¡Mi ventana se agrietó!", "¡Brillan los diamantes!"},
             fb_bl_window_defeat_1 = {"Mi ventana de", "oportunidad se cerró."},
             fb_bl_window_gloat_1 = {"¿Diamantes?", "¡Débiles!"},
+            fb_bl_window_interrupted_1 = {"¿Mis palabras se van", "por la ventana?!"},
 
             -- The Manacle: -1 hand size
             fb_bl_manacle_name_1 = {"Pero soy", "El grillete"},
@@ -198,6 +213,7 @@ return {
             fb_bl_manacle_disabled_1 = {"¡Los grilletes!", "¡Se soltaron!"},
             fb_bl_manacle_defeat_1 = {"Libre al fin...", "de mí."},
             fb_bl_manacle_gloat_1 = {"¡Te dejé esposado!"},
+            fb_bl_manacle_interrupted_1 = {"¡Alto! Te encadenaré", "por eso."},
 
             -- The Eye: no repeat hand types this round
             fb_bl_eye_name_1 = {"Pero soy", "El ojo"},
@@ -209,6 +225,7 @@ return {
             fb_bl_eye_disabled_1 = {"¡Mi ojo!", "¡¿Quién me lo picó?!"},
             fb_bl_eye_defeat_1 = {"Ojos que no ven,", "corazón que no siente..."},
             fb_bl_eye_gloat_1 = {"¡Ojo, te lo dije!"},
+            fb_bl_eye_interrupted_1 = {"¡Lo vi!", "Qué grosero."},
 
             -- The Mouth: play only 1 hand type this round
             fb_bl_mouth_name_1 = {"Pero soy", "La boca"},
@@ -220,6 +237,7 @@ return {
             fb_bl_mouth_disabled_1 = {"¡¿Quién me amordazó?!"},
             fb_bl_mouth_defeat_1 = {"Me quedé sin palabras..."},
             fb_bl_mouth_gloat_1 = {"¡Cállate,", "perdedor!"},
+            fb_bl_mouth_interrupted_1 = {"¡Oye! ¡Esta boca", "seguía hablando!"},
 
             -- The Plant: all face cards are debuffed
             fb_bl_plant_name_1 = {"Pero soy", "La planta"},
@@ -231,6 +249,7 @@ return {
             fb_bl_plant_disabled_1 = {"¡Mis pétalos!", "¡Todos se fueron!"},
             fb_bl_plant_defeat_1 = {"Marchita...", "Volveré a crecer."},
             fb_bl_plant_gloat_1 = {"¡Dale la cara,", "perdiste!"},
+            fb_bl_plant_interrupted_1 = {"Déjame crecer", "primero, impaciente."},
 
             -- The Serpent: after play or discard, always draw 3 cards
             fb_bl_serpent_name_1 = {"Pero soy", "La serpiente"},
@@ -242,6 +261,7 @@ return {
             fb_bl_serpent_disabled_1 = {"¡Mis colmillos! Ssss...", "¡Sin veneno!"},
             fb_bl_serpent_defeat_1 = {"Mudé de piel...", "y de orgullo."},
             fb_bl_serpent_gloat_1 = {"¡Hasta luegosss!"},
+            fb_bl_serpent_interrupted_1 = {"¡Sss! ¡No me", "interrumpas!"},
 
             -- The Pillar: cards played previously this ante are debuffed
             fb_bl_pillar_name_1 = {"Pero soy", "El pilar"},
@@ -253,6 +273,7 @@ return {
             fb_bl_pillar_disabled_1 = {"¡Mi memoria!", "Se... desvanece."},
             fb_bl_pillar_defeat_1 = {"Un pilar de la", "comunidad, caído."},
             fb_bl_pillar_gloat_1 = {"¿Manos viejas?", "¡Ruinas!"},
+            fb_bl_pillar_interrupted_1 = {"¿No respetas", "a tus mayores?"},
 
             -- The Needle: play only 1 hand
             fb_bl_needle_name_1 = {"Pero soy", "La aguja"},
@@ -264,6 +285,7 @@ return {
             fb_bl_needle_disabled_1 = {"¡Mi aguja!", "¡Se desafiló!"},
             fb_bl_needle_defeat_1 = {"Jugada filosa.", "Me ganaste."},
             fb_bl_needle_gloat_1 = {"¡Punto final!", "¡Perdiste!"},
+            fb_bl_needle_interrupted_1 = {"Qué punzante.", "¡No había terminado!"},
 
             -- The Head: all Heart cards are debuffed
             fb_bl_head_name_1 = {"Pero soy", "La cabeza"},
@@ -275,6 +297,7 @@ return {
             fb_bl_head_disabled_1 = {"¡Me duele la cabeza!", "¿Vuelven los corazones?"},
             fb_bl_head_defeat_1 = {"Perdí la cabeza...", "por ti."},
             fb_bl_head_gloat_1 = {"¿Sin corazón, eh?"},
+            fb_bl_head_interrupted_1 = {"¿Perdiste la cabeza?", "¡Estoy hablando!"},
 
             -- The Tooth: lose $1 per card played
             fb_bl_tooth_name_1 = {"Pero soy", "El diente"},
@@ -286,6 +309,7 @@ return {
             fb_bl_tooth_disabled_1 = {"¡Mi mordida!", "¡Se fue!"},
             fb_bl_tooth_defeat_1 = {"Con uñas y dientes,", "igual perdí."},
             fb_bl_tooth_gloat_1 = {"¡Paga, ingenuo!"},
+            fb_bl_tooth_interrupted_1 = {"¡Grr! Me las vas", "a pagar."},
 
             -- The Flint: base Chips and Mult are halved
             fb_bl_flint_name_1 = {"Pero soy", "El pedernal"},
@@ -297,6 +321,7 @@ return {
             fb_bl_flint_disabled_1 = {"¡¿Poder total?!", "¡No es justo!"},
             fb_bl_flint_defeat_1 = {"Mi chispa", "se apagó."},
             fb_bl_flint_gloat_1 = {"¡Mitad de", "diversión!"},
+            fb_bl_flint_interrupted_1 = {"¡No me eches chispas!", "¡Estaba hablando!"},
 
             -- The Mark: all face cards are drawn face down
             fb_bl_mark_name_1 = {"Pero soy", "La marca"},
@@ -308,6 +333,7 @@ return {
             fb_bl_mark_disabled_1 = {"¡Las caras!", "¡Las puedo ver!"},
             fb_bl_mark_defeat_1 = {"Dejaste tu", "marca en mí."},
             fb_bl_mark_gloat_1 = {"¡Marcado", "para perder!"},
+            fb_bl_mark_interrupted_1 = {"Anotado. Ahora estás", "marcado."},
 
             -- Amber Acorn: flips and shuffles all Joker cards
             fb_bl_final_acorn_name_1 = {"Pero soy", "Bellota ambarina"},
@@ -319,6 +345,7 @@ return {
             fb_bl_final_acorn_disabled_1 = {"¡Mi bellota!", "¡¿Orden restaurado?!"},
             fb_bl_final_acorn_defeat_1 = {"Rompiste", "mi cáscara..."},
             fb_bl_final_acorn_gloat_1 = {"¡Qué locura,", "perdedor!"},
+            fb_bl_final_acorn_interrupted_1 = {"¡Bellotas! No", "había terminado."},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"Pero soy", "Hoja verde"},
@@ -330,6 +357,7 @@ return {
             fb_bl_final_leaf_disabled_1 = {"¡Mi hoja!", "¡Se marchitó!"},
             fb_bl_final_leaf_defeat_1 = {"Me voy... como", "hoja en el viento."},
             fb_bl_final_leaf_gloat_1 = {"¡Pasa la hoja,", "perdedor!"},
+            fb_bl_final_leaf_interrupted_1 = {"Bien. Sáltate las", "cortesías."},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"Pero soy", "Contenedor violeta"},
@@ -341,6 +369,7 @@ return {
             fb_bl_final_vessel_disabled_1 = {"¡Mi contenedor!", "¡Se hunde!"},
             fb_bl_final_vessel_defeat_1 = {"El contenedor...", "quedó vacío."},
             fb_bl_final_vessel_gloat_1 = {"¿Derrota", "enorme, eh?"},
+            fb_bl_final_vessel_interrupted_1 = {"¿Zarpar antes de mi", "discurso? Atrevido."},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"Pero soy", "Corazón carmesí"},
@@ -352,6 +381,7 @@ return {
             fb_bl_final_heart_disabled_1 = {"¡Mi corazón! Se", "saltó un latido."},
             fb_bl_final_heart_defeat_1 = {"Mi corazón...", "está roto."},
             fb_bl_final_heart_gloat_1 = {"¿Con el", "corazón roto?"},
+            fb_bl_final_heart_interrupted_1 = {"¿Me interrumpes?", "¡Qué desalmado!"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"Pero soy", "Campana cerúlea"},
@@ -363,6 +393,7 @@ return {
             fb_bl_final_bell_disabled_1 = {"¡Mi campana calló!", "¡Tramposo!"},
             fb_bl_final_bell_defeat_1 = {"Silencio cerúleo...", "ya no repico."},
             fb_bl_final_bell_gloat_1 = {"¡Ding dong,", "perdiste!"},
+            fb_bl_final_bell_interrupted_1 = {"¿Salvado por la", "campana? ¡Esta vez no!"},
         }
     }
 }

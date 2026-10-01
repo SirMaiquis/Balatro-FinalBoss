@@ -55,6 +55,9 @@ return {
             fb_generic_gloat_1 = {"那个Boss", "太强了..."},
             fb_generic_gloat_2 = {"庄家", "永远会赢。"},
             fb_generic_gloat_3 = {"下局", "好运吧。"},
+            fb_generic_interrupted_1 = {"我的演讲！"},
+            fb_generic_interrupted_2 = {"好吧…原来", "是这样。"},
+            fb_generic_interrupted_3 = {"连声招呼都不打？"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"但我是", "钩子！"},
@@ -66,6 +69,7 @@ return {
             fb_bl_hook_disabled_1 = {"我的钩子！", "断了！"},
             fb_bl_hook_defeat_1 = {"好吧...", "放你走。"},
             fb_bl_hook_gloat_1 = {"上钩了！"},
+            fb_bl_hook_interrupted_1 = {"没礼貌！我话还", "没说完！"},
 
             -- The Ox: playing your most played hand sets money to $0
             fb_bl_ox_name_1 = {"但我是", "公牛！"},
@@ -77,6 +81,7 @@ return {
             fb_bl_ox_disabled_1 = {"我的角！", "钝了！"},
             fb_bl_ox_defeat_1 = {"你抓住了", "牛角..."},
             fb_bl_ox_gloat_1 = {"现在你破产了！"},
+            fb_bl_ox_interrupted_1 = {"哦，原来你是", "这个态度。"},
 
             -- The House: first hand is drawn face down
             fb_bl_house_name_1 = {"但我是", "房屋！"},
@@ -88,6 +93,7 @@ return {
             fb_bl_house_disabled_1 = {"我的眼罩！", "掉了！"},
             fb_bl_house_defeat_1 = {"房子...", "塌了。"},
             fb_bl_house_gloat_1 = {"庄家通吃！"},
+            fb_bl_house_interrupted_1 = {"家规：还不许", "出牌！"},
 
             -- The Wall: extra large blind
             fb_bl_wall_name_1 = {"但我是", "围墙！"},
@@ -99,6 +105,7 @@ return {
             fb_bl_wall_disabled_1 = {"裂缝！我的墙", "裂开了！"},
             fb_bl_wall_defeat_1 = {"围墙...", "倒塌了。"},
             fb_bl_wall_gloat_1 = {"撞墙了吧？"},
+            fb_bl_wall_interrupted_1 = {"像在对墙说话…", "等等，我就是墙。"},
 
             -- The Wheel: 1 in 7 cards get drawn face down
             fb_bl_wheel_name_1 = {"但我是", "车轮！"},
@@ -110,6 +117,7 @@ return {
             fb_bl_wheel_disabled_1 = {"车轮停了？", "有诈！"},
             fb_bl_wheel_defeat_1 = {"命运之轮...", "转向了我。"},
             fb_bl_wheel_gloat_1 = {"轮到你输了！"},
+            fb_bl_wheel_interrupted_1 = {"慢着！我还在", "转呢！"},
 
             -- The Arm: decrease level of played poker hand
             fb_bl_arm_name_1 = {"但我是", "手臂！"},
@@ -121,6 +129,7 @@ return {
             fb_bl_arm_disabled_1 = {"我的手臂软了！", "作弊！"},
             fb_bl_arm_defeat_1 = {"你击败了", "我的强臂。"},
             fb_bl_arm_gloat_1 = {"降级！"},
+            fb_bl_arm_interrupted_1 = {"放手！我还没", "秀完肌肉！"},
 
             -- The Club: all Club cards are debuffed
             fb_bl_club_name_1 = {"但我是", "梅花！"},
@@ -132,6 +141,7 @@ return {
             fb_bl_club_disabled_1 = {"我的梅花", "没了威力！"},
             fb_bl_club_defeat_1 = {"俱乐部打烊。", "该走了..."},
             fb_bl_club_gloat_1 = {"打烊啦！"},
+            fb_bl_club_interrupted_1 = {"喂！在我的俱乐部", "我先说话！"},
 
             -- The Fish: cards drawn face down after each hand played
             fb_bl_fish_name_1 = {"但我是", "鱼！"},
@@ -143,6 +153,7 @@ return {
             fb_bl_fish_disabled_1 = {"我的鳞片！", "掉光了！"},
             fb_bl_fish_defeat_1 = {"被钓上来了...", "高手啊。"},
             fb_bl_fish_gloat_1 = {"你落水了！"},
+            fb_bl_fish_interrupted_1 = {"你扯断了", "我的鱼线！"},
 
             -- The Psychic: must play 5 cards
             fb_bl_psychic_name_1 = {"但我是", "灵媒！"},
@@ -154,6 +165,7 @@ return {
             fb_bl_psychic_disabled_1 = {"我的幻象！", "消失了！"},
             fb_bl_psychic_defeat_1 = {"我早预见了。", "...是吗？"},
             fb_bl_psychic_gloat_1 = {"我早说了！"},
+            fb_bl_psychic_interrupted_1 = {"我就知道你会这样。", "…还是没礼貌。"},
 
             -- The Goad: all Spade cards are debuffed
             fb_bl_goad_name_1 = {"但我是", "挑衅！"},
@@ -165,6 +177,7 @@ return {
             fb_bl_goad_disabled_1 = {"我现在", "没法挑衅了！"},
             fb_bl_goad_defeat_1 = {"该死，", "你赢了。"},
             fb_bl_goad_gloat_1 = {"自己挖坟吧！"},
+            fb_bl_goad_interrupted_1 = {"挑衅我？", "好啊！"},
 
             -- The Water: start with 0 discards
             fb_bl_water_name_1 = {"但我是", "水！"},
@@ -176,6 +189,7 @@ return {
             fb_bl_water_disabled_1 = {"弃牌又", "流动了！"},
             fb_bl_water_defeat_1 = {"我彻底", "干涸了..."},
             fb_bl_water_gloat_1 = {"你泡汤了！"},
+            fb_bl_water_interrupted_1 = {"打断我？你要", "陷入深水了！"},
 
             -- The Window: all Diamond cards are debuffed
             fb_bl_window_name_1 = {"但我是", "窗口！"},
@@ -187,6 +201,7 @@ return {
             fb_bl_window_disabled_1 = {"我的窗裂了！", "方片闪耀了！"},
             fb_bl_window_defeat_1 = {"我的机会之窗", "关上了。"},
             fb_bl_window_gloat_1 = {"方片？削弱！"},
+            fb_bl_window_interrupted_1 = {"我的话被你", "扔出窗外？！"},
 
             -- The Manacle: -1 hand size
             fb_bl_manacle_name_1 = {"但我是", "镣铐！"},
@@ -198,6 +213,7 @@ return {
             fb_bl_manacle_disabled_1 = {"镣铐！", "掉了！"},
             fb_bl_manacle_defeat_1 = {"终于自由了...", "摆脱了我。"},
             fb_bl_manacle_gloat_1 = {"束手就擒！"},
+            fb_bl_manacle_interrupted_1 = {"站住！就凭这个", "我要锁住你！"},
 
             -- The Eye: no repeat hand types this round
             fb_bl_eye_name_1 = {"但我是", "眼睛！"},
@@ -209,6 +225,7 @@ return {
             fb_bl_eye_disabled_1 = {"我的眼睛！谁", "戳我眼睛？！"},
             fb_bl_eye_defeat_1 = {"眼不见，", "心不烦..."},
             fb_bl_eye_gloat_1 = {"早就看穿了！"},
+            fb_bl_eye_interrupted_1 = {"我看见了！", "真没礼貌。"},
 
             -- The Mouth: play only 1 hand type this round
             fb_bl_mouth_name_1 = {"但我是", "嘴巴！"},
@@ -220,6 +237,7 @@ return {
             fb_bl_mouth_disabled_1 = {"谁给我", "戴了口套？！"},
             fb_bl_mouth_defeat_1 = {"我无话可说..."},
             fb_bl_mouth_gloat_1 = {"闭嘴，输家！"},
+            fb_bl_mouth_interrupted_1 = {"喂！这张嘴", "还在说话！"},
 
             -- The Plant: all face cards are debuffed
             fb_bl_plant_name_1 = {"但我是", "植物！"},
@@ -231,6 +249,7 @@ return {
             fb_bl_plant_disabled_1 = {"我的花瓣！", "全没了！"},
             fb_bl_plant_defeat_1 = {"枯萎了...", "我会再长出来。"},
             fb_bl_plant_gloat_1 = {"面对现实吧！"},
+            fb_bl_plant_interrupted_1 = {"先让我长大，", "急什么！"},
 
             -- The Serpent: after play or discard, always draw 3 cards
             fb_bl_serpent_name_1 = {"但我是", "巨蟒！"},
@@ -242,6 +261,7 @@ return {
             fb_bl_serpent_disabled_1 = {"我的毒牙！嘶...", "毒液没了！"},
             fb_bl_serpent_defeat_1 = {"蜕了皮...", "也丢了尊严。"},
             fb_bl_serpent_gloat_1 = {"嘶嘶，再见！"},
+            fb_bl_serpent_interrupted_1 = {"嘶嘶！别插嘴！"},
 
             -- The Pillar: cards played previously this ante are debuffed
             fb_bl_pillar_name_1 = {"但我是", "支柱！"},
@@ -253,6 +273,7 @@ return {
             fb_bl_pillar_disabled_1 = {"我的记忆！", "...在消退。"},
             fb_bl_pillar_defeat_1 = {"社区的支柱", "倒下了。"},
             fb_bl_pillar_gloat_1 = {"我还站着！"},
+            fb_bl_pillar_interrupted_1 = {"不懂得", "尊老吗？"},
 
             -- The Needle: play only 1 hand
             fb_bl_needle_name_1 = {"但我是", "针！"},
@@ -264,6 +285,7 @@ return {
             fb_bl_needle_disabled_1 = {"我的针！", "钝了！"},
             fb_bl_needle_defeat_1 = {"打得犀利。", "你赢了。"},
             fb_bl_needle_gloat_1 = {"重点是你输了！"},
+            fb_bl_needle_interrupted_1 = {"真扎人。", "我还没说完！"},
 
             -- The Head: all Heart cards are debuffed
             fb_bl_head_name_1 = {"但我是", "头部！"},
@@ -275,6 +297,7 @@ return {
             fb_bl_head_disabled_1 = {"我头好痛！", "红桃又能用了？"},
             fb_bl_head_defeat_1 = {"为你丢了脑袋..."},
             fb_bl_head_gloat_1 = {"没心没肺吧？"},
+            fb_bl_head_interrupted_1 = {"你昏头了吗？", "我在说话！"},
 
             -- The Tooth: lose $1 per card played
             fb_bl_tooth_name_1 = {"但我是", "牙齿！"},
@@ -286,6 +309,7 @@ return {
             fb_bl_tooth_disabled_1 = {"我的獠牙！", "没了！"},
             fb_bl_tooth_defeat_1 = {"拼尽全力，", "我还是输了。"},
             fb_bl_tooth_gloat_1 = {"付钱吧，", "冤大头！"},
+            fb_bl_tooth_interrupted_1 = {"咕噜！你要为此", "付出代价！"},
 
             -- The Flint: base Chips and Mult are halved
             fb_bl_flint_name_1 = {"但我是", "燧石！"},
@@ -297,6 +321,7 @@ return {
             fb_bl_flint_disabled_1 = {"全力以赴？！", "不公平！"},
             fb_bl_flint_defeat_1 = {"我的火花", "熄灭了。"},
             fb_bl_flint_gloat_1 = {"乐趣减半！"},
+            fb_bl_flint_interrupted_1 = {"别冒火星！", "我在说话！"},
 
             -- The Mark: all face cards are drawn face down
             fb_bl_mark_name_1 = {"但我是", "标记！"},
@@ -308,6 +333,7 @@ return {
             fb_bl_mark_disabled_1 = {"人头牌！", "我看见了！"},
             fb_bl_mark_defeat_1 = {"你在我身上", "留下了标记。"},
             fb_bl_mark_gloat_1 = {"标记为输家！"},
+            fb_bl_mark_interrupted_1 = {"记住了。你被", "盯上了。"},
 
             -- Amber Acorn: flips and shuffles all Joker cards
             fb_bl_final_acorn_name_1 = {"但我是", "琥珀之实！"},
@@ -319,6 +345,7 @@ return {
             fb_bl_final_acorn_disabled_1 = {"我的果实！", "秩序恢复了？！"},
             fb_bl_final_acorn_defeat_1 = {"你敲开了", "我的外壳..."},
             fb_bl_final_acorn_gloat_1 = {"壳都碎了！"},
+            fb_bl_final_acorn_interrupted_1 = {"慢着！我还没", "发芽呢！"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"但我是", "翠绿之叶！"},
@@ -330,6 +357,7 @@ return {
             fb_bl_final_leaf_disabled_1 = {"我的叶子！", "枯萎了！"},
             fb_bl_final_leaf_defeat_1 = {"我要离开了...", "如一片落叶。"},
             fb_bl_final_leaf_gloat_1 = {"落叶归根！"},
+            fb_bl_final_leaf_interrupted_1 = {"好吧。客套话", "就免了。"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"但我是", "靛紫之杯！"},
@@ -341,6 +369,7 @@ return {
             fb_bl_final_vessel_disabled_1 = {"我的杯子！", "在下沉！"},
             fb_bl_final_vessel_defeat_1 = {"杯子...", "空了。"},
             fb_bl_final_vessel_gloat_1 = {"一败涂地！"},
+            fb_bl_final_vessel_interrupted_1 = {"我还没讲完就", "起航？真大胆。"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"但我是", "绯红之心！"},
@@ -352,6 +381,7 @@ return {
             fb_bl_final_heart_disabled_1 = {"我的心！", "漏跳了一拍。"},
             fb_bl_final_heart_defeat_1 = {"我的心...", "碎了。"},
             fb_bl_final_heart_gloat_1 = {"心碎了吗？"},
+            fb_bl_final_heart_interrupted_1 = {"打断我？", "真无情！"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"但我是", "蔚蓝之铃！"},
@@ -363,6 +393,7 @@ return {
             fb_bl_final_bell_disabled_1 = {"我的铃哑了！", "作弊！"},
             fb_bl_final_bell_defeat_1 = {"钟声响起", "为我而鸣。"},
             fb_bl_final_bell_gloat_1 = {"叮咚，你输了！"},
+            fb_bl_final_bell_interrupted_1 = {"被铃声救了？", "这次可不行！"},
         }
     }
 }

@@ -31,7 +31,11 @@ local orig_end_round = end_round
 function end_round(...)
   local ret = orig_end_round(...)
   -- Queued after vanilla's own end-of-round event, so game over / Mr. Bones is decided.
-  G.E_MANAGER:add_event(Event({func = function()
+  -- pause_force: on a loss, vanilla's event sets GAME_OVER and, in the same frame, update_game_over
+  -- pauses the game (G.SETTINGS.paused) before this event's turn comes (the blocking event ahead of
+  -- it holds the queue for that pass). Events made before a pause are skipped while it lasts, so
+  -- without this the game-over branch of on_round_end never ran.
+  G.E_MANAGER:add_event(Event({pause_force = true, func = function()
     if director().enabled() then U.guard('end_round', director().on_round_end) end
     return true
   end}))

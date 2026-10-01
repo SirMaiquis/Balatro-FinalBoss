@@ -55,6 +55,9 @@ return {
             fb_generic_gloat_1 = {"あのボスは", "強すぎた…"},
             fb_generic_gloat_2 = {"結局、", "胴元が勝つ。"},
             fb_generic_gloat_3 = {"次のランに", "期待しな。"},
+            fb_generic_interrupted_1 = {"俺の演説が！"},
+            fb_generic_interrupted_2 = {"そうか…", "そういうことか。"},
+            fb_generic_interrupted_3 = {"挨拶もなしか？"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"だが俺は", "フックだ！"},
@@ -66,6 +69,7 @@ return {
             fb_bl_hook_disabled_1 = {"俺のフックが！", "折れた！"},
             fb_bl_hook_defeat_1 = {"よかろう…", "見逃してやる。"},
             fb_bl_hook_gloat_1 = {"釣れたな！"},
+            fb_bl_hook_interrupted_1 = {"無礼な！まだ", "話の途中だ！"},
 
             -- The Ox: playing your most played hand sets money to $0
             fb_bl_ox_name_1 = {"だが俺は", "雄牛だ！"},
@@ -77,6 +81,7 @@ return {
             fb_bl_ox_disabled_1 = {"俺の角が！", "鈍った！"},
             fb_bl_ox_defeat_1 = {"闘牛の角を", "掴んだな…"},
             fb_bl_ox_gloat_1 = {"文無しだな！"},
+            fb_bl_ox_interrupted_1 = {"ほう、そういう", "つもりか。"},
 
             -- The House: first hand is drawn face down
             fb_bl_house_name_1 = {"だが俺は", "家だ！"},
@@ -88,6 +93,7 @@ return {
             fb_bl_house_disabled_1 = {"俺の目隠しが！", "外れた！"},
             fb_bl_house_defeat_1 = {"家が…", "崩れていく。"},
             fb_bl_house_gloat_1 = {"胴元の勝ち！"},
+            fb_bl_house_interrupted_1 = {"家のルールだ、", "まだ打つな！"},
 
             -- The Wall: extra large blind
             fb_bl_wall_name_1 = {"だが俺は", "壁だ！"},
@@ -99,6 +105,7 @@ return {
             fb_bl_wall_disabled_1 = {"ヒビが！", "壁が割れる！"},
             fb_bl_wall_defeat_1 = {"壁が…", "崩れ落ちる。"},
             fb_bl_wall_gloat_1 = {"壁にぶつかったな！"},
+            fb_bl_wall_interrupted_1 = {"壁に話してる気分だ…", "あ、俺が壁か。"},
 
             -- The Wheel: 1 in 7 cards get drawn face down
             fb_bl_wheel_name_1 = {"だが俺は", "ホイールだ！"},
@@ -110,6 +117,7 @@ return {
             fb_bl_wheel_disabled_1 = {"輪が止まった？", "イカサマだ！"},
             fb_bl_wheel_defeat_1 = {"運命の輪が", "俺に背を向けた。"},
             fb_bl_wheel_gloat_1 = {"運も尽きたな！"},
+            fb_bl_wheel_interrupted_1 = {"待て！まだ", "回ってる途中だ！"},
 
             -- The Arm: decrease level of played poker hand
             fb_bl_arm_name_1 = {"だが俺は", "腕だ！"},
@@ -121,6 +129,7 @@ return {
             fb_bl_arm_disabled_1 = {"腕に力が！", "イカサマだ！"},
             fb_bl_arm_defeat_1 = {"俺の剛腕を", "破ったか。"},
             fb_bl_arm_gloat_1 = {"レベルダウン！"},
+            fb_bl_arm_interrupted_1 = {"手を出すな！", "自慢の途中だ！"},
 
             -- The Club: all Club cards are debuffed
             fb_bl_club_name_1 = {"だが俺は", "クラブだ！"},
@@ -132,6 +141,7 @@ return {
             fb_bl_club_disabled_1 = {"クラブの牙が", "抜けた！"},
             fb_bl_club_defeat_1 = {"クラブは閉店だ。", "帰る時間か…"},
             fb_bl_club_gloat_1 = {"閉店ガラガラ！"},
+            fb_bl_club_interrupted_1 = {"おい！俺のクラブ", "では俺が先だ！"},
 
             -- The Fish: cards drawn face down after each hand played
             fb_bl_fish_name_1 = {"だが俺は", "魚だ！"},
@@ -143,6 +153,7 @@ return {
             fb_bl_fish_disabled_1 = {"俺のウロコが！", "剥がれた！"},
             fb_bl_fish_defeat_1 = {"釣られた…", "プロの腕だ。"},
             fb_bl_fish_gloat_1 = {"ずぶ濡れだな！"},
+            fb_bl_fish_interrupted_1 = {"糸を切りやがった！"},
 
             -- The Psychic: must play 5 cards
             fb_bl_psychic_name_1 = {"だが俺は", "サイキックだ！"},
@@ -154,6 +165,7 @@ return {
             fb_bl_psychic_disabled_1 = {"俺の予知が！", "消えた！"},
             fb_bl_psychic_defeat_1 = {"予知していた。", "…いや、違う？"},
             fb_bl_psychic_gloat_1 = {"予知通りだ！"},
+            fb_bl_psychic_interrupted_1 = {"そうすると思ったよ。", "…それでも無礼だ。"},
 
             -- The Goad: all Spade cards are debuffed
             fb_bl_goad_name_1 = {"だが俺は", "ゴアドだ！"},
@@ -165,6 +177,7 @@ return {
             fb_bl_goad_disabled_1 = {"もう誰も", "煽れん！"},
             fb_bl_goad_defeat_1 = {"くそっ、", "貴様の勝ちだ。"},
             fb_bl_goad_gloat_1 = {"墓穴を掘れ！"},
+            fb_bl_goad_interrupted_1 = {"俺を挑発するか？", "いいだろう！"},
 
             -- The Water: start with 0 discards
             fb_bl_water_name_1 = {"だが俺は", "水だ！"},
@@ -176,6 +189,7 @@ return {
             fb_bl_water_disabled_1 = {"ディスカードが", "流れ出した！"},
             fb_bl_water_defeat_1 = {"俺は干上がった…"},
             fb_bl_water_gloat_1 = {"水の泡だな！"},
+            fb_bl_water_interrupted_1 = {"遮ったな？", "水に流さんぞ！"},
 
             -- The Window: all Diamond cards are debuffed
             fb_bl_window_name_1 = {"だが俺は", "窓だ！"},
@@ -187,6 +201,7 @@ return {
             fb_bl_window_disabled_1 = {"窓が割れた！", "ダイヤが輝く！"},
             fb_bl_window_defeat_1 = {"俺の好機の窓が", "閉じた。"},
             fb_bl_window_gloat_1 = {"ダイヤ？弱体化！"},
+            fb_bl_window_interrupted_1 = {"俺の言葉を", "窓から捨てる気か！"},
 
             -- The Manacle: -1 hand size
             fb_bl_manacle_name_1 = {"だが俺は", "手枷だ！"},
@@ -198,6 +213,7 @@ return {
             fb_bl_manacle_disabled_1 = {"枷が！", "外れた！"},
             fb_bl_manacle_defeat_1 = {"ついに自由か…", "俺から。"},
             fb_bl_manacle_gloat_1 = {"手も足も出ない！"},
+            fb_bl_manacle_interrupted_1 = {"止まれ！その手、", "縛ってやる！"},
 
             -- The Eye: no repeat hand types this round
             fb_bl_eye_name_1 = {"だが俺は", "目だ！"},
@@ -209,6 +225,7 @@ return {
             fb_bl_eye_disabled_1 = {"俺の目が！", "誰が突いた！？"},
             fb_bl_eye_defeat_1 = {"目に見えなければ", "気にならん…"},
             fb_bl_eye_gloat_1 = {"言った通りだ！"},
+            fb_bl_eye_interrupted_1 = {"見たぞ！", "無礼な。"},
 
             -- The Mouth: play only 1 hand type this round
             fb_bl_mouth_name_1 = {"だが俺は", "口だ！"},
@@ -220,6 +237,7 @@ return {
             fb_bl_mouth_disabled_1 = {"誰が俺に", "口輪を！？"},
             fb_bl_mouth_defeat_1 = {"言葉も出ない…"},
             fb_bl_mouth_gloat_1 = {"黙れ、負け犬！"},
+            fb_bl_mouth_interrupted_1 = {"おい！この口は", "まだ喋ってた！"},
 
             -- The Plant: all face cards are debuffed
             fb_bl_plant_name_1 = {"だが俺は", "プラントだ！"},
@@ -231,6 +249,7 @@ return {
             fb_bl_plant_disabled_1 = {"俺の花びらが！", "全て散った！"},
             fb_bl_plant_defeat_1 = {"枯れた…", "また生えてやる。"},
             fb_bl_plant_gloat_1 = {"現実を見ろ！"},
+            fb_bl_plant_interrupted_1 = {"まず育たせろ、", "せっかちめ！"},
 
             -- The Serpent: after play or discard, always draw 3 cards
             fb_bl_serpent_name_1 = {"だが俺は", "サーペントだ！"},
@@ -242,6 +261,7 @@ return {
             fb_bl_serpent_disabled_1 = {"俺の牙が！シャー…", "毒が尽きた！"},
             fb_bl_serpent_defeat_1 = {"脱皮した…", "プライドも。"},
             fb_bl_serpent_gloat_1 = {"シャー！またな！"},
+            fb_bl_serpent_interrupted_1 = {"シャー！話を", "遮るな！"},
 
             -- The Pillar: cards played previously this ante are debuffed
             fb_bl_pillar_name_1 = {"だが俺は", "柱だ！"},
@@ -253,6 +273,7 @@ return {
             fb_bl_pillar_disabled_1 = {"記憶が…", "薄れていく。"},
             fb_bl_pillar_defeat_1 = {"大黒柱が", "倒れたか…"},
             fb_bl_pillar_gloat_1 = {"まだ立ってる！"},
+            fb_bl_pillar_interrupted_1 = {"年長者を", "敬わんのか？"},
 
             -- The Needle: play only 1 hand
             fb_bl_needle_name_1 = {"だが俺は", "ニードルだ！"},
@@ -264,6 +285,7 @@ return {
             fb_bl_needle_disabled_1 = {"俺の針が！", "鈍った！"},
             fb_bl_needle_defeat_1 = {"鋭い一手だ。", "やられた。"},
             fb_bl_needle_gloat_1 = {"要点は、負けだ！"},
+            fb_bl_needle_interrupted_1 = {"チクリと来たな。", "まだ途中だ！"},
 
             -- The Head: all Heart cards are debuffed
             fb_bl_head_name_1 = {"だが俺は", "頭だ！"},
@@ -275,6 +297,7 @@ return {
             fb_bl_head_disabled_1 = {"頭が痛い！", "ハートが戻った？"},
             fb_bl_head_defeat_1 = {"貴様のせいで", "頭を失った…"},
             fb_bl_head_gloat_1 = {"ハートレスか？"},
+            fb_bl_head_interrupted_1 = {"頭がおかしいのか？", "俺が話してる！"},
 
             -- The Tooth: lose $1 per card played
             fb_bl_tooth_name_1 = {"だが俺は", "歯だ！"},
@@ -286,6 +309,7 @@ return {
             fb_bl_tooth_disabled_1 = {"俺の噛む力が！", "消えた！"},
             fb_bl_tooth_defeat_1 = {"歯を食いしばって", "も負けたか。"},
             fb_bl_tooth_gloat_1 = {"払え、カモ！"},
+            fb_bl_tooth_interrupted_1 = {"グルル！その分、", "払ってもらう！"},
 
             -- The Flint: base Chips and Mult are halved
             fb_bl_flint_name_1 = {"だが俺は", "フリントだ！"},
@@ -297,6 +321,7 @@ return {
             fb_bl_flint_disabled_1 = {"フルパワー！？", "ずるいぞ！"},
             fb_bl_flint_defeat_1 = {"俺の火花が", "消えた。"},
             fb_bl_flint_gloat_1 = {"楽しさ半減！"},
+            fb_bl_flint_interrupted_1 = {"火花を散らすな！", "話の途中だ！"},
 
             -- The Mark: all face cards are drawn face down
             fb_bl_mark_name_1 = {"だが俺は", "マークだ！"},
@@ -308,6 +333,7 @@ return {
             fb_bl_mark_disabled_1 = {"顔が！", "見えるぞ！"},
             fb_bl_mark_defeat_1 = {"貴様は俺に", "印を刻んだ。"},
             fb_bl_mark_gloat_1 = {"負けの印付き！"},
+            fb_bl_mark_interrupted_1 = {"目をつけたぞ。", "覚えておけ。"},
 
             -- Amber Acorn: flips and shuffles all Joker cards
             fb_bl_final_acorn_name_1 = {"だが俺は", "琥珀色のドングリだ！"},
@@ -319,6 +345,7 @@ return {
             fb_bl_final_acorn_disabled_1 = {"俺のドングリが！", "秩序が戻った！？"},
             fb_bl_final_acorn_defeat_1 = {"俺の殻を", "割ったな…"},
             fb_bl_final_acorn_gloat_1 = {"どんぐりころころ！"},
+            fb_bl_final_acorn_interrupted_1 = {"待て待て！", "まだ芽も出てない！"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"だが俺は", "青々とした葉だ！"},
@@ -330,6 +357,7 @@ return {
             fb_bl_final_leaf_disabled_1 = {"俺の葉が！", "枯れた！"},
             fb_bl_final_leaf_defeat_1 = {"去るとしよう…", "葉のように。"},
             fb_bl_final_leaf_gloat_1 = {"枯れ葉のように", "散れ！"},
+            fb_bl_final_leaf_interrupted_1 = {"いいだろう。", "挨拶は抜きだ。"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"だが俺は", "バイオレットベッセルだ！"},
@@ -341,6 +369,7 @@ return {
             fb_bl_final_vessel_disabled_1 = {"俺の船が！", "沈んでいく！"},
             fb_bl_final_vessel_defeat_1 = {"船は…", "空になった。"},
             fb_bl_final_vessel_gloat_1 = {"大敗北だな！"},
+            fb_bl_final_vessel_interrupted_1 = {"俺の話の前に出航か。", "大胆だな。"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"だが俺は", "クリムゾンハートだ！"},
@@ -352,6 +381,7 @@ return {
             fb_bl_final_heart_disabled_1 = {"俺の心臓が！", "鼓動が飛んだ。"},
             fb_bl_final_heart_defeat_1 = {"俺の心が…", "砕けた。"},
             fb_bl_final_heart_gloat_1 = {"失恋したか？"},
+            fb_bl_final_heart_interrupted_1 = {"話を遮るのか？", "なんて薄情な！"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"だが俺は", "セルリアンベルだ！"},
@@ -363,6 +393,7 @@ return {
             fb_bl_final_bell_disabled_1 = {"鐘が鳴らん！", "イカサマだ！"},
             fb_bl_final_bell_defeat_1 = {"鐘が鳴る…", "俺のために。"},
             fb_bl_final_bell_gloat_1 = {"ゴーン、負けだ！"},
+            fb_bl_final_bell_interrupted_1 = {"ゴングに救われた？", "今回は違う！"},
         }
     }
 }

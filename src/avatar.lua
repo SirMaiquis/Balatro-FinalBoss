@@ -13,6 +13,12 @@ V.LAUGH_VOLUME = 0.75   -- louder than talking (0.5)
 V.LAUGH_ACCENT = {sound = 'multhit1', pitch = 0.6, volume = 0.3} -- one low thud as the laugh starts
 V.ROOM_MARGIN = 0.5 -- the window always shows at least this much of the room padding per side
 V.DISSOLVE = {[0] = 0, [1] = 0.12, [2] = 0.25}
+V.GLOAT_GAP = 0.5       -- game over: space between the game-over panel and the chip
+V.GLOAT_FALLBACK_DX = 5.5 -- no panel found: this far right of the room's centre
+V.GLOAT_LAUGH_LATE = 3.5  -- laugh anyway this long after the game over if Jimbo never speaks
+V.ANGER_TIME = 0.4      -- interrupted: sharp shake length
+V.ANGER_SHAKE = 0.14    -- interrupted: shake amplitude at its start
+V.RED = {1, 0.15, 0.1, 0.8}
 V.obj = nil
 V.hud_blind = nil -- the blind whose HUD chip is dissolved while the avatar is out
 V.perch = V.RINGSIDE
@@ -24,9 +30,17 @@ V.tremble = false
 V.wound = 0
 V.laugh_id = 0 -- bumped per laugh: a newer laugh silences the older one's remaining beats
 V.laugh_start, V.laugh_until = 0, 0 -- REAL-time window the update reads for hops, tilt and shake
+V.anger_until = 0 -- REAL-time end of the interrupted shake
+V.gloating = nil  -- game over: {pitch, laughed, t0}; the chip sits beside the panel and laughs once
 
 local function now() return FinalBoss.util.now() end
 local function reduced() return G.SETTINGS.reduced_motion end
+
+--- Flash the chip for `duration` seconds (white unless a colour is given).
+local function flash(o, duration, colour)
+  o.flash_until = now() + duration
+  o.flash_colour = colour
+end
 
 local function after(delay, fn)
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = delay, timer = 'REAL', blocking = false,
@@ -53,6 +67,7 @@ function Avatar:init(X, Y, W, H, sprite, colour)
   self.dissolve = 0
   self.dissolve_colours = {G.C.BLACK, colour}
   self.flash_until = 0
+  self.flash_colour = nil -- nil = white
   self.children.sprite = sprite
   self.children.sprite.states.collide.can = false
   self.children.sprite.states.hover.can = false
@@ -67,13 +82,26 @@ function Avatar:move(dt)
   local t = G.TIMERS.REAL
   local calm = reduced()
   local speed = V.wound >= 1 and 1.5 or 1
-  local shaking = (V.tremble or V.wound >= 2) and not calm
+  local gloat = V.gloating ~= nil
+  local shaking = (V.tremble or V.wound >= 2) and not calm and not gloat
   local jx = shaking and (math.random() - 0.5) * 0.06 or 0
   local jy = shaking and (math.random() - 0.5) * 0.06 or 0
+  -- Interrupted: a sharp, quickly decaying shake (sprite only, like the laugh).
+  local anger = (not calm and now() < V.anger_until) and V.ANGER_SHAKE * (V.anger_until - now()) / V.ANGER_TIME or 0
+  if anger > 0 then
+    jx = jx + (math.random() - 0.5) * 2 * anger
+    jy = jy + (math.random() - 0.5) * 2 * anger
+  end
   s.T.x = self.T.x + jx
-  s.T.y = self.T.y + (calm and 0 or 0.08 * math.sin(t * speed * 2 * math.pi / 2.2)) + jy
-  s.T.r = calm and 0 or 0.05 * math.sin(t * speed * 1.3)
+  if gloat then -- game over: a slow, smug bob with a slight lean
+    s.T.y = self.T.y + (calm and 0 or 0.06 * math.sin(t * 2 * math.pi / 3.4))
+    s.T.r = calm and 0 or (0.07 + 0.035 * math.sin(t * 2 * math.pi / 4.6))
+  else
+    s.T.y = self.T.y + (calm and 0 or 0.08 * math.sin(t * speed * 2 * math.pi / 2.2)) + jy
+    s.T.r = calm and 0 or 0.05 * math.sin(t * speed * 1.3)
+  end
   s.T.w, s.T.h = self.T.w, self.T.h
+  if anger > 0 then s.VT.x, s.VT.y = s.T.x, s.T.y end -- the sprite's spring would smooth the shake away
   -- Laughing: hop on every "ha", tilt back and forth, shake at the end. Applied to the sprite only
   -- (the avatar's own T is the perch, so roaming glides never fight it) and straight onto its
   -- drawn position, since the sprite's spring would smooth a 0.1 s hop away. All offsets are zero
@@ -99,7 +127,9 @@ function Avatar:draw()
   s:draw_shader('dissolve')
   if now() < self.flash_until then
     prep_draw(s, 1)
-    love.graphics.setColor(1, 1, 1, 0.75)
+    local c = self.flash_colour
+    if c then love.graphics.setColor(c[1], c[2], c[3], c[4] or 0.75)
+    else love.graphics.setColor(1, 1, 1, 0.75) end
     love.graphics.circle('fill', s.VT.w / 2, s.VT.h / 2, s.VT.w * 0.42)
     love.graphics.pop()
     love.graphics.setColor(1, 1, 1, 1)
@@ -149,7 +179,7 @@ end
 
 local function go_to(i, instant)
   local o = V.obj
-  if not o then return end
+  if not o or V.gloating then return end -- game over: the chip belongs beside the panel
   V.perch = i
   o.T.x, o.T.y = perch_xy(i)
   if instant then o:hard_set_VT() end
@@ -199,8 +229,72 @@ function V.position()
   return T.x, T.y, T.w, T.h
 end
 
+--- Game over: the spot right of the game-over panel, vertically centred. The overlay UIBox's root
+--- covers the whole screen (it is the dim); its first child is the panel. Fixed fallback.
+local function gloat_xy()
+  local S = V.SIZE
+  local m = G.OVERLAY_MENU
+  local root = type(m) == 'table' and m.UIRoot
+  local panel = root and root.children and root.children[1]
+  local T = panel and panel.T
+  local x, y
+  if T and T.w and T.w > 0 and T.h and T.h > 0 then
+    x, y = T.x + T.w + V.GLOAT_GAP, T.y + T.h / 2 - S / 2
+  else
+    x, y = G.ROOM.T.w / 2 + V.GLOAT_FALLBACK_DX, G.ROOM.T.h / 2 - S / 2
+  end
+  return math.min(x, G.ROOM.T.w + V.ROOM_MARGIN - S), y
+end
+
+--- Jimbo has said his quip (vanilla puts a Card_Character with a speech bubble in 'jimbo_spot').
+local function jimbo_speaking()
+  local m = G.OVERLAY_MENU
+  local spot = type(m) == 'table' and m.get_UIE_by_ID and m:get_UIE_by_ID('jimbo_spot')
+  local j = spot and spot.config and spot.config.object
+  return (j and j.children and j.children.speech_bubble) and true or false
+end
+
+--- The boss won: it glides beside the game-over panel, above the overlay's dim, laughs once when
+--- Jimbo delivers its catchphrase, then idles smugly until the run is torn down (V.remove).
+--- The game-over screen pauses the game (G.SETTINGS.paused): moveables made before the pause stop
+--- moving, so the chip and its sprite are marked pause-proof. Vanilla draws G.I.POPUP after
+--- G.OVERLAY_MENU, so moving the chip from G.I.MOVEABLE to G.I.POPUP puts it above the dim
+--- (Node:remove drops it from G.I.POPUP again).
+function V.gloat(pitch)
+  local o = V.obj
+  if not o or V.gloating then return end
+  V.gloating = {pitch = pitch, laughed = false, t0 = now()}
+  V.talking, V.tremble, V.scoring, V.fading = false, false, false, false
+  V.anger_until = 0
+  o.created_on_pause = true
+  local s = o.children.sprite
+  if s then s.created_on_pause = true end
+  o.states.collide.can, o.states.click.can, o.states.hover.can = false, false, false
+  for i = #G.I.MOVEABLE, 1, -1 do
+    if G.I.MOVEABLE[i] == o then table.remove(G.I.MOVEABLE, i) end
+  end
+  table.insert(G.I.POPUP, o)
+  o.T.x, o.T.y = gloat_xy()
+  if reduced() then V.snap() end -- no glide under reduced motion
+end
+
+local function gloat_tick()
+  local o, g = V.obj, V.gloating
+  local x, y = gloat_xy() -- live: the panel slides in, and the window may be resized
+  if o.T.x ~= x or o.T.y ~= y then
+    o.T.x, o.T.y = x, y
+    if reduced() then V.snap() end
+  end
+  if not g.laughed and (jimbo_speaking() or now() - g.t0 >= V.GLOAT_LAUGH_LATE) then
+    g.laughed = true
+    V.laugh(g.pitch)
+  end
+end
+
 function V.tick(dt)
-  if not V.obj or V.fading then return end
+  if not V.obj then return end
+  if V.gloating then return gloat_tick() end
+  if V.fading then return end
   if reduced() then -- no roaming: live at ringside (snap there if the setting changed mid-fight)
     if V.perch ~= V.RINGSIDE then go_to(V.RINGSIDE, true); V.snap() end -- snap: sprite too
     return
@@ -226,7 +320,7 @@ end
 function V.hit(size)
   local o = V.obj
   if not o then return end
-  o.flash_until = now() + 0.15
+  flash(o, 0.15)
   o:juice_up(size == 'big' and 0.6 or (size == 'weak' and 0.25 or 0.4), 0.15)
   if reduced() or size == 'weak' then return end -- a weak hit is a soft flinch: no knockback
   local dir = V.side() == 'right' and 1 or -1
@@ -259,7 +353,7 @@ function V.laugh(pitch)
       if V.obj ~= o or V.laugh_id ~= id then return end
       play_sound(syllable, (pitch or 1) * FinalBoss.logic.laugh_pitch(i), V.LAUGH_VOLUME)
       -- vanilla juice_up is a no-op under reduced motion: pulse with a brief flash instead
-      if calm and i % 2 == 0 then o.flash_until = now() + 0.08 end
+      if calm and i % 2 == 0 then flash(o, 0.08) end
     end)
   end
   return V.LAUGH_DURATION
@@ -282,7 +376,30 @@ end
 function V.set_tremble(on) V.tremble = on and true or false end
 
 function V.flash(duration)
-  if V.obj then V.obj.flash_until = now() + (duration or 0.15) end
+  if V.obj then flash(V.obj, duration or 0.15) end
+end
+
+--- No avatar: the HUD blind chip snaps instead (juice + a brief red burst drawn over the chip).
+local function anger_chip(blind)
+  if not (blind and blind.T and blind.children and blind.children.animatedSprite) then return end
+  blind:juice_up(0.6, 0.4) -- vanilla juice_up is a no-op under reduced motion: the red flash stays
+  local p = Particles(0, 0, 0, 0, {attach = blind, fill = true, timer = 0.008, scale = 0.35, speed = 1.2,
+    lifespan = 0.4, colours = {V.RED, {0.85, 0.1, 0.1, 1}}})
+  after(0.15, function() p:fade(0.25) end)
+  after(0.45, function() p:remove() end)
+end
+
+--- Interrupted mid-speech: a red flash and a sharp ~0.4 s shake on the avatar, or on the HUD chip
+--- when there is no avatar (reduced motion: the flash only).
+function V.anger(blind)
+  local o = V.obj
+  if not o then return anger_chip(blind) end
+  flash(o, 0.25, V.RED)
+  if not reduced() then
+    V.anger_until = now() + V.ANGER_TIME
+    o:juice_up(0.5, 0.3)
+  end
+  V.next_roam = math.max(V.next_roam, now() + 2) -- stay put while snapping
 end
 
 function V.set_dissolve(amount, duration)
@@ -318,6 +435,7 @@ end
 local function restore_hud_blind()
   local b = V.hud_blind
   V.hud_blind = nil
+  if V.gloating then return end -- the game-over screen owns the table
   if not b or not G.GAME or b ~= G.GAME.blind then return end
   if not (b.config and b.config.blind and b.config.blind.key) then return end
   local enc = G.GAME.FinalBoss and G.GAME.FinalBoss.encounter
@@ -330,7 +448,8 @@ function V.remove()
   V.obj = nil
   restore_hud_blind()
   V.talking, V.fading, V.tremble, V.wound, V.scoring = false, false, false, 0, false
-  V.laugh_start, V.laugh_until = 0, 0
+  V.laugh_start, V.laugh_until, V.anger_until = 0, 0, 0
+  V.gloating = nil
   V.perch = V.RINGSIDE
   if o then o:remove() end
 end

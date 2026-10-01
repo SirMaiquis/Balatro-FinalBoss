@@ -57,6 +57,24 @@ logic.REACTIONS = {big_hand = true, close = true, last_hand = true, disabled = t
 
 local PRIORITY = {'last_hand', 'close', 'big_hand'}
 
+-- Moments whose line always shows (no cooldown, cuts the current line). 'interrupted' is said
+-- when the player plays a hand while the boss's intro is still running (once per encounter).
+logic.FORCED_MOMENTS = {defeat = true, interrupted = true}
+
+--- Whether this frame interrupts the boss's intro. a: {hand_played (G.STATE is HAND_PLAYED),
+--- cinematic_intro, dialogue_intro (either part of the intro is running), tier, ended, fired}.
+function logic.should_interrupt(a)
+  if not a.hand_played or a.ended then return false end
+  if a.tier ~= 'light' and a.tier ~= 'full' then return false end
+  if a.fired and a.fired.interrupted then return false end
+  return (a.cinematic_intro or a.dialogue_intro) and true or false
+end
+
+--- Whether a scored hand's moment line is replaced by the interrupted line said for that hand.
+function logic.moment_replaced(interrupt_hand, hand)
+  return interrupt_hand ~= nil and hand ~= nil and interrupt_hand == hand
+end
+
 --- args: {is_boss, is_showdown, entry_tier = 'auto'|'light'|'full', ante, min_ante}
 function logic.decide_tier(a)
   if not a.is_boss then return 'none' end

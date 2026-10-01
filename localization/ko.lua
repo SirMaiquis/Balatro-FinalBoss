@@ -55,6 +55,9 @@ return {
             fb_generic_gloat_1 = {"그 보스는", "너무 셌어..."},
             fb_generic_gloat_2 = {"결국 하우스가", "이기는 법."},
             fb_generic_gloat_3 = {"다음 런엔", "행운을."},
+            fb_generic_interrupted_1 = {"내 연설이!"},
+            fb_generic_interrupted_2 = {"그래... 그렇게", "나온다 이거지."},
+            fb_generic_interrupted_3 = {"인사도 없이?"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"하지만 나는", "훅이다!"},
@@ -66,6 +69,7 @@ return {
             fb_bl_hook_disabled_1 = {"내 훅이!", "부러졌다!"},
             fb_bl_hook_defeat_1 = {"좋아... 놔주지."},
             fb_bl_hook_gloat_1 = {"낚였구나!"},
+            fb_bl_hook_interrupted_1 = {"무례하군! 아직", "말하는 중이었다!"},
 
             -- The Ox: playing your most played hand sets money to $0
             fb_bl_ox_name_1 = {"하지만 나는", "황소다!"},
@@ -77,6 +81,7 @@ return {
             fb_bl_ox_disabled_1 = {"내 뿔이!", "무뎌졌다!"},
             fb_bl_ox_defeat_1 = {"황소의 뿔을", "잡았군..."},
             fb_bl_ox_gloat_1 = {"이제 빈털터리!"},
+            fb_bl_ox_interrupted_1 = {"오호, 이렇게", "나오시겠다?"},
 
             -- The House: first hand is drawn face down
             fb_bl_house_name_1 = {"하지만 나는", "집이다!"},
@@ -88,6 +93,7 @@ return {
             fb_bl_house_disabled_1 = {"내 눈가리개가!", "떨어졌다!"},
             fb_bl_house_defeat_1 = {"집이...", "무너졌다."},
             fb_bl_house_gloat_1 = {"하우스 승!"},
+            fb_bl_house_interrupted_1 = {"집의 규칙이다,", "아직 치지 마!"},
 
             -- The Wall: extra large blind
             fb_bl_wall_name_1 = {"하지만 나는", "벽이다!"},
@@ -99,6 +105,7 @@ return {
             fb_bl_wall_disabled_1 = {"금이 갔어!", "벽이 갈라진다!"},
             fb_bl_wall_defeat_1 = {"벽이...", "무너진다."},
             fb_bl_wall_gloat_1 = {"벽에 부딪혔지?"},
+            fb_bl_wall_interrupted_1 = {"벽에 말하는 기분...", "아, 내가 벽이지."},
 
             -- The Wheel: 1 in 7 cards get drawn face down
             fb_bl_wheel_name_1 = {"하지만 나는", "바퀴다!"},
@@ -110,6 +117,7 @@ return {
             fb_bl_wheel_disabled_1 = {"바퀴가 멈췄어?", "조작이다!"},
             fb_bl_wheel_defeat_1 = {"운명의 바퀴가", "나를 등졌다..."},
             fb_bl_wheel_gloat_1 = {"운이 다했군!"},
+            fb_bl_wheel_interrupted_1 = {"워! 서두르지 마,", "아직 돌고 있다!"},
 
             -- The Arm: decrease level of played poker hand
             fb_bl_arm_name_1 = {"하지만 나는", "팔이다!"},
@@ -121,6 +129,7 @@ return {
             fb_bl_arm_disabled_1 = {"팔에 힘이 빠졌다!", "반칙이다!"},
             fb_bl_arm_defeat_1 = {"내 강한 팔을", "꺾었군."},
             fb_bl_arm_gloat_1 = {"레벨 다운!"},
+            fb_bl_arm_interrupted_1 = {"손 떼! 아직 근육", "자랑 중이었다!"},
 
             -- The Club: all Club cards are debuffed
             fb_bl_club_name_1 = {"하지만 나는", "클럽이다!"},
@@ -132,6 +141,7 @@ return {
             fb_bl_club_disabled_1 = {"내 클럽이", "힘을 잃었다!"},
             fb_bl_club_defeat_1 = {"클럽 폐업이다.", "갈 시간이군..."},
             fb_bl_club_gloat_1 = {"영업 종료!"},
+            fb_bl_club_interrupted_1 = {"이봐! 내 클럽에선", "내가 먼저 말한다!"},
 
             -- The Fish: cards drawn face down after each hand played
             fb_bl_fish_name_1 = {"하지만 나는", "물고기다!"},
@@ -143,6 +153,7 @@ return {
             fb_bl_fish_disabled_1 = {"내 비늘이!", "떨어졌다!"},
             fb_bl_fish_defeat_1 = {"낚였다...", "프로에게."},
             fb_bl_fish_gloat_1 = {"물에 빠졌군!"},
+            fb_bl_fish_interrupted_1 = {"내 낚싯줄을", "끊었겠다!"},
 
             -- The Psychic: must play 5 cards
             fb_bl_psychic_name_1 = {"하지만 나는", "심령술사다!"},
@@ -154,6 +165,7 @@ return {
             fb_bl_psychic_disabled_1 = {"내 환영이!", "사라졌다!"},
             fb_bl_psychic_defeat_1 = {"예견했다.", "...아닌가?"},
             fb_bl_psychic_gloat_1 = {"내 말이 맞았지!"},
+            fb_bl_psychic_interrupted_1 = {"그럴 줄 알았다.", "...그래도 무례해."},
 
             -- The Goad: all Spade cards are debuffed
             fb_bl_goad_name_1 = {"하지만 나는", "자극이다!"},
@@ -165,6 +177,7 @@ return {
             fb_bl_goad_disabled_1 = {"이제 아무도", "자극 못 해!"},
             fb_bl_goad_defeat_1 = {"젠장,", "네가 이겼다."},
             fb_bl_goad_gloat_1 = {"제 무덤을 파라!"},
+            fb_bl_goad_interrupted_1 = {"나를 도발해?", "좋다!"},
 
             -- The Water: start with 0 discards
             fb_bl_water_name_1 = {"하지만 나는", "물이다!"},
@@ -176,6 +189,7 @@ return {
             fb_bl_water_disabled_1 = {"버리기가", "다시 흐른다!"},
             fb_bl_water_defeat_1 = {"바싹 말랐군..."},
             fb_bl_water_gloat_1 = {"물거품이 됐군!"},
+            fb_bl_water_interrupted_1 = {"말을 끊어? 이제", "물 건너갔다!"},
 
             -- The Window: all Diamond cards are debuffed
             fb_bl_window_name_1 = {"하지만 나는", "창문이다!"},
@@ -187,6 +201,7 @@ return {
             fb_bl_window_disabled_1 = {"창문이 깨졌다!", "다이아가 빛난다!"},
             fb_bl_window_defeat_1 = {"내 기회의 창이", "닫혔다."},
             fb_bl_window_gloat_1 = {"다이아? 약화!"},
+            fb_bl_window_interrupted_1 = {"내 말을 창밖으로", "던져버리겠다고?!"},
 
             -- The Manacle: -1 hand size
             fb_bl_manacle_name_1 = {"하지만 나는", "수갑이다!"},
@@ -198,6 +213,7 @@ return {
             fb_bl_manacle_disabled_1 = {"수갑이!", "풀렸다!"},
             fb_bl_manacle_defeat_1 = {"드디어 자유...", "나로부터."},
             fb_bl_manacle_gloat_1 = {"손도 못 쓰지?"},
+            fb_bl_manacle_interrupted_1 = {"멈춰! 그 대가로", "족쇄를 채워주마!"},
 
             -- The Eye: no repeat hand types this round
             fb_bl_eye_name_1 = {"하지만 나는", "눈이다!"},
@@ -209,6 +225,7 @@ return {
             fb_bl_eye_disabled_1 = {"내 눈이! 누가", "찔렀어?!"},
             fb_bl_eye_defeat_1 = {"눈에서 멀어지면", "마음에서도..."},
             fb_bl_eye_gloat_1 = {"내 말이 맞지!"},
+            fb_bl_eye_interrupted_1 = {"다 봤다!", "무례하군."},
 
             -- The Mouth: play only 1 hand type this round
             fb_bl_mouth_name_1 = {"하지만 나는", "입이다!"},
@@ -220,6 +237,7 @@ return {
             fb_bl_mouth_disabled_1 = {"누가 내게", "재갈을?!"},
             fb_bl_mouth_defeat_1 = {"할 말을 잃었군..."},
             fb_bl_mouth_gloat_1 = {"입 닥쳐, 패배자!"},
+            fb_bl_mouth_interrupted_1 = {"이봐! 이 입은", "아직 말하고 있었다!"},
 
             -- The Plant: all face cards are debuffed
             fb_bl_plant_name_1 = {"하지만 나는", "행성이다!"},
@@ -231,6 +249,7 @@ return {
             fb_bl_plant_disabled_1 = {"내 꽃잎이!", "다 사라졌다!"},
             fb_bl_plant_defeat_1 = {"시들었군...", "다시 자라겠다."},
             fb_bl_plant_gloat_1 = {"현실을 직시해!"},
+            fb_bl_plant_interrupted_1 = {"좀 자라게 둬라,", "성질 급하긴!"},
 
             -- The Serpent: after play or discard, always draw 3 cards
             fb_bl_serpent_name_1 = {"하지만 나는", "뱀이다!"},
@@ -242,6 +261,7 @@ return {
             fb_bl_serpent_disabled_1 = {"내 송곳니! 쉬익...", "독이 다 떨어졌다!"},
             fb_bl_serpent_defeat_1 = {"허물을 벗었군...", "자존심도."},
             fb_bl_serpent_gloat_1 = {"쉬익, 또 보자!"},
+            fb_bl_serpent_interrupted_1 = {"쉬익! 말 끊지", "마라!"},
 
             -- The Pillar: cards played previously this ante are debuffed
             fb_bl_pillar_name_1 = {"하지만 나는", "기둥이다!"},
@@ -253,6 +273,7 @@ return {
             fb_bl_pillar_disabled_1 = {"내 기억이!", "...흐려진다."},
             fb_bl_pillar_defeat_1 = {"공동체의 기둥이", "쓰러졌다."},
             fb_bl_pillar_gloat_1 = {"아직 서 있다!"},
+            fb_bl_pillar_interrupted_1 = {"어른을 공경할", "줄 모르나?"},
 
             -- The Needle: play only 1 hand
             fb_bl_needle_name_1 = {"하지만 나는", "바늘이다!"},
@@ -264,6 +285,7 @@ return {
             fb_bl_needle_disabled_1 = {"내 바늘이!", "무뎌졌다!"},
             fb_bl_needle_defeat_1 = {"날카로운 플레이.", "내가 졌다."},
             fb_bl_needle_gloat_1 = {"핵심은 네 패배!"},
+            fb_bl_needle_interrupted_1 = {"따끔하군.", "아직 안 끝났다!"},
 
             -- The Head: all Heart cards are debuffed
             fb_bl_head_name_1 = {"하지만 나는", "머리다!"},
@@ -275,6 +297,7 @@ return {
             fb_bl_head_disabled_1 = {"머리가 아프다!", "하트가 돌아왔나?"},
             fb_bl_head_defeat_1 = {"너 때문에", "머리를 잃었다..."},
             fb_bl_head_gloat_1 = {"무정하군!"},
+            fb_bl_head_interrupted_1 = {"정신 나갔나?", "내가 말하는 중이다!"},
 
             -- The Tooth: lose $1 per card played
             fb_bl_tooth_name_1 = {"하지만 나는", "이빨이다!"},
@@ -286,6 +309,7 @@ return {
             fb_bl_tooth_disabled_1 = {"내 이빨이!", "사라졌다!"},
             fb_bl_tooth_defeat_1 = {"이를 악물어도", "졌구나."},
             fb_bl_tooth_gloat_1 = {"돈 내, 호구야!"},
+            fb_bl_tooth_interrupted_1 = {"으르렁! 그 대가를", "치르게 해주마!"},
 
             -- The Flint: base Chips and Mult are halved
             fb_bl_flint_name_1 = {"하지만 나는", "부싯돌이다!"},
@@ -297,6 +321,7 @@ return {
             fb_bl_flint_disabled_1 = {"풀파워라고?!", "불공평해!"},
             fb_bl_flint_defeat_1 = {"내 불꽃이", "꺼졌다."},
             fb_bl_flint_gloat_1 = {"재미도 반토막!"},
+            fb_bl_flint_interrupted_1 = {"불똥 튀기지 마!", "말하는 중이었다!"},
 
             -- The Mark: all face cards are drawn face down
             fb_bl_mark_name_1 = {"하지만 나는", "가면이다!"},
@@ -308,6 +333,7 @@ return {
             fb_bl_mark_disabled_1 = {"얼굴이!", "다 보인다!"},
             fb_bl_mark_defeat_1 = {"내게 네 흔적을", "남겼군."},
             fb_bl_mark_gloat_1 = {"패배로 낙인!"},
+            fb_bl_mark_interrupted_1 = {"기억해 두지.", "넌 찍혔다."},
 
             -- Amber Acorn: flips and shuffles all Joker cards
             fb_bl_final_acorn_name_1 = {"하지만 나는", "호박색 도토리다!"},
@@ -319,6 +345,7 @@ return {
             fb_bl_final_acorn_disabled_1 = {"내 도토리!", "질서가 돌아왔어?!"},
             fb_bl_final_acorn_defeat_1 = {"내 껍질을", "깨버렸군..."},
             fb_bl_final_acorn_gloat_1 = {"도토리 키 재기!"},
+            fb_bl_final_acorn_interrupted_1 = {"잠깐! 아직 싹도", "안 텄다고!"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"하지만 나는", "심록색 잎사귀다!"},
@@ -330,6 +357,7 @@ return {
             fb_bl_final_leaf_disabled_1 = {"내 잎이!", "말라버렸다!"},
             fb_bl_final_leaf_defeat_1 = {"떠나마...", "낙엽처럼."},
             fb_bl_final_leaf_gloat_1 = {"낙엽처럼 져라!"},
+            fb_bl_final_leaf_interrupted_1 = {"좋다. 인사는", "생략하지."},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"하지만 나는", "보라색 술잔이다!"},
@@ -341,6 +369,7 @@ return {
             fb_bl_final_vessel_disabled_1 = {"내 술잔이!", "가라앉는다!"},
             fb_bl_final_vessel_defeat_1 = {"술잔이...", "비어버렸다."},
             fb_bl_final_vessel_gloat_1 = {"완패했군!"},
+            fb_bl_final_vessel_interrupted_1 = {"내 연설 전에", "출항이라니. 대담하군."},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"하지만 나는", "진홍색 술잔이다!"},
@@ -352,6 +381,7 @@ return {
             fb_bl_final_heart_disabled_1 = {"내 심장이!", "한 박자 걸렀다."},
             fb_bl_final_heart_defeat_1 = {"내 마음이...", "부서졌다."},
             fb_bl_final_heart_gloat_1 = {"상심했나?"},
+            fb_bl_final_heart_interrupted_1 = {"내 말을 끊어?", "무정하군!"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"하지만 나는", "하늘색 종이다!"},
@@ -363,6 +393,7 @@ return {
             fb_bl_final_bell_disabled_1 = {"내 종이 조용해!", "반칙이다!"},
             fb_bl_final_bell_defeat_1 = {"종이 울린다", "나를 위해."},
             fb_bl_final_bell_gloat_1 = {"땡땡, 졌구나!"},
+            fb_bl_final_bell_interrupted_1 = {"종소리에 살았다고?", "이번엔 아니다!"},
         }
     }
 }

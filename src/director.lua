@@ -119,7 +119,11 @@ function Dir.on_round_end()
     enc.ended = true
     FinalBoss.fx.stop()
     FinalBoss.arena.stop(true)
-    if enc.cinematic then FinalBoss.cinematic.game_over(FinalBoss.registry.get(enc.key).voice.pitch) end
+    if enc.cinematic then
+      FinalBoss.dialogue.end_intro()
+      FinalBoss.dialogue.hide(G.GAME.blind) -- no bubble at the game-over screen: Jimbo has the line
+      FinalBoss.cinematic.game_over(FinalBoss.registry.get(enc.key).voice.pitch)
+    end
   else
     st.lost_to = nil
   end
@@ -149,7 +153,7 @@ function Dir.fire(moment, opts)
   if not key then return true end
   local entry = FinalBoss.registry.get(enc.key)
   FinalBoss.dialogue.say(blind, key, Dir.vars(blind), entry.voice.pitch,
-    {force = opts.force or moment == 'defeat'})
+    {force = opts.force or FinalBoss.logic.FORCED_MOMENTS[moment] or false})
   return true
 end
 
@@ -176,7 +180,7 @@ function Dir.on_hand_after()
   -- The reaction waits until the game shows the score (Dir.tick -> logic.score_landed), or the
   -- boss would spoil it. Everything above is decided now.
   local p = {start = chips, delta = delta, total = total, required = required, moment = moment,
-    enc = enc, blind = blind, t0 = FinalBoss.util.now(), queued_done = false}
+    enc = enc, blind = blind, t0 = FinalBoss.util.now(), queued_done = false, hand = hands_played}
   Dir.pending = p
   -- Completion signal in queue order: context.after runs inside evaluate_play after it has queued
   -- delay(0.8), chips2, the G.GAME.chips ease, the blocking chip_total ease and the handname clear
@@ -201,6 +205,9 @@ local function react(p)
     wait = Dir.stage_hit(enc, blind, p.delta, p.total, p.required, p.moment)
   end
   if not p.moment then return end
+  -- This hand interrupted the intro: its interrupted line replaces the moment line (the moment
+  -- stays unfired, so a later hand can still trigger it). The stage hit above still played.
+  if FinalBoss.logic.moment_replaced(enc.interrupt_hand, p.hand) then return end
   if wait <= 0 then Dir.fire(p.moment); return end
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = wait, timer = 'REAL', blocking = false,
     blockable = false, func = function()
@@ -288,9 +295,30 @@ function Dir.on_blind_defeated()
   FinalBoss.arena.stop()
 end
 
+--- The player pressed Play while the boss's intro (cinematic beats or intro lines) is still
+--- running: the speech stops at once, the boss snaps (red flash + shake) and says its interrupted
+--- line, which replaces this hand's moment line (react). Once per encounter; discards and
+--- key / click skips never get here (only G.STATES.HAND_PLAYED counts).
+function Dir.check_interrupt()
+  if not (G.STATES and G.STATE == G.STATES.HAND_PLAYED) then return end
+  local enc, blind = current()
+  if not enc then return end
+  local C, D = FinalBoss.cinematic, FinalBoss.dialogue
+  local cine, talk = C.active(), D.intro_active()
+  if not FinalBoss.logic.should_interrupt{hand_played = true, cinematic_intro = cine,
+      dialogue_intro = talk, tier = enc.tier, ended = enc.ended, fired = enc.fired} then return end
+  enc.fired.interrupted = true
+  enc.interrupt_hand = G.GAME.current_round.hands_played -- this hand's id at context.after
+  if cine then C.interrupt() end
+  D.end_intro() -- remaining lines dropped; its on_end (letterbox retract) runs once
+  FinalBoss.avatar.anger(blind)
+  Dir.fire('interrupted', {force = true})
+end
+
 --- Per-frame tick (hooks: Game:update wrap). Cheap when nothing is on stage or pending.
 function Dir.tick(dt)
   local A, V, H = FinalBoss.arena, FinalBoss.avatar, FinalBoss.hpbar
+  if FinalBoss.cinematic.active() or FinalBoss.dialogue.intro_active() then Dir.check_interrupt() end
   if not (Dir.pending or A.active() or V.exists() or H.exists()) then return end
   if Dir.pending then check_pending() end
   V.tick(dt)

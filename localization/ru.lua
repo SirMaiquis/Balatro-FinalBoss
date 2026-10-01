@@ -55,6 +55,9 @@ return {
             fb_generic_gloat_1 = {"Этот босс был", "слишком силен..."},
             fb_generic_gloat_2 = {"Казино", "всегда в плюсе."},
             fb_generic_gloat_3 = {"Удачи в", "следующем забеге."},
+            fb_generic_interrupted_1 = {"Моя речь!"},
+            fb_generic_interrupted_2 = {"Ну... вот, значит,", "как."},
+            fb_generic_interrupted_3 = {"Даже не", "поздороваешься?"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Но я", "Крюк"},
@@ -66,6 +69,7 @@ return {
             fb_bl_hook_disabled_1 = {"Мой крюк!", "Он сломан!"},
             fb_bl_hook_defeat_1 = {"Ладно... сниму", "тебя с крючка."},
             fb_bl_hook_gloat_1 = {"Попался на крючок!"},
+            fb_bl_hook_interrupted_1 = {"Грубиян! Я был", "на полуслове!"},
 
             -- The Ox: playing your most played hand sets money to $0
             fb_bl_ox_name_1 = {"Но я", "Буйвол"},
@@ -77,6 +81,7 @@ return {
             fb_bl_ox_disabled_1 = {"Мои рога!", "Они затупились!"},
             fb_bl_ox_defeat_1 = {"Ты взял быка", "за рога..."},
             fb_bl_ox_gloat_1 = {"Теперь ты банкрот!"},
+            fb_bl_ox_interrupted_1 = {"Ах, вот ТАК, значит,", "всё будет."},
 
             -- The House: first hand is drawn face down
             fb_bl_house_name_1 = {"Но я", "Дом"},
@@ -88,6 +93,7 @@ return {
             fb_bl_house_disabled_1 = {"Моя повязка!", "Она упала!"},
             fb_bl_house_defeat_1 = {"Дом...", "рухнул."},
             fb_bl_house_gloat_1 = {"Дом выигрывает!"},
+            fb_bl_house_interrupted_1 = {"Правило дома:", "играть рано!"},
 
             -- The Wall: extra large blind
             fb_bl_wall_name_1 = {"Но я", "Стена"},
@@ -99,6 +105,7 @@ return {
             fb_bl_wall_disabled_1 = {"Трещины! Моя стена", "трескается!"},
             fb_bl_wall_defeat_1 = {"Стена...", "рушится."},
             fb_bl_wall_gloat_1 = {"Уперся в стену!"},
+            fb_bl_wall_interrupted_1 = {"Как со стеной", "говорю... стоп."},
 
             -- The Wheel: 1 in 7 cards get drawn face down
             fb_bl_wheel_name_1 = {"Но я", "Колесо"},
@@ -110,6 +117,7 @@ return {
             fb_bl_wheel_disabled_1 = {"Колесо встало?", "Подстроено!"},
             fb_bl_wheel_defeat_1 = {"Колесо фортуны", "повернулось против меня."},
             fb_bl_wheel_gloat_1 = {"Колесо", "повернулось!"},
+            fb_bl_wheel_interrupted_1 = {"Тпру! Не спеши,", "я ещё кручусь!"},
 
             -- The Arm: decrease level of played poker hand
             fb_bl_arm_name_1 = {"Но я", "Рука"},
@@ -121,6 +129,7 @@ return {
             fb_bl_arm_disabled_1 = {"Моя рука обмякла!", "Жулик!"},
             fb_bl_arm_defeat_1 = {"Ты победил мою", "сильную руку."},
             fb_bl_arm_gloat_1 = {"Руки опустились!"},
+            fb_bl_arm_interrupted_1 = {"Руки прочь! Я ещё", "не накрасовался!"},
 
             -- The Club: all Club cards are debuffed
             fb_bl_club_name_1 = {"Но я", "Трефа"},
@@ -132,6 +141,7 @@ return {
             fb_bl_club_disabled_1 = {"Мои трефы", "потеряли хватку!"},
             fb_bl_club_defeat_1 = {"Клуб закрыт.", "Пора уходить..."},
             fb_bl_club_gloat_1 = {"Получи дубинкой!"},
+            fb_bl_club_interrupted_1 = {"Эй! В моём клубе", "я говорю первым."},
 
             -- The Fish: cards drawn face down after each hand played
             fb_bl_fish_name_1 = {"Но я", "Рыба"},
@@ -143,6 +153,7 @@ return {
             fb_bl_fish_disabled_1 = {"Моя чешуя!", "Она слетела!"},
             fb_bl_fish_defeat_1 = {"Поймана...", "профессионалом."},
             fb_bl_fish_gloat_1 = {"Ты сел на мель!"},
+            fb_bl_fish_interrupted_1 = {"Ты оборвал", "мне леску!"},
 
             -- The Psychic: must play 5 cards
             fb_bl_psychic_name_1 = {"Но я", "Экстрасенс"},
@@ -154,6 +165,7 @@ return {
             fb_bl_psychic_disabled_1 = {"Мои видения!", "Они пропали!"},
             fb_bl_psychic_defeat_1 = {"Я это предвидел.", "...Или нет?"},
             fb_bl_psychic_gloat_1 = {"Я так и знал!"},
+            fb_bl_psychic_interrupted_1 = {"Я знал, что ты", "так сделаешь. Грубо."},
 
             -- The Goad: all Spade cards are debuffed
             fb_bl_goad_name_1 = {"Но я", "Побуждение"},
@@ -165,6 +177,7 @@ return {
             fb_bl_goad_disabled_1 = {"Теперь я никого", "не подзадорю!"},
             fb_bl_goad_defeat_1 = {"Черт возьми,", "ты победил."},
             fb_bl_goad_gloat_1 = {"Копай себе могилу!"},
+            fb_bl_goad_interrupted_1 = {"Дразнишь МЕНЯ?", "Ну ладно!"},
 
             -- The Water: start with 0 discards
             fb_bl_water_name_1 = {"Но я", "Вода"},
@@ -176,6 +189,7 @@ return {
             fb_bl_water_disabled_1 = {"Сбросы снова", "текут!"},
             fb_bl_water_defeat_1 = {"Я совсем", "высохла..."},
             fb_bl_water_gloat_1 = {"Ты смыт!"},
+            fb_bl_water_interrupted_1 = {"Перебивать? Теперь", "ты пойдёшь ко дну!"},
 
             -- The Window: all Diamond cards are debuffed
             fb_bl_window_name_1 = {"Но я", "Окно"},
@@ -187,6 +201,7 @@ return {
             fb_bl_window_disabled_1 = {"Мое окно треснуло!", "Бубны сияют!"},
             fb_bl_window_defeat_1 = {"Мое окно", "возможностей закрылось."},
             fb_bl_window_gloat_1 = {"Бубны? Ослаблены!"},
+            fb_bl_window_interrupted_1 = {"Мои слова летят", "в окно?!"},
 
             -- The Manacle: -1 hand size
             fb_bl_manacle_name_1 = {"Но я", "Кандалы"},
@@ -198,6 +213,7 @@ return {
             fb_bl_manacle_disabled_1 = {"Кандалы!", "Они спали!"},
             fb_bl_manacle_defeat_1 = {"Наконец свободен...", "от меня."},
             fb_bl_manacle_gloat_1 = {"Руки в наручниках!"},
+            fb_bl_manacle_interrupted_1 = {"Стоять! За это я", "закую тебя в цепи!"},
 
             -- The Eye: no repeat hand types this round
             fb_bl_eye_name_1 = {"Но я", "Глаз"},
@@ -209,6 +225,7 @@ return {
             fb_bl_eye_disabled_1 = {"Мой глаз! Кто мне", "в него ткнул?!"},
             fb_bl_eye_defeat_1 = {"С глаз долой,", "из сердца вон..."},
             fb_bl_eye_gloat_1 = {"Я же говорил!"},
+            fb_bl_eye_interrupted_1 = {"Я всё видел!", "Как грубо."},
 
             -- The Mouth: play only 1 hand type this round
             fb_bl_mouth_name_1 = {"Но я", "Пасть"},
@@ -220,6 +237,7 @@ return {
             fb_bl_mouth_disabled_1 = {"Кто надел на меня", "намордник?!"},
             fb_bl_mouth_defeat_1 = {"У меня нет слов..."},
             fb_bl_mouth_gloat_1 = {"Заткнись,", "неудачник!"},
+            fb_bl_mouth_interrupted_1 = {"Эй! Этот рот", "ещё говорил!"},
 
             -- The Plant: all face cards are debuffed
             fb_bl_plant_name_1 = {"Но я", "Цветок"},
@@ -231,6 +249,7 @@ return {
             fb_bl_plant_disabled_1 = {"Мои лепестки!", "Все пропали!"},
             fb_bl_plant_defeat_1 = {"Увял...", "Я отрасту снова."},
             fb_bl_plant_gloat_1 = {"Взгляни правде", "в лицо!"},
+            fb_bl_plant_interrupted_1 = {"Дай сперва вырасти,", "нетерпеливый!"},
 
             -- The Serpent: after play or discard, always draw 3 cards
             fb_bl_serpent_name_1 = {"Но я", "Змей"},
@@ -242,6 +261,7 @@ return {
             fb_bl_serpent_disabled_1 = {"Мои клыки! Ссс...", "Яда больше нет!"},
             fb_bl_serpent_defeat_1 = {"Сбросил кожу...", "и гордость."},
             fb_bl_serpent_gloat_1 = {"До ссс-видания!"},
+            fb_bl_serpent_interrupted_1 = {"Ш-ш-ш! Не", "перебивай!"},
 
             -- The Pillar: cards played previously this ante are debuffed
             fb_bl_pillar_name_1 = {"Но я", "Столп"},
@@ -253,6 +273,7 @@ return {
             fb_bl_pillar_disabled_1 = {"Моя память!", "Она... гаснет."},
             fb_bl_pillar_defeat_1 = {"Столп общества", "пал."},
             fb_bl_pillar_gloat_1 = {"Все еще стою!"},
+            fb_bl_pillar_interrupted_1 = {"Никакого уважения", "к старшим?"},
 
             -- The Needle: play only 1 hand
             fb_bl_needle_name_1 = {"Но я", "Игла"},
@@ -264,6 +285,7 @@ return {
             fb_bl_needle_disabled_1 = {"Моя игла!", "Она затупилась!"},
             fb_bl_needle_defeat_1 = {"Острая игра.", "Ты меня достал."},
             fb_bl_needle_gloat_1 = {"Уколола тебя!"},
+            fb_bl_needle_interrupted_1 = {"Как колко.", "Я не договорил!"},
 
             -- The Head: all Heart cards are debuffed
             fb_bl_head_name_1 = {"Но я", "Голова"},
@@ -275,6 +297,7 @@ return {
             fb_bl_head_disabled_1 = {"У меня болит голова!", "Червы снова работают?"},
             fb_bl_head_defeat_1 = {"Потеряла голову...", "из-за тебя."},
             fb_bl_head_gloat_1 = {"Бессердечный, да?"},
+            fb_bl_head_interrupted_1 = {"Голову потерял?", "Я говорю!"},
 
             -- The Tooth: lose $1 per card played
             fb_bl_tooth_name_1 = {"Но я", "Зуб"},
@@ -286,6 +309,7 @@ return {
             fb_bl_tooth_disabled_1 = {"Мой укус!", "Он пропал!"},
             fb_bl_tooth_defeat_1 = {"Зубами и когтями,", "я проиграл."},
             fb_bl_tooth_gloat_1 = {"Плати, простофиля!"},
+            fb_bl_tooth_interrupted_1 = {"Р-р-р! Ты за это", "заплатишь!"},
 
             -- The Flint: base Chips and Mult are halved
             fb_bl_flint_name_1 = {"Но я", "Кремень"},
@@ -297,6 +321,7 @@ return {
             fb_bl_flint_disabled_1 = {"Полная сила?!", "Нечестно!"},
             fb_bl_flint_defeat_1 = {"Моя искра", "погасла."},
             fb_bl_flint_gloat_1 = {"Половина веселья!"},
+            fb_bl_flint_interrupted_1 = {"Не искри!", "Я говорил!"},
 
             -- The Mark: all face cards are drawn face down
             fb_bl_mark_name_1 = {"Но я", "Знак"},
@@ -308,6 +333,7 @@ return {
             fb_bl_mark_disabled_1 = {"Лица!", "Я их вижу!"},
             fb_bl_mark_defeat_1 = {"Ты оставил на мне", "свой знак."},
             fb_bl_mark_gloat_1 = {"Отмечен", "проигрышем!"},
+            fb_bl_mark_interrupted_1 = {"Запомнил. Теперь", "ты на заметке."},
 
             -- Amber Acorn: flips and shuffles all Joker cards
             fb_bl_final_acorn_name_1 = {"Но я", "Янтарный желудь"},
@@ -319,6 +345,7 @@ return {
             fb_bl_final_acorn_disabled_1 = {"Мой желудь!", "Порядок вернулся?!"},
             fb_bl_final_acorn_defeat_1 = {"Ты расколол", "мою скорлупу..."},
             fb_bl_final_acorn_gloat_1 = {"Вот это орех!"},
+            fb_bl_final_acorn_interrupted_1 = {"Стой! Я даже", "не пророс!"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"Но я", "Зеленый лист"},
@@ -330,6 +357,7 @@ return {
             fb_bl_final_leaf_disabled_1 = {"Мой лист!", "Он засох!"},
             fb_bl_final_leaf_defeat_1 = {"Я ухожу...", "как лист."},
             fb_bl_final_leaf_gloat_1 = {"Листай на выход!"},
+            fb_bl_final_leaf_interrupted_1 = {"Ладно. Обойдёмся", "без любезностей."},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"Но я", "Фиолетовый сосуд"},
@@ -341,6 +369,7 @@ return {
             fb_bl_final_vessel_disabled_1 = {"Мой сосуд!", "Он тонет!"},
             fb_bl_final_vessel_defeat_1 = {"Сосуд...", "опустел."},
             fb_bl_final_vessel_gloat_1 = {"Полное поражение!"},
+            fb_bl_final_vessel_interrupted_1 = {"Отплываешь до моей", "речи? Смело."},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"Но я", "Багровое сердце"},
@@ -352,6 +381,7 @@ return {
             fb_bl_final_heart_disabled_1 = {"Мое сердце! Оно", "пропустило удар."},
             fb_bl_final_heart_defeat_1 = {"Мое сердце...", "разбито."},
             fb_bl_final_heart_gloat_1 = {"Сердце разбито?"},
+            fb_bl_final_heart_interrupted_1 = {"Перебиваешь меня?", "Какой бессердечный!"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"Но я", "Лазурный колокольчик"},
@@ -363,6 +393,7 @@ return {
             fb_bl_final_bell_disabled_1 = {"Мой колокольчик молчит!", "Жулик!"},
             fb_bl_final_bell_defeat_1 = {"Колокол звонит", "по мне."},
             fb_bl_final_bell_gloat_1 = {"Динь-дон,", "проиграл!"},
+            fb_bl_final_bell_interrupted_1 = {"Спасён гонгом?", "Не в этот раз!"},
         }
     }
 }

@@ -27,6 +27,7 @@ Every boss blind gets a tier. The tier decides how much of the show it gets.
 | Defeat | a line | a line and the shatter effect (the explosive finale when `cinematic` is on) |
 | Music | vanilla | a FinalBoss showdown track |
 | Screen effects (vignette, shake, flash) | none | yes |
+| Interrupted line (you play during the intro) | yes | yes |
 | Gloat when you lose | yes | yes |
 
 Reaction triggers:
@@ -39,6 +40,10 @@ Reaction triggers:
 
 If several reactions would fire on the same hand, only one plays (last hand, then close, then big hand). Click the blind chip or press any key during an intro to advance to the next line; press twice quickly to skip the rest of the intro.
 
+**Interrupting the boss.** Play a hand while the boss's intro is still running (the showdown title card or any intro line) and the speech stops at once: the boss snaps (a sharp shake and a red flash on the avatar, or on the HUD chip for regular bosses) and says its interrupted line instead. That line replaces the reaction line for that hand; the hit itself still lands. It happens once per blind. Skipping lines with a key or a click, or discarding, is not an interruption.
+
+**Game over.** When a boss beats you, Jimbo mocks you on the game-over screen with that boss's catchphrase.
+
 Regular bosses are light tier from the ante set in `min_ante` onward. Showdown bosses are always full tier. Mods can override the tier per boss (see below). An explicit `'light'` or `'full'` tier ignores `min_ante` and whether the boss is a showdown.
 
 ### Showdown stage
@@ -48,12 +53,13 @@ Showdowns (full tier) get a stage of their own. None of it appears for regular b
 - **Roaming boss avatar.** A large chip with the boss's own art sits on the table. It bobs and lives right of the play area, above the deck; while you choose cards it glides between a few open spots where its HP bar stays clear of your cards, and it stops while it talks. When you play a hand it returns to the right of the play area until the hand resolves. Its speech bubbles are drawn above your cards. The boss reacts when your score lands: each hand makes it flash and flinch, a hand under 10% of the boss's health makes it shrug off the hit and laugh (a distinct "ha-ha-ha": it hops and tilts, and its line waits until the laugh ends), and it gets wounded: below 50% it cracks and bobs faster, below 25% it cracks more and trembles. While the boss is on the table, its HUD chip steps out of the HUD and returns when it leaves. Click it to skip an intro line.
 - **HP bar and damage numbers.** Under the avatar: the boss name, a vanilla-style pixel bar (the same rounded, stepped bars as the game's own progress bars) in the boss's colour and `remaining / max`. The bar is drawn under your cards, so a card that overlaps it stays on top; damage numbers and speech bubbles still draw above. Each hand drops the bar at once and leaves a white trail that drains, and a damage number pops up above the avatar (big hands bigger, tiny hands small and grey). The bar flashes at 50% and 25%.
 - **Cinematic intro.** Black bars slide in, a dark band with the "SHOWDOWN" title and the boss name slams in across the screen (above the boss-effect text) and holds for a moment, and the avatar falls onto the table before it speaks. Press any key to jump straight to the avatar and its dialogue (a click works once the avatar has landed). Press again to advance a line; press twice quickly to skip the rest. The title card draws above your cards. Continue never replays the intro.
-- **Slow-motion explosive finale.** When the winning score lands, the game slows for under a second while the avatar cracks and shows its defeat line, then it explodes into shards with a flash in the boss's colour (the flash needs `fx`). Losing to a showdown makes the avatar laugh and fade before the gloat.
+- **Slow-motion explosive finale.** When the winning score lands, the game slows for under a second while the avatar cracks and shows its defeat line, then it explodes into shards with a flash in the boss's colour (the flash needs `fx`). Playing a hand during the title card cuts the intro: the avatar lands at once, snaps at you and says its interrupted line (no intro dialogue).
+- **Game-over gloat.** Lose a showdown and the HP bar goes away (the fight is over) while the avatar glides beside the game-over panel, above the dark overlay. When Jimbo says the boss's catchphrase, the boss laughs once, then bobs smugly until you start a new run or go to the main menu.
 - **Living arena.** The background swirl takes the boss's colours, pulses on each hand, and darkens and spins faster as the boss gets wounded (below 50%, then below 25%). In the final stretch (below 25%) the music pitches up slightly; the pitch-up needs both `fx` and `music`. Everything returns to normal when the blind ends.
 
 Turn off the avatar side with `cinematic` (avatar, HP bar, damage numbers, intro and finale). The arena follows `fx`, and the music pitch-up in the final stretch needs both `fx` and `music`. If you quit or Continue mid-showdown the stage is rebuilt from the saved score, with no fall-in.
 
-**Reduced motion.** With Balatro's reduced motion setting on, the stage keeps colours, flashes, the dissolve and the explosion, but drops the movement: no roaming, bob, tilt, tremble, knockback, slide/fall animations, slow motion, arena spin or arena pulses. The avatar and bars just appear, the avatar stays right of the play area, and screen shake is off (only the explosion keeps a small jiggle).
+**Reduced motion.** With Balatro's reduced motion setting on, the stage keeps colours, flashes, the dissolve and the explosion, but drops the movement: no roaming, bob, tilt, tremble, knockback, slide/fall animations, slow motion, arena spin or arena pulses (an interrupted boss only flashes red, and the game-over avatar does not bob). The avatar and bars just appear, the avatar stays right of the play area, and screen shake is off (only the explosion keeps a small jiggle).
 
 ### Showdown schedule
 
@@ -141,11 +147,12 @@ All text lives in `misc.quips` in your mod's localization. Each moment can have 
 | last hand | `fb_<blind>_last_hand_<n>` | per boss |
 | disabled | `fb_<blind>_disabled_<n>` | per boss |
 | defeat | `fb_<blind>_defeat_<n>` | per boss |
+| interrupted | `fb_<blind>_interrupted_<n>` | per boss (you played a hand during the intro) |
 | gloat | `fb_<blind>_gloat_<n>` | per boss |
 
 `<blind>` is the full blind key, for example `bl_hook`. For each moment FinalBoss tries the boss-specific key first, then `fb_generic_<moment>_<n>`, and otherwise skips the moment. The shared `opener` and `closer` lines have no generic fallback: if none exist, they are skipped. A raw key is never shown to the player. Generic lines receive the boss name as `#1#`.
 
-Writing tips: each quip is 1 or 2 lines, and each line should stay under about 24 visible characters so it fits the speech bubble. A per-boss gloat line is spoken by Jimbo on the game-over screen and gets no placeholders, so name the boss in the text itself.
+Writing tips: each quip is 1 or 2 lines, and each line should stay under about 24 visible characters so it fits the speech bubble. A gloat line is spoken by Jimbo on the game-over screen, mocking you with the boss's catchphrase: write only the line itself (no "Name:" header, no quotation marks) and no placeholders.
 
 ## Compatibility
 

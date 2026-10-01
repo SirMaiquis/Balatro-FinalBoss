@@ -1,7 +1,9 @@
 local T = {}
 
-local BOSS_MOMENTS = {'name', 'intro', 'big_hand', 'close', 'last_hand', 'disabled', 'defeat', 'gloat'}
-local GENERIC_MOMENTS = {'name', 'intro', 'big_hand', 'close', 'last_hand', 'disabled', 'defeat', 'gloat'}
+local BOSS_MOMENTS = {'name', 'intro', 'big_hand', 'close', 'last_hand', 'disabled', 'defeat', 'gloat',
+  'interrupted'}
+local GENERIC_MOMENTS = {'name', 'intro', 'big_hand', 'close', 'last_hand', 'disabled', 'defeat', 'gloat',
+  'interrupted'}
 local MAX_LINE = 24
 
 local function load()
@@ -58,6 +60,17 @@ T['gloat lines have no placeholders'] = function()
   for key, lines in pairs(quips) do
     if key:find('_gloat_') then
       for _, line in ipairs(lines) do assert(not line:find('#'), key .. ' has a placeholder') end
+    end
+  end
+end
+
+T['gloat lines are only the line: no Name: header, no quotes'] = function()
+  local quips = load()
+  for key, lines in pairs(quips) do
+    if key:find('gloat') then
+      assert(not lines[1]:find(':%s*$'), key .. ' starts with a header line')
+      local text = table.concat(lines, ' ')
+      assert(not (text:sub(1, 1) == '"' and text:sub(-1) == '"'), key .. ' is wrapped in quotes')
     end
   end
 end

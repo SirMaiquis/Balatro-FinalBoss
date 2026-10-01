@@ -160,6 +160,19 @@ function C.skip()
   finish_intro()
 end
 
+--- The player played a hand during the intro beats: jump to the end state (title gone, avatar
+--- landed, letterbox retracting) WITHOUT starting the intro dialogue (on_done is dropped).
+function C.interrupt()
+  if C.phase ~= 'intro' then return end
+  C.token = C.token + 1
+  C.on_done = nil
+  remove_title()
+  spawn_stage(false)
+  FinalBoss.avatar.snap() -- interrupted mid-fall: land it instantly
+  C.retract_bars()
+  C.phase = nil
+end
+
 --- Called when the intro dialogue ends (or is skipped / absent): letterbox slides away.
 function C.retract_bars()
   if C.bars then
@@ -221,17 +234,17 @@ function C.play_finale(blind)
   return true
 end
 
---- The boss won: a last laugh, then the avatar fades away (the gloat quip plays as before).
+--- The boss won: the HP bar goes (the fight is over) and the avatar gloats beside the game-over
+--- panel, laughing once when Jimbo says its catchphrase (avatar.gloat). Run teardown clears it.
 function C.game_over(pitch)
   C.token = C.token + 1
   FinalBoss.timescale = 1
   remove_title()
   C.retract_bars()
-  C.phase = nil
+  C.phase, C.on_done = nil, nil
   FinalBoss.hpbar.remove()
   if not FinalBoss.avatar.exists() then return end
-  local laugh_time = FinalBoss.avatar.laugh(pitch)
-  later(math.max(0.5, laugh_time), function() FinalBoss.avatar.fade_out(0.8) end)
+  FinalBoss.avatar.gloat(pitch)
 end
 
 function C.reset()
