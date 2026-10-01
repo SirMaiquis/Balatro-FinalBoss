@@ -51,3 +51,4 @@ Journal of every step of the 2.0 overhaul. Newest entries at the bottom.
 - [x] No FinalBoss errors in the Lovely log
 - 2026-10-01 Final review fixes: vignette cleared on guard failure, Talisman number conversion, README load order, dialogue reset on run teardown, registry input checks, reduced-motion static vignette 0.3, Chicot skips intro.
 - 2026-10-01 Stage skeleton: lovely/timescale.toml, stub modules, director tick/reset_stage, Game:update wrap.
+- 2026-10-01 Living arena: boss-coloured swirl for showdowns, darker/faster by wound stage, hit pulse, final-stretch pitch.

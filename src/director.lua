@@ -8,6 +8,14 @@ local function num(x)
   return tonumber(x) or 0
 end
 
+local function fight_numbers(blind)
+  return num(G.GAME.chips), num(blind.chips)
+end
+
+local function stage_of(total, required)
+  return FinalBoss.logic.wound_stage(FinalBoss.logic.hp_fraction(total, required))
+end
+
 function Dir.enabled()
   local st = G.GAME and G.GAME.FinalBoss
   return not (st and st.disabled_for_run)
@@ -32,20 +40,22 @@ function Dir.on_blind_set(blind)
   local proto = blind.config.blind or {}
   if not proto.key then st.encounter = nil; return end
   local entry = FinalBoss.registry.get(proto.key)
+  local is_showdown = (proto.boss and proto.boss.showdown) and true or false
   local tier = FinalBoss.logic.decide_tier{
     is_boss = blind.boss and true or false,
-    is_showdown = (proto.boss and proto.boss.showdown) and true or false,
+    is_showdown = is_showdown,
     entry_tier = entry.tier,
     ante = G.GAME.round_resets.ante,
     min_ante = FinalBoss.config.min_ante,
   }
   st.encounter = {key = proto.key, tier = tier, fired = {}, reactions = 0, phase = 1, track = nil,
-    last_variant = {}, ended = false, last_hand_seen = nil}
+    last_variant = {}, ended = false, last_hand_seen = nil, showdown = is_showdown, cinematic = false}
   st.lost_to = nil
   if tier == 'none' then return end
   if tier == 'full' then
     st.encounter.track = FinalBoss.music.pick_track(entry)
     FinalBoss.fx.play(entry.fx.intro, blind)
+    if is_showdown then FinalBoss.arena.start(blind, 0) end
   end
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = Dir.INTRO_DELAY, timer = 'REAL',
     blocking = false, blockable = false,
@@ -68,12 +78,16 @@ function Dir.play_intro(blind_key)
     FinalBoss.logic.line_duration(FinalBoss.config.intro_speed), entry.voice.pitch)
 end
 
---- Continuing a saved run: restore FX for an unfinished full encounter, never replay the intro.
+--- Continuing a saved run: restore FX and stage for an unfinished full encounter, never replay the intro.
 function Dir.on_blind_loaded(blind)
   FinalBoss.dialogue.reset(blind) -- a loaded blind never has a live bubble
   local enc = (G.GAME.FinalBoss or {}).encounter
   if not enc or enc.tier ~= 'full' or enc.ended then return end
-  if blind.config.blind and blind.config.blind.key == enc.key then FinalBoss.fx.resume(blind) end
+  if not (blind.config.blind and blind.config.blind.key == enc.key) then return end
+  FinalBoss.fx.resume(blind)
+  if not enc.showdown then return end
+  local total, required = fight_numbers(blind)
+  FinalBoss.arena.resume(blind, stage_of(total, required))
 end
 
 --- Runs after vanilla's end-of-round event, so Mr. Bones saves are resolved.
@@ -84,6 +98,7 @@ function Dir.on_round_end()
   if G.STATE == G.STATES.GAME_OVER then
     enc.ended = true
     FinalBoss.fx.stop()
+    FinalBoss.arena.stop()
   else
     st.lost_to = nil
   end
@@ -136,7 +151,15 @@ function Dir.on_hand_after()
   if hands_left == 0 and total < required then st.lost_to = enc.key end
   local moment = FinalBoss.logic.detect_moments{delta = delta, total = total, required = required,
     hands_left = hands_left, fired = enc.fired, tier = enc.tier, reactions = enc.reactions}
+  if enc.tier == 'full' and enc.showdown then
+    Dir.stage_hit(enc, blind, delta, total, required, moment)
+  end
   if moment then Dir.fire(moment) end
+end
+
+--- Stage reactions to a scored hand in a showdown.
+function Dir.stage_hit(enc, blind, delta, total, required, moment)
+  FinalBoss.arena.on_hit(stage_of(total, required))
 end
 
 function Dir.on_blind_disabled()
@@ -150,6 +173,7 @@ function Dir.on_blind_defeated()
   if enc.tier == 'full' then
     FinalBoss.fx.play(FinalBoss.registry.get(enc.key).fx.defeat, blind)
     FinalBoss.fx.stop()
+    FinalBoss.arena.stop()
   end
 end
 

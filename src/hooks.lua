@@ -75,6 +75,15 @@ function Game:delete_run(...)
   return ret
 end
 
+-- Vanilla paints every showdown blue/red (common_events.lua ease_background_colour_blind) and
+-- re-runs it on every refresh, including fx.flash's restore: re-apply the arena palette after it.
+local orig_ease_bg_blind = ease_background_colour_blind
+function ease_background_colour_blind(...)
+  local ret = orig_ease_bg_blind(...)
+  if FinalBoss.arena.active() then U.guard('arena_apply', FinalBoss.arena.apply) end
+  return ret
+end
+
 -- Per-frame stage tick (avatar idle/roam, HP bar trail, arena music pitch).
 local orig_game_update = Game.update
 function Game:update(dt, ...)
