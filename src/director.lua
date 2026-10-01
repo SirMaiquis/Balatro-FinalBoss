@@ -251,11 +251,12 @@ function Dir.stage_hit(enc, blind, delta, total, required, moment)
   -- avatar is still on the table and the fight is still going).
   local V = FinalBoss.avatar
   local o = V.anchor()
+  if not o then return 0 end -- no avatar to laugh: the line must not wait for nothing
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = Dir.WEAK_LAUGH_DELAY, timer = 'REAL',
     blocking = false, blockable = false, func = function()
       FinalBoss.util.guard('weak_laugh', function()
         local e = current()
-        if not o or V.anchor() ~= o or not e or e ~= enc or e.ended then return end
+        if V.anchor() ~= o or not e or e ~= enc or e.ended then return end
         V.laugh(FinalBoss.registry.get(enc.key).voice.pitch)
       end)
       return true

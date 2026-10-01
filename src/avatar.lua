@@ -22,6 +22,7 @@ V.talking = false
 V.fading = false
 V.tremble = false
 V.wound = 0
+V.laugh_id = 0 -- bumped per laugh: a newer laugh silences the older one's remaining beats
 V.laugh_start, V.laugh_until = 0, 0 -- REAL-time window the update reads for hops, tilt and shake
 
 local function now() return FinalBoss.util.now() end
@@ -236,12 +237,14 @@ end
 
 --- Laugh: ONE syllable (fixed for the whole laugh) repeated LAUGH.beats times at an even, fast
 --- cadence, pitch stepping down, louder than talking, after a low accent. Not reduced: the chip hops,
---- tilts and shakes (see Avatar:move). Reduced: sound and a single small juice pulse.
+--- tilts and shakes (see Avatar:move). Reduced: sound and a flash pulse on every other beat.
 --- Returns the laugh's total duration in seconds.
 function V.laugh(pitch)
   local o = V.obj
   if not o then return V.LAUGH_DURATION end
   local L = FinalBoss.logic.LAUGH
+  V.laugh_id = V.laugh_id + 1
+  local id = V.laugh_id
   local syllable = 'voice' .. math.random(1, 11)
   local calm = reduced()
   if not calm then
@@ -253,9 +256,10 @@ function V.laugh(pitch)
   play_sound(a.sound, a.pitch, a.volume)
   for i = 0, L.beats - 1 do
     after(i * L.step, function()
-      if V.obj ~= o then return end
+      if V.obj ~= o or V.laugh_id ~= id then return end
       play_sound(syllable, (pitch or 1) * FinalBoss.logic.laugh_pitch(i), V.LAUGH_VOLUME)
-      if i == 0 and calm then o:juice_up(0.2, 0.2) end
+      -- vanilla juice_up is a no-op under reduced motion: pulse with a brief flash instead
+      if calm and i % 2 == 0 then o.flash_until = now() + 0.08 end
     end)
   end
   return V.LAUGH_DURATION
