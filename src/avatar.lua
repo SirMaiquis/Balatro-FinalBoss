@@ -5,7 +5,8 @@ V.SIZE = 2.1
 V.ROAM_MIN, V.ROAM_MAX = 6, 9
 V.KNOCKBACK = 0.5
 V.PERCH_COUNT = 4
-V.RINGSIDE = FinalBoss.logic.PERCH_RINGSIDE -- home: spawn, landing, scoring, and the only spot under reduced motion
+-- Home perch: spawn, landing, scoring, and the only spot under reduced motion.
+V.RINGSIDE = FinalBoss.logic.PERCH_RINGSIDE
 V.HP_BOX_H = 1.05 -- estimated HP box height incl. its 0.05 gap, until the real box exists
 V.HUD_EASE = 0.3
 V.LAUGH_DURATION = FinalBoss.logic.laugh_duration() -- the director schedules the line after it

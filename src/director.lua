@@ -162,10 +162,6 @@ function Dir.on_hand_after()
   local hands_played = G.GAME.current_round.hands_played
   if enc.last_hand_seen == hands_played then return end -- defensive: one evaluation per hand
   Dir.flush_pending() -- a previous hand's reaction updates enc.fired / reactions, read below
-  if FinalBoss.config.dev_mode then
-    FinalBoss.util.log('info', ('dev: at after chips=%s delta=%s'):format(
-      tostring(G.GAME.chips), tostring(SMODS.last_hand_score)))
-  end
   enc.last_hand_seen = hands_played
   local delta = num(SMODS.last_hand_score)
   local chips = num(G.GAME.chips)
