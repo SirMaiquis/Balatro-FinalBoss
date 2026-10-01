@@ -29,13 +29,22 @@ end
 
 local orig_end_round = end_round
 function end_round(...)
+  local q = G.E_MANAGER.queues.base
+  local n = #q
   local ret = orig_end_round(...)
-  -- Queued after vanilla's own end-of-round event, so game over / Mr. Bones is decided.
-  -- pause_force: on a loss, vanilla's event sets GAME_OVER and, in the same frame, update_game_over
-  -- pauses the game (G.SETTINGS.paused) before this event's turn comes (the blocking event ahead of
-  -- it holds the queue for that pass). Events made before a pause are skipped while it lasts, so
-  -- without this the game-over branch of on_round_end never ran.
-  G.E_MANAGER:add_event(Event({pause_force = true, func = function()
+  -- Vanilla end_round queues exactly one event (the 0.2 s end-of-round event that decides game
+  -- over / Mr. Bones); smods only patches inside it. Ours runs after it has completed:
+  -- * pause_force: on a loss that event sets GAME_OVER and, in the same frame, update_game_over
+  --   pauses the game before our turn (the blocking event ahead of us holds the queue for that
+  --   pass). Events made before a pause are skipped while it lasts, so without pause_force the
+  --   game-over branch of on_round_end never ran.
+  -- * the gate: a pause-skipped event never sets `blocked`, so if the player pauses (options menu)
+  --   before vanilla's event has run, ours would be handled first, with the round undecided. It
+  --   waits (returns false) until vanilla's event is complete; blocking = false so a waiting event
+  --   never stalls events queued meanwhile (e.g. while the options menu is open).
+  local ev = q[n + 1]
+  G.E_MANAGER:add_event(Event({pause_force = true, blocking = false, func = function()
+    if ev and not ev.complete then return false end
     if director().enabled() then U.guard('end_round', director().on_round_end) end
     return true
   end}))

@@ -201,7 +201,7 @@ return {
             fb_bl_window_disabled_1 = {"¡Mi ventana, agrietada!", "¡Brillan los diamantes!"},
             fb_bl_window_defeat_1 = {"Mi ventana de", "oportunidad se cerró."},
             fb_bl_window_gloat_1 = {"¿Diamantes?", "¡Débiles!"},
-            fb_bl_window_interrupted_1 = {"¿Mis palabras se van", "por la ventana?!"},
+            fb_bl_window_interrupted_1 = {"¡¿Mis palabras se van", "por la ventana?!"},
 
             -- The Manacle: -1 hand size
             fb_bl_manacle_name_1 = {"Pero soy", "El grillete"},

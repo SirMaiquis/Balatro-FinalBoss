@@ -71,8 +71,27 @@ function logic.should_interrupt(a)
 end
 
 --- Whether a scored hand's moment line is replaced by the interrupted line said for that hand.
-function logic.moment_replaced(interrupt_hand, hand)
+--- The defeat line is never replaced: the boss always gets its last word.
+function logic.moment_replaced(interrupt_hand, hand, moment)
+  if moment == 'defeat' then return false end
   return interrupt_hand ~= nil and hand ~= nil and interrupt_hand == hand
+end
+
+--- Game over: where the gloating chip sits beside the game-over panel, and how big it is.
+--- panel = {x, y, w, h}; room_right = the right edge the window always shows; S = normal chip size,
+--- min_s = smallest chip that still reads; gap = space kept around the chip.
+--- Right of the panel, vertically centred, shrunk to the free margin (never below min_s); when
+--- even min_s does not fit there, it sits above the panel's top-right corner instead (shrunk to
+--- the space above, floor min_s), so it never covers the panel. Returns x, y, size (top-left).
+function logic.gloat_rect(panel, room_right, S, min_s, gap)
+  local right = panel.x + panel.w
+  local free = room_right - right - 2 * gap -- gap to the panel and to the window edge
+  if free >= min_s then
+    local size = math.min(S, free)
+    return right + gap, panel.y + panel.h / 2 - size / 2, size
+  end
+  local size = math.max(min_s, math.min(S, panel.y - 2 * gap))
+  return right - size, panel.y - gap - size, size
 end
 
 --- args: {is_boss, is_showdown, entry_tier = 'auto'|'light'|'full', ante, min_ante}

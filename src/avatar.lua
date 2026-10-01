@@ -13,9 +13,12 @@ V.LAUGH_VOLUME = 0.75   -- louder than talking (0.5)
 V.LAUGH_ACCENT = {sound = 'multhit1', pitch = 0.6, volume = 0.3} -- one low thud as the laugh starts
 V.ROOM_MARGIN = 0.5 -- the window always shows at least this much of the room padding per side
 V.DISSOLVE = {[0] = 0, [1] = 0.12, [2] = 0.25}
-V.GLOAT_GAP = 0.5       -- game over: space between the game-over panel and the chip
+V.GLOAT_GAP = 0.3       -- game over: space kept between the chip and the panel / window edge
+V.GLOAT_MIN = 1.4       -- game over: the chip shrinks to fit the free margin, never below this
 V.GLOAT_FALLBACK_DX = 5.5 -- no panel found: this far right of the room's centre
+V.GLOAT_LAUGH_DELAY = 1.0 -- laugh this long after Jimbo starts talking (not over his babble)
 V.GLOAT_LAUGH_LATE = 3.5  -- laugh anyway this long after the game over if Jimbo never speaks
+V.GLOAT_LEAVE = 0.25    -- dissolve time when the game-over screen goes
 V.ANGER_TIME = 0.4      -- interrupted: sharp shake length
 V.ANGER_SHAKE = 0.14    -- interrupted: shake amplitude at its start
 V.RED = {1, 0.15, 0.1, 0.8}
@@ -229,33 +232,51 @@ function V.position()
   return T.x, T.y, T.w, T.h
 end
 
---- Game over: the spot right of the game-over panel, vertically centred. The overlay UIBox's root
---- covers the whole screen (it is the dim); its first child is the panel. Fixed fallback.
-local function gloat_xy()
-  local S = V.SIZE
-  local m = G.OVERLAY_MENU
-  local root = type(m) == 'table' and m.UIRoot
-  local panel = root and root.children and root.children[1]
+--- Whether an overlay is vanilla's game-over screen (create_UIBox_game_over has 'jimbo_spot').
+local function is_game_over_menu(m)
+  return type(m) == 'table' and m.UIRoot and m.get_UIE_by_ID and m:get_UIE_by_ID('jimbo_spot') and true or false
+end
+
+--- The game-over panel's T. The overlay's ROOT is the full-screen dim; ROOT's first child is a row
+--- {Jimbo's column ('jimbo_spot'), a column (padding 0.1) holding the panel} (UI_definitions.lua
+--- create_UIBox_game_over, t.nodes[1]), so the panel is the last column's first child.
+local function game_over_panel(m)
+  local row = m and m.UIRoot and m.UIRoot.children and m.UIRoot.children[1]
+  local col = row and row.children and row.children[#row.children]
+  local panel = col and col.children and col.children[1] or col
   local T = panel and panel.T
-  local x, y
-  if T and T.w and T.w > 0 and T.h and T.h > 0 then
-    x, y = T.x + T.w + V.GLOAT_GAP, T.y + T.h / 2 - S / 2
-  else
-    x, y = G.ROOM.T.w / 2 + V.GLOAT_FALLBACK_DX, G.ROOM.T.h / 2 - S / 2
+  if T and T.w and T.w > 0 and T.h and T.h > 0 then return T end
+  return nil
+end
+
+--- Game over: top-left and size of the gloating chip (logic.gloat_rect beside the live panel);
+--- fixed spot right of centre when the panel is not found.
+local function gloat_spot(m)
+  local T = game_over_panel(m)
+  if T then
+    return FinalBoss.logic.gloat_rect({x = T.x, y = T.y, w = T.w, h = T.h}, G.ROOM.T.w + V.ROOM_MARGIN,
+      V.SIZE, V.GLOAT_MIN, V.GLOAT_GAP)
   end
-  return math.min(x, G.ROOM.T.w + V.ROOM_MARGIN - S), y
+  local S = V.SIZE
+  return math.min(G.ROOM.T.w / 2 + V.GLOAT_FALLBACK_DX, G.ROOM.T.w + V.ROOM_MARGIN - S), G.ROOM.T.h / 2 - S / 2, S
 end
 
 --- Jimbo has said his quip (vanilla puts a Card_Character with a speech bubble in 'jimbo_spot').
-local function jimbo_speaking()
-  local m = G.OVERLAY_MENU
-  local spot = type(m) == 'table' and m.get_UIE_by_ID and m:get_UIE_by_ID('jimbo_spot')
+local function jimbo_speaking(m)
+  local spot = m and m:get_UIE_by_ID('jimbo_spot')
   local j = spot and spot.config and spot.config.object
   return (j and j.children and j.children.speech_bubble) and true or false
 end
 
---- The boss won: it glides beside the game-over panel, above the overlay's dim, laughs once when
---- Jimbo delivers its catchphrase, then idles smugly until the run is torn down (V.remove).
+local function place_gloat(o, x, y, size)
+  if o.T.x == x and o.T.y == y and o.T.w == size then return end
+  o.T.x, o.T.y, o.T.w, o.T.h = x, y, size, size -- Avatar:move sizes the sprite from T
+  if reduced() then V.snap() end -- no glide under reduced motion
+end
+
+--- The boss won: it glides beside the game-over panel, above the overlay's dim, laughs once just
+--- after Jimbo delivers its catchphrase, then idles smugly until the game-over screen goes (it then
+--- dissolves away) or the run is torn down (V.remove).
 --- The game-over screen pauses the game (G.SETTINGS.paused): moveables made before the pause stop
 --- moving, so the chip and its sprite are marked pause-proof. Vanilla draws G.I.POPUP after
 --- G.OVERLAY_MENU, so moving the chip from G.I.MOVEABLE to G.I.POPUP puts it above the dim
@@ -263,7 +284,10 @@ end
 function V.gloat(pitch)
   local o = V.obj
   if not o or V.gloating then return end
-  V.gloating = {pitch = pitch, laughed = false, t0 = now()}
+  -- menu: the game-over overlay this gloat belongs to; when another overlay replaces it (New Run
+  -- opens the run setup), the chip leaves.
+  V.gloating = {pitch = pitch, laughed = false, t0 = now(), laugh_at = nil, leaving = false,
+    menu = is_game_over_menu(G.OVERLAY_MENU) and G.OVERLAY_MENU or nil}
   V.talking, V.tremble, V.scoring, V.fading = false, false, false, false
   V.anger_until = 0
   o.created_on_pause = true
@@ -274,18 +298,25 @@ function V.gloat(pitch)
     if G.I.MOVEABLE[i] == o then table.remove(G.I.MOVEABLE, i) end
   end
   table.insert(G.I.POPUP, o)
-  o.T.x, o.T.y = gloat_xy()
-  if reduced() then V.snap() end -- no glide under reduced motion
+  place_gloat(o, gloat_spot(V.gloating.menu))
 end
 
 local function gloat_tick()
   local o, g = V.obj, V.gloating
-  local x, y = gloat_xy() -- live: the panel slides in, and the window may be resized
-  if o.T.x ~= x or o.T.y ~= y then
-    o.T.x, o.T.y = x, y
-    if reduced() then V.snap() end
+  if g.leaving then return end
+  local m = G.OVERLAY_MENU
+  if not g.menu and is_game_over_menu(m) then g.menu = m end
+  if g.menu and m ~= g.menu then -- the game-over screen is gone: dissolve away (REAL timer, runs paused)
+    g.leaving = true
+    V.fade_out(V.GLOAT_LEAVE)
+    return
   end
-  if not g.laughed and (jimbo_speaking() or now() - g.t0 >= V.GLOAT_LAUGH_LATE) then
+  place_gloat(o, gloat_spot(g.menu)) -- live: the panel slides in, and the window may be resized
+  -- Laugh once, a beat after Jimbo starts talking (not over his babble); without Jimbo (losses
+  -- past the win ante) GLOAT_LAUGH_LATE after the game over.
+  if not g.laugh_at and g.menu and jimbo_speaking(g.menu) then g.laugh_at = now() + V.GLOAT_LAUGH_DELAY end
+  if not g.laughed and ((g.laugh_at and now() >= g.laugh_at)
+      or (not g.laugh_at and now() - g.t0 >= V.GLOAT_LAUGH_LATE)) then
     g.laughed = true
     V.laugh(g.pitch)
   end

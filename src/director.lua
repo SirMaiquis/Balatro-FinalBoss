@@ -79,6 +79,9 @@ function Dir.play_intro(blind_key)
   local on_end = enc and enc.cinematic and FinalBoss.cinematic.retract_bars or nil
   local function nothing_to_say() FinalBoss.cinematic.retract_bars() end
   if not enc or not FinalBoss.config.dialogue or blind.disabled then return nothing_to_say() end
+  -- A hand is already being played (the delayed intro came late): skip the intro for this
+  -- encounter rather than start it only to cut it at once.
+  if G.STATES and G.STATE == G.STATES.HAND_PLAYED then return nothing_to_say() end
   local steps = {}
   for _, moment in ipairs(FinalBoss.logic.intro_sequence(enc.tier)) do
     local key = FinalBoss.registry.resolve(enc.key, moment, enc.last_variant)
@@ -206,8 +209,9 @@ local function react(p)
   end
   if not p.moment then return end
   -- This hand interrupted the intro: its interrupted line replaces the moment line (the moment
-  -- stays unfired, so a later hand can still trigger it). The stage hit above still played.
-  if FinalBoss.logic.moment_replaced(enc.interrupt_hand, p.hand) then return end
+  -- stays unfired, so a later hand can still trigger it), except the defeat line, which always
+  -- plays (and may replace the interrupted bubble). The stage hit above still played.
+  if FinalBoss.logic.moment_replaced(enc.interrupt_hand, p.hand, p.moment) then return end
   if wait <= 0 then Dir.fire(p.moment); return end
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = wait, timer = 'REAL', blocking = false,
     blockable = false, func = function()

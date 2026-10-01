@@ -152,7 +152,7 @@ return {
             fb_bl_fish_last_hand_1 = {"Letzter Wurf.", "Hol ihn ein."},
             fb_bl_fish_disabled_1 = {"Meine Schuppen!", "Sie sind ab!"},
             fb_bl_fish_defeat_1 = {"Eingeholt...", "von einem Profi."},
-            fb_bl_fish_gloat_1 = {"Du bist", "abgesoffen!"},
+            fb_bl_fish_gloat_1 = {"Dich hab ich", "nass gemacht!"},
             fb_bl_fish_interrupted_1 = {"Du hast mir die", "Leine gekappt!"},
 
             -- The Psychic: must play 5 cards

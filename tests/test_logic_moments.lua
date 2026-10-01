@@ -113,6 +113,35 @@ T['moment_replaced: only the interrupting hand'] = function()
   eq(logic.moment_replaced(0, 1), false)
   eq(logic.moment_replaced(nil, 0), false)
   eq(logic.moment_replaced(2, nil), false)
+  eq(logic.moment_replaced(0, 0, 'close'), true)
+end
+
+T['moment_replaced: the defeat line is never replaced'] = function()
+  eq(logic.moment_replaced(0, 0, 'defeat'), false)
+  eq(logic.moment_replaced(3, 3, 'defeat'), false)
+end
+
+local function near(a, b, msg) if math.abs(a - b) > 1e-9 then error((msg or 'value') .. ': ' .. a .. ' ~= ' .. b, 2) end end
+
+T['gloat_rect: full size right of the panel, vertically centred'] = function()
+  local x, y, s = logic.gloat_rect({x = 6, y = 2, w = 10, h = 8}, 20.5, 2.1, 1.4, 0.3)
+  near(s, 2.1, 'size'); near(x, 16.3, 'x'); near(y, 2 + 4 - 1.05, 'y')
+end
+
+T['gloat_rect: shrinks to the free margin, never covering the panel'] = function()
+  -- free = 20.5 - 18 - 0.6 = 1.9
+  local x, y, s = logic.gloat_rect({x = 8, y = 2, w = 10, h = 8}, 20.5, 2.1, 1.4, 0.3)
+  near(s, 1.9, 'size'); near(x, 18.3, 'x'); near(y, 6 - 0.95, 'y')
+  assert(x + s <= 20.5 - 0.3 + 1e-9, 'stays inside the window')
+end
+
+T['gloat_rect: above the top-right corner when even the minimum does not fit'] = function()
+  -- free = 20.5 - 19.5 - 0.6 = 0.4 < 1.4; space above = 2 - 0.6 = 1.4
+  local x, y, s = logic.gloat_rect({x = 9.5, y = 2, w = 10, h = 8}, 20.5, 2.1, 1.4, 0.3)
+  near(s, 1.4, 'size'); near(x, 19.5 - 1.4, 'x'); near(y, 2 - 0.3 - 1.4, 'y')
+  assert(y + s <= 2, 'never covers the panel')
+  local _, _, big = logic.gloat_rect({x = 9.5, y = 4, w = 10, h = 6}, 20.5, 2.1, 1.4, 0.3)
+  near(big, 2.1, 'full size when there is room above')
 end
 
 T['interrupted is forced, not a reaction'] = function()
