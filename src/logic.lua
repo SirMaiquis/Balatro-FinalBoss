@@ -77,12 +77,11 @@ function logic.moment_replaced(interrupt_hand, hand, moment)
   return interrupt_hand ~= nil and hand ~= nil and interrupt_hand == hand
 end
 
---- Game over: where the gloating chip sits beside the game-over panel, and how big it is.
+--- Game over: top-left x, y and size of the gloating chip beside the game-over panel.
 --- panel = {x, y, w, h}; room_right = the right edge the window always shows; S = normal chip size,
 --- min_s = smallest chip that still reads; gap = space kept around the chip.
---- Right of the panel, vertically centred, shrunk to the free margin (never below min_s); when
---- even min_s does not fit there, it sits above the panel's top-right corner instead (shrunk to
---- the space above, floor min_s), so it never covers the panel. Returns x, y, size (top-left).
+--- Right of the panel, vertically centred, shrunk to the free margin (floor min_s); if even min_s
+--- does not fit, above the panel's top-right corner instead, so it never covers the panel.
 function logic.gloat_rect(panel, room_right, S, min_s, gap)
   local right = panel.x + panel.w
   local free = room_right - right - 2 * gap -- gap to the panel and to the window edge

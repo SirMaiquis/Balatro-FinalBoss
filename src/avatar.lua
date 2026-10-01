@@ -65,7 +65,7 @@ function Avatar:init(X, Y, W, H, sprite, colour)
   self.children = {}
   self.states.collide.can = true
   self.states.click.can = true
-  self.states.hover.can = true -- the controller only presses the hovered object, so click needs hover
+  self.states.hover.can = true -- G.CONTROLLER only clicks the hovered object, so click needs hover
   self.states.drag.can = false
   self.dissolve = 0
   self.dissolve_colours = {G.C.BLACK, colour}
@@ -105,10 +105,9 @@ function Avatar:move(dt)
   end
   s.T.w, s.T.h = self.T.w, self.T.h
   if anger > 0 then s.VT.x, s.VT.y = s.T.x, s.T.y end -- the sprite's spring would smooth the shake away
-  -- Laughing: hop on every "ha", tilt back and forth, shake at the end. Applied to the sprite only
-  -- (the avatar's own T is the perch, so roaming glides never fight it) and straight onto its
-  -- drawn position, since the sprite's spring would smooth a 0.1 s hop away. All offsets are zero
-  -- outside the window, so the chip ends exactly on its bob.
+  -- Laughing: hop, tilt and shake on the sprite only (the avatar's T is the perch, so roaming
+  -- never fights it), written straight to VT since the sprite's spring would smooth a 0.1 s hop
+  -- away. Offsets are zero outside the window, so the chip ends exactly on its bob.
   if not calm and now() < V.laugh_until then
     local hop, tilt, shake = FinalBoss.logic.laugh_motion(now() - V.laugh_start)
     s.T.x = s.T.x + (shake > 0 and (math.random() - 0.5) * 2 * shake or 0)

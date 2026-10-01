@@ -1,4 +1,4 @@
---- FinalBoss 1.0 entry point: builds the FinalBoss namespace and loads src/ modules in order.
+--- FinalBoss entry point: builds the FinalBoss namespace and loads src/ modules in order.
 FinalBoss = {}
 FinalBoss.mod = SMODS.current_mod
 FinalBoss.config = SMODS.current_mod.config

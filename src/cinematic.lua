@@ -228,7 +228,7 @@ function C.play_finale(blind)
   after(1.2, token, function() explode(blind, calm) end)
   later(1.6, function()
     if C.phase == 'finale' then C.phase = nil end
-    FinalBoss.fx.stop() -- vignette and arena revert with the explosion (spec 7.2); both are idempotent
+    FinalBoss.fx.stop() -- vignette and arena revert with the explosion; both are idempotent
     FinalBoss.arena.stop()
   end)
   return true

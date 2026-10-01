@@ -183,10 +183,10 @@ function Dir.on_hand_after()
   local p = {start = chips, delta = delta, total = total, required = required, moment = moment,
     enc = enc, blind = blind, t0 = FinalBoss.util.now(), queued_done = false, hand = hands_played}
   Dir.pending = p
-  -- Completion signal in queue order: context.after runs inside evaluate_play after it has queued
-  -- delay(0.8), chips2, the G.GAME.chips ease, the blocking chip_total ease and the handname clear
-  -- (state_events.lua 1036-1066, before the after-loop at 1068), and add_event appends to the base
-  -- queue, so this event runs after all of them. Blocking ease + game-speed timing included.
+  -- Completion signal in queue order: context.after runs inside evaluate_play (state_events.lua)
+  -- after it has queued the score display (delay, chips2, the G.GAME.chips ease, the blocking
+  -- chip_total ease, the handname clear), so this event appended to the base queue runs after all
+  -- of them, at game speed.
   G.E_MANAGER:add_event(Event({func = function()
     FinalBoss.util.guard('score_queued', function() if Dir.pending == p then p.queued_done = true end end)
     return true
