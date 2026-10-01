@@ -23,17 +23,17 @@ end
 
 local Avatar = Moveable:extend()
 
-function Avatar:init(X, Y, W, H, atlas, pos, colour)
+function Avatar:init(X, Y, W, H, sprite, colour)
   Moveable.init(self, X, Y, W, H)
   self.children = {}
   self.states.collide.can = true
   self.states.click.can = true
-  self.states.hover.can = false
+  self.states.hover.can = true -- the controller only presses the hovered object, so click needs hover
   self.states.drag.can = false
   self.dissolve = 0
   self.dissolve_colours = {G.C.BLACK, colour}
   self.flash_until = 0
-  self.children.sprite = AnimatedSprite(X, Y, W, H, atlas, pos)
+  self.children.sprite = sprite
   self.children.sprite.states.collide.can = false
   self.children.sprite.states.hover.can = false
   self.children.sprite.states.drag.can = false
@@ -110,7 +110,7 @@ local function perch_xy(i)
     p = {x = a.x + a.w / 2 - S / 2, y = a.y - S * 0.5}
   end
   if not p then p = {x = G.ROOM.T.w * 0.72, y = G.ROOM.T.h * 0.35} end
-  return p.x, p.y
+  return math.max(0, math.min(p.x, G.ROOM.T.w - V.SIZE)), p.y
 end
 
 local function go_to(i, instant)
@@ -126,12 +126,18 @@ function V.spawn(blind, opts)
   V.remove()
   local proto = blind and blind.config and blind.config.blind
   if not proto then return end
-  local atlas = (proto.atlas and G.ANIMATION_ATLAS[proto.atlas]) or G.ANIMATION_ATLAS['blind_chips']
-  local pos = {x = 0, y = (proto.pos and proto.pos.y) or 0}
   local c = proto.boss_colour or G.C.RED
   local x, y = perch_xy(2)
   local start_y = opts.fall and (y - G.ROOM.T.h - V.SIZE) or y
-  V.obj = Avatar(x, start_y, V.SIZE, V.SIZE, atlas, pos, {c[1], c[2], c[3], 1})
+  local sprite_pos = copy_table(proto.pos or {x = 0, y = 0})
+  local sprite
+  if SMODS and SMODS.create_sprite then -- exact art, frames and sprite class for modded bosses
+    sprite = SMODS.create_sprite(x, start_y, V.SIZE, V.SIZE, proto.atlas or 'blind_chips', sprite_pos, proto.sprite_args)
+  else
+    sprite = AnimatedSprite(x, start_y, V.SIZE, V.SIZE,
+      (proto.atlas and G.ANIMATION_ATLAS[proto.atlas]) or G.ANIMATION_ATLAS['blind_chips'], sprite_pos)
+  end
+  V.obj = Avatar(x, start_y, V.SIZE, V.SIZE, sprite, {c[1], c[2], c[3], 1})
   V.obj:hard_set_VT()
   go_to(2, not opts.fall)
   V.next_roam = now() + math.random(V.ROAM_MIN, V.ROAM_MAX)
