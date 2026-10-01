@@ -1,6 +1,22 @@
 return {
     misc = {
         dictionary = {
+            fb_tab_showdowns = "Showdowns",
+            fb_cfg_dialogue = "Boss dialogue",
+            fb_cfg_music = "Showdown music",
+            fb_cfg_fx = "Screen effects",
+            fb_cfg_intro_speed = "Intro speed",
+            fb_speed_slow = "Slow",
+            fb_speed_normal = "Normal",
+            fb_speed_fast = "Fast",
+            fb_cfg_min_ante = "Boss dialogue from ante",
+            fb_cfg_dev_mode = "Developer keys (F5-F7)",
+            fb_cfg_showdown_enabled = "Custom showdown schedule",
+            fb_cfg_start_ante = "First showdown ante",
+            fb_cfg_every = "Then every N antes",
+            fb_cfg_preview = "Showdowns at antes:",
+            fb_cfg_hard = "Hard! Early showdowns are brutal.",
+            fb_cfg_next_ante = "Changes apply from the next ante.",
         },
         quips = {
             -- Shared intro bookends (full tier only)
