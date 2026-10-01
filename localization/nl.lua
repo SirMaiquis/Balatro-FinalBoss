@@ -65,7 +65,7 @@ return {
             fb_bl_hook_last_hand_1 = {"Eindelijk heb ik", "je aan de haak!"},
             fb_bl_hook_disabled_1 = {"Mijn haak!", "Hij is kapot!"},
             fb_bl_hook_defeat_1 = {"Goed... ik laat", "je van de haak."},
-            fb_bl_hook_gloat_1 = {"De haak:", "\"Aan de haak geslagen!\""},
+            fb_bl_hook_gloat_1 = {"Aan de haak", "geslagen!"},
 
             -- The Ox: playing your most played hand sets money to $0
             fb_bl_ox_name_1 = {"Maar ik ben", "De os"},
@@ -76,7 +76,7 @@ return {
             fb_bl_ox_last_hand_1 = {"Laatste hand. Geef het", "uit of verlies het."},
             fb_bl_ox_disabled_1 = {"Mijn hoorns!", "Ze zijn bot!"},
             fb_bl_ox_defeat_1 = {"Je greep de stier", "bij de hoorns..."},
-            fb_bl_ox_gloat_1 = {"De os:", "\"Nu ben je blut!\""},
+            fb_bl_ox_gloat_1 = {"Nu ben je blut!"},
 
             -- The House: first hand is drawn face down
             fb_bl_house_name_1 = {"Maar ik ben", "Het huis"},
@@ -87,7 +87,7 @@ return {
             fb_bl_house_last_hand_1 = {"Geen blind geluk", "meer."},
             fb_bl_house_disabled_1 = {"Mijn blinddoek!", "Hij viel af!"},
             fb_bl_house_defeat_1 = {"Het huis...", "is gevallen."},
-            fb_bl_house_gloat_1 = {"Het huis:", "\"Het huis wint!\""},
+            fb_bl_house_gloat_1 = {"Het huis wint!"},
 
             -- The Wall: extra large blind
             fb_bl_wall_name_1 = {"Maar ik ben", "De muur"},
@@ -98,7 +98,7 @@ return {
             fb_bl_wall_last_hand_1 = {"Er is niets meer", "te beklimmen."},
             fb_bl_wall_disabled_1 = {"Scheuren! Mijn muur", "barst!"},
             fb_bl_wall_defeat_1 = {"De muur...", "stort in."},
-            fb_bl_wall_gloat_1 = {"De muur:", "\"Tegen de muur!\""},
+            fb_bl_wall_gloat_1 = {"Tegen de muur!"},
 
             -- The Wheel: 1 in 7 cards get drawn face down
             fb_bl_wheel_name_1 = {"Maar ik ben", "Het rad"},
@@ -109,7 +109,7 @@ return {
             fb_bl_wheel_last_hand_1 = {"Laatste draai.", "Voel je je gelukkig?"},
             fb_bl_wheel_disabled_1 = {"Het rad stopt?", "Vals spel!"},
             fb_bl_wheel_defeat_1 = {"Het rad van fortuin", "draait tegen me..."},
-            fb_bl_wheel_gloat_1 = {"Het rad:", "\"Rad voor ogen!\""},
+            fb_bl_wheel_gloat_1 = {"Rad voor ogen!"},
 
             -- The Arm: decrease level of played poker hand
             fb_bl_arm_name_1 = {"Maar ik ben", "Het wapen"},
@@ -120,7 +120,7 @@ return {
             fb_bl_arm_last_hand_1 = {"Laatste hand. Spierbal", "niet te vroeg."},
             fb_bl_arm_disabled_1 = {"Mijn arm hangt slap!", "Valsspeler!"},
             fb_bl_arm_defeat_1 = {"Je hebt mijn sterke", "arm verslagen."},
-            fb_bl_arm_gloat_1 = {"Het wapen:", "\"Een stapje terug!\""},
+            fb_bl_arm_gloat_1 = {"Een stapje terug!"},
 
             -- The Club: all Club cards are debuffed
             fb_bl_club_name_1 = {"Maar ik ben", "De klaver"},
@@ -131,7 +131,7 @@ return {
             fb_bl_club_last_hand_1 = {"Laatste hand. Laat de", "klaveren thuis."},
             fb_bl_club_disabled_1 = {"Mijn klaveren", "hebben geen beet meer!"},
             fb_bl_club_defeat_1 = {"Klaver dicht.", "Tijd om te gaan..."},
-            fb_bl_club_gloat_1 = {"De klaver:", "\"Klaverjassen!\""},
+            fb_bl_club_gloat_1 = {"Klaverjassen!"},
 
             -- The Fish: cards drawn face down after each hand played
             fb_bl_fish_name_1 = {"Maar ik ben", "De vis"},
@@ -142,7 +142,7 @@ return {
             fb_bl_fish_last_hand_1 = {"Laatste worp.", "Haal hem binnen."},
             fb_bl_fish_disabled_1 = {"Mijn schubben!", "Ze zijn eraf!"},
             fb_bl_fish_defeat_1 = {"Binnengehaald...", "door een prof."},
-            fb_bl_fish_gloat_1 = {"De vis:", "\"Je bent kopje-onder!\""},
+            fb_bl_fish_gloat_1 = {"Je bent", "kopje-onder!"},
 
             -- The Psychic: must play 5 cards
             fb_bl_psychic_name_1 = {"Maar ik ben", "De helderziende"},
@@ -153,7 +153,7 @@ return {
             fb_bl_psychic_last_hand_1 = {"Ik voorzie je", "laatste hand."},
             fb_bl_psychic_disabled_1 = {"Mijn visioenen!", "Ze zijn weg!"},
             fb_bl_psychic_defeat_1 = {"Ik zag het aankomen.", "...Of toch niet?"},
-            fb_bl_psychic_gloat_1 = {"De helderziende:", "\"Ik zag het al!\""},
+            fb_bl_psychic_gloat_1 = {"Ik zag het al!"},
 
             -- The Goad: all Spade cards are debuffed
             fb_bl_goad_name_1 = {"Maar ik ben", "De aansporing"},
@@ -164,7 +164,7 @@ return {
             fb_bl_goad_last_hand_1 = {"Graaf diep. Het is je", "laatste hand."},
             fb_bl_goad_disabled_1 = {"Ik kan nu niemand", "meer aansporen!"},
             fb_bl_goad_defeat_1 = {"Verdorie,", "je hebt gewonnen."},
-            fb_bl_goad_gloat_1 = {"De aansporing:", "\"Graaf je eigen graf!\""},
+            fb_bl_goad_gloat_1 = {"Graaf je", "eigen graf!"},
 
             -- The Water: start with 0 discards
             fb_bl_water_name_1 = {"Maar ik ben", "Het water"},
@@ -175,7 +175,7 @@ return {
             fb_bl_water_last_hand_1 = {"Laatste hand. Zwem", "of zink."},
             fb_bl_water_disabled_1 = {"Weggooien stroomt", "weer!"},
             fb_bl_water_defeat_1 = {"Ik ben helemaal", "opgedroogd..."},
-            fb_bl_water_gloat_1 = {"Het water:", "\"Je bent verzopen!\""},
+            fb_bl_water_gloat_1 = {"Je bent verzopen!"},
 
             -- The Window: all Diamond cards are debuffed
             fb_bl_window_name_1 = {"Maar ik ben", "Het raam"},
@@ -186,7 +186,7 @@ return {
             fb_bl_window_last_hand_1 = {"Laatste hand. Geen", "bling toegestaan."},
             fb_bl_window_disabled_1 = {"Mijn raam is gebroken!", "Ruiten schitteren!"},
             fb_bl_window_defeat_1 = {"Mijn kans is", "verkeken."},
-            fb_bl_window_gloat_1 = {"Het raam:", "\"Ruiten? Gedebuft!\""},
+            fb_bl_window_gloat_1 = {"Ruiten? Gedebuft!"},
 
             -- The Manacle: -1 hand size
             fb_bl_manacle_name_1 = {"Maar ik ben", "Boeien"},
@@ -197,7 +197,7 @@ return {
             fb_bl_manacle_last_hand_1 = {"Laatste hand. In", "boeien nog wel."},
             fb_bl_manacle_disabled_1 = {"De boeien!", "Ze vallen af!"},
             fb_bl_manacle_defeat_1 = {"Eindelijk vrij...", "van mij."},
-            fb_bl_manacle_gloat_1 = {"Boeien:", "\"Handen omhoog!\""},
+            fb_bl_manacle_gloat_1 = {"Handen omhoog!"},
 
             -- The Eye: no repeat hand types this round
             fb_bl_eye_name_1 = {"Maar ik ben", "Het oog"},
@@ -208,7 +208,7 @@ return {
             fb_bl_eye_last_hand_1 = {"Ik zie je", "laatste hand."},
             fb_bl_eye_disabled_1 = {"Mijn oog! Wie prikte", "in mijn oog?!"},
             fb_bl_eye_defeat_1 = {"Uit het oog,", "uit het hart..."},
-            fb_bl_eye_gloat_1 = {"Het oog:", "\"Ik zei het toch!\""},
+            fb_bl_eye_gloat_1 = {"Ik zei het toch!"},
 
             -- The Mouth: play only 1 hand type this round
             fb_bl_mouth_name_1 = {"Maar ik ben", "De mond"},
@@ -219,7 +219,7 @@ return {
             fb_bl_mouth_last_hand_1 = {"Laatste hand. Zelfde", "type. Mond dicht."},
             fb_bl_mouth_disabled_1 = {"Wie heeft me een", "muilkorf omgedaan?!"},
             fb_bl_mouth_defeat_1 = {"Ik ben sprakeloos..."},
-            fb_bl_mouth_gloat_1 = {"De mond:", "\"Houd je mond, loser!\""},
+            fb_bl_mouth_gloat_1 = {"Houd je mond,", "loser!"},
 
             -- The Plant: all face cards are debuffed
             fb_bl_plant_name_1 = {"Maar ik ben", "De plant"},
@@ -230,7 +230,7 @@ return {
             fb_bl_plant_last_hand_1 = {"Zie je laatste", "hand onder ogen."},
             fb_bl_plant_disabled_1 = {"Mijn blaadjes!", "Ze zijn allemaal weg!"},
             fb_bl_plant_defeat_1 = {"Verwelkt...", "Ik groei wel terug."},
-            fb_bl_plant_gloat_1 = {"De plant:", "\"Zie het onder ogen!\""},
+            fb_bl_plant_gloat_1 = {"Zie het", "onder ogen!"},
 
             -- The Serpent: after play or discard, always draw 3 cards
             fb_bl_serpent_name_1 = {"Maar ik ben", "Het serpent"},
@@ -241,7 +241,7 @@ return {
             fb_bl_serpent_last_hand_1 = {"Laatste beet.", "Drie kaarten."},
             fb_bl_serpent_disabled_1 = {"Mijn giftanden! Sss...", "Geen gif meer!"},
             fb_bl_serpent_defeat_1 = {"Vervelde mijn huid...", "en mijn trots."},
-            fb_bl_serpent_gloat_1 = {"Het serpent:", "\"Tot sissens!\""},
+            fb_bl_serpent_gloat_1 = {"Tot sissens!"},
 
             -- The Pillar: cards played previously this ante are debuffed
             fb_bl_pillar_name_1 = {"Maar ik ben", "De pilaar"},
@@ -252,7 +252,7 @@ return {
             fb_bl_pillar_last_hand_1 = {"Laatste hand. Oude", "kaarten zijn nutteloos."},
             fb_bl_pillar_disabled_1 = {"Mijn geheugen!", "Het... vervaagt."},
             fb_bl_pillar_defeat_1 = {"Een pilaar van de", "samenleving valt."},
-            fb_bl_pillar_gloat_1 = {"De pilaar:", "\"Nog steeds overeind!\""},
+            fb_bl_pillar_gloat_1 = {"Nog steeds", "overeind!"},
 
             -- The Needle: play only 1 hand
             fb_bl_needle_name_1 = {"Maar ik ben", "De naald"},
@@ -263,7 +263,7 @@ return {
             fb_bl_needle_last_hand_1 = {"Deze hand is", "je enige hand."},
             fb_bl_needle_disabled_1 = {"Mijn naald!", "Hij is bot!"},
             fb_bl_needle_defeat_1 = {"Scherp gespeeld.", "Je hebt me."},
-            fb_bl_needle_gloat_1 = {"De naald:", "\"Punt is, je verloor!\""},
+            fb_bl_needle_gloat_1 = {"Punt is,", "je verloor!"},
 
             -- The Head: all Heart cards are debuffed
             fb_bl_head_name_1 = {"Maar ik ben", "Het hoofd"},
@@ -274,7 +274,7 @@ return {
             fb_bl_head_last_hand_1 = {"Laatste hand. Geen", "harten. Geen genade."},
             fb_bl_head_disabled_1 = {"Mijn hoofd bonkt!", "Werken harten weer?"},
             fb_bl_head_defeat_1 = {"Mijn hoofd verloren...", "door jou."},
-            fb_bl_head_gloat_1 = {"Het hoofd:", "\"Hartloos, hè?\""},
+            fb_bl_head_gloat_1 = {"Hartloos, hè?"},
 
             -- The Tooth: lose $1 per card played
             fb_bl_tooth_name_1 = {"Maar ik ben", "De tand"},
@@ -285,7 +285,7 @@ return {
             fb_bl_tooth_last_hand_1 = {"Laatste hand,", "laatste dollars."},
             fb_bl_tooth_disabled_1 = {"Mijn beet!", "Hij is weg!"},
             fb_bl_tooth_defeat_1 = {"Met tand en nagel", "verloren."},
-            fb_bl_tooth_gloat_1 = {"De tand:", "\"Betalen, sukkel!\""},
+            fb_bl_tooth_gloat_1 = {"Betalen, sukkel!"},
 
             -- The Flint: base Chips and Mult are halved
             fb_bl_flint_name_1 = {"Maar ik ben", "De vuursteen"},
@@ -296,7 +296,7 @@ return {
             fb_bl_flint_last_hand_1 = {"Laatste hand. Halve", "vonk."},
             fb_bl_flint_disabled_1 = {"Volle kracht?!", "Niet eerlijk!"},
             fb_bl_flint_defeat_1 = {"Mijn vonk", "is gedoofd."},
-            fb_bl_flint_gloat_1 = {"De vuursteen:", "\"Half plezier!\""},
+            fb_bl_flint_gloat_1 = {"Half plezier!"},
 
             -- The Mark: all face cards are drawn face down
             fb_bl_mark_name_1 = {"Maar ik ben", "Het teken"},
@@ -307,7 +307,7 @@ return {
             fb_bl_mark_last_hand_1 = {"Laatste hand. Kies", "gezichten blind."},
             fb_bl_mark_disabled_1 = {"De gezichten!", "Ik zie ze!"},
             fb_bl_mark_defeat_1 = {"Je hebt je stempel", "op mij gedrukt."},
-            fb_bl_mark_gloat_1 = {"Het teken:", "\"Getekend: verliezer!\""},
+            fb_bl_mark_gloat_1 = {"Getekend als", "verliezer!"},
 
             -- Amber Acorn: flips and shuffles all Joker cards
             fb_bl_final_acorn_name_1 = {"Maar ik ben", "Amberkleurige eikel"},
@@ -318,7 +318,7 @@ return {
             fb_bl_final_acorn_last_hand_1 = {"Laatste hand. Waar", "is je joker?"},
             fb_bl_final_acorn_disabled_1 = {"Mijn eikel!", "Orde hersteld?!"},
             fb_bl_final_acorn_defeat_1 = {"Je hebt mijn", "schil gekraakt..."},
-            fb_bl_final_acorn_gloat_1 = {"Amberkleurige eikel:", "\"Eikelrijk verloren!\""},
+            fb_bl_final_acorn_gloat_1 = {"Eikelrijk", "verloren!"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"Maar ik ben", "Groen blaadje"},
@@ -329,7 +329,7 @@ return {
             fb_bl_final_leaf_last_hand_1 = {"Laatste hand.", "Een joker verkopen?"},
             fb_bl_final_leaf_disabled_1 = {"Mijn blaadje! Het is", "verdord!"},
             fb_bl_final_leaf_defeat_1 = {"Ik ga heen...", "als een blad."},
-            fb_bl_final_leaf_gloat_1 = {"Groen blaadje:", "\"Blad, blad, verloren!\""},
+            fb_bl_final_leaf_gloat_1 = {"Blad, blad,", "verloren!"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"Maar ik ben", "Violet vat"},
@@ -340,7 +340,7 @@ return {
             fb_bl_final_vessel_last_hand_1 = {"Laatste hand. Dit", "schip zinkt niet."},
             fb_bl_final_vessel_disabled_1 = {"Mijn vat!", "Het zinkt!"},
             fb_bl_final_vessel_defeat_1 = {"Het vat...", "is leeggemaakt."},
-            fb_bl_final_vessel_gloat_1 = {"Violet vat:", "\"Vat je 'm? Verloren!\""},
+            fb_bl_final_vessel_gloat_1 = {"Vat je 'm?", "Verloren!"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"Maar ik ben", "Karmozijnrood hart"},
@@ -351,7 +351,7 @@ return {
             fb_bl_final_heart_last_hand_1 = {"Laatste hand. Welke", "joker is stil?"},
             fb_bl_final_heart_disabled_1 = {"Mijn hart! Het sloeg", "een slag over."},
             fb_bl_final_heart_defeat_1 = {"Mijn hart...", "is gebroken."},
-            fb_bl_final_heart_gloat_1 = {"Karmozijnrood hart:", "\"Al liefdesverdriet?\""},
+            fb_bl_final_heart_gloat_1 = {"Al liefdesverdriet?"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"Maar ik ben", "Azuurblauwe bel"},
@@ -362,7 +362,7 @@ return {
             fb_bl_final_bell_last_hand_1 = {"Laatste hand. Eén", "kaart is geforceerd."},
             fb_bl_final_bell_disabled_1 = {"Mijn bel is stil!", "Valsspeler!"},
             fb_bl_final_bell_defeat_1 = {"De bel luidt", "voor mij."},
-            fb_bl_final_bell_gloat_1 = {"Azuurblauwe bel:", "\"Ding dong, verloren!\""},
+            fb_bl_final_bell_gloat_1 = {"Ding dong,", "verloren!"},
         }
     }
 }

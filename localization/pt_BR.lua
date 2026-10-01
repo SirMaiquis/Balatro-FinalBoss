@@ -65,7 +65,7 @@ return {
             fb_bl_hook_last_hand_1 = {"Enfim fisguei", "você!"},
             fb_bl_hook_disabled_1 = {"Meu gancho!", "Quebrou!"},
             fb_bl_hook_defeat_1 = {"Tudo bem... vou", "soltar você."},
-            fb_bl_hook_gloat_1 = {"O Gancho:", "\"Fisgado!\""},
+            fb_bl_hook_gloat_1 = {"Fisgado!"},
 
             -- The Ox: playing your most played hand sets money to $0
             fb_bl_ox_name_1 = {"Mas eu sou", "O Touro"},
@@ -76,7 +76,7 @@ return {
             fb_bl_ox_last_hand_1 = {"Última mão. Gaste", "ou perca."},
             fb_bl_ox_disabled_1 = {"Meus chifres!", "Ficaram cegos!"},
             fb_bl_ox_defeat_1 = {"Você pegou o touro", "pelos chifres..."},
-            fb_bl_ox_gloat_1 = {"O Touro:", "\"Agora está falido!\""},
+            fb_bl_ox_gloat_1 = {"Agora está falido!"},
 
             -- The House: first hand is drawn face down
             fb_bl_house_name_1 = {"Mas eu sou", "A Casa"},
@@ -87,7 +87,7 @@ return {
             fb_bl_house_last_hand_1 = {"Chega de sorte", "cega."},
             fb_bl_house_disabled_1 = {"Minha venda!", "Caiu!"},
             fb_bl_house_defeat_1 = {"A casa...", "caiu."},
-            fb_bl_house_gloat_1 = {"A Casa:", "\"A casa ganha!\""},
+            fb_bl_house_gloat_1 = {"A casa ganha!"},
 
             -- The Wall: extra large blind
             fb_bl_wall_name_1 = {"Mas eu sou", "O Muro"},
@@ -98,7 +98,7 @@ return {
             fb_bl_wall_last_hand_1 = {"Não há mais", "onde escalar."},
             fb_bl_wall_disabled_1 = {"Rachaduras! Meu muro", "está rachando!"},
             fb_bl_wall_defeat_1 = {"O muro...", "desaba."},
-            fb_bl_wall_gloat_1 = {"O Muro:", "\"Deu de cara no muro!\""},
+            fb_bl_wall_gloat_1 = {"Deu de cara", "no muro!"},
 
             -- The Wheel: 1 in 7 cards get drawn face down
             fb_bl_wheel_name_1 = {"Mas eu sou", "A Roda"},
@@ -109,7 +109,7 @@ return {
             fb_bl_wheel_last_hand_1 = {"Último giro.", "Sentindo a sorte?"},
             fb_bl_wheel_disabled_1 = {"A roda parou?", "Tá armado!"},
             fb_bl_wheel_defeat_1 = {"A roda da fortuna", "gira contra mim..."},
-            fb_bl_wheel_gloat_1 = {"A Roda:", "\"A roda girou!\""},
+            fb_bl_wheel_gloat_1 = {"A roda girou!"},
 
             -- The Arm: decrease level of played poker hand
             fb_bl_arm_name_1 = {"Mas eu sou", "O Braço"},
@@ -120,7 +120,7 @@ return {
             fb_bl_arm_last_hand_1 = {"Última mão. Sem", "fazer pose."},
             fb_bl_arm_disabled_1 = {"Meu braço amoleceu!", "Trapaceiro!"},
             fb_bl_arm_defeat_1 = {"Você venceu meu", "braço forte."},
-            fb_bl_arm_gloat_1 = {"O Braço:", "\"Rebaixado!\""},
+            fb_bl_arm_gloat_1 = {"Rebaixado!"},
 
             -- The Club: all Club cards are debuffed
             fb_bl_club_name_1 = {"Mas eu sou", "Paulada"},
@@ -131,7 +131,7 @@ return {
             fb_bl_club_last_hand_1 = {"Última mão. Deixe os", "paus em casa."},
             fb_bl_club_disabled_1 = {"Meus paus perderam", "a força!"},
             fb_bl_club_defeat_1 = {"Clube fechado.", "Hora de ir..."},
-            fb_bl_club_gloat_1 = {"Paulada:", "\"Levou pau!\""},
+            fb_bl_club_gloat_1 = {"Levou pau!"},
 
             -- The Fish: cards drawn face down after each hand played
             fb_bl_fish_name_1 = {"Mas eu sou", "O Peixe"},
@@ -142,7 +142,7 @@ return {
             fb_bl_fish_last_hand_1 = {"Último lançamento.", "Recolha a linha."},
             fb_bl_fish_disabled_1 = {"Minhas escamas!", "Caíram!"},
             fb_bl_fish_defeat_1 = {"Fisgado...", "por um profissional."},
-            fb_bl_fish_gloat_1 = {"O Peixe:", "\"Você se afogou!\""},
+            fb_bl_fish_gloat_1 = {"Você se afogou!"},
 
             -- The Psychic: must play 5 cards
             fb_bl_psychic_name_1 = {"Mas eu sou", "O Psíquico"},
@@ -153,7 +153,7 @@ return {
             fb_bl_psychic_last_hand_1 = {"Prevejo a sua", "última mão."},
             fb_bl_psychic_disabled_1 = {"Minhas visões!", "Sumiram!"},
             fb_bl_psychic_defeat_1 = {"Eu previ isso.", "...Ou não?"},
-            fb_bl_psychic_gloat_1 = {"O Psíquico:", "\"Eu já sabia!\""},
+            fb_bl_psychic_gloat_1 = {"Eu já sabia!"},
 
             -- The Goad: all Spade cards are debuffed
             fb_bl_goad_name_1 = {"Mas eu sou", "Aguilhão"},
@@ -164,7 +164,7 @@ return {
             fb_bl_goad_last_hand_1 = {"Cave fundo. É sua", "última mão."},
             fb_bl_goad_disabled_1 = {"Agora não consigo", "instigar ninguém!"},
             fb_bl_goad_defeat_1 = {"Maldição,", "você venceu."},
-            fb_bl_goad_gloat_1 = {"Aguilhão:", "\"Cave sua própria cova!\""},
+            fb_bl_goad_gloat_1 = {"Cave sua", "própria cova!"},
 
             -- The Water: start with 0 discards
             fb_bl_water_name_1 = {"Mas eu sou", "A Água"},
@@ -175,7 +175,7 @@ return {
             fb_bl_water_last_hand_1 = {"Última mão. Nade", "ou afunde."},
             fb_bl_water_disabled_1 = {"Os descartes voltam", "a fluir!"},
             fb_bl_water_defeat_1 = {"Estou todo seco..."},
-            fb_bl_water_gloat_1 = {"A Água:", "\"Foi por água abaixo!\""},
+            fb_bl_water_gloat_1 = {"Foi por água", "abaixo!"},
 
             -- The Window: all Diamond cards are debuffed
             fb_bl_window_name_1 = {"Mas eu sou", "A Janela"},
@@ -186,7 +186,7 @@ return {
             fb_bl_window_last_hand_1 = {"Última mão. Brilho", "proibido."},
             fb_bl_window_disabled_1 = {"Minha janela rachou!", "Ouros brilham!"},
             fb_bl_window_defeat_1 = {"Minha janela de", "oportunidade fechou."},
-            fb_bl_window_gloat_1 = {"A Janela:", "\"Ouros? Debilitados!\""},
+            fb_bl_window_gloat_1 = {"Ouros?", "Debilitados!"},
 
             -- The Manacle: -1 hand size
             fb_bl_manacle_name_1 = {"Mas eu sou", "As Algemas"},
@@ -197,7 +197,7 @@ return {
             fb_bl_manacle_last_hand_1 = {"Última mão. E ainda", "por cima, algemado."},
             fb_bl_manacle_disabled_1 = {"As algemas!", "Soltaram!"},
             fb_bl_manacle_defeat_1 = {"Livre enfim...", "de mim."},
-            fb_bl_manacle_gloat_1 = {"As Algemas:", "\"Mãos ao alto!\""},
+            fb_bl_manacle_gloat_1 = {"Mãos ao alto!"},
 
             -- The Eye: no repeat hand types this round
             fb_bl_eye_name_1 = {"Mas eu sou", "O Olho"},
@@ -208,7 +208,7 @@ return {
             fb_bl_eye_last_hand_1 = {"Estou de olho na", "sua última mão."},
             fb_bl_eye_disabled_1 = {"Meu olho! Quem", "me cutucou?!"},
             fb_bl_eye_defeat_1 = {"Longe dos olhos,", "longe do coração..."},
-            fb_bl_eye_gloat_1 = {"O Olho:", "\"Eu avisei!\""},
+            fb_bl_eye_gloat_1 = {"Eu avisei!"},
 
             -- The Mouth: play only 1 hand type this round
             fb_bl_mouth_name_1 = {"Mas eu sou", "A Boca"},
@@ -219,7 +219,7 @@ return {
             fb_bl_mouth_last_hand_1 = {"Última mão. Mesmo", "tipo. Boca fechada."},
             fb_bl_mouth_disabled_1 = {"Quem me", "amordaçou?!"},
             fb_bl_mouth_defeat_1 = {"Estou sem palavras..."},
-            fb_bl_mouth_gloat_1 = {"A Boca:", "\"Cala a boca, perdedor!\""},
+            fb_bl_mouth_gloat_1 = {"Cala a boca,", "perdedor!"},
 
             -- The Plant: all face cards are debuffed
             fb_bl_plant_name_1 = {"Mas eu sou", "A Planta"},
@@ -230,7 +230,7 @@ return {
             fb_bl_plant_last_hand_1 = {"Encare a sua", "última mão."},
             fb_bl_plant_disabled_1 = {"Minhas pétalas!", "Sumiram todas!"},
             fb_bl_plant_defeat_1 = {"Murchei...", "Vou crescer de novo."},
-            fb_bl_plant_gloat_1 = {"A Planta:", "\"Encare: você perdeu!\""},
+            fb_bl_plant_gloat_1 = {"Encare: você perdeu!"},
 
             -- The Serpent: after play or discard, always draw 3 cards
             fb_bl_serpent_name_1 = {"Mas eu sou", "A Serpente"},
@@ -241,7 +241,7 @@ return {
             fb_bl_serpent_last_hand_1 = {"Último bote.", "Três cartas."},
             fb_bl_serpent_disabled_1 = {"Minhas presas! Sss...", "Sem veneno!"},
             fb_bl_serpent_defeat_1 = {"Troquei de pele...", "e perdi o orgulho."},
-            fb_bl_serpent_gloat_1 = {"A Serpente:", "\"Sss-aia daí!\""},
+            fb_bl_serpent_gloat_1 = {"Sss-aia daí!"},
 
             -- The Pillar: cards played previously this ante are debuffed
             fb_bl_pillar_name_1 = {"Mas eu sou", "O Pilar"},
@@ -252,7 +252,7 @@ return {
             fb_bl_pillar_last_hand_1 = {"Última mão. Cartas", "velhas não servem."},
             fb_bl_pillar_disabled_1 = {"Minha memória!", "Está... sumindo."},
             fb_bl_pillar_defeat_1 = {"Um pilar da", "comunidade caiu."},
-            fb_bl_pillar_gloat_1 = {"O Pilar:", "\"Ainda de pé!\""},
+            fb_bl_pillar_gloat_1 = {"Ainda de pé!"},
 
             -- The Needle: play only 1 hand
             fb_bl_needle_name_1 = {"Mas eu sou", "A Agulha"},
@@ -263,7 +263,7 @@ return {
             fb_bl_needle_last_hand_1 = {"Esta mão é a sua", "única mão."},
             fb_bl_needle_disabled_1 = {"Minha agulha!", "Está cega!"},
             fb_bl_needle_defeat_1 = {"Jogada afiada.", "Você me pegou."},
-            fb_bl_needle_gloat_1 = {"A Agulha:", "\"Ponto final: perdeu!\""},
+            fb_bl_needle_gloat_1 = {"Ponto final!", "Você perdeu!"},
 
             -- The Head: all Heart cards are debuffed
             fb_bl_head_name_1 = {"Mas eu sou", "A Cabeça"},
@@ -274,7 +274,7 @@ return {
             fb_bl_head_last_hand_1 = {"Última mão. Sem", "copas. Sem piedade."},
             fb_bl_head_disabled_1 = {"Minha cabeça dói!", "Copas voltaram?"},
             fb_bl_head_defeat_1 = {"Perdi a cabeça...", "por você."},
-            fb_bl_head_gloat_1 = {"A Cabeça:", "\"Sem coração, né?\""},
+            fb_bl_head_gloat_1 = {"Sem coração, né?"},
 
             -- The Tooth: lose $1 per card played
             fb_bl_tooth_name_1 = {"Mas eu sou", "O Dente"},
@@ -285,7 +285,7 @@ return {
             fb_bl_tooth_last_hand_1 = {"Última mão,", "últimos dólares."},
             fb_bl_tooth_disabled_1 = {"Minha mordida!", "Sumiu!"},
             fb_bl_tooth_defeat_1 = {"Com unhas e dentes,", "perdi."},
-            fb_bl_tooth_gloat_1 = {"O Dente:", "\"Pague, otário!\""},
+            fb_bl_tooth_gloat_1 = {"Pague, otário!"},
 
             -- The Flint: base Chips and Mult are halved
             fb_bl_flint_name_1 = {"Mas eu sou", "A Pederneira"},
@@ -296,7 +296,7 @@ return {
             fb_bl_flint_last_hand_1 = {"Última mão. Metade", "da faísca."},
             fb_bl_flint_disabled_1 = {"Poder total?!", "Não é justo!"},
             fb_bl_flint_defeat_1 = {"Minha faísca", "se apagou."},
-            fb_bl_flint_gloat_1 = {"A Pederneira:", "\"Metade da diversão!\""},
+            fb_bl_flint_gloat_1 = {"Metade da", "diversão!"},
 
             -- The Mark: all face cards are drawn face down
             fb_bl_mark_name_1 = {"Mas eu sou", "A Marca"},
@@ -307,7 +307,7 @@ return {
             fb_bl_mark_last_hand_1 = {"Última mão. Escolha", "rostos às cegas."},
             fb_bl_mark_disabled_1 = {"Os rostos!", "Estou vendo!"},
             fb_bl_mark_defeat_1 = {"Você deixou sua", "marca em mim."},
-            fb_bl_mark_gloat_1 = {"A Marca:", "\"Marcado para perder!\""},
+            fb_bl_mark_gloat_1 = {"Marcado para", "perder!"},
 
             -- Amber Acorn: flips and shuffles all Joker cards
             fb_bl_final_acorn_name_1 = {"Mas eu sou", "Semente Dourada"},
@@ -318,7 +318,7 @@ return {
             fb_bl_final_acorn_last_hand_1 = {"Última mão. Onde", "está seu curinga?"},
             fb_bl_final_acorn_disabled_1 = {"Minha semente!", "A ordem voltou?!"},
             fb_bl_final_acorn_defeat_1 = {"Você quebrou", "minha casca..."},
-            fb_bl_final_acorn_gloat_1 = {"Semente Dourada:", "\"Uma casca de noz!\""},
+            fb_bl_final_acorn_gloat_1 = {"Uma casca de noz!"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"Mas eu sou", "Folha Verdejante"},
@@ -329,7 +329,7 @@ return {
             fb_bl_final_leaf_last_hand_1 = {"Última mão. Vender", "um curinga?"},
             fb_bl_final_leaf_disabled_1 = {"Minha folha!", "Secou!"},
             fb_bl_final_leaf_defeat_1 = {"Estou indo...", "como uma folha."},
-            fb_bl_final_leaf_gloat_1 = {"Folha Verdejante:", "\"Folheou, perdeu!\""},
+            fb_bl_final_leaf_gloat_1 = {"Folheou, perdeu!"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"Mas eu sou", "Recipiente Roxo"},
@@ -340,7 +340,7 @@ return {
             fb_bl_final_vessel_last_hand_1 = {"Última mão. Este", "navio não afunda."},
             fb_bl_final_vessel_disabled_1 = {"Meu recipiente!", "Está afundando!"},
             fb_bl_final_vessel_defeat_1 = {"O recipiente...", "foi esvaziado."},
-            fb_bl_final_vessel_gloat_1 = {"Recipiente Roxo:", "\"Derrota vazia!\""},
+            fb_bl_final_vessel_gloat_1 = {"Derrota vazia!"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"Mas eu sou", "Coração Rubro"},
@@ -351,7 +351,7 @@ return {
             fb_bl_final_heart_last_hand_1 = {"Última mão. Qual", "curinga está mudo?"},
             fb_bl_final_heart_disabled_1 = {"Meu coração! Falhou", "uma batida."},
             fb_bl_final_heart_defeat_1 = {"Meu coração...", "está partido."},
-            fb_bl_final_heart_gloat_1 = {"Coração Rubro:", "\"Coração partido?\""},
+            fb_bl_final_heart_gloat_1 = {"Coração partido?"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"Mas eu sou", "Sino Cerúleo"},
@@ -362,7 +362,7 @@ return {
             fb_bl_final_bell_last_hand_1 = {"Última mão. Uma", "carta é forçada."},
             fb_bl_final_bell_disabled_1 = {"Meu sino está mudo!", "Trapaceiro!"},
             fb_bl_final_bell_defeat_1 = {"O sino toca", "por mim."},
-            fb_bl_final_bell_gloat_1 = {"Sino Cerúleo:", "\"Blém blém, perdeu!\""},
+            fb_bl_final_bell_gloat_1 = {"Blém blém, perdeu!"},
         }
     }
 }

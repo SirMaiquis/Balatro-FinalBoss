@@ -5,7 +5,9 @@ Usage (repo root):
   uv run --with lupa tools/check_loc.py es_419 es_ES # only these
 Checks: every misc.quips / misc.dictionary key of default.lua exists, no extra keys,
 colour tags {X:..}...{} balanced (scanned in order), no empty values, #n# placeholders
-identical to English. A name ending in .lua is used as a file path (default.lua stays the base).
+identical to English, gloat lines (Jimbo says them on the game-over screen) are only the line:
+no "Name:" header line, not wrapped in quotation marks. A name ending in .lua is used as a file
+path (default.lua stays the base).
 """
 import pathlib
 import re
@@ -21,6 +23,9 @@ LOC = ROOT / 'localization'
 TAG = re.compile(r'\{([^{}]*)\}')
 PLACEHOLDER = re.compile(r'#\d+#')
 SECTIONS = ('quips', 'dictionary')
+GLOAT_KEY = re.compile(r'^quips\.fb_(?:\w+_)?gloat(?:_\d+)?$')
+OPEN_QUOTES = '"“„«‹「『‘'   # " “ „ « ‹ 「 『 ‘
+CLOSE_QUOTES = '"”“»›」』’'  # " ” “ » › 」 』 ’
 
 
 def load(lua, path):
@@ -75,6 +80,16 @@ def tag_problem(line):
     return None
 
 
+def gloat_problem(lines):
+    """A gloat is the boss's line as Jimbo says it: no 'Name:' header, no surrounding quotes."""
+    if lines[0].rstrip().endswith((':', '：')):
+        return 'gloat starts with a "Name:" header line'
+    text = ' '.join(lines).strip()
+    if text[:1] in OPEN_QUOTES and text[-1:] in CLOSE_QUOTES:
+        return 'gloat is wrapped in quotation marks'
+    return None
+
+
 def main(names):
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8')
@@ -99,6 +114,10 @@ def main(names):
                 why = tag_problem(line)
                 if why:
                     errors.append(f'{path.name}: {key}: {why} in {ascii(line)}')
+            if GLOAT_KEY.match(key):
+                why = gloat_problem(lines)
+                if why:
+                    errors.append(f'{path.name}: {key}: {why}')
         if path.name == 'default.lua':
             continue
         for key, base_lines in base.items():

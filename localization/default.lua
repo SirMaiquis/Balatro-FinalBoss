@@ -65,7 +65,7 @@ return {
             fb_bl_hook_last_hand_1 = {"Hooked you", "at last!"},
             fb_bl_hook_disabled_1 = {"My hook!", "It's broken!"},
             fb_bl_hook_defeat_1 = {"Fine... I'll", "let you go."},
-            fb_bl_hook_gloat_1 = {"The Hook:", "\"Got you hooked!\""},
+            fb_bl_hook_gloat_1 = {"Got you hooked!"},
 
             -- The Ox: playing your most played hand sets money to $0
             fb_bl_ox_name_1 = {"But I'm The Ox"},
@@ -76,7 +76,7 @@ return {
             fb_bl_ox_last_hand_1 = {"Last hand. Spend", "it or lose it."},
             fb_bl_ox_disabled_1 = {"My horns!", "They went dull!"},
             fb_bl_ox_defeat_1 = {"You took the bull", "by the horns..."},
-            fb_bl_ox_gloat_1 = {"The Ox:", "\"Now you're broke!\""},
+            fb_bl_ox_gloat_1 = {"Now you're broke!"},
 
             -- The House: first hand is drawn face down
             fb_bl_house_name_1 = {"But I'm The House"},
@@ -87,7 +87,7 @@ return {
             fb_bl_house_last_hand_1 = {"No more", "blind luck."},
             fb_bl_house_disabled_1 = {"My blindfold!", "It fell off!"},
             fb_bl_house_defeat_1 = {"The house...", "has fallen."},
-            fb_bl_house_gloat_1 = {"The House:", "\"The house wins!\""},
+            fb_bl_house_gloat_1 = {"The house wins!"},
 
             -- The Wall: extra large blind
             fb_bl_wall_name_1 = {"But I'm The Wall"},
@@ -98,7 +98,7 @@ return {
             fb_bl_wall_last_hand_1 = {"Nowhere left", "to climb."},
             fb_bl_wall_disabled_1 = {"Cracks! My wall", "is cracking!"},
             fb_bl_wall_defeat_1 = {"The wall...", "comes tumbling."},
-            fb_bl_wall_gloat_1 = {"The Wall:", "\"Hit a wall, huh?\""},
+            fb_bl_wall_gloat_1 = {"Hit a wall, huh?"},
 
             -- The Wheel: 1 in 7 cards get drawn face down
             fb_bl_wheel_name_1 = {"But I'm The Wheel"},
@@ -109,7 +109,7 @@ return {
             fb_bl_wheel_last_hand_1 = {"Last spin.", "Feeling lucky?"},
             fb_bl_wheel_disabled_1 = {"The wheel stopped?", "Rigged!"},
             fb_bl_wheel_defeat_1 = {"Wheel of fortune...", "turns on me."},
-            fb_bl_wheel_gloat_1 = {"The Wheel:", "\"Wheel, that's that!\""},
+            fb_bl_wheel_gloat_1 = {"Wheel,", "that's that!"},
 
             -- The Arm: decrease level of played poker hand
             fb_bl_arm_name_1 = {"But I'm The Arm"},
@@ -120,7 +120,7 @@ return {
             fb_bl_arm_last_hand_1 = {"One last hand.", "Don't flex it."},
             fb_bl_arm_disabled_1 = {"My arm went limp!", "Cheater!"},
             fb_bl_arm_defeat_1 = {"You've bested", "my strong arm."},
-            fb_bl_arm_gloat_1 = {"The Arm:", "\"That's a downgrade!\""},
+            fb_bl_arm_gloat_1 = {"That's a", "downgrade!"},
 
             -- The Club: all Club cards are debuffed
             fb_bl_club_name_1 = {"But I'm The Club"},
@@ -131,7 +131,7 @@ return {
             fb_bl_club_last_hand_1 = {"Last hand. Leave", "the clubs home."},
             fb_bl_club_disabled_1 = {"My clubs lost", "their bite!"},
             fb_bl_club_defeat_1 = {"Club closed.", "Time to go..."},
-            fb_bl_club_gloat_1 = {"The Club:", "\"Club'd you good!\""},
+            fb_bl_club_gloat_1 = {"Club'd you good!"},
 
             -- The Fish: cards drawn face down after each hand played
             fb_bl_fish_name_1 = {"But I'm The Fish"},
@@ -142,7 +142,7 @@ return {
             fb_bl_fish_last_hand_1 = {"Last cast.", "Reel it in."},
             fb_bl_fish_disabled_1 = {"My scales!", "They fell off!"},
             fb_bl_fish_defeat_1 = {"Reeled in...", "by a pro."},
-            fb_bl_fish_gloat_1 = {"The Fish:", "\"You're all wet!\""},
+            fb_bl_fish_gloat_1 = {"You're all wet!"},
 
             -- The Psychic: must play 5 cards
             fb_bl_psychic_name_1 = {"But I'm The Psychic"},
@@ -153,7 +153,7 @@ return {
             fb_bl_psychic_last_hand_1 = {"I foresee your", "last hand."},
             fb_bl_psychic_disabled_1 = {"My visions!", "They're gone!"},
             fb_bl_psychic_defeat_1 = {"I saw this coming.", "...Or did I?"},
-            fb_bl_psychic_gloat_1 = {"The Psychic:", "\"Saw that coming!\""},
+            fb_bl_psychic_gloat_1 = {"Saw that coming!"},
 
             -- The Goad: all Spade cards are debuffed
             fb_bl_goad_name_1 = {"But I'm The Goad"},
@@ -164,7 +164,7 @@ return {
             fb_bl_goad_last_hand_1 = {"Dig deep. It's", "your last hand."},
             fb_bl_goad_disabled_1 = {"I can't goad", "anyone now!"},
             fb_bl_goad_defeat_1 = {"Call a spade a spade:", "I got outplayed."},
-            fb_bl_goad_gloat_1 = {"The Goad:", "\"Dig your own grave!\""},
+            fb_bl_goad_gloat_1 = {"Dig your", "own grave!"},
 
             -- The Water: start with 0 discards
             fb_bl_water_name_1 = {"But I'm The Water"},
@@ -175,7 +175,7 @@ return {
             fb_bl_water_last_hand_1 = {"Last hand. Sink", "or swim."},
             fb_bl_water_disabled_1 = {"My drought?!", "It's over?!"},
             fb_bl_water_defeat_1 = {"I'm all dried up..."},
-            fb_bl_water_gloat_1 = {"The Water:", "\"You're all washed up!\""},
+            fb_bl_water_gloat_1 = {"You're all", "washed up!"},
 
             -- The Window: all Diamond cards are debuffed
             fb_bl_window_name_1 = {"But I'm The Window"},
@@ -186,7 +186,7 @@ return {
             fb_bl_window_last_hand_1 = {"Last hand. No", "bling allowed."},
             fb_bl_window_disabled_1 = {"My window cracked!", "Diamonds shine!"},
             fb_bl_window_defeat_1 = {"My window of", "opportunity shut."},
-            fb_bl_window_gloat_1 = {"The Window:", "\"Diamonds? Debuffed!\""},
+            fb_bl_window_gloat_1 = {"Diamonds?", "Debuffed!"},
 
             -- The Manacle: -1 hand size
             fb_bl_manacle_name_1 = {"But I'm The Manacle"},
@@ -197,7 +197,7 @@ return {
             fb_bl_manacle_last_hand_1 = {"Last hand. In", "chains, no less."},
             fb_bl_manacle_disabled_1 = {"The shackles!", "They came off!"},
             fb_bl_manacle_defeat_1 = {"Free at last...", "of me."},
-            fb_bl_manacle_gloat_1 = {"The Manacle:", "\"Hand-cuffed you!\""},
+            fb_bl_manacle_gloat_1 = {"Hand-cuffed you!"},
 
             -- The Eye: no repeat hand types this round
             fb_bl_eye_name_1 = {"But I'm The Eye"},
@@ -208,7 +208,7 @@ return {
             fb_bl_eye_last_hand_1 = {"Eye spy your", "last hand."},
             fb_bl_eye_disabled_1 = {"My eye! Who", "poked my eye?!"},
             fb_bl_eye_defeat_1 = {"Out of sight,", "out of mind..."},
-            fb_bl_eye_gloat_1 = {"The Eye:", "\"Eye told you so!\""},
+            fb_bl_eye_gloat_1 = {"Eye told you so!"},
 
             -- The Mouth: play only 1 hand type this round
             fb_bl_mouth_name_1 = {"But I'm The Mouth"},
@@ -219,7 +219,7 @@ return {
             fb_bl_mouth_last_hand_1 = {"Last hand. Same", "type. Zip it."},
             fb_bl_mouth_disabled_1 = {"Who muzzled me?!"},
             fb_bl_mouth_defeat_1 = {"I'm speechless..."},
-            fb_bl_mouth_gloat_1 = {"The Mouth:", "\"Zip it, loser!\""},
+            fb_bl_mouth_gloat_1 = {"Zip it, loser!"},
 
             -- The Plant: all face cards are debuffed
             fb_bl_plant_name_1 = {"But I'm The Plant"},
@@ -230,7 +230,7 @@ return {
             fb_bl_plant_last_hand_1 = {"Face your", "last hand."},
             fb_bl_plant_disabled_1 = {"My petals!", "They're all gone!"},
             fb_bl_plant_defeat_1 = {"Wilted...", "I'll grow back."},
-            fb_bl_plant_gloat_1 = {"The Plant:", "\"Face it, you lost!\""},
+            fb_bl_plant_gloat_1 = {"Face it, you lost!"},
 
             -- The Serpent: after play or discard, always draw 3 cards
             fb_bl_serpent_name_1 = {"But I'm The Serpent"},
@@ -241,7 +241,7 @@ return {
             fb_bl_serpent_last_hand_1 = {"Last hand. Strike", "now or never."},
             fb_bl_serpent_disabled_1 = {"My fangs! Hiss...", "No venom left!"},
             fb_bl_serpent_defeat_1 = {"Shed my skin...", "and my pride."},
-            fb_bl_serpent_gloat_1 = {"The Serpent:", "\"Sss-ee you later!\""},
+            fb_bl_serpent_gloat_1 = {"Sss-ee you later!"},
 
             -- The Pillar: cards played previously this ante are debuffed
             fb_bl_pillar_name_1 = {"But I'm The Pillar"},
@@ -252,7 +252,7 @@ return {
             fb_bl_pillar_last_hand_1 = {"Last hand. Old", "cards are useless."},
             fb_bl_pillar_disabled_1 = {"My memory!", "It's... fading."},
             fb_bl_pillar_defeat_1 = {"A pillar of the", "community, fallen."},
-            fb_bl_pillar_gloat_1 = {"The Pillar:", "\"Past hands? Rubble!\""},
+            fb_bl_pillar_gloat_1 = {"Past hands?", "Rubble!"},
 
             -- The Needle: play only 1 hand
             fb_bl_needle_name_1 = {"But I'm The Needle"},
@@ -263,7 +263,7 @@ return {
             fb_bl_needle_last_hand_1 = {"This hand is", "your only hand."},
             fb_bl_needle_disabled_1 = {"My needle!", "It's blunt!"},
             fb_bl_needle_defeat_1 = {"Sharp play.", "You got me."},
-            fb_bl_needle_gloat_1 = {"The Needle:", "\"Point is, you lost!\""},
+            fb_bl_needle_gloat_1 = {"Point is,", "you lost!"},
 
             -- The Head: all Heart cards are debuffed
             fb_bl_head_name_1 = {"But I'm The Head"},
@@ -274,7 +274,7 @@ return {
             fb_bl_head_last_hand_1 = {"Last hand. No", "hearts. No mercy."},
             fb_bl_head_disabled_1 = {"My head hurts!", "Hearts work again?"},
             fb_bl_head_defeat_1 = {"Lost my head...", "over you."},
-            fb_bl_head_gloat_1 = {"The Head:", "\"Heartless, huh?\""},
+            fb_bl_head_gloat_1 = {"Heartless, huh?"},
 
             -- The Tooth: lose $1 per card played
             fb_bl_tooth_name_1 = {"But I'm The Tooth"},
@@ -285,7 +285,7 @@ return {
             fb_bl_tooth_last_hand_1 = {"Last hand,", "last dollars."},
             fb_bl_tooth_disabled_1 = {"My bite!", "It's gone!"},
             fb_bl_tooth_defeat_1 = {"Tooth and nail,", "I lost."},
-            fb_bl_tooth_gloat_1 = {"The Tooth:", "\"Pay up, sucker!\""},
+            fb_bl_tooth_gloat_1 = {"Pay up, sucker!"},
 
             -- The Flint: base Chips and Mult are halved
             fb_bl_flint_name_1 = {"But I'm The Flint"},
@@ -296,7 +296,7 @@ return {
             fb_bl_flint_last_hand_1 = {"Last hand. Half", "the spark."},
             fb_bl_flint_disabled_1 = {"Full power?!", "Not fair!"},
             fb_bl_flint_defeat_1 = {"My spark", "is out."},
-            fb_bl_flint_gloat_1 = {"The Flint:", "\"Half the fun!\""},
+            fb_bl_flint_gloat_1 = {"Half the fun!"},
 
             -- The Mark: all face cards are drawn face down
             fb_bl_mark_name_1 = {"But I'm The Mark"},
@@ -307,7 +307,7 @@ return {
             fb_bl_mark_last_hand_1 = {"Last hand. Pick", "faces blindly."},
             fb_bl_mark_disabled_1 = {"The faces!", "I can see them!"},
             fb_bl_mark_defeat_1 = {"You've made your", "mark on me."},
-            fb_bl_mark_gloat_1 = {"The Mark:", "\"Marked for loss!\""},
+            fb_bl_mark_gloat_1 = {"Marked for loss!"},
 
             -- Amber Acorn: flips and shuffles all Joker cards
             fb_bl_final_acorn_name_1 = {"But I'm Amber Acorn"},
@@ -318,7 +318,7 @@ return {
             fb_bl_final_acorn_last_hand_1 = {"Last hand. Where", "is your joker?"},
             fb_bl_final_acorn_disabled_1 = {"My acorn!", "Order restored?!"},
             fb_bl_final_acorn_defeat_1 = {"You cracked", "my shell..."},
-            fb_bl_final_acorn_gloat_1 = {"Amber Acorn:", "\"Totally nuts!\""},
+            fb_bl_final_acorn_gloat_1 = {"Totally nuts!"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"But I'm Verdant Leaf"},
@@ -329,7 +329,7 @@ return {
             fb_bl_final_leaf_last_hand_1 = {"Last hand. Sell", "a joker?"},
             fb_bl_final_leaf_disabled_1 = {"My leaf! It", "withered away!"},
             fb_bl_final_leaf_defeat_1 = {"I'm leaving...", "like a leaf."},
-            fb_bl_final_leaf_gloat_1 = {"Verdant Leaf:", "\"Leaf it to me!\""},
+            fb_bl_final_leaf_gloat_1 = {"Leaf it to me!"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"But I'm Violet Vessel"},
@@ -340,7 +340,7 @@ return {
             fb_bl_final_vessel_last_hand_1 = {"Last hand. This", "ship won't sink."},
             fb_bl_final_vessel_disabled_1 = {"My vessel!", "It's sinking!"},
             fb_bl_final_vessel_defeat_1 = {"The vessel...", "has been emptied."},
-            fb_bl_final_vessel_gloat_1 = {"Violet Vessel:", "\"Vast defeat, huh?\""},
+            fb_bl_final_vessel_gloat_1 = {"Vast defeat, huh?"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"But I'm Crimson Heart"},
@@ -351,7 +351,7 @@ return {
             fb_bl_final_heart_last_hand_1 = {"Last hand. Which", "joker's silenced?"},
             fb_bl_final_heart_disabled_1 = {"My heart! It's", "skipped a beat."},
             fb_bl_final_heart_defeat_1 = {"My heart...", "is broken."},
-            fb_bl_final_heart_gloat_1 = {"Crimson Heart:", "\"Heart-broken yet?\""},
+            fb_bl_final_heart_gloat_1 = {"Heart-broken yet?"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"But I'm Cerulean Bell"},
@@ -362,7 +362,7 @@ return {
             fb_bl_final_bell_last_hand_1 = {"Last hand. One", "card is forced."},
             fb_bl_final_bell_disabled_1 = {"My bell is silent!", "Cheater!"},
             fb_bl_final_bell_defeat_1 = {"Cerulean silence...", "I'm done ringing."},
-            fb_bl_final_bell_gloat_1 = {"Cerulean Bell:", "\"Ding dong, you lost!\""},
+            fb_bl_final_bell_gloat_1 = {"Ding dong,", "you lost!"},
         }
     }
 }

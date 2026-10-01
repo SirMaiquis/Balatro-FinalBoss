@@ -65,7 +65,7 @@ return {
             fb_bl_hook_last_hand_1 = {"드디어 낚았다!"},
             fb_bl_hook_disabled_1 = {"내 훅이!", "부러졌다!"},
             fb_bl_hook_defeat_1 = {"좋아... 놔주지."},
-            fb_bl_hook_gloat_1 = {"훅:", "\"낚였구나!\""},
+            fb_bl_hook_gloat_1 = {"낚였구나!"},
 
             -- The Ox: playing your most played hand sets money to $0
             fb_bl_ox_name_1 = {"하지만 나는", "황소다!"},
@@ -76,7 +76,7 @@ return {
             fb_bl_ox_last_hand_1 = {"마지막 핸드.", "쓰든지 잃든지."},
             fb_bl_ox_disabled_1 = {"내 뿔이!", "무뎌졌다!"},
             fb_bl_ox_defeat_1 = {"황소의 뿔을", "잡았군..."},
-            fb_bl_ox_gloat_1 = {"황소:", "\"이제 빈털터리!\""},
+            fb_bl_ox_gloat_1 = {"이제 빈털터리!"},
 
             -- The House: first hand is drawn face down
             fb_bl_house_name_1 = {"하지만 나는", "집이다!"},
@@ -87,7 +87,7 @@ return {
             fb_bl_house_last_hand_1 = {"더는 눈먼", "행운은 없다."},
             fb_bl_house_disabled_1 = {"내 눈가리개가!", "떨어졌다!"},
             fb_bl_house_defeat_1 = {"집이...", "무너졌다."},
-            fb_bl_house_gloat_1 = {"집:", "\"하우스 승!\""},
+            fb_bl_house_gloat_1 = {"하우스 승!"},
 
             -- The Wall: extra large blind
             fb_bl_wall_name_1 = {"하지만 나는", "벽이다!"},
@@ -98,7 +98,7 @@ return {
             fb_bl_wall_last_hand_1 = {"더는 오를", "곳이 없다."},
             fb_bl_wall_disabled_1 = {"금이 갔어!", "벽이 갈라진다!"},
             fb_bl_wall_defeat_1 = {"벽이...", "무너진다."},
-            fb_bl_wall_gloat_1 = {"벽:", "\"벽에 부딪혔지?\""},
+            fb_bl_wall_gloat_1 = {"벽에 부딪혔지?"},
 
             -- The Wheel: 1 in 7 cards get drawn face down
             fb_bl_wheel_name_1 = {"하지만 나는", "바퀴다!"},
@@ -109,7 +109,7 @@ return {
             fb_bl_wheel_last_hand_1 = {"마지막 회전.", "운이 따를까?"},
             fb_bl_wheel_disabled_1 = {"바퀴가 멈췄어?", "조작이다!"},
             fb_bl_wheel_defeat_1 = {"운명의 바퀴가", "나를 등졌다..."},
-            fb_bl_wheel_gloat_1 = {"바퀴:", "\"운이 다했군!\""},
+            fb_bl_wheel_gloat_1 = {"운이 다했군!"},
 
             -- The Arm: decrease level of played poker hand
             fb_bl_arm_name_1 = {"하지만 나는", "팔이다!"},
@@ -120,7 +120,7 @@ return {
             fb_bl_arm_last_hand_1 = {"마지막 핸드.", "힘주지 마라."},
             fb_bl_arm_disabled_1 = {"팔에 힘이 빠졌다!", "반칙이다!"},
             fb_bl_arm_defeat_1 = {"내 강한 팔을", "꺾었군."},
-            fb_bl_arm_gloat_1 = {"팔:", "\"레벨 다운!\""},
+            fb_bl_arm_gloat_1 = {"레벨 다운!"},
 
             -- The Club: all Club cards are debuffed
             fb_bl_club_name_1 = {"하지만 나는", "클럽이다!"},
@@ -131,7 +131,7 @@ return {
             fb_bl_club_last_hand_1 = {"마지막 핸드.", "클럽은 두고 와라."},
             fb_bl_club_disabled_1 = {"내 클럽이", "힘을 잃었다!"},
             fb_bl_club_defeat_1 = {"클럽 폐업이다.", "갈 시간이군..."},
-            fb_bl_club_gloat_1 = {"클럽:", "\"영업 종료!\""},
+            fb_bl_club_gloat_1 = {"영업 종료!"},
 
             -- The Fish: cards drawn face down after each hand played
             fb_bl_fish_name_1 = {"하지만 나는", "물고기다!"},
@@ -142,7 +142,7 @@ return {
             fb_bl_fish_last_hand_1 = {"마지막 낚시.", "끌어올려라."},
             fb_bl_fish_disabled_1 = {"내 비늘이!", "떨어졌다!"},
             fb_bl_fish_defeat_1 = {"낚였다...", "프로에게."},
-            fb_bl_fish_gloat_1 = {"물고기:", "\"물에 빠졌군!\""},
+            fb_bl_fish_gloat_1 = {"물에 빠졌군!"},
 
             -- The Psychic: must play 5 cards
             fb_bl_psychic_name_1 = {"하지만 나는", "심령술사다!"},
@@ -153,7 +153,7 @@ return {
             fb_bl_psychic_last_hand_1 = {"네 마지막 핸드가", "보인다."},
             fb_bl_psychic_disabled_1 = {"내 환영이!", "사라졌다!"},
             fb_bl_psychic_defeat_1 = {"예견했다.", "...아닌가?"},
-            fb_bl_psychic_gloat_1 = {"심령술사:", "\"내 말이 맞았지!\""},
+            fb_bl_psychic_gloat_1 = {"내 말이 맞았지!"},
 
             -- The Goad: all Spade cards are debuffed
             fb_bl_goad_name_1 = {"하지만 나는", "자극이다!"},
@@ -164,7 +164,7 @@ return {
             fb_bl_goad_last_hand_1 = {"깊이 파라. 마지막", "핸드다."},
             fb_bl_goad_disabled_1 = {"이제 아무도", "자극 못 해!"},
             fb_bl_goad_defeat_1 = {"젠장,", "네가 이겼다."},
-            fb_bl_goad_gloat_1 = {"자극:", "\"제 무덤을 파라!\""},
+            fb_bl_goad_gloat_1 = {"제 무덤을 파라!"},
 
             -- The Water: start with 0 discards
             fb_bl_water_name_1 = {"하지만 나는", "물이다!"},
@@ -175,7 +175,7 @@ return {
             fb_bl_water_last_hand_1 = {"마지막 핸드.", "헤엄치든 가라앉든."},
             fb_bl_water_disabled_1 = {"버리기가", "다시 흐른다!"},
             fb_bl_water_defeat_1 = {"바싹 말랐군..."},
-            fb_bl_water_gloat_1 = {"물:", "\"물거품이 됐군!\""},
+            fb_bl_water_gloat_1 = {"물거품이 됐군!"},
 
             -- The Window: all Diamond cards are debuffed
             fb_bl_window_name_1 = {"하지만 나는", "창문이다!"},
@@ -186,7 +186,7 @@ return {
             fb_bl_window_last_hand_1 = {"마지막 핸드.", "반짝임 금지."},
             fb_bl_window_disabled_1 = {"창문이 깨졌다!", "다이아가 빛난다!"},
             fb_bl_window_defeat_1 = {"내 기회의 창이", "닫혔다."},
-            fb_bl_window_gloat_1 = {"창문:", "\"다이아? 약화!\""},
+            fb_bl_window_gloat_1 = {"다이아? 약화!"},
 
             -- The Manacle: -1 hand size
             fb_bl_manacle_name_1 = {"하지만 나는", "수갑이다!"},
@@ -197,7 +197,7 @@ return {
             fb_bl_manacle_last_hand_1 = {"마지막 핸드.", "수갑까지 찼군."},
             fb_bl_manacle_disabled_1 = {"수갑이!", "풀렸다!"},
             fb_bl_manacle_defeat_1 = {"드디어 자유...", "나로부터."},
-            fb_bl_manacle_gloat_1 = {"수갑:", "\"손도 못 쓰지?\""},
+            fb_bl_manacle_gloat_1 = {"손도 못 쓰지?"},
 
             -- The Eye: no repeat hand types this round
             fb_bl_eye_name_1 = {"하지만 나는", "눈이다!"},
@@ -208,7 +208,7 @@ return {
             fb_bl_eye_last_hand_1 = {"네 마지막 핸드가", "보인다."},
             fb_bl_eye_disabled_1 = {"내 눈이! 누가", "찔렀어?!"},
             fb_bl_eye_defeat_1 = {"눈에서 멀어지면", "마음에서도..."},
-            fb_bl_eye_gloat_1 = {"눈:", "\"내 말이 맞지!\""},
+            fb_bl_eye_gloat_1 = {"내 말이 맞지!"},
 
             -- The Mouth: play only 1 hand type this round
             fb_bl_mouth_name_1 = {"하지만 나는", "입이다!"},
@@ -219,7 +219,7 @@ return {
             fb_bl_mouth_last_hand_1 = {"마지막 핸드. 같은", "족보. 입 닫아."},
             fb_bl_mouth_disabled_1 = {"누가 내게", "재갈을?!"},
             fb_bl_mouth_defeat_1 = {"할 말을 잃었군..."},
-            fb_bl_mouth_gloat_1 = {"입:", "\"입 닥쳐, 패배자!\""},
+            fb_bl_mouth_gloat_1 = {"입 닥쳐, 패배자!"},
 
             -- The Plant: all face cards are debuffed
             fb_bl_plant_name_1 = {"하지만 나는", "행성이다!"},
@@ -230,7 +230,7 @@ return {
             fb_bl_plant_last_hand_1 = {"마지막 핸드를", "직시해라."},
             fb_bl_plant_disabled_1 = {"내 꽃잎이!", "다 사라졌다!"},
             fb_bl_plant_defeat_1 = {"시들었군...", "다시 자라겠다."},
-            fb_bl_plant_gloat_1 = {"행성:", "\"현실을 직시해!\""},
+            fb_bl_plant_gloat_1 = {"현실을 직시해!"},
 
             -- The Serpent: after play or discard, always draw 3 cards
             fb_bl_serpent_name_1 = {"하지만 나는", "뱀이다!"},
@@ -241,7 +241,7 @@ return {
             fb_bl_serpent_last_hand_1 = {"마지막 한 방.", "카드는 3장."},
             fb_bl_serpent_disabled_1 = {"내 송곳니! 쉬익...", "독이 다 떨어졌다!"},
             fb_bl_serpent_defeat_1 = {"허물을 벗었군...", "자존심도."},
-            fb_bl_serpent_gloat_1 = {"뱀:", "\"쉬익, 또 보자!\""},
+            fb_bl_serpent_gloat_1 = {"쉬익, 또 보자!"},
 
             -- The Pillar: cards played previously this ante are debuffed
             fb_bl_pillar_name_1 = {"하지만 나는", "기둥이다!"},
@@ -252,7 +252,7 @@ return {
             fb_bl_pillar_last_hand_1 = {"마지막 핸드.", "옛 카드는 쓸모없다."},
             fb_bl_pillar_disabled_1 = {"내 기억이!", "...흐려진다."},
             fb_bl_pillar_defeat_1 = {"공동체의 기둥이", "쓰러졌다."},
-            fb_bl_pillar_gloat_1 = {"기둥:", "\"아직 서 있다!\""},
+            fb_bl_pillar_gloat_1 = {"아직 서 있다!"},
 
             -- The Needle: play only 1 hand
             fb_bl_needle_name_1 = {"하지만 나는", "바늘이다!"},
@@ -263,7 +263,7 @@ return {
             fb_bl_needle_last_hand_1 = {"이 핸드가", "네 유일한 핸드."},
             fb_bl_needle_disabled_1 = {"내 바늘이!", "무뎌졌다!"},
             fb_bl_needle_defeat_1 = {"날카로운 플레이.", "내가 졌다."},
-            fb_bl_needle_gloat_1 = {"바늘:", "\"핵심은 네 패배!\""},
+            fb_bl_needle_gloat_1 = {"핵심은 네 패배!"},
 
             -- The Head: all Heart cards are debuffed
             fb_bl_head_name_1 = {"하지만 나는", "머리다!"},
@@ -274,7 +274,7 @@ return {
             fb_bl_head_last_hand_1 = {"마지막 핸드. 하트", "없다. 자비도 없다."},
             fb_bl_head_disabled_1 = {"머리가 아프다!", "하트가 돌아왔나?"},
             fb_bl_head_defeat_1 = {"너 때문에", "머리를 잃었다..."},
-            fb_bl_head_gloat_1 = {"머리:", "\"무정하군!\""},
+            fb_bl_head_gloat_1 = {"무정하군!"},
 
             -- The Tooth: lose $1 per card played
             fb_bl_tooth_name_1 = {"하지만 나는", "이빨이다!"},
@@ -285,7 +285,7 @@ return {
             fb_bl_tooth_last_hand_1 = {"마지막 핸드,", "마지막 달러."},
             fb_bl_tooth_disabled_1 = {"내 이빨이!", "사라졌다!"},
             fb_bl_tooth_defeat_1 = {"이를 악물어도", "졌구나."},
-            fb_bl_tooth_gloat_1 = {"이빨:", "\"돈 내, 호구야!\""},
+            fb_bl_tooth_gloat_1 = {"돈 내, 호구야!"},
 
             -- The Flint: base Chips and Mult are halved
             fb_bl_flint_name_1 = {"하지만 나는", "부싯돌이다!"},
@@ -296,7 +296,7 @@ return {
             fb_bl_flint_last_hand_1 = {"마지막 핸드.", "불꽃은 절반."},
             fb_bl_flint_disabled_1 = {"풀파워라고?!", "불공평해!"},
             fb_bl_flint_defeat_1 = {"내 불꽃이", "꺼졌다."},
-            fb_bl_flint_gloat_1 = {"부싯돌:", "\"재미도 반토막!\""},
+            fb_bl_flint_gloat_1 = {"재미도 반토막!"},
 
             -- The Mark: all face cards are drawn face down
             fb_bl_mark_name_1 = {"하지만 나는", "가면이다!"},
@@ -307,7 +307,7 @@ return {
             fb_bl_mark_last_hand_1 = {"마지막 핸드. 얼굴을", "눈감고 골라라."},
             fb_bl_mark_disabled_1 = {"얼굴이!", "다 보인다!"},
             fb_bl_mark_defeat_1 = {"내게 네 흔적을", "남겼군."},
-            fb_bl_mark_gloat_1 = {"가면:", "\"패배로 낙인!\""},
+            fb_bl_mark_gloat_1 = {"패배로 낙인!"},
 
             -- Amber Acorn: flips and shuffles all Joker cards
             fb_bl_final_acorn_name_1 = {"하지만 나는", "호박색 도토리다!"},
@@ -318,7 +318,7 @@ return {
             fb_bl_final_acorn_last_hand_1 = {"마지막 핸드.", "네 조커는 어디?"},
             fb_bl_final_acorn_disabled_1 = {"내 도토리!", "질서가 돌아왔어?!"},
             fb_bl_final_acorn_defeat_1 = {"내 껍질을", "깨버렸군..."},
-            fb_bl_final_acorn_gloat_1 = {"호박색 도토리:", "\"도토리 키 재기!\""},
+            fb_bl_final_acorn_gloat_1 = {"도토리 키 재기!"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"하지만 나는", "심록색 잎사귀다!"},
@@ -329,7 +329,7 @@ return {
             fb_bl_final_leaf_last_hand_1 = {"마지막 핸드.", "조커 팔래?"},
             fb_bl_final_leaf_disabled_1 = {"내 잎이!", "말라버렸다!"},
             fb_bl_final_leaf_defeat_1 = {"떠나마...", "낙엽처럼."},
-            fb_bl_final_leaf_gloat_1 = {"심록색 잎사귀:", "\"낙엽처럼 져라!\""},
+            fb_bl_final_leaf_gloat_1 = {"낙엽처럼 져라!"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"하지만 나는", "보라색 술잔이다!"},
@@ -340,7 +340,7 @@ return {
             fb_bl_final_vessel_last_hand_1 = {"마지막 핸드.", "이 배는 안 가라앉아."},
             fb_bl_final_vessel_disabled_1 = {"내 술잔이!", "가라앉는다!"},
             fb_bl_final_vessel_defeat_1 = {"술잔이...", "비어버렸다."},
-            fb_bl_final_vessel_gloat_1 = {"보라색 술잔:", "\"완패했군!\""},
+            fb_bl_final_vessel_gloat_1 = {"완패했군!"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"하지만 나는", "진홍색 술잔이다!"},
@@ -351,7 +351,7 @@ return {
             fb_bl_final_heart_last_hand_1 = {"마지막 핸드. 어느", "조커가 침묵?"},
             fb_bl_final_heart_disabled_1 = {"내 심장이!", "한 박자 걸렀다."},
             fb_bl_final_heart_defeat_1 = {"내 마음이...", "부서졌다."},
-            fb_bl_final_heart_gloat_1 = {"진홍색 술잔:", "\"상심했나?\""},
+            fb_bl_final_heart_gloat_1 = {"상심했나?"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"하지만 나는", "하늘색 종이다!"},
@@ -362,7 +362,7 @@ return {
             fb_bl_final_bell_last_hand_1 = {"마지막 핸드.", "카드 한 장 강제."},
             fb_bl_final_bell_disabled_1 = {"내 종이 조용해!", "반칙이다!"},
             fb_bl_final_bell_defeat_1 = {"종이 울린다", "나를 위해."},
-            fb_bl_final_bell_gloat_1 = {"하늘색 종:", "\"땡땡, 졌구나!\""},
+            fb_bl_final_bell_gloat_1 = {"땡땡, 졌구나!"},
         }
     }
 }
