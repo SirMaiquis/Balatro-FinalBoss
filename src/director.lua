@@ -72,8 +72,9 @@ end
 function Dir.play_intro(blind_key)
   local enc, blind = current(blind_key)
   -- In a cinematic showdown the letterbox retracts when the intro dialogue ends (or never starts).
+  -- retract_bars is a no-op without bars, so it is safe for every encounter.
   local on_end = enc and enc.cinematic and FinalBoss.cinematic.retract_bars or nil
-  local function nothing_to_say() if on_end then on_end() end end
+  local function nothing_to_say() FinalBoss.cinematic.retract_bars() end
   if not enc or not FinalBoss.config.dialogue or blind.disabled then return nothing_to_say() end
   local steps = {}
   for _, moment in ipairs(FinalBoss.logic.intro_sequence(enc.tier)) do
@@ -113,7 +114,7 @@ function Dir.on_round_end()
     enc.ended = true
     FinalBoss.fx.stop()
     FinalBoss.arena.stop(true)
-    if enc.cinematic then FinalBoss.hpbar.remove(); FinalBoss.avatar.fade_out(0.8) end
+    if enc.cinematic then FinalBoss.cinematic.game_over(FinalBoss.registry.get(enc.key).voice.pitch) end
   else
     st.lost_to = nil
   end
@@ -181,7 +182,10 @@ function Dir.stage_hit(enc, blind, delta, total, required, moment)
   FinalBoss.hpbar.update(total, required)
   FinalBoss.hpbar.damage(delta, size)
   FinalBoss.avatar.set_wound(stage)
-  if moment == 'defeat' then return end
+  if moment == 'defeat' then
+    FinalBoss.cinematic.play_finale(blind) -- the defeat line (fired next) shows during the shake
+    return
+  end
   FinalBoss.avatar.hit(size)
   if size == 'weak' then FinalBoss.avatar.laugh(FinalBoss.registry.get(enc.key).voice.pitch) end
 end
@@ -194,12 +198,18 @@ function Dir.on_blind_defeated()
   local enc, blind = current()
   if not enc then return end
   enc.ended = true
-  if enc.tier == 'full' then
-    if enc.cinematic then FinalBoss.hpbar.remove(); FinalBoss.avatar.fade_out(0.6) end
+  if enc.tier ~= 'full' then return end
+  if enc.cinematic then
+    -- The finale (started on the winning hand) owns the explosion; clean up if it never ran.
+    if FinalBoss.cinematic.phase ~= 'finale' then
+      FinalBoss.hpbar.remove()
+      FinalBoss.avatar.remove()
+    end
+  else
     FinalBoss.fx.play(FinalBoss.registry.get(enc.key).fx.defeat, blind)
-    FinalBoss.fx.stop()
-    FinalBoss.arena.stop()
   end
+  FinalBoss.fx.stop()
+  FinalBoss.arena.stop()
 end
 
 --- Per-frame tick (hooks: Game:update wrap). Cheap when nothing is on stage.

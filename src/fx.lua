@@ -106,9 +106,9 @@ function EFFECTS.phase_shift(blind)
   later(1.2, gen, function() ease_vignette(F.HOLD, 1.5) end)
 end
 
-function F.play(name, blind)
+function F.play(name, blind, ...)
   if not enabled() or not name or not EFFECTS[name] then return end
-  EFFECTS[name](blind)
+  EFFECTS[name](blind, ...)
 end
 
 function F.stop()

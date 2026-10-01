@@ -61,6 +61,7 @@ local function show_title(blind)
     }},
     config = {major = G.ROOM_ATTACH, align = 'cm', offset = {x = 0, y = -1}, bond = 'Weak', can_collide = false},
   }
+  C.title.attention_text = true -- drawn in vanilla's late pass, above the cards (the bars stay under)
 end
 
 local function spawn_stage(fall)
@@ -118,6 +119,8 @@ function C.skip()
   C.token = C.token + 1
   remove_title()
   spawn_stage(false)
+  local a = FinalBoss.avatar.anchor() -- skipped mid-fall: land it instantly
+  if a then a:hard_set_VT() end
   finish_intro()
 end
 
@@ -139,8 +142,55 @@ function C.retract_bars()
   if C.phase == 'dialogue' then C.phase = nil end
 end
 
-function C.play_finale(blind) end
-function C.game_over(pitch) end
+local function explode(blind, calm)
+  local x, y, w, h = FinalBoss.avatar.position()
+  FinalBoss.hpbar.remove()
+  FinalBoss.avatar.remove()
+  if not x then return end
+  local c = (blind.config.blind and blind.config.blind.boss_colour) or G.C.RED
+  local p = Particles(x, y, w, h, {timer = 0.005, scale = 0.6, speed = 8, lifespan = 2.0,
+    colours = {c, G.C.WHITE, darken(c, 0.3)}, fill = true})
+  FinalBoss.fx.play('flash', blind, '') -- '' = restore to the neutral colour vanilla eases to after a win
+  G.ROOM.jiggle = G.ROOM.jiggle + (calm and 2 or 6)
+  play_sound('explosion_release1', 1, 0.7)
+  play_sound('glass1', 0.9, 0.6)
+  later(1.2, function() p:fade(0.6) end)
+  later(2.2, function() p:remove() end)
+end
+
+--- Winning hand: slow motion, violent shake + flashes while the defeat line plays, then boom.
+function C.play_finale(blind)
+  if not FinalBoss.avatar.exists() then return end
+  C.token = C.token + 1
+  local token = C.token
+  remove_title()
+  C.retract_bars()
+  C.phase = 'finale'
+  local calm = reduced()
+  if not calm then FinalBoss.timescale = 0.35 end
+  FinalBoss.avatar.set_tremble(true)
+  FinalBoss.avatar.set_dissolve(0.5, 1.0)
+  play_sound('explosion_buildup1', 1, 0.6)
+  for i = 0, 6 do
+    after(i * 0.15, token, function() FinalBoss.avatar.flash(0.08) end)
+  end
+  later(0.8, function() FinalBoss.timescale = 1 end) -- always restored, even if the token moves on
+  after(1.2, token, function() explode(blind, calm) end)
+  later(1.6, function() if C.phase == 'finale' then C.phase = nil end end)
+end
+
+--- The boss won: a last laugh, then the avatar fades away (the gloat quip plays as before).
+function C.game_over(pitch)
+  C.token = C.token + 1
+  FinalBoss.timescale = 1
+  remove_title()
+  C.retract_bars()
+  C.phase = nil
+  if not FinalBoss.avatar.exists() then return end
+  FinalBoss.hpbar.remove()
+  FinalBoss.avatar.laugh(pitch)
+  later(0.5, function() FinalBoss.avatar.fade_out(0.8) end)
+end
 
 function C.reset()
   C.token = C.token + 1
