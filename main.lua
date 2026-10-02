@@ -5,6 +5,9 @@ FinalBoss.config = SMODS.current_mod.config
 FinalBoss.VERSION = SMODS.current_mod.version
 FinalBoss.timescale = 1 -- slow-motion factor (lovely/timescale.toml); only cinematic.lua changes it
 
+-- Mods list icon: Steamodded shows the atlas '<prefix>_modicon' (assets/1x|2x/icon.png, tools/make_art.py).
+SMODS.Atlas{key = 'modicon', path = 'icon.png', px = 34, py = 34}
+
 local function load_file(path)
   local chunk, err = SMODS.load_file(path)
   assert(chunk, ('FinalBoss: failed to load %s: %s'):format(path, tostring(err)))

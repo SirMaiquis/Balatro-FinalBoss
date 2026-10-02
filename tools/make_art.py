@@ -1,9 +1,10 @@
 """Render icon.png (256x256, Thunderstore) and thumbnail.jpg (1920x1080) from the game's own
-background shader, showdown boss chips and m6x11 font.
+background shader, showdown boss chips and m6x11 font, plus the Steamodded mod-list icon
+assets/1x/icon.png (34x34) and assets/2x/icon.png (68x68): the Crimson Heart chip, exact pixels.
 
     uv run --with pillow --with numpy tools/make_art.py [path/to/Balatro/source]
 
-The Balatro source folder must contain resources/ (textures/2x/BlindChips.png, fonts/m6x11plus.ttf).
+The Balatro source folder must contain resources/ (textures/1x and 2x/BlindChips.png, fonts/m6x11plus.ttf).
 """
 import os
 import sys
@@ -129,7 +130,19 @@ def make_thumbnail():
     canvas.convert('RGB').save(os.path.join(ROOT, 'thumbnail.jpg'), quality=92)
 
 
+def make_modicon():
+    """assets/{1x,2x}/icon.png: frame 0 of the Crimson Heart chip, exact pixels (Steamodded's mod list icon)."""
+    row = CHIPS['heart'][0]
+    for scale in (1, 2):
+        px = 34 * scale
+        atlas = Image.open(os.path.join(GAME, 'resources', 'textures', f'{scale}x', 'BlindChips.png')).convert('RGBA')
+        out_dir = os.path.join(ROOT, 'assets', f'{scale}x')
+        os.makedirs(out_dir, exist_ok=True)
+        atlas.crop((0, row * px, px, (row + 1) * px)).save(os.path.join(out_dir, 'icon.png'))
+
+
 if __name__ == '__main__':
     make_icon()
     make_thumbnail()
-    print('wrote icon.png and thumbnail.jpg')
+    make_modicon()
+    print('wrote icon.png, thumbnail.jpg and assets/{1x,2x}/icon.png')

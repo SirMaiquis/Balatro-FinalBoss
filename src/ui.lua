@@ -3,7 +3,7 @@
 local UI = {}
 UI.preview = {warn = ''}
 UI.static = {note = ''}
-UI.track = nil -- UIBox of the Showdowns tab's ante track, swapped in place on every settings change
+UI.cells = nil -- ante track cells {box, text, chip} of the open Showdowns tab, restyled in place
 
 local ANTES = {1, 2, 3, 4, 5, 6, 7, 8}
 local TRACK_LAST, TRACK_ROW = 16, 8 -- antes on the track, boxes per row
@@ -131,48 +131,54 @@ local function chip_sprite()
   return sprite
 end
 
---- One ante: lit crimson with the chip when it is a showdown, else a dim box with the number.
---- Every box has the same size, so swapping the track never resizes the tab.
-local function ante_box(ante, showdown)
-  local nodes
-  if showdown then
-    nodes = {row({{n = G.UIT.O, config = {object = chip_sprite()}}}, 0), row({text(tostring(ante), nil, 0.28)}, 0)}
-  else
-    nodes = {row({text(tostring(ante), G.C.UI.TEXT_INACTIVE, 0.35)}, 0)}
-  end
-  return {n = G.UIT.C, config = {align = 'cm', minw = 0.75, minh = 0.95, r = 0.1,
-    colour = showdown and col('crimson') or {0, 0, 0, 0.3}}, nodes = nodes}
+local CELL_LIT, CELL_OFF = col('crimson'), {0, 0, 0, 0.3} -- source colours, copied into the cells
+
+local function set_colour(dst, src) dst[1], dst[2], dst[3], dst[4] = src[1], src[2], src[3], src[4] end
+
+--- One ante cell, always the same nodes and size: a chip row and a number row. The nodes keep the
+--- cell's colour tables by reference, so UI.refresh_track restyles the cell in place.
+local function ante_cell(ante)
+  local cell = {box = copy_table(CELL_OFF), text = copy_table(G.C.UI.TEXT_INACTIVE), chip = chip_sprite()}
+  cell.chip.states.visible = false
+  local node = {n = G.UIT.C, config = {align = 'cm', minw = 0.75, minh = 0.95, r = 0.1, colour = cell.box}, nodes = {
+    row({{n = G.UIT.O, config = {object = cell.chip}}}, 0),
+    row({{n = G.UIT.T, config = {text = tostring(ante), scale = 0.3, colour = cell.text, shadow = true}}}, 0),
+  }}
+  return cell, node
 end
 
-local function track_definition()
-  local sd = FinalBoss.config.showdown
-  local win_ante = (G.GAME and G.GAME.win_ante) or 8
-  local track = FinalBoss.logic.showdown_track(sd.enabled, sd.start_ante, sd.every, win_ante, TRACK_LAST)
+--- The track's rows of plain nodes; UI.cells is reset to this tab's cells.
+local function track_rows()
+  UI.cells = {}
   local rows = {}
   for first = 1, TRACK_LAST, TRACK_ROW do
     local boxes = {}
     for ante = first, math.min(first + TRACK_ROW - 1, TRACK_LAST) do
-      boxes[#boxes + 1] = ante_box(ante, track[ante])
+      local cell, node = ante_cell(ante)
+      UI.cells[ante] = cell
+      boxes[#boxes + 1] = node
     end
     rows[#rows + 1] = row(boxes, 0.05)
   end
-  return {n = G.UIT.ROOT, config = {align = 'cm', padding = 0.02, colour = G.C.CLEAR}, nodes = rows}
+  return rows
 end
 
-local function new_track(parent)
-  return UIBox{definition = track_definition(), config = {offset = {x = 0, y = 0}, parent = parent, type = 'cm'}}
-end
-
---- Swap the track UIBox for a fresh one (TagManager's change_tags_page / vanilla change_tab).
---- No-op when the Showdowns tab is not open: its box was removed with the tab.
+--- Light the showdown antes in place: crimson box, light number and the chip shown; other antes get a
+--- dim box, grey number and a hidden chip. No-op once the Showdowns tab is gone (its sprites were
+--- removed with it).
 function UI.refresh_track()
-  local box = UI.track
-  local wrap = box and not box.REMOVED and box.parent
-  if not wrap or wrap.REMOVED or wrap.config.object ~= box then return end
-  box:remove()
-  UI.track = new_track(wrap)
-  wrap.config.object = UI.track
-  wrap.UIBox:recalculate()
+  local cells = UI.cells
+  if not cells then return end
+  if cells[1].chip.REMOVED then UI.cells = nil; return end
+  local sd = FinalBoss.config.showdown
+  local win_ante = (G.GAME and G.GAME.win_ante) or 8
+  local track = FinalBoss.logic.showdown_track(sd.enabled, sd.start_ante, sd.every, win_ante, TRACK_LAST)
+  for ante, cell in ipairs(cells) do
+    local lit = track[ante]
+    set_colour(cell.box, lit and CELL_LIT or CELL_OFF)
+    set_colour(cell.text, lit and G.C.UI.TEXT_LIGHT or G.C.UI.TEXT_INACTIVE)
+    cell.chip.states.visible = lit
+  end
 end
 
 function UI.refresh_preview()
@@ -207,15 +213,15 @@ end
 
 function UI.showdowns_tab()
   local sd = FinalBoss.config.showdown
-  UI.track = new_track(nil) -- the O node below becomes its parent
-  UI.refresh_preview()
+  local track = track_rows()
+  UI.refresh_preview() -- also lights the new cells
   UI.static.note = localize('fb_cfg_next_ante')
   local start, every = cycle('fb_cfg_start_ante', sd, 'start_ante', ANTES), cycle('fb_cfg_every', sd, 'every', ANTES)
   start.n, every.n = G.UIT.C, G.UIT.C -- side by side
   return root{
     toggle('fb_cfg_showdown_enabled', sd, 'enabled'),
     {n = G.UIT.R, config = {align = 'cm', padding = 0.05}, nodes = {start, every}},
-    row({group(localize('fb_cfg_preview'), {{n = G.UIT.O, config = {object = UI.track}}})}, 0.05),
+    row({group(localize('fb_cfg_preview'), track)}, 0.05),
     text_row(UI.preview, 'warn', G.C.RED),
     text_row(UI.static, 'note', G.C.UI.TEXT_INACTIVE),
   }
