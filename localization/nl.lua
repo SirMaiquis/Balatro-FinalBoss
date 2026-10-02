@@ -19,8 +19,23 @@ return {
             fb_cfg_preview = "Showdowns bij Ante:",
             fb_cfg_hard = "Zwaar! Vroege showdowns zijn bruut.",
             fb_cfg_next_ante = "Wijzigingen gelden vanaf de volgende Ante.",
+            fb_cfg_group_dialogue = "Baasdialogen",
+            fb_cfg_group_stage = "Showdown-podium",
+            fb_credits_thanks = "Bedankt voor het spelen met FinalBoss!",
+            fb_credits_lead = "Gemaakt en onderhouden door",
+            fb_credits_music = "Showdown-muziek:",
+            fb_credits_music_by = "Adam Isiah (orkestrale cover)",
+            fb_credits_listen = "Luister op YouTube",
+            fb_credits_github = "GitHub",
+            fb_tip_me = "Geef een fooi",
+            fb_tip_me_message_1 = "Vind je FinalBoss leuk? Overweeg dan",
+            fb_tip_me_message_2 = "een kleine fooi om je steun te tonen.",
+            fb_tip_me_message_3 = "Dat wordt enorm gewaardeerd!",
         },
         quips = {
+            -- Config menu header card
+            fb_cfg_header = {"Bazen praten terug en showdowns worden baasgevechten.", "Door {C:green,E:1}@SirMaiquis{}"},
+
             -- Shared intro bookends (full tier only)
             fb_opener_1 = {"Je bent te ver", "gekomen..."},
             fb_opener_2 = {"En helaas moet ik", "zeggen..."},

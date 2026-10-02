@@ -65,11 +65,11 @@ Turn off the avatar side with `cinematic` (avatar, HP bar, damage numbers, intro
 
 ### Showdown schedule
 
-By default, showdowns appear exactly like vanilla (ante 8, 16, ...). Turn on the schedule in the Showdowns tab and pick a first ante and an interval to get extra showdowns, for example start 4 and every 4 gives antes 4, 8, 12 and so on. The win-ante boss is always a showdown. The tab shows a live preview of the next showdown antes and warns ("Hard!") when the first showdown is before ante 4. Changes apply from the next ante's boss roll.
+By default, showdowns appear exactly like vanilla (ante 8, 16, ...). Turn on the schedule in the Showdowns tab and pick a first ante and an interval to get extra showdowns, for example start 4 and every 4 gives antes 4, 8, 12 and so on. The win-ante boss is always a showdown. The tab shows a live ante track (antes 1 to 16, showdown antes lit in crimson with a final-boss chip) and warns ("Hard!") when the first showdown is before ante 4. Changes apply from the next ante's boss roll.
 
 ### Configuration
 
-Set in the Mods menu (Final Boss, Config and Showdowns tabs). Steamodded saves your choices; `config.lua` only holds the defaults.
+Set in the Mods menu (Final Boss). The Config tab groups the boss dialogue settings and the showdown stage toggles, with the developer keys at the bottom; the Showdowns tab holds the schedule; the Credits tab has the links (GitHub, the showdown music, Ko-fi). Steamodded saves your choices; `config.lua` only holds the defaults.
 
 | Key | What it does | Default |
 |---|---|---|

@@ -19,8 +19,23 @@ return {
             fb_cfg_preview = "Duels aux mises initiales :",
             fb_cfg_hard = "Difficile ! Les duels précoces sont brutaux.",
             fb_cfg_next_ante = "Effectif dès la prochaine mise initiale.",
+            fb_cfg_group_dialogue = "Dialogues des boss",
+            fb_cfg_group_stage = "Scène du duel",
+            fb_credits_thanks = "Merci de jouer avec FinalBoss !",
+            fb_credits_lead = "Créé et maintenu par",
+            fb_credits_music = "Musique des duels :",
+            fb_credits_music_by = "Adam Isiah (reprise orchestrale)",
+            fb_credits_listen = "Écouter sur YouTube",
+            fb_credits_github = "GitHub",
+            fb_tip_me = "Me soutenir",
+            fb_tip_me_message_1 = "Si FinalBoss vous plaît, pensez à me laisser",
+            fb_tip_me_message_2 = "un petit pourboire pour me soutenir.",
+            fb_tip_me_message_3 = "C'est très apprécié !",
         },
         quips = {
+            -- Config menu header card
+            fb_cfg_header = {"Les boss répliquent et les duels finaux deviennent de vrais combats.", "Par {C:green,E:1}@SirMaiquis{}"},
+
             -- Shared intro bookends (full tier only)
             fb_opener_1 = {"Tu es allé trop loin..."},
             fb_opener_2 = {"Et j'ai le regret", "de dire..."},

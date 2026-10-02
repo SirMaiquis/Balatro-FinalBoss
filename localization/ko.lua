@@ -19,8 +19,23 @@ return {
             fb_cfg_preview = "결전 앤티:",
             fb_cfg_hard = "어려움! 초반 결전은 가혹합니다.",
             fb_cfg_next_ante = "변경은 다음 앤티부터 적용됩니다.",
+            fb_cfg_group_dialogue = "보스 대사",
+            fb_cfg_group_stage = "결전 무대",
+            fb_credits_thanks = "FinalBoss를 플레이해 주셔서 감사합니다!",
+            fb_credits_lead = "제작 및 관리:",
+            fb_credits_music = "결전 음악:",
+            fb_credits_music_by = "Adam Isiah (오케스트라 커버)",
+            fb_credits_listen = "YouTube에서 듣기",
+            fb_credits_github = "GitHub",
+            fb_tip_me = "후원하기",
+            fb_tip_me_message_1 = "FinalBoss가 마음에 드셨다면",
+            fb_tip_me_message_2 = "작은 후원으로 응원해 주세요.",
+            fb_tip_me_message_3 = "정말 감사합니다!",
         },
         quips = {
+            -- Config menu header card
+            fb_cfg_header = {"보스가 말을 걸고, 결전은 보스전이 됩니다.", "제작 {C:green,E:1}@SirMaiquis{}"},
+
             -- Shared intro bookends (full tier only)
             fb_opener_1 = {"너무 멀리 왔군..."},
             fb_opener_2 = {"안타깝지만", "말해주지..."},

@@ -19,8 +19,23 @@ return {
             fb_cfg_preview = "Enfrentamientos en apuestas iniciales:",
             fb_cfg_hard = "¡Difícil! Los enfrentamientos tempranos son brutales.",
             fb_cfg_next_ante = "Los cambios se aplican a partir de la siguiente apuesta inicial.",
+            fb_cfg_group_dialogue = "Diálogo de jefes",
+            fb_cfg_group_stage = "Escenario del enfrentamiento",
+            fb_credits_thanks = "¡Gracias por jugar con FinalBoss!",
+            fb_credits_lead = "Creado y mantenido por",
+            fb_credits_music = "Música de enfrentamientos:",
+            fb_credits_music_by = "Adam Isiah (versión orquestal)",
+            fb_credits_listen = "Escuchar en YouTube",
+            fb_credits_github = "GitHub",
+            fb_tip_me = "Invítame a un café",
+            fb_tip_me_message_1 = "Si te gusta FinalBoss, plantéate darme",
+            fb_tip_me_message_2 = "una pequeña propina como muestra de apoyo.",
+            fb_tip_me_message_3 = "¡Te lo agradezco muchísimo!",
         },
         quips = {
+            -- Config menu header card
+            fb_cfg_header = {"Los jefes te contestan y los enfrentamientos son combates épicos.", "Por {C:green,E:1}@SirMaiquis{}"},
+
             -- Shared intro bookends (full tier only)
             fb_opener_1 = {"Has llegado muy lejos..."},
             fb_opener_2 = {"Y siento decirte..."},

@@ -19,8 +19,23 @@ return {
             fb_cfg_preview = "Поединки на анте:",
             fb_cfg_hard = "Сложно! Ранние поединки жестоки.",
             fb_cfg_next_ante = "Изменения вступят со следующего анте.",
+            fb_cfg_group_dialogue = "Диалоги боссов",
+            fb_cfg_group_stage = "Сцена поединка",
+            fb_credits_thanks = "Спасибо, что играете с FinalBoss!",
+            fb_credits_lead = "Создатель и разработчик:",
+            fb_credits_music = "Музыка поединков:",
+            fb_credits_music_by = "Adam Isiah (оркестровый кавер)",
+            fb_credits_listen = "Слушать на YouTube",
+            fb_credits_github = "GitHub",
+            fb_tip_me = "Поддержать",
+            fb_tip_me_message_1 = "Если вам нравится FinalBoss, поддержите меня",
+            fb_tip_me_message_2 = "небольшим донатом.",
+            fb_tip_me_message_3 = "Я очень это ценю!",
         },
         quips = {
+            -- Config menu header card
+            fb_cfg_header = {"Боссы отвечают, а поединки становятся битвами с боссом.", "Автор: {C:green,E:1}@SirMaiquis{}"},
+
             -- Shared intro bookends (full tier only)
             fb_opener_1 = {"Ты зашел слишком", "далеко..."},
             fb_opener_2 = {"И, к сожалению,", "должен сказать..."},

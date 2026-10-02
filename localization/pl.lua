@@ -19,8 +19,23 @@ return {
             fb_cfg_preview = "Pojedynki na Wejściach:",
             fb_cfg_hard = "Trudno! Wczesne pojedynki są brutalne.",
             fb_cfg_next_ante = "Zmiany działają od następnego Wejścia.",
+            fb_cfg_group_dialogue = "Dialogi bossów",
+            fb_cfg_group_stage = "Scena pojedynku",
+            fb_credits_thanks = "Dzięki za grę z FinalBoss!",
+            fb_credits_lead = "Stworzone i rozwijane przez",
+            fb_credits_music = "Muzyka pojedynków:",
+            fb_credits_music_by = "Adam Isiah (cover orkiestrowy)",
+            fb_credits_listen = "Posłuchaj na YouTube",
+            fb_credits_github = "GitHub",
+            fb_tip_me = "Wesprzyj mnie",
+            fb_tip_me_message_1 = "Jeśli lubisz FinalBoss, rozważ",
+            fb_tip_me_message_2 = "drobny napiwek jako wsparcie.",
+            fb_tip_me_message_3 = "Bardzo to doceniam!",
         },
         quips = {
+            -- Config menu header card
+            fb_cfg_header = {"Bossowie odpowiadają, a pojedynki stają się walkami z bossem.", "Autor: {C:green,E:1}@SirMaiquis{}"},
+
             -- Shared intro bookends (full tier only)
             fb_opener_1 = {"Zaszedłeś za daleko..."},
             fb_opener_2 = {"I z przykrością", "muszę powiedzieć..."},

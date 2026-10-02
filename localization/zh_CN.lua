@@ -19,8 +19,23 @@ return {
             fb_cfg_preview = "决战底注:",
             fb_cfg_hard = "困难！前期决战极其残酷。",
             fb_cfg_next_ante = "更改将从下个底注起生效。",
+            fb_cfg_group_dialogue = "Boss对话",
+            fb_cfg_group_stage = "决战舞台",
+            fb_credits_thanks = "感谢你游玩FinalBoss！",
+            fb_credits_lead = "制作与维护：",
+            fb_credits_music = "决战音乐：",
+            fb_credits_music_by = "Adam Isiah（管弦乐翻奏）",
+            fb_credits_listen = "在YouTube上收听",
+            fb_credits_github = "GitHub",
+            fb_tip_me = "打赏我",
+            fb_tip_me_message_1 = "如果你喜欢FinalBoss，",
+            fb_tip_me_message_2 = "欢迎小额打赏以示支持。",
+            fb_tip_me_message_3 = "非常感谢！",
         },
         quips = {
+            -- Config menu header card
+            fb_cfg_header = {"Boss会开口说话，决战化身Boss战。", "作者 {C:green,E:1}@SirMaiquis{}"},
+
             -- Shared intro bookends (full tier only)
             fb_opener_1 = {"你走得太远了..."},
             fb_opener_2 = {"很遗憾，我得", "告诉你..."},

@@ -78,6 +78,36 @@ T['preview_showdowns: defaults equal vanilla'] = function()
   eq(table.concat(logic.preview_showdowns(true, 8, 8, 8, 3), ','), '8,16,24')
 end
 
+-- Lit antes of a showdown_track, as "a,b,c" (and checks the track covers exactly 1..last).
+local function lit(track, last)
+  eq(#track, last, 'track length')
+  local out = {}
+  for a = 1, last do
+    eq(type(track[a]), 'boolean', 'ante ' .. a)
+    if track[a] then out[#out + 1] = a end
+  end
+  return table.concat(out, ',')
+end
+
+T['showdown_track: schedule off lights the vanilla showdowns only'] = function()
+  eq(lit(logic.showdown_track(false, 2, 2, 8, 16), 16), '8,16')
+  eq(lit(logic.showdown_track(false, 2, 2, 6, 16), 16), '6,12')
+end
+
+T['showdown_track: custom schedule merges with vanilla, capped at last'] = function()
+  eq(lit(logic.showdown_track(true, 4, 4, 8, 16), 16), '4,8,12,16')
+  eq(lit(logic.showdown_track(true, 3, 4, 8, 16), 16), '3,7,8,11,15,16')
+  eq(lit(logic.showdown_track(true, 5, 8, 8, 16), 16), '5,8,13,16')
+end
+
+T['showdown_track: every ante lights the whole track'] = function()
+  eq(lit(logic.showdown_track(true, 1, 1, 8, 16), 16), '1,2,3,4,5,6,7,8,9,10,11,12,13,14,15,16')
+end
+
+T['showdown_track: defaults equal vanilla'] = function()
+  eq(lit(logic.showdown_track(true, 8, 8, 8, 16), 16), '8,16')
+end
+
 T['line_duration: slow normal fast, unknown is normal'] = function()
   eq(logic.line_duration(1), 6)
   eq(logic.line_duration(2), 4)

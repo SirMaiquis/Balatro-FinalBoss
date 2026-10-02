@@ -23,7 +23,8 @@ First release.
 
 ### Settings
 - Independent toggles for dialogue, music, screen effects and showdown cinematics, plus intro speed and the first ante for regular-boss dialogue.
-- Showdown schedule: choose a first ante and an interval to get extra showdowns, with a live preview.
+- Showdown schedule: choose a first ante and an interval to get extra showdowns, with a live ante track.
+- Themed config menu in the boss palette, with a Credits tab.
 - Respects Balatro's reduced motion setting: colours and flashes stay, movement goes.
 
 ### For mod authors

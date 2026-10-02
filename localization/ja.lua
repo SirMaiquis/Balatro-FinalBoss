@@ -19,8 +19,23 @@ return {
             fb_cfg_preview = "決戦アンティ:",
             fb_cfg_hard = "難関！序盤の決戦は過酷だ。",
             fb_cfg_next_ante = "変更は次のアンティから反映。",
+            fb_cfg_group_dialogue = "ボスのセリフ",
+            fb_cfg_group_stage = "決戦の舞台",
+            fb_credits_thanks = "FinalBossで遊んでくれてありがとう！",
+            fb_credits_lead = "制作・メンテナンス:",
+            fb_credits_music = "決戦BGM:",
+            fb_credits_music_by = "Adam Isiah (オーケストラカバー)",
+            fb_credits_listen = "YouTubeで聴く",
+            fb_credits_github = "GitHub",
+            fb_tip_me = "チップを送る",
+            fb_tip_me_message_1 = "FinalBossを気に入ってもらえたら",
+            fb_tip_me_message_2 = "少額のチップで応援してもらえると嬉しいです。",
+            fb_tip_me_message_3 = "本当にありがとうございます！",
         },
         quips = {
+            -- Config menu header card
+            fb_cfg_header = {"ボスがしゃべり、決戦はボスバトルになる。", "作者 {C:green,E:1}@SirMaiquis{}"},
+
             -- Shared intro bookends (full tier only)
             fb_opener_1 = {"ここまで来たか…"},
             fb_opener_2 = {"悪いが、", "言わせてもらう…"},

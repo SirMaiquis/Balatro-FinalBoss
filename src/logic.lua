@@ -37,6 +37,17 @@ function logic.preview_showdowns(enabled, start, every, win_ante, n)
   return out
 end
 
+--- Ante track of the config menu: track[a] is true when ante a (1..last) is a showdown under the
+--- given settings (the same schedule as preview_showdowns, cut at `last`).
+function logic.showdown_track(enabled, start, every, win_ante, last)
+  local track = {}
+  for a = 1, last do track[a] = false end
+  for _, a in ipairs(logic.preview_showdowns(enabled, start, every, win_ante, last)) do
+    if a <= last then track[a] = true end
+  end
+  return track
+end
+
 local DURATIONS = {6, 4, 2.5} -- slow, normal, fast (seconds per intro line)
 
 function logic.line_duration(speed)

@@ -19,8 +19,23 @@ return {
             fb_cfg_preview = "Showdowns at antes:",
             fb_cfg_hard = "Hard! Early showdowns are brutal.",
             fb_cfg_next_ante = "Changes apply from the next ante.",
+            fb_cfg_group_dialogue = "Boss dialogue",
+            fb_cfg_group_stage = "Showdown stage",
+            fb_credits_thanks = "Thank you for playing with FinalBoss!",
+            fb_credits_lead = "Created and maintained by",
+            fb_credits_music = "Showdown music:",
+            fb_credits_music_by = "Adam Isiah (orchestral cover)",
+            fb_credits_listen = "Listen on YouTube",
+            fb_credits_github = "GitHub",
+            fb_tip_me = "Tip Me",
+            fb_tip_me_message_1 = "If you enjoy FinalBoss, please consider tipping me",
+            fb_tip_me_message_2 = "a small amount to show your support.",
+            fb_tip_me_message_3 = "It's greatly appreciated!",
         },
         quips = {
+            -- Config menu header card
+            fb_cfg_header = {"Bosses talk back and showdowns become boss fights.", "By {C:green,E:1}@SirMaiquis{}"},
+
             -- Shared intro bookends (full tier only)
             fb_opener_1 = {"You've come too far..."},
             fb_opener_2 = {"And I'm sorry to say..."},

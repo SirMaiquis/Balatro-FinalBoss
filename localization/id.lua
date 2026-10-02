@@ -19,8 +19,23 @@ return {
             fb_cfg_preview = "Duel final di Ante:",
             fb_cfg_hard = "Sulit! Duel final awal sangat brutal.",
             fb_cfg_next_ante = "Perubahan berlaku mulai Ante berikutnya.",
+            fb_cfg_group_dialogue = "Dialog boss",
+            fb_cfg_group_stage = "Panggung duel final",
+            fb_credits_thanks = "Terima kasih sudah bermain dengan FinalBoss!",
+            fb_credits_lead = "Dibuat dan dikelola oleh",
+            fb_credits_music = "Musik duel final:",
+            fb_credits_music_by = "Adam Isiah (cover orkestra)",
+            fb_credits_listen = "Dengarkan di YouTube",
+            fb_credits_github = "GitHub",
+            fb_tip_me = "Beri Tip",
+            fb_tip_me_message_1 = "Kalau kamu suka FinalBoss, pertimbangkan",
+            fb_tip_me_message_2 = "memberi tip kecil sebagai dukungan.",
+            fb_tip_me_message_3 = "Sangat saya hargai!",
         },
         quips = {
+            -- Config menu header card
+            fb_cfg_header = {"Boss membalas bicara dan duel final jadi pertarungan boss.", "Oleh {C:green,E:1}@SirMaiquis{}"},
+
             -- Shared intro bookends (full tier only)
             fb_opener_1 = {"Kamu sudah terlalu", "jauh..."},
             fb_opener_2 = {"Dan sayangnya,", "harus kubilang..."},
