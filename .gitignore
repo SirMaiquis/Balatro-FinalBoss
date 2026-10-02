@@ -13,3 +13,11 @@ Thumbs.db
 
 # Private planning docs (specs/plans) — local only, never pushed
 docs/superpowers/
+.superpowers/
+
+# Release zips
+dist/
+
+# Release builds (create_release.ps1)
+releases/
+temp_release_*/

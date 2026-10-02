@@ -1,0 +1,10 @@
+{
+    "name": "FinalBoss",
+    "version_number": "1.0.0",
+    "website_url": "https://github.com/SirMaiquis/Balatro-FinalBoss",
+    "description": "Bosses talk back in 15 languages, showdowns become cinematic boss fights with HP bars and an explosive finale, and you decide when final bosses appear.",
+    "dependencies": [
+        "Steamodded-Steamodded-26.829.0",
+        "Thunderstore-lovely-0.9.0"
+    ]
+}
