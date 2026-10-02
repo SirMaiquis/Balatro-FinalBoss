@@ -43,8 +43,8 @@ T['every fb quip is 1-2 short ascii lines'] = function()
   local quips = load()
   local bad = {}
   for key, lines in pairs(quips) do
-    -- fb_cfg_* quips are config menu text (the header card), not dialogue bubbles
-    if key:sub(1, 3) == 'fb_' and key:sub(1, 7) ~= 'fb_cfg_' then
+    -- fb_cfg_header is config menu text (the header card), not a dialogue bubble
+    if key:sub(1, 3) == 'fb_' and key ~= 'fb_cfg_header' then
       if type(lines) ~= 'table' or #lines < 1 or #lines > 2 then bad[#bad + 1] = key .. ' (line count)' end
       for _, line in ipairs(type(lines) == 'table' and lines or {}) do
         if #visible(line) > MAX_LINE then bad[#bad + 1] = key .. ' (too long: ' .. line .. ')' end
