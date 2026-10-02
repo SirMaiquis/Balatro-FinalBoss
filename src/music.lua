@@ -2,7 +2,7 @@
 --- encounter's chosen track; otherwise nothing bids and vanilla music plays.
 local M = {}
 M.BID = 10
-M.FILES = {'showdown_1.ogg', 'showdown_2.ogg'}
+M.FILES = {'showdown.ogg'} -- Adam Isiah's orchestral cover of the main theme, used with permission
 M.POOL = {}
 
 function M.bid(sound)

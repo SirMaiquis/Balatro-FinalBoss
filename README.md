@@ -72,7 +72,7 @@ Set in the Mods menu (Final Boss, Config and Showdowns tabs). Steamodded saves y
 | Key | What it does | Default |
 |---|---|---|
 | `dialogue` | Boss and Jimbo lines (intros, reactions, defeat, gloat) | `true` |
-| `music` | FinalBoss showdown tracks during full-tier encounters | `true` |
+| `music` | The FinalBoss showdown track (Adam Isiah's orchestral cover) during full-tier encounters | `true` |
 | `cinematic` | Showdown cinematics: avatar, HP bar, damage numbers, intro and finale. The arena follows `fx`; the music pitch-up in the final stretch needs both `fx` and `music` | `true` |
 | `fx` | Screen effects: vignette, shake, flash, shatter. They only run in full-tier encounters. Also controls the boss-coloured arena of showdowns. Respects Balatro's reduced motion and screenshake settings. Under reduced motion the shake and the vignette animation are off (the vignette stays at a fixed strength), while the background flash and the defeat burst still run | `true` |
 | `intro_speed` | How long each intro line stays up: 1 slow (6 s), 2 normal (4 s), 3 fast (2.5 s) | `2` |
@@ -106,7 +106,7 @@ Always check that `FinalBoss` exists first so your mod still works without it. R
 | `blind` | Required. Full blind key, for example `'bl_hook'` or your prefixed key | |
 | `tier` | `'auto'`, `'light'` or `'full'`. Auto means showdown bosses are full and the rest are light. An unknown value falls back to `'auto'` with a warning. A forced `'full'` on a boss that is not a showdown gets full dialogue but not the showdown stage (avatar, HP bar, cinematics and arena are showdown-only) | `'auto'` |
 | `voice` | `{pitch = n}`: pitch of the vanilla voice blips for the boss's lines | `{pitch = 1.0}` |
-| `music` | `nil` uses the showdown pool. A full prefixed sound key string, or a list of them, picks from your own tracks (full tier only). See "Custom music" below | `nil` |
+| `music` | `nil` uses FinalBoss's showdown track. A full prefixed sound key string, or a list of them, picks from your own tracks (full tier only). See "Custom music" below | `nil` |
 | `fx` | `{intro = name, defeat = name}` with names from `pulse`, `shake`, `flash`, `shatter`, `phase_shift`. An unknown name is ignored with a warning. They only run in full-tier encounters | `{intro = 'pulse', defeat = 'shatter'}` |
 | `phases` | Reserved for a future release, ignored for now | `nil` |
 
@@ -167,7 +167,7 @@ English, German (`de`), Spanish Latin America (`es_419`), Spanish Spain (`es_ES`
 ## Credits
 
 - Author: SirMaiquis
-- Showdown music: the tracks from the original FinalBoss
+- Showdown music: [Balatro (Main Theme) (Orchestral Cover)](https://www.youtube.com/watch?v=XCBC8oz8dfE) by **Adam Isiah**, used with his permission
 - Built on [Steamodded](https://github.com/Steamodded/smods) and [Lovely](https://github.com/ethangreen-dev/lovely-injector)
 
 ## License

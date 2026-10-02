@@ -12,7 +12,7 @@ First release.
 - Dialogue for all 28 vanilla bosses plus generic lines for modded bosses, in 15 languages.
 
 ### Showdown stage
-- Showdown music: the FinalBoss showdown tracks play during showdowns.
+- Showdown music: Adam Isiah's orchestral cover of the Balatro main theme plays during showdowns (used with permission).
 - Screen effects: vignette, shake, flash and shatter.
 - Cinematic intro: letterbox bars, a "SHOWDOWN" title band with the boss name, and the boss avatar falling onto the table.
 - Roaming boss avatar with its own HP bar, damage numbers and a white damage trail.
