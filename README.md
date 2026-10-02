@@ -12,6 +12,10 @@ Bosses talk back. Every boss blind gets a short line of dialogue when it starts,
 
 ## Install
 
+**With a mod manager:** install [Final Boss from Thunderstore](https://thunderstore.io/c/balatro/p/SirMaiquis/FinalBoss/) (r2modman or the Thunderstore app). Steamodded and Lovely come with it.
+
+**By hand:**
+
 1. Download `FinalBoss-v1.0.0.zip` from the [releases page](https://github.com/SirMaiquis/Balatro-FinalBoss/releases).
 2. Extract it into `%AppData%\Balatro\Mods\` so the files end up in `%AppData%\Balatro\Mods\FinalBoss\`.
 3. Start Balatro. The mod appears in the Mods menu as "Final Boss" with its own config tabs.
@@ -174,4 +178,4 @@ English, German (`de`), Spanish Latin America (`es_419`), Spanish Spain (`es_ES`
 
 ## License
 
-FinalBoss is released under the [MIT License](LICENSE). See the [changelog](CHANGELOG.md) for what changed in each release.
+FinalBoss is released under the [MIT License](https://github.com/SirMaiquis/Balatro-FinalBoss/blob/main/LICENSE). See the [changelog](https://github.com/SirMaiquis/Balatro-FinalBoss/blob/main/CHANGELOG.md) for what changed in each release.
