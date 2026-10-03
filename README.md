@@ -82,7 +82,7 @@ Moves never change what the boss does; they only show it. A repeated move (a sta
 ### Final bosses: deaths and phases
 
 - **Deaths.** The finale's explosion is replaced by each final boss's own death: Crimson Heart shatters into hearts, Verdant Leaf is blown away in a gust of leaves, Amber Acorn cracks open (crack lines and shell shards), Violet Vessel spills purple liquid over the play area, Cerulean Bell rings once more and breaks. Bosses from other mods keep the explosion unless they register a `death`. Deaths need `fx`.
-- **Phases.** At 50% and 25% health a final boss transforms: time slows for a moment, the screen flashes in its colour and the showdown music dips, the avatar swells and shakes, its own move erupts big and it says a phase line. Afterwards its HP bar shows **II** or **III**, and it roams faster with an aura that gets stronger in phase III. One huge hand that goes from above 50% to below 25% goes straight to phase III. The winning hand and your last hand never transform the boss, and a boss that has been disabled (for example by Chicot) has no phases and no twists. Verdant Leaf disabled by its own joker sale still counts as having its power for this. Phases need Showdown cinematics (`cinematic`).
+- **Phases.** At 50% and 25% health a final boss transforms: time slows for a moment, the screen flashes in its colour and the showdown music dips, the avatar swells and shakes, its own move erupts big and it says a phase line. Afterwards its HP bar shows **II** or **III**, and it roams faster with an aura that gets stronger in phase III. One huge hand that goes from above 50% to below 25% goes straight to phase III. The winning hand and your last hand never transform the boss, and a boss that has been disabled (for example by Chicot) has no phases and no twists. A Verdant Leaf disabled by your own joker sale still gets its phases and its regrowth twist. Phases need Showdown cinematics (`cinematic`).
 - **Rule twists** (Boss phases change the rules, `phase_twists`, off by default, read when the blind starts): in phases II and III each final boss twists its own mechanic. Amber Acorn hides and reshuffles your jokers again; once you have sold a joker, Verdant Leaf withers 1 random card (phase II) or 2 (phase III) in each new hand, with vines on them; Violet Vessel heals 10% of its original requirement each time it changes phase (skipping to phase III heals twice) and the bar visibly refills; Crimson Heart disables 2 jokers per hand instead of 1; Cerulean Bell forces 2 cards instead of 1. With twists off, phases are only a show.
 
 Continue mid-showdown restores the phase, stance, marker and twists without replaying the transformation.
@@ -197,10 +197,10 @@ Effects (`effect = ...`):
 | Effect | What it does | Options |
 |---|---|---|
 | `burst` | a particle spray from the boss | `scale` |
-| `ring` | shockwave rings from the boss, or around each target card | `count` (default 2), `scale` |
+| `ring` | shockwave rings from the boss, or around each target card | `count` (default 2), `scale` (rings from the boss) |
 | `glare` | rings travel from the boss onto the target cards | `line = true` adds a beam |
 | `fling` | the target cards jolt toward the boss with a trail | |
-| `stamp` | a mark bursts onto each target card | `glyph` = `'x'`, `'hex'`, `'vine'` or `'crack'` |
+| `stamp` | a mark bursts onto each target card | `glyph` = `'x'`, `'hex'`, `'vine'` or `'crack'`; `scale` |
 | `curse` | a persistent mark fitted to each target card, drawn like a seal, kept while the card stays debuffed by the blind | `style` (required) = `'suit'` (frame and badge of the debuffed suit), `'vine'` or `'crack'` |
 | `sweep` | a band of particles washes across the target area | `time`, `scale` |
 | `chain` | dark bars clamp the target area | |
@@ -208,12 +208,12 @@ Effects (`effect = ...`):
 | `drain` | coins stream from the money counter to the boss | `amount` = a number, `'played'` (one per played card) or `'money'` (what the boss just took) |
 | `crack` | the target HUD element juices, flashes and cracks | `style` = `'fill'` (a bar rises over it) or `'slam'` (a bar drops onto it first) |
 | `fist` | the Raised Fist drops onto the target and slams as the hand level falls; built for The Arm (`hand_debuff`, `target = 'hud_hand_level'`) | `impact` = a sound |
-| `recount` | a counter shows its old value and counts to the new one (`set` kind only; the real counter is hidden meanwhile); `cue` = steps played as the count starts | `value` (required) = `'hands'`, `'discards'`, `'hand_size'` or `'target'`; `hold`, `time`; `step`, `lead`, `tick` for a stepwise count; `top`, `impact` |
+| `recount` | a counter shows its old value and counts to the new one (`set` kind only; the real counter is hidden meanwhile); `cue` = steps played as the count starts (the cue still plays when the counter is missing, with nothing counted) | `value` (required) = `'hands'`, `'discards'`, `'hand_size'` or `'target'`; `hold`, `time`; `step`, `lead`, `tick` for a stepwise count; `top`, `impact` |
 | `needle` | a needle stabs a counter, the cue of The Needle's recount | `impact` |
 | `land` | each face-down card flashes as it reaches its slot (`live` flipped recipe, step marked `each = true`) | |
 | `snake` | a snake crawls from the deck to the hand (`draw` kind) | |
 
-Targets (`target = ...`): `source` (the boss, the default), `cards`, `played`, `hand`, `jokers`, and the HUD elements `hud_chips`, `hud_mult`, `hud_hand_name`, `hud_hand_level`, `hud_hands`, `hud_discards`, `hud_target` (the blind's score), `hud_dollars` and `hand_limit` (the "0/8" card count under the hand). A step whose target does not exist is skipped.
+Targets (`target = ...`): `source` (the boss, the default), `cards`, `played`, `hand`, `jokers`, and the HUD elements `hud_chips`, `hud_mult`, `hud_hand_name`, `hud_hand_level`, `hud_hands`, `hud_discards`, `hud_target` (the blind's score), `hud_dollars` and `hand_limit` (the "0/8" card count under the hand). A step whose target does not exist is skipped. Numeric options (`scale`, `count`, `time`, `hold`, a numeric `amount`) given as strings are converted; any other value is ignored with a warning in the log.
 
 Colours: leave `colour` out for the boss colour, or use `'suit'` (the suit your blind debuffs) or a lower-case `G.C` name such as `'gold'` or `'blue'`. `sound = {key, pitch, volume}` names a vanilla sound on a recipe (played with the move) or on a step (played when that step runs); the pitch is multiplied by the boss's `voice.pitch`.
 
@@ -274,6 +274,7 @@ Writing tips: each quip is 1 or 2 lines, and each line should stay under about 2
 - FinalBoss ships one Lovely patch (`lovely/timescale.toml`) for the finale's slow motion; if a game update changes its target line, the finale simply runs at normal speed.
 - Boss moves observe `Blind:set_blind`, `press_play`, `modify_hand`, `debuff_hand`, `stay_flipped`, `drawn_to_hand`, `disable` and `wiggle`, and `G.FUNCS.draw_from_deck_to_hand`, by wrapping them: the original always runs first and its results are returned unchanged. A mod that replaces one of these instead of wrapping it loses the moves tied to it.
 - Boss memory is stored in your Balatro profile (`profile.jkr`); resetting the profile resets it.
+- Removing FinalBoss in the middle of a Verdant Leaf fight with twists on leaves the withered cards debuffed for the rest of that run.
 - Mods that replace (rather than wrap) `SMODS.is_showdown_ante` or `end_round` override FinalBoss's behaviour for the showdown schedule and the round-end handling.
 
 ## Languages
