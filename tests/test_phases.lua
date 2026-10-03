@@ -291,6 +291,8 @@ T['twists: Violet Vessel heals 10% of the original requirement once per phase'] 
   P.apply_once(ctx.enc, ctx.blind, 2)
   eq(ctx.blind.chips, 1100)
   eq(ctx.blind.chip_text, '1100')
+  eq(ctx.count('heal'), 0, 'visuals wait for play_fx')
+  P.play_fx(ctx.blind)
   eq(ctx.args.heal[1], 600, 'bar total')
   eq(ctx.args.heal[2], 1100, 'bar requirement')
   P.apply_once(ctx.enc, ctx.blind, 2)
@@ -314,12 +316,44 @@ T['twists: off, phase I or a disabled blind apply nothing'] = function()
   eq(ctx.blind.chips, 1000, 'disabled')
 end
 
-T['twists: the transformation return step applies the one-shot twist'] = function()
+T['twists: the Vessel heal lands when the phase is recorded; the bar refills at the return step'] = function()
   local P, ctx = setup({key = 'bl_final_vessel', twists = true})
-  P.transform(ctx.enc, ctx.blind, 2, 1)
-  eq(ctx.blind.chips, 1000, 'not before the return')
-  ctx.advance(2)
+  eq(P.check(ctx.enc, ctx.blind, hand(600), 1.2), true)
+  eq(ctx.blind.chips, 1100, 'a hand played during the laugh reads the healed requirement')
+  eq(ctx.count('heal'), 0, 'no refill yet')
+  ctx.advance(1.2 + P.DURATION - 0.1)
+  eq(ctx.count('heal'), 0, 'still before the return step')
+  ctx.advance(0.2)
+  eq(ctx.count('heal'), 1, 'refill at the return step')
+  eq(ctx.args.heal[2], 1100, 'the bar ends on the healed requirement')
+  eq(ctx.blind.chips, 1100, 'healed once')
+end
+
+T['twists: the Vessel heal without a delay is also immediate, the refill still waits'] = function()
+  local P, ctx = setup({key = 'bl_final_vessel', twists = true})
+  P.check(ctx.enc, ctx.blind, hand(600))
   eq(ctx.blind.chips, 1100)
+  eq(ctx.count('heal'), 0)
+  ctx.advance(2)
+  eq(ctx.count('heal'), 1)
+end
+
+T['twists: a round end before the return step keeps the heal and drops the refill'] = function()
+  local P, ctx = setup({key = 'bl_final_vessel', twists = true})
+  P.check(ctx.enc, ctx.blind, hand(600), 1.2)
+  P.reset()
+  ctx.advance(5)
+  eq(ctx.blind.chips, 1100, 'game state stays')
+  eq(ctx.count('heal'), 0, 'visuals dropped')
+  eq(#P.fx_queue, 0)
+end
+
+T['twists: F8 applies the one-shot twist at once'] = function()
+  local P, ctx = setup({key = 'bl_final_vessel', twists = true})
+  eq(P.force_next(), 2)
+  eq(ctx.blind.chips, 1100)
+  ctx.advance(2)
+  eq(ctx.count('heal'), 1)
 end
 
 T['twists: Amber Acorn hides the jokers again and shuffles them three times'] = function()
@@ -328,9 +362,13 @@ T['twists: Amber Acorn hides the jokers again and shuffles them three times'] = 
   ctx.jokers[1].facing = 'back'
   P.apply_once(ctx.enc, ctx.blind, 2)
   for i, j in ipairs(ctx.jokers) do eq(j.facing, 'back', 'joker ' .. i) end
-  ctx.advance(2)
-  eq(ctx.count('set_ranks'), 3, 'three shuffles')
+  eq(ctx.count('set_ranks'), 1, 'the new order is set at once')
   eq(#G.jokers.cards, 3, 'same jokers')
+  eq(ctx.count('sound'), 0, 'slides wait for play_fx')
+  P.play_fx(ctx.blind)
+  ctx.advance(2)
+  eq(ctx.count('sound'), 3, 'three slides')
+  eq(ctx.count('set_ranks'), 1, 'the visuals never reorder')
 end
 
 T['twists: Verdant Leaf regrows on 1 (II) / 2 (III) cards per draw after a sale, re-rolled'] = function()
@@ -465,11 +503,14 @@ end
 
 T['twists: a hand that skips phase II applies II and III'] = function()
   local P, ctx = setup({key = 'bl_final_vessel', twists = true})
-  P.transform(ctx.enc, ctx.blind, 3, 1)
-  ctx.advance(2)
-  eq(ctx.blind.chips, 1200, 'healed 10% twice')
+  P.check(ctx.enc, ctx.blind, hand(800), 1.2)
+  eq(ctx.blind.chips, 1200, 'healed 10% twice, at once')
   eq(ctx.enc.twists.applied['2'], true)
   eq(ctx.enc.twists.applied['3'], true)
+  ctx.advance(5)
+  eq(ctx.count('heal'), 1, 'one refill shows both heals')
+  eq(ctx.args.heal[2], 1200)
+  eq(ctx.blind.chips, 1200, 'never a third time')
 end
 
 T['twists: Continue applies a one-shot twist a save cut off, once'] = function()
@@ -477,8 +518,11 @@ T['twists: Continue applies a one-shot twist a save cut off, once'] = function()
   ctx.enc.phase = 2 -- saved before the return step
   P.restore(ctx.enc, ctx.blind)
   eq(ctx.blind.chips, 1100)
+  eq(ctx.count('heal'), 1, 'the rebuilt bar refills at once')
+  eq(ctx.args.heal[2], 1100)
   P.restore(ctx.enc, ctx.blind)
   eq(ctx.blind.chips, 1100, 'never twice')
+  eq(ctx.count('heal'), 1, 'nor its refill')
 end
 
 T['twists: Continue rebuilds the Leaf vines on withered hand cards'] = function()

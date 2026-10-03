@@ -41,8 +41,8 @@ local function powerless(enc, blind)
   return not (enc.key == 'bl_final_leaf' and enc.twists and enc.twists.leaf_sold == true)
 end
 
---- Phases run in cinematic showdowns while the avatar is on the table (spec §3.6) and the boss has
---- its power. blind: default the current blind.
+--- Phases run in cinematic showdowns while the avatar is on the table and the boss has its power.
+--- blind: default the current blind.
 function P.active(enc, blind)
   blind = blind or (G.GAME and G.GAME.blind)
   return (enc and enc.showdown and enc.cinematic and FinalBoss.config.cinematic
@@ -63,13 +63,17 @@ function P.check(enc, blind, p, delay)
     target = L.phase_cross(from - 1, stage), hands_left = p.hands_left}
   if not target then return false end
   enc.phase = target
+  -- One-shot twists change the game now (the Vessel's requirement, the Acorn's joker order), while
+  -- the player has no control: the next hand must read the new state even if it is played before
+  -- the transformation's return step, which only plays their visuals.
+  P.apply_upto(enc, blind, target)
   if (delay or 0) <= 0 then
     P.transform(enc, blind, target, from)
     return true
   end
   P.token = P.token + 1
   after(delay, P.token, function()
-    if live(enc) and P.active(enc, blind) then P.transform(enc, blind, target, from) end
+    if live(enc) and P.active(enc, blind) then P.transform(enc, blind, target, from) else P.fx_queue = {} end
   end)
   return true
 end
@@ -79,6 +83,7 @@ function P.transform(enc, blind, phase, from)
   P.token = P.token + 1
   local token = P.token
   enc.phase = phase
+  P.apply_upto(enc, blind, phase) -- a no-op after P.check; F8 (P.force_next) comes straight here
   FinalBoss.achievements.award_from('phase', FinalBoss.logic.phase_achievements, from, phase) -- Phase Skipper
   local M = FinalBoss.moves
   local c = M.boss_colour(blind)
@@ -130,12 +135,12 @@ function P.transform(enc, blind, phase, from)
   -- 5. Return: the music comes back; stance, HP marker and an arena pulse.
   after(P.DURATION, token, function()
     FinalBoss.music.unduck()
-    if not live(enc) then return end
+    if not live(enc) then P.fx_queue = {}; return end
     FinalBoss.avatar.set_stance(phase, c)
     FinalBoss.hpbar.set_phase(phase)
     local A = FinalBoss.arena
     if A.state then A.on_hit(A.state.stage) end
-    P.apply_upto(enc, blind, phase) -- twists: Acorn shuffle, Vessel heal (others act per draw)
+    P.play_fx(blind) -- twist visuals: Acorn shuffle sounds, Vessel bar refill (others act per draw)
   end)
 end
 
@@ -152,51 +157,65 @@ local function twists_live(enc, blind)
   return true
 end
 
+--- One-shot twists come in two halves: `state` changes the game the moment the phase is recorded
+--- (P.check, P.transform, P.restore); `fx` plays its visuals later (the transformation's return
+--- step, or at once on Continue). Visuals never touch game state.
 local ONCE, DRAW = {}, {}
 
+P.fx_queue = {} -- one-shot twists whose visuals are still to play (never saved)
+
 --- Amber Acorn: hide the jokers again and shuffle them three times (vanilla routine, blind.lua:190-205).
-function ONCE.acorn_shuffle(enc, blind, t)
-  local J = G.jokers
-  if not (J and #J.cards > 0) then return end
-  J:unhighlight_all()
-  for _, j in ipairs(J.cards) do
-    if j.facing == 'front' then j:flip() end
-  end
-  if #J.cards < 2 then return end
-  G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.2, func = function()
-    FinalBoss.util.guard('twist_acorn', function()
-      for _, pitch in ipairs({0.85, 1.15, 1}) do
-        G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.15, func = function()
-          FinalBoss.util.guard('twist_acorn_shuffle', function()
-            FinalBoss.logic.shuffle(J.cards, math.random)
-            J:set_ranks()
+--- The order is decided at once; the visuals are the three card slides.
+ONCE.acorn_shuffle = {
+  state = function(enc, blind, t)
+    local J = G.jokers
+    if not (J and #J.cards > 0) then return end
+    J:unhighlight_all()
+    for _, j in ipairs(J.cards) do
+      if j.facing == 'front' then j:flip() end
+    end
+    if #J.cards < 2 then return end
+    for _ = 1, 3 do FinalBoss.logic.shuffle(J.cards, math.random) end
+    J:set_ranks()
+  end,
+  fx = function(blind, t)
+    local J = G.jokers
+    if not (J and #J.cards > 1) then return end
+    for i, pitch in ipairs({0.85, 1.15, 1}) do
+      G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.15 * i, timer = 'REAL', blocking = false,
+        blockable = false, func = function()
+          FinalBoss.util.guard('twist_acorn_slide', function()
+            for _, j in ipairs(G.jokers and G.jokers.cards or {}) do j:juice_up(0.1, 0.1) end
             play_sound('cardSlide1', pitch)
           end)
           return true
         end}))
-      end
-    end)
-    return true
-  end}))
-end
+    end
+  end,
+}
 
 --- Violet Vessel: heal 10% of the original requirement; the HP bar refills visibly.
-function ONCE.vessel_heal(enc, blind, t)
-  local num = FinalBoss.director.num
-  enc.twists.vessel_base = enc.twists.vessel_base or num(blind.chips) -- plain number: saved data
-  -- Raw arithmetic on blind.chips on purpose: with Talisman it is a big number, and adding to it
-  -- keeps that type (Blind:save, the HUD's chip_text and Talisman's own comparisons expect it).
-  -- Only the copies handed to FinalBoss code below go through num.
-  blind.chips = blind.chips + enc.twists.vessel_base * t.ratio
-  blind.chip_text = number_format(blind.chips)
-  local L = FinalBoss.logic
-  local total, required = num(G.GAME.chips), num(blind.chips)
-  local stage = L.wound_stage(L.hp_fraction(total, required))
-  FinalBoss.hpbar.heal(total, required)
-  FinalBoss.avatar.set_wound(stage)
-  if FinalBoss.arena.state then FinalBoss.arena.on_hit(stage) end
-  play_sound('magic_crumple3', 0.8, 0.5)
-end
+ONCE.vessel_heal = {
+  state = function(enc, blind, t)
+    local num = FinalBoss.director.num
+    enc.twists.vessel_base = enc.twists.vessel_base or num(blind.chips) -- plain number: saved data
+    -- Raw arithmetic on blind.chips on purpose: with Talisman it is a big number, and adding to it
+    -- keeps that type (Blind:save, the HUD's chip_text and Talisman's own comparisons expect it).
+    blind.chips = blind.chips + enc.twists.vessel_base * t.ratio
+    blind.chip_text = number_format(blind.chips)
+  end,
+  -- Reads the requirement when it plays, so the bar always ends on the healed value (and on the
+  -- latest one when two heals queued up).
+  fx = function(blind, t)
+    local num, L = FinalBoss.director.num, FinalBoss.logic
+    local total, required = num(G.GAME.chips), num(blind.chips)
+    local stage = L.wound_stage(L.hp_fraction(total, required))
+    FinalBoss.hpbar.heal(total, required)
+    FinalBoss.avatar.set_wound(stage)
+    if FinalBoss.arena.state then FinalBoss.arena.on_hit(stage) end
+    play_sound('magic_crumple3', 0.8, 0.5)
+  end,
+}
 
 --- Verdant Leaf (after a joker sale): N random hand cards wither again, re-rolled every draw. They
 --- carry the Leaf's own vine curse mark (src/curse.lua draws it while the LEAF_SOURCE debuff holds).
@@ -263,23 +282,38 @@ function DRAW.bell_force(enc, blind, t)
   select_forced()
 end
 
---- One-shot twist when a phase is reached (Acorn shuffle, Vessel heal). enc.twists.applied keeps
---- Continue from repeating it. Its keys are strings ('2', '3'): plain saved data whatever the
---- serializer does with number keys.
+--- One-shot twist when a phase is reached (Acorn shuffle, Vessel heal): its game state now, its
+--- visuals queued for P.play_fx. enc.twists.applied keeps it single (Continue, a later transform).
+--- Its keys are strings ('2', '3'): plain saved data whatever the serializer does with number keys.
 function P.apply_once(enc, blind, phase)
   if not twists_live(enc, blind) then return end
   local t = FinalBoss.logic.twist_for(enc.key, phase)
   local k = tostring(phase)
   if not (t and t.once and ONCE[t.once]) or enc.twists.applied[k] then return end
   enc.twists.applied[k] = true
-  ONCE[t.once](enc, blind, t)
+  ONCE[t.once].state(enc, blind, t)
+  P.fx_queue[#P.fx_queue + 1] = t
 end
 
 --- Every one-shot twist up to `phase` not applied yet: a hand that skips phase II applies II and III
---- (the Vessel heals another 10% at III), and Continue applies one a save cut off (a save in the
---- 1.5 s before the return step). apply_once keeps each one single.
+--- (the Vessel heals another 10% at III), and P.restore applies any one still missing on Continue.
+--- apply_once keeps each one single.
 function P.apply_upto(enc, blind, phase)
   for ph = 2, phase or 1 do P.apply_once(enc, blind, ph) end
+end
+
+--- Play the queued twist visuals, each kind once (a skipped phase heals twice: one bar refill
+--- shows both).
+function P.play_fx(blind)
+  local queue = P.fx_queue
+  P.fx_queue = {}
+  local seen = {}
+  for _, t in ipairs(queue) do
+    if not seen[t.once] then
+      seen[t.once] = true
+      FinalBoss.util.guard('twist_fx', ONCE[t.once].fx, blind, t)
+    end
+  end
 end
 
 --- hooks.lua, after vanilla's drawn_to_hand and moves.on_drawn: per-draw twists (Leaf, Heart, Bell).
@@ -328,6 +362,7 @@ function P.restore(enc, blind)
   FinalBoss.avatar.set_stance(enc.phase, M.boss_colour(blind))
   FinalBoss.hpbar.set_phase(enc.phase)
   P.apply_upto(enc, blind, enc.phase)
+  P.play_fx(blind) -- the bar was just built with the old requirement: it refills to the healed one
   local withered = {}
   for _, c in ipairs(G.hand and G.hand.cards or {}) do
     local src = c.ability and c.ability.debuff_sources
@@ -360,6 +395,7 @@ end
 --- (never the finale's slow motion, which uses the same 0.35).
 function P.reset()
   P.token = P.token + 1
+  P.fx_queue = {}
   if P.slowing then
     P.slowing = false
     if not finale_playing() then FinalBoss.timescale = 1 end
