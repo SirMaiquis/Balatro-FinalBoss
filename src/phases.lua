@@ -41,6 +41,8 @@ local function powerless(enc, blind)
   return not (enc.key == 'bl_final_leaf' and enc.twists and enc.twists.leaf_sold == true)
 end
 
+P.powerless = powerless -- also read by Dir.on_blind_defeated (a powerless win is not twisted)
+
 --- Phases run in cinematic showdowns while the avatar is on the table and the boss has its power.
 --- blind: default the current blind.
 function P.active(enc, blind)

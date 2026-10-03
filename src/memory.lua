@@ -96,7 +96,8 @@ function Mem.on_win(enc)
     FinalBoss.logic.record_result(mem, enc.key, 'won')
     if enc.showdown then
       mem.final_defeated[enc.key] = true
-      if enc.twists_on then mem.final_defeated_twisted[enc.key] = true end
+      -- twisted: the twists were on and the boss kept its power (enc.powerless: Dir.on_blind_defeated)
+      if enc.twists_on and not enc.powerless then mem.final_defeated_twisted[enc.key] = true end
     end
     local broke = mem.nemesis == enc.key
     if broke then FinalBoss.logic.break_nemesis(mem, enc.key) end

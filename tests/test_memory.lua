@@ -84,6 +84,13 @@ T['memory: a win on a showdown records final_defeated (twisted only with twists)
   eq(ctx.mem.last('bl_goad'), 'won')
 end
 
+T['memory: a win over a powerless boss (Chicot) never counts as twisted'] = function()
+  local ctx = setup({})
+  ctx.mem.on_win({key = 'bl_final_heart', showdown = true, twists_on = true, powerless = true})
+  eq(ctx.profile.FinalBoss.final_defeated.bl_final_heart, true, 'still a final boss win')
+  eq(ctx.profile.FinalBoss.final_defeated_twisted.bl_final_heart, nil, 'not twisted')
+end
+
 T['memory: three losses make a nemesis, beating it breaks it'] = function()
   local ctx = setup({})
   for _ = 1, 3 do ctx.mem.on_loss('bl_x') end

@@ -334,6 +334,9 @@ function Dir.on_blind_defeated()
   local raw = FinalBoss.util.state().encounter
   local gb = G.GAME.blind
   if raw and raw.boss and not raw.recorded and gb and gb.config.blind and gb.config.blind.key == raw.key then
+    -- A disabled blind stays disabled until the next one is set (Blind:defeat keeps the flag), so a
+    -- boss disabled at any point of the fight (Chicot, Luchador) is still disabled here.
+    raw.powerless = FinalBoss.phases.powerless(raw, gb) or nil
     local m, beaten = FinalBoss.memory.on_win(raw)
     if m then raw.recorded = true end
     -- The nemesis fell (its own defeat line already played): burst, banner; it is now broken.

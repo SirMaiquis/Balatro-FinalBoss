@@ -101,7 +101,7 @@ Continue mid-showdown restores the phase, stance, marker and twists without repl
   - Phase Skipper: take a final boss from phase I to phase III in one hand
   - Comeback: defeat a final boss on your last hand
   - Nemesis Slayer: defeat your nemesis
-  - Twisted: defeat all 5 vanilla final bosses with phase twists on
+  - Twisted: defeat all 5 vanilla final bosses with phase twists on (a win over a boss disabled by Chicot or Luchador does not count)
 
   They follow Steamodded's achievement settings: with an Unlock All profile, or in seeded and challenge runs, Steamodded decides whether they unlock (its "Bypass Restrictions" setting).
 

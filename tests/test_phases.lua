@@ -275,6 +275,17 @@ T['phases: a disabled final boss (Chicot) never transforms'] = function()
   eq(ctx.count('set_stance'), 0, 'no restore')
 end
 
+T['phases.powerless: a disabled boss, except a Leaf disabled by a joker sale'] = function()
+  local P, ctx = setup()
+  eq(P.powerless(ctx.enc, ctx.blind), false, 'with its power')
+  ctx.blind.disabled = true
+  eq(P.powerless(ctx.enc, ctx.blind), true, 'Chicot')
+  P, ctx = setup({key = 'bl_final_leaf'})
+  P.on_disable(ctx.blind, true)
+  ctx.blind.disabled = true
+  eq(P.powerless(ctx.enc, ctx.blind), false, 'Leaf after a sale')
+end
+
 T['phases: Verdant Leaf disabled by a joker sale keeps transforming'] = function()
   local P, ctx = setup({key = 'bl_final_leaf'})
   P.on_disable(ctx.blind, true)
