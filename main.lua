@@ -7,6 +7,9 @@ FinalBoss.timescale = 1 -- slow-motion factor (lovely/timescale.toml); only cine
 
 -- Mods list icon: Steamodded shows the atlas '<prefix>_modicon' (assets/1x|2x/icon.png, tools/make_art.py).
 SMODS.Atlas{key = 'modicon', path = 'icon.png', px = 34, py = 34}
+-- Curse marks and the Needle's needle (assets/1x|2x/curse_marks.png, tools/make_art.py): card-sized
+-- frames, 71 x 95 like the vanilla card atlases (game.lua:1014-1016); cells: logic.MARK_FRAMES.
+SMODS.Atlas{key = 'curse_marks', path = 'curse_marks.png', px = 71, py = 95}
 
 local function load_file(path)
   local chunk, err = SMODS.load_file(path)

@@ -277,10 +277,11 @@ end
 --- cards (step.style, logic.CURSE_STYLES); fist = the Raised Fist slams onto a HUD element;
 --- recount = a counter shown going from its old value to its new one (step.value,
 --- logic.RECOUNT_VALUES; step.cue = steps played as the count starts); land = a flash on each card as
---- it reaches its slot; snake = a snake crawls from the deck to the hand.
+--- it reaches its slot; snake = a snake crawls from the deck to the hand; needle = a needle stabs
+--- into a HUD counter (The Needle's cue).
 logic.EFFECTS = {fling = true, drain = true, crack = true, stamp = true, sweep = true, glare = true,
   chain = true, ring = true, spin = true, burst = true, curse = true, fist = true, recount = true,
-  land = true, snake = true}
+  land = true, snake = true, needle = true}
 
 --- Curse mark styles (src/curse.lua): a suit-coloured frame with the suit badge, vines, cracks.
 logic.CURSE_STYLES = {suit = true, vine = true, crack = true}
@@ -439,34 +440,30 @@ logic.HUD_IDS = {hud_chips = 'hand_chip_area', hud_mult = 'hand_mult_area', hud_
 logic.CURSE_GROW = 0.5     -- seconds a new mark takes to grow onto its card
 logic.CURSE_STAGGER = 0.06 -- seconds between two cards of one batch (reads as one stroke)
 
---- Mark shapes in card units (x across, y down, both in [0, 1], scaled to the card's width and
---- height). strokes: polylines, flat x1, y1, x2, y2, ...; they grow from their first point.
---- vine.leaves: {x, y, angle (radians), reveal (the growth fraction at which the leaf appears)}.
-logic.CURSE_SHAPES = {
-  vine = {
-    strokes = {
-      {0.06, 1.0, 0.1, 0.84, 0.05, 0.68, 0.12, 0.52, 0.06, 0.36, 0.14, 0.2, 0.1, 0.07, 0.24, 0.03},
-      {0.94, 1.0, 0.88, 0.86, 0.95, 0.72, 0.87, 0.58, 0.94, 0.44, 0.86, 0.32},
-      {0.1, 0.84, 0.26, 0.8, 0.36, 0.86, 0.5, 0.82},
-      {0.88, 0.58, 0.74, 0.62, 0.66, 0.56},
-      {0.06, 0.36, 0.2, 0.4, 0.28, 0.34},
-    },
-    leaves = {
-      {0.12, 0.6, -0.6, 0.3}, {0.05, 0.28, 0.5, 0.55}, {0.18, 0.06, -0.3, 0.85},
-      {0.9, 0.79, 0.6, 0.35}, {0.92, 0.5, -0.5, 0.65}, {0.42, 0.85, 0.2, 0.75},
-      {0.68, 0.56, -0.8, 0.9}, {0.27, 0.35, 0.9, 0.95},
-    },
-  },
-  crack = {
-    strokes = {
-      {0.62, 0.0, 0.55, 0.14, 0.6, 0.27, 0.47, 0.42, 0.53, 0.55, 0.42, 0.7, 0.48, 0.84, 0.4, 1.0},
-      {0.47, 0.42, 0.33, 0.47, 0.24, 0.43, 0.1, 0.5, 0.0, 0.48},
-      {0.53, 0.55, 0.66, 0.6, 0.76, 0.56, 0.9, 0.63, 1.0, 0.61},
-      {0.6, 0.27, 0.72, 0.24, 0.8, 0.3},
-      {0.42, 0.7, 0.3, 0.76, 0.26, 0.86},
-    },
-  },
-}
+--- Columns of the curse marks atlas (assets/*/curse_marks.png, drawn by tools/make_art.py in this
+--- order): a suit frame with its badge per vanilla suit (row 0: low-contrast colours, row 1:
+--- high-contrast), a plain frame for any other suit, vines, cracks and the Needle's needle.
+logic.MARK_FRAMES = {Hearts = 0, Diamonds = 1, Clubs = 2, Spades = 3, suit = 4, vine = 5, crack = 6, needle = 7}
+local SUIT_FRAMES = {Hearts = true, Diamonds = true, Clubs = true, Spades = true}
+
+--- The atlas cell (x, y) of a mark: style (logic.CURSE_STYLES), the cursed suit and whether that suit
+--- uses its high-contrast palette. nil for an unknown style.
+function logic.mark_frame(style, suit, hc)
+  if style == 'suit' then
+    if suit and SUIT_FRAMES[suit] then return logic.MARK_FRAMES[suit], hc and 1 or 0 end
+    return logic.MARK_FRAMES.suit, 0
+  end
+  if style ~= 'needle' and logic.MARK_FRAMES[style] then return logic.MARK_FRAMES[style], 0 end
+  return nil
+end
+
+--- The dissolve a mark is drawn with (the dissolve shader's mask, 0 = whole, 1 = gone): it fades in as
+--- it grows (g, logic.curse_grow) and goes with its card when the card dissolves (card.dissolve,
+--- which vanilla reads as math.abs, engine/sprite.lua:99).
+function logic.mark_dissolve(g, card_dissolve)
+  local d = 1 - math.max(0, math.min(1, g or 1))
+  return math.max(d, math.min(1, math.abs(card_dissolve or 0)))
+end
 
 --- Growth of a mark born `elapsed` seconds ago, 0..1 (ease out over CURSE_GROW). A negative age is a
 --- staggered card not shown yet. Reduced motion: whole at once.
@@ -486,15 +483,6 @@ function logic.curse_visible(debuff, by_blind, mark_key, blind_key, blind_disabl
   if not (on and facing and debuff and by_blind) then return false end
   if blind_disabled or blind_key == nil then return false end
   return mark_key == blind_key
-end
-
---- A polyline of n segments revealed to fraction g: k whole segments, then fraction f of segment k + 1.
-function logic.reveal(g, n)
-  if not n or n <= 0 or not g or g <= 0 then return 0, 0 end
-  if g >= 1 then return n, 0 end
-  local x = g * n
-  local k = math.floor(x)
-  return k, x - k
 end
 
 -- The Arm's fist (effects.fist) -----------------------------------------------------------------------
@@ -629,6 +617,45 @@ function logic.recount_value(from, to, elapsed, hold, time, reduced)
   local v = from + (to - from) * (1 - (1 - p) * (1 - p))
   if to < from then return math.ceil(v) end
   return math.floor(v)
+end
+
+-- Stepwise recount and the Needle (effects.recount with step, effects.needle) -------------------------
+
+logic.STEP_MAX = 8        -- a stepwise count takes at most this many steps
+logic.NEEDLE_FALL = 0.15  -- seconds the needle takes to stab down into its counter
+logic.NEEDLE_HOLD = 0.6   -- seconds it stays stuck when no count holds it there
+logic.SHAKE = {time = 0.35, amp = 0.06, freq = 18} -- a counter's shake: seconds, room units, per second
+
+local function whole(v) return math.floor(v + 0.5) end
+
+--- The values a stepwise count shows after each of its steps, from `from` to `to`: one whole number at
+--- a time (4 -> 1: 3, 2, 1), or, past `max` steps (default STEP_MAX), `max` even steps that land on `to`.
+function logic.count_steps(from, to, max)
+  local out = {}
+  if from == nil or to == nil then return out end
+  from, to = whole(from), whole(to)
+  local n = math.abs(to - from)
+  if n == 0 then return out end
+  local k = math.min(n, math.max(1, max or logic.STEP_MAX))
+  for i = 1, k do out[i] = from + whole((to - from) * i / k) end
+  return out
+end
+
+--- How many of a count's n steps are done `elapsed` seconds after the first one (which lands at once),
+--- one every `step` seconds.
+function logic.step_index(elapsed, step, n)
+  if not n or n <= 0 or not elapsed or elapsed < 0 then return 0 end
+  if not step or step <= 0 then return n end
+  return math.min(n, math.floor(elapsed / step) + 1)
+end
+
+--- A counter's sideways shake `elapsed` seconds after a hit (room units): fast, dying out over
+--- SHAKE.time. Reduced motion: none.
+function logic.shake_offset(elapsed, reduced)
+  local S = logic.SHAKE
+  if reduced or not elapsed or elapsed < 0 or elapsed >= S.time then return 0 end
+  local fade = 1 - elapsed / S.time
+  return S.amp * fade * fade * math.sin(2 * math.pi * S.freq * elapsed)
 end
 
 return logic

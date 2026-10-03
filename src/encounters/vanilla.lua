@@ -91,10 +91,12 @@ local BOSSES = {
   bl_pillar = {pitch = 0.75, moves = {
     card_debuff = {{effect = 'curse', target = 'cards', style = 'crack'}, sound = {'crumple2', 0.7, 0.4}},
   }},
-  -- The Needle: one hand only. The hands counter shows the old count, a pierce drops it to 1.
+  -- The Needle: one hand only. Above the game's "-N" popup, a needle stabs into the hands counter,
+  -- which flashes red, shakes and drops one hand at a time (a tick per step) down to 1.
   bl_needle = {pitch = 1.3, moves = {
-    set = {{effect = 'recount', target = 'hud_hands', value = 'hands', hold = 0.2, time = 0.8,
-      cue = {{effect = 'crack', target = 'hud_hands', sound = {'slice1', 1.4, 0.45}}}}},
+    set = {{effect = 'recount', target = 'hud_hands', value = 'hands', hold = 0.1, top = true, step = 0.18,
+      lead = 0.3, tick = {'card1', 1.25, 0.5},
+      cue = {{effect = 'needle', target = 'hud_hands', impact = {'slice1', 1.4, 0.5}}}}},
   }},
   -- The Head: Hearts debuffed (suit frame and badge).
   bl_head = {pitch = 1.05, moves = {

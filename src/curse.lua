@@ -1,14 +1,25 @@
 --- Curse marks (1.1): a mark fitted to each card a card_debuff boss curses, drawn on the card for as
 --- long as the curse holds: 'suit' (Club, Goad, Window, Head: a dark suit-coloured frame and the
---- suit's badge), 'vine' (The Plant) or 'crack' (The Pillar). A new mark grows in over
+--- suit's badge), 'vine' (The Plant) or 'crack' (The Pillar). A new mark fades in over
 --- logic.CURSE_GROW seconds (at once under reduced motion), then stays as a quiet overlay.
 ---
+--- Art: card-sized frames of the 'curse_marks' atlas (assets/1x|2x/curse_marks.png, tools/make_art.py;
+--- cells: logic.MARK_FRAMES / logic.mark_frame), inside the card's own silhouette.
 --- Drawing: an SMODS.DrawStep (smods src/card_draw.lua:64-104, run by Card:draw for every card at
 --- src/card_draw.lua:570-577), so the mark is part of the card's own draw wherever the card is drawn
---- (hand, play, discard, deck view) and uses the card sprite's transform (prep_draw on
---- card.children.center, the way vanilla draws seals and stickers from the card's center sprite).
+--- (hand, play, discard, deck view). Each mark is drawn exactly like a seal or a sticker - vanilla
+--- card.lua:4474-4475 / smods src/card_draw.lua:339-340 and :352-353:
+---   sprite:draw_shader('dissolve', nil, nil, nil, card.children.center)
+--- Sprite:draw_shader (engine/sprite.lua:73-124) draws through Sprite:draw_from (:180-198), which takes
+--- the transform of card.children.center (position, rotation, scale, juice, the flip pinch) and scales
+--- the frame to the card, and the dissolve shader's vertex stage applies the card's hover tilt (from
+--- the sprite's role.draw_major: tilt_var, hover_tilt). So the mark moves 1:1 with the card.
+--- Fade-in: draw_from always paints in white (G.BRUTE_OVERLAY or G.C.WHITE, sprite.lua:186), so the
+--- fade uses the shader's dissolve uniform, which draw_shader reads from role.draw_major.dissolve
+--- (sprite.lua:99): role.draw_major is a proxy that copies the card's tilt fields and ID and carries
+--- logic.mark_dissolve (1 - growth, or the card's own dissolve when it dissolves away).
 ---
---- State: card.fb_curse = {style, colour, dark, deep, suit, key, born, epoch, card} (transient: Card:save
+--- State: card.fb_curse = {style, burn, suit, key, born, epoch, card} (transient: Card:save
 --- only saves its own fields, card.lua:4625). Marks of an older epoch are stale (C.clear on a new
 --- blind, the blind's defeat and run teardown). Deck-view copies share their card's params table
 --- (copy_card, common_events.lua:2175), so C.by_params finds the original's mark for them.
@@ -16,7 +27,7 @@ local C = {}
 C.epoch = 0
 C.live = 0 -- marks made this epoch; the draw step returns at once while it is 0
 C.by_params = setmetatable({}, {__mode = 'k'})
-C.badges = {} -- suit -> {image, key, quad, px, py}: the suit's UI icon
+C.sprites = {} -- atlas cell -> Sprite, made on first use (a run's sprites go with the run: node.lua:85)
 
 local function L() return FinalBoss.logic end
 local function now() return FinalBoss.util.now() end
@@ -37,12 +48,12 @@ function C.mark(cards, style, colour, blind)
   if not (proto and proto.key and L().CURSE_STYLES[style]) then return 0 end
   colour = colour or G.C.RED
   local suit = blind.debuff and blind.debuff.suit
-  local dark, deep = darken(colour, 0.35), darken(colour, 0.6)
+  local burn = {colour, darken(colour, 0.35)} -- the dissolve shader's edge colours while it fades in
   local t, n = now(), 0
   for _, card in ipairs(cards or {}) do
     local old = type(card) == 'table' and card.fb_curse
     if type(card) == 'table' and not card.REMOVED and not (old and old.epoch == C.epoch) then
-      local m = {style = style, colour = colour, dark = dark, deep = deep, suit = suit, key = proto.key,
+      local m = {style = style, burn = burn, suit = suit, key = proto.key,
         born = t + n * L().CURSE_STAGGER, epoch = C.epoch, card = card}
       card.fb_curse = m
       if type(card.params) == 'table' then C.by_params[card.params] = m end
@@ -53,136 +64,29 @@ function C.mark(cards, style, colour, blind)
   return n
 end
 
--- Drawing (card-local units: the card spans 0..w x 0..h) --------------------------------------------
+-- Drawing ----------------------------------------------------------------------------------------------
+
+--- The sprite of atlas cell (x, y): card-sized (G.CARD_W x G.CARD_H, like vanilla's shared seals,
+--- game.lua:189-194), made through SMODS.create_sprite (smods src/utils.lua:3996-4005) and cached. A
+--- sprite made during a run is removed with the run (Node:init registers it as a stage object,
+--- engine/node.lua:85; Game:delete_run, game.lua:1144), so a removed one is made again.
+local function sprite_at(x, y)
+  local i = y * 16 + x
+  local s = C.sprites[i]
+  if s and not s.REMOVED then return s end
+  local prefix = (FinalBoss.mod and FinalBoss.mod.prefix) or 'FinalBoss'
+  s = SMODS.create_sprite(0, 0, G.CARD_W, G.CARD_H, prefix .. '_curse_marks', {x = x, y = y})
+  s.states.collide.can, s.states.hover.can = false, false
+  s.states.click.can, s.states.drag.can = false, false
+  C.sprites[i] = s
+  return s
+end
+
+--- The draw_major the shader reads (engine/sprite.lua:75-104): the card's tilt fields and ID, the
+--- mark's dissolve and edge colours. One table, refilled for every draw.
+local major = {}
 
 local lg = love.graphics
-
-local function paint(c, a) lg.setColor(c[1], c[2], c[3], (c[4] or 1) * a) end
-
---- The suit's UI icon, as smods' deck view picks it (src/overrides.lua:817-823: the suit's lc/hc UI
---- atlas, vanilla ui_assets 'ui_1'/'ui_2', at SMODS.Suits[suit].ui_pos). The quad is built like
---- Sprite:set_sprite_pos (engine/sprite.lua:24-38) and rebuilt when the atlas image changes.
-function C.badge(suit)
-  local def = suit and SMODS.Suits and SMODS.Suits[suit]
-  if not (def and def.ui_pos) then return nil end
-  local pal = G.SETTINGS.colour_palettes and G.SETTINGS.colour_palettes[suit]
-  local key = (pal == 'hc' and def.hc_ui_atlas) or def.lc_ui_atlas or 'ui_1'
-  local atlas = SMODS.get_atlas(key) or G.ASSET_ATLAS['ui_1']
-  if not (atlas and atlas.image) then return nil end
-  local b = C.badges[suit]
-  if b and b.image == atlas.image and b.key == key then return b end
-  local pos = def.ui_pos
-  b = {image = atlas.image, key = key, px = atlas.px, py = atlas.py,
-    quad = lg.newQuad(pos.x * atlas.px, pos.y * atlas.py, atlas.px, atlas.py, atlas.image:getDimensions())}
-  C.badges[suit] = b
-  return b
-end
-
-local JOINT_SEGMENTS = 12 -- the joint dots are tiny
-local CIRCLE_SEGMENTS = 24
-local ELLIPSE_SEGMENTS = 16
-
---- A polyline (card units) revealed to growth g: whole segments, then part of the next one. Round
---- dots at the joints stand in for line joins (each segment is its own line: no allocation). ox, oy
---- shift it (room units) without touching the transform stack.
-local function stroke(pts, w, h, g, lw, ox, oy)
-  local n = #pts / 2 - 1
-  local k, f = L().reveal(g, n)
-  if k == 0 and f == 0 then return end
-  ox, oy = ox or 0, oy or 0
-  local r = lw / 2
-  lg.circle('fill', pts[1] * w + ox, pts[2] * h + oy, r, JOINT_SEGMENTS)
-  for i = 1, k do
-    local x2, y2 = pts[2 * i + 1] * w + ox, pts[2 * i + 2] * h + oy
-    lg.line(pts[2 * i - 1] * w + ox, pts[2 * i] * h + oy, x2, y2)
-    lg.circle('fill', x2, y2, r, JOINT_SEGMENTS)
-  end
-  if f > 0 and k < n then
-    local i = k + 1
-    local x1, y1 = pts[2 * i - 1] * w + ox, pts[2 * i] * h + oy
-    local x2, y2 = x1 + (pts[2 * i + 1] * w + ox - x1) * f, y1 + (pts[2 * i + 2] * h + oy - y1) * f
-    lg.line(x1, y1, x2, y2)
-    lg.circle('fill', x2, y2, r, JOINT_SEGMENTS)
-  end
-end
-
---- Club / Goad / Window / Head: a dark frame in the suit's colour hugging the card's rounded edge, a
---- thin inner line in the suit colour and the suit badge in the top-right corner (the corner the
---- card's own rank and pip leave free). Grows in by scale.
-local function draw_suit(m, w, h, g, a)
-  local s = 0.82 + 0.18 * g
-  lg.translate(w / 2, h / 2)
-  lg.scale(s)
-  lg.translate(-w / 2, -h / 2)
-  local lw, r = w * 0.06, w * 0.08
-  paint(m.dark, 0.92 * a)
-  lg.setLineWidth(lw)
-  lg.rectangle('line', lw / 2, lw / 2, w - lw, h - lw, r, r)
-  local i = lw * 1.25
-  paint(m.colour, 0.85 * a)
-  lg.setLineWidth(lw * 0.3)
-  lg.rectangle('line', i, i, w - 2 * i, h - 2 * i, r * 0.7, r * 0.7)
-  local br = w * 0.14
-  local cx, cy = w - br - lw * 0.35, br + lw * 0.35
-  paint(m.dark, a)
-  lg.circle('fill', cx, cy, br, CIRCLE_SEGMENTS)
-  paint(m.colour, a)
-  lg.setLineWidth(lw * 0.35)
-  lg.circle('line', cx, cy, br, CIRCLE_SEGMENTS)
-  local b = C.badge(m.suit)
-  if b then
-    local sz = br * 1.35
-    lg.setColor(1, 1, 1, a)
-    lg.draw(b.image, b.quad, cx - sz / 2, cy - sz / 2, 0, sz / b.px, sz / b.py)
-  end
-end
-
---- One leaf: moves and turns the transform onto it (inside the caller's push), then draws it.
-local function draw_leaf(m, w, h, leaf, ls, lw, a)
-  lg.translate(leaf[1] * w, leaf[2] * h)
-  lg.rotate(leaf[3])
-  paint(m.colour, a)
-  lg.ellipse('fill', 0, 0, ls * w * 0.08, ls * w * 0.042, ELLIPSE_SEGMENTS)
-  paint(m.dark, a)
-  lg.setLineWidth(lw * 0.3)
-  lg.line(-ls * w * 0.07, 0, ls * w * 0.07, 0)
-end
-
---- The Plant: dark stems climb from the bottom corners and creep across the face, leaves in the boss
---- colour open as the stems pass them. Grows along the stems. Each leaf's push is popped even when its
---- drawing fails, so the transform stack always stays balanced.
-local function draw_vine(m, w, h, g, a)
-  local shape = L().CURSE_SHAPES.vine
-  local lw = w * 0.045
-  paint(m.dark, 0.95 * a)
-  lg.setLineWidth(lw)
-  for _, pts in ipairs(shape.strokes) do stroke(pts, w, h, g, lw) end
-  for _, leaf in ipairs(shape.leaves) do
-    if g >= leaf[4] then
-      local ls = (g >= 1) and 1 or math.min(1, (g - leaf[4]) / 0.12)
-      lg.push()
-      local ok, err = pcall(draw_leaf, m, w, h, leaf, ls, lw, a) -- no closure: drawn every frame
-      lg.pop()
-      if not ok then error(err, 0) end
-    end
-  end
-end
-
---- The Pillar: dark fractures run across the card from top to bottom and edge to edge, each with a
---- pale highlight on one side so it reads as a split in the card, not a drawn line (the highlight is
---- offset by coordinates, no push/pop).
-local function draw_crack(m, w, h, g, a)
-  local strokes = L().CURSE_SHAPES.crack.strokes
-  local lw = w * 0.038
-  paint(m.deep, 0.95 * a)
-  lg.setLineWidth(lw)
-  for _, pts in ipairs(strokes) do stroke(pts, w, h, g, lw) end
-  lg.setColor(1, 1, 1, 0.55 * a)
-  lg.setLineWidth(lw * 0.35)
-  for _, pts in ipairs(strokes) do stroke(pts, w, h, g, lw * 0.35, lw * 0.6, lw * 0.45) end
-end
-
-local STYLES = {suit = draw_suit, vine = draw_vine, crack = draw_crack}
 
 --- Draw card's mark m (the DrawStep below, through util.guard). Visible only while the card (and, for
 --- a deck-view copy, its original) is debuffed by the blind that cursed it, that blind is current and
@@ -199,23 +103,40 @@ function C.draw(card, m)
   local bkey = b and b.config and b.config.blind and b.config.blind.key
   if not L().curse_visible(owner.debuff and card.debuff, owner.debuffed_by_blind, m.key, bkey,
       b and b.disabled, G.GAME and G.GAME.facing_blind, on) then return end
-  local sp = card.children and card.children.center
-  local draw_style = STYLES[m.style]
-  if not (sp and draw_style) then return end
-  local g = L().curse_grow(now() - m.born, G.SETTINGS.reduced_motion)
-  local a = g * (1 - math.min(1, math.abs(card.dissolve or 0))) * (card.greyed and 0.5 or 1)
-  if a <= 0 then return end
-  local lw0 = lg.getLineWidth()
-  prep_draw(sp, 1) -- the card sprite's own transform: position, rotation, juice and flip pinch
-  local ok, err = pcall(draw_style, m, sp.VT.w, sp.VT.h, g, a)
-  lg.pop() -- always balance prep_draw's push, even when the style failed
-  lg.setLineWidth(lw0)
-  lg.setColor(1, 1, 1, 1)
-  if not ok then error(err, 0) end
+  local center = card.children and card.children.center
+  if not center then return end
+  -- the suit's palette as smods picks it (G.FUNCS.update_suit_colours, smods src/utils.lua:1274-1286)
+  local pal = m.suit and G.SETTINGS.colour_palettes and G.SETTINGS.colour_palettes[m.suit]
+  local x, y = L().mark_frame(m.style, m.suit, pal == 'hc')
+  if not x then return end
+  local own = math.abs(card.dissolve or 0)
+  local d = L().mark_dissolve(L().curse_grow(now() - m.born, G.SETTINGS.reduced_motion), own)
+  if d >= 0.999 then return end
+  local s = sprite_at(x, y)
+  major.ID, major.tilt_var, major.hover_tilt, major.mouse_damping = card.ID, card.tilt_var, card.hover_tilt,
+    card.mouse_damping
+  major.dissolve = d
+  major.dissolve_colours = (own > 0 and own >= d) and card.dissolve_colours or m.burn
+  s.role.draw_major = major
+  local depth = lg.getStackDepth and lg.getStackDepth()
+  local ok, err
+  if card.greyed then
+    -- greyed like the card (smods' greyed step, src/card_draw.lua:471-483: the 'played' shader)
+    ok, err = pcall(s.draw_shader, s, 'played', nil, card.ARGS.send_to_shader, nil, center)
+  else
+    ok, err = pcall(s.draw_shader, s, 'dissolve', nil, nil, nil, center)
+  end
+  major.tilt_var, major.dissolve_colours = nil, nil -- hold no card table between frames
+  if not ok then
+    lg.setShader()
+    while depth and lg.getStackDepth() > depth do lg.pop() end -- balance draw_from's push
+    error(err, 0)
+  end
 end
 
--- order 85: after smods' debuff (70) and greyed (80) shaders, which redraw the card opaquely, and
--- before the card's children (others, 90): src/card_draw.lua:457-535. Face-down cards show no mark.
+-- order 85: after smods' debuff (70) and greyed (80) shaders, which redraw the card over the seals and
+-- stickers (30, 40), and before the card's children (others, 90): src/card_draw.lua:457-535.
+-- Face-down cards show no mark.
 SMODS.DrawStep{
   key = 'curse_mark',
   order = 85,

@@ -39,16 +39,17 @@ T['the 23 regular bosses have their spec recipe kind'] = function()
 end
 
 --- A recipe sounds when it plays (recipe.sound), when one of its steps runs (step.sound, also on a
---- recount's cue steps), or at its impact (a fist's or recount's own impact sound: the fist landing in
---- sync with the game's level change, the count landing on the new value).
+--- recount's cue steps), at its impact (a fist's, needle's or recount's own impact sound: the fist
+--- landing in sync with the game's level change, the needle stabbing in, the count landing on the new
+--- value) or on each step of a stepwise count (step.tick).
 local function is_sound(s) return type(s) == 'table' and type(s[1]) == 'string' end
 
 local function has_sound(recipe)
   if is_sound(recipe.sound) then return true end
   for _, step in ipairs(recipe) do
-    if is_sound(step.sound) or is_sound(step.impact) then return true end
+    if is_sound(step.sound) or is_sound(step.impact) or is_sound(step.tick) then return true end
     for _, cue in ipairs(step.cue or {}) do
-      if is_sound(cue.sound) then return true end
+      if is_sound(cue.sound) or is_sound(cue.impact) then return true end
     end
   end
   return false
@@ -112,13 +113,32 @@ T['blind-start bosses recount their counter from the old value to the new one'] 
     assert(step.effect == 'recount' and step.target == w[1] and step.value == w[2], key .. ': recount ' .. w[2])
     assert(type(step.cue) == 'table' and #step.cue >= 1, key .. ': a cue plays as the count starts')
     local total = (step.hold or 0) + (step.time or 0)
-    assert(total >= 0.8 and total <= 1.4, key .. ': about a second, got ' .. total)
+    if step.step then -- stepwise: the needle's fall, then one step per drop (4 -> 1 at the most hands)
+      total = (step.hold or 0) + logic.NEEDLE_FALL + step.step * (#logic.count_steps(4, 1) - 1)
+    end
+    assert(total >= 0.5 and total <= 1.4, key .. ': about a second, got ' .. total)
   end
   local wall = b.bl_wall.moves.set[1]
   assert(wall.cue[1].effect == 'crack', 'the Wall cracks')
   assert(type(wall.impact) == 'table', 'the Wall lands with a thud')
   assert(b.bl_water.moves.set[1].cue[1].effect == 'sweep', 'the Water washes')
   assert(b.bl_manacle.moves.set[1].cue[1].effect == 'chain', 'the Manacle clamps')
+  for _, key in ipairs({'bl_wall', 'bl_water', 'bl_manacle'}) do
+    local step = b[key].moves.set[1]
+    assert(not step.step and not step.top, key .. ': counts smoothly and waits for the popup, as before')
+  end
+end
+
+T['the Needle stabs its needle into the hands counter, which drops one step at a time above the popup'] = function()
+  local step = bosses().bl_needle.moves.set[1]
+  assert(step.effect == 'recount' and step.target == 'hud_hands' and step.value == 'hands', 'recount hands')
+  assert(step.top == true, 'drawn above the -N popup and starts at once')
+  assert(type(step.step) == 'number' and step.step >= 0.12 and step.step <= 0.25, 'about 0.18 s per step')
+  assert(type(step.tick) == 'table' and type(step.tick[1]) == 'string', 'a sound per step')
+  assert(type(step.lead) == 'number' and step.lead >= logic.NEEDLE_FALL, 'waits for the needle to land')
+  local cue = step.cue[1]
+  assert(#step.cue == 1 and cue.effect == 'needle' and cue.target == 'hud_hands', 'the needle stabs the counter')
+  assert(type(cue.impact) == 'table' and type(cue.impact[1]) == 'string', 'the stab sounds as it lands')
 end
 
 T['the House sweeps while the face-down cards are dealt, each flashes as it lands'] = function()

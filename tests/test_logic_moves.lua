@@ -7,12 +7,12 @@ local function eq(actual, expected, msg)
   end
 end
 
-T['EFFECTS lists the ten primitives plus curse, fist, recount, land and snake'] = function()
+T['EFFECTS lists the ten primitives plus curse, fist, recount, land, snake and needle'] = function()
   local n = 0
   for _ in pairs(logic.EFFECTS) do n = n + 1 end
-  eq(n, 15, 'effect count')
+  eq(n, 16, 'effect count')
   for _, name in ipairs({'fling', 'drain', 'crack', 'stamp', 'sweep', 'glare', 'chain', 'ring', 'spin', 'burst',
-      'curse', 'fist', 'recount', 'land', 'snake'}) do
+      'curse', 'fist', 'recount', 'land', 'snake', 'needle'}) do
     assert(logic.EFFECTS[name], 'missing effect ' .. name)
   end
 end
@@ -34,21 +34,45 @@ T['CURSE_STYLES: suit, vine, crack'] = function()
   for _, s in ipairs({'suit', 'vine', 'crack'}) do assert(logic.CURSE_STYLES[s], s) end
 end
 
-T['CURSE_SHAPES: vine and crack strokes inside the unit square, leaves with a reveal point'] = function()
-  for _, name in ipairs({'vine', 'crack'}) do
-    local shape = logic.CURSE_SHAPES[name]
-    assert(type(shape) == 'table' and #shape.strokes >= 2, name .. ' needs strokes')
-    for _, s in ipairs(shape.strokes) do
-      assert(#s >= 4 and #s % 2 == 0, name .. ': a stroke needs at least two points')
-      for _, v in ipairs(s) do assert(v >= 0 and v <= 1, name .. ': point outside the unit square') end
-    end
+--- The column order of assets/*/curse_marks.png (tools/make_art.py MARK_COLUMNS).
+local ART_COLUMNS = {'Hearts', 'Diamonds', 'Clubs', 'Spades', 'suit', 'vine', 'crack', 'needle'}
+
+T['MARK_FRAMES: one atlas column per frame, in the order make_art.py draws them'] = function()
+  local n = 0
+  for _ in pairs(logic.MARK_FRAMES) do n = n + 1 end
+  eq(n, #ART_COLUMNS, 'frame count')
+  for i, name in ipairs(ART_COLUMNS) do eq(logic.MARK_FRAMES[name], i - 1, name) end
+end
+
+T['mark_frame: every curse style has a frame, suit frames per suit and palette'] = function()
+  for style in pairs(logic.CURSE_STYLES) do
+    local x, y = logic.mark_frame(style, 'Clubs', false)
+    assert(x and y, 'style ' .. style .. ' has a frame')
   end
-  local leaves = logic.CURSE_SHAPES.vine.leaves
-  assert(#leaves >= 3, 'vines carry leaves')
-  for _, l in ipairs(leaves) do
-    assert(l[1] >= 0 and l[1] <= 1 and l[2] >= 0 and l[2] <= 1, 'leaf inside the card')
-    assert(l[4] > 0 and l[4] <= 1, 'leaf reveal point in (0, 1]')
-  end
+  local x, y = logic.mark_frame('suit', 'Clubs', false)
+  eq(x, 2); eq(y, 0, 'low contrast: row 0')
+  x, y = logic.mark_frame('suit', 'Clubs', true)
+  eq(x, 2); eq(y, 1, 'high contrast: row 1')
+  for _, s in ipairs({'Hearts', 'Diamonds', 'Spades'}) do eq(logic.mark_frame('suit', s, false), logic.MARK_FRAMES[s], s) end
+  x, y = logic.mark_frame('suit', 'mod_Stars', true)
+  eq(x, logic.MARK_FRAMES.suit, 'unknown suit: the plain frame'); eq(y, 0, 'the plain frame has one palette')
+  x, y = logic.mark_frame('suit', nil, false)
+  eq(x, logic.MARK_FRAMES.suit, 'no suit: the plain frame')
+  x, y = logic.mark_frame('vine', 'Hearts', true)
+  eq(x, logic.MARK_FRAMES.vine); eq(y, 0, 'vines ignore suit and palette')
+  eq(logic.mark_frame('crack'), logic.MARK_FRAMES.crack)
+  eq(logic.mark_frame('lava', 'Hearts', false), nil, 'unknown style')
+end
+
+T['mark_dissolve: fades in as the mark grows, follows the card dissolving away'] = function()
+  eq(logic.mark_dissolve(0, 0), 1, 'not grown: hidden')
+  eq(logic.mark_dissolve(1, 0), 0, 'grown: fully shown')
+  assert(math.abs(logic.mark_dissolve(0.25, 0) - 0.75) < 1e-9, 'quarter grown')
+  eq(logic.mark_dissolve(1, 0.6), 0.6, 'the card dissolves: the mark goes with it')
+  eq(logic.mark_dissolve(1, -0.4), 0.4, 'negative dissolve (vanilla uses abs)')
+  eq(logic.mark_dissolve(0.2, 0.1), 0.8, 'the larger wins')
+  eq(logic.mark_dissolve(1, nil), 0, 'no dissolve field')
+  eq(logic.mark_dissolve(2, 0), 0, 'clamped'); eq(logic.mark_dissolve(-1, 0), 1, 'clamped')
 end
 
 T['curse_grow: eases 0 -> 1 over CURSE_GROW, at once under reduced motion'] = function()
@@ -76,21 +100,55 @@ T['curse_visible: only while the card is cursed by this live, facing, enabled bl
   eq(logic.curse_visible(true, true, 'bl_club', 'bl_club', false, true, false), false, 'moves or fx off')
 end
 
-T['reveal: whole segments and the fraction of the next one'] = function()
-  local k, f = logic.reveal(0, 4)
-  eq(k, 0); eq(f, 0)
-  k, f = logic.reveal(1, 4)
-  eq(k, 4); eq(f, 0)
-  k, f = logic.reveal(0.5, 4)
-  eq(k, 2); eq(f, 0)
-  k, f = logic.reveal(0.6, 4)
-  eq(k, 2); assert(math.abs(f - 0.4) < 1e-9, 'fraction ' .. f)
-  k, f = logic.reveal(2, 3)
-  eq(k, 3); eq(f, 0)
-  k, f = logic.reveal(-1, 3)
-  eq(k, 0); eq(f, 0)
-  k, f = logic.reveal(0.5, 0)
-  eq(k, 0); eq(f, 0)
+local function seq(t) return table.concat(t, ',') end
+
+T['count_steps: the values shown after each step, one at a time'] = function()
+  eq(seq(logic.count_steps(4, 1)), '3,2,1', 'the Needle: 4 -> 1')
+  eq(seq(logic.count_steps(1, 4)), '2,3,4', 'counting up')
+  eq(seq(logic.count_steps(2, 1)), '1', 'one step')
+  eq(#logic.count_steps(3, 3), 0, 'nothing to count')
+  eq(#logic.count_steps(nil, 3), 0, 'unknown start')
+  eq(#logic.count_steps(3, nil), 0, 'unknown end')
+end
+
+T['count_steps: at most `max` steps (default STEP_MAX), always landing on the new value'] = function()
+  local s = logic.count_steps(20, 1)
+  eq(#s, logic.STEP_MAX, 'capped')
+  eq(s[#s], 1, 'lands on the new value')
+  for i = 2, #s do assert(s[i] < s[i - 1], 'strictly down') end
+  for _, v in ipairs(s) do eq(math.floor(v), v, 'whole numbers') end
+  s = logic.count_steps(0, 10, 4)
+  eq(#s, 4); eq(s[4], 10)
+  for i = 2, #s do assert(s[i] > s[i - 1], 'strictly up') end
+  eq(seq(logic.count_steps(5, 2, 8)), '4,3,2', 'under the cap: every number')
+  assert(logic.STEP_MAX >= 3 and logic.STEP_MAX <= 10, 'a handful of steps')
+end
+
+T['step_index: steps done `elapsed` seconds after the first one'] = function()
+  eq(logic.step_index(-0.1, 0.18, 3), 0, 'not started')
+  eq(logic.step_index(0, 0.18, 3), 1, 'the first step lands at once')
+  eq(logic.step_index(0.17, 0.18, 3), 1)
+  eq(logic.step_index(0.18, 0.18, 3), 2)
+  eq(logic.step_index(0.4, 0.18, 3), 3)
+  eq(logic.step_index(9, 0.18, 3), 3, 'never past the last')
+  eq(logic.step_index(0.5, 0, 3), 3, 'no step time: all at once')
+  eq(logic.step_index(0.5, 0.18, 0), 0, 'no steps')
+end
+
+T['shake_offset: a quick side to side shake that dies out, none under reduced motion'] = function()
+  eq(logic.shake_offset(-0.1, false), 0, 'not started')
+  eq(logic.shake_offset(logic.SHAKE.time, false), 0, 'over')
+  eq(logic.shake_offset(5, false), 0)
+  local seen, max = {}, 0
+  for i = 1, 20 do
+    local v = logic.shake_offset(i * logic.SHAKE.time / 21, false)
+    max = math.max(max, math.abs(v))
+    seen[v > 0 and 'right' or (v < 0 and 'left' or 'mid')] = true
+    eq(logic.shake_offset(i * logic.SHAKE.time / 21, true), 0, 'reduced motion: still')
+  end
+  assert(seen.left and seen.right, 'both ways')
+  assert(max > 0 and max <= logic.SHAKE.amp, 'within the amplitude')
+  assert(math.abs(logic.shake_offset(logic.SHAKE.time * 0.9, false)) < logic.SHAKE.amp * 0.2, 'dies out')
 end
 
 -- smods SMODS.upgrade_poker_hands (src/utils.lua:4089-4097) for one level change queues

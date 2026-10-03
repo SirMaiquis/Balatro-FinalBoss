@@ -1,7 +1,7 @@
 --- Effects library (1.1): visual primitives shared by boss moves, deaths and phase changes:
 --- fling, drain, crack, stamp, sweep, glare, chain, ring, spin, burst, plus curse (persistent card
 --- marks, src/curse.lua), fist (The Arm), recount (a counter's old -> new value), land (a flash on a
---- card as it reaches its slot) and snake (The Serpent) (logic.EFFECTS).
+--- card as it reaches its slot), snake (The Serpent) and needle (The Needle) (logic.EFFECTS).
 --- E.<name>(src, target, opts):
 ---   src    = performer {x, y, w, h, obj, colour, avatar} (moves.performer) or any rectangle
 ---   target = list of cards | CardArea | UIElement | nil (each primitive says which it reads)
@@ -11,6 +11,7 @@
 --- Callers check config.fx first (moves.enabled, deaths.play, phases).
 local E = {}
 E.host = nil -- invisible attention_text UIBox: its children draw in vanilla's late pass (above cards)
+E.top = nil  -- the same, kept drawing after vanilla's own popups while a top effect lives (keep_top)
 E.gen = 0    -- bumped by E.reset(): timers of a torn-down run do nothing
 E.reddened = nil -- {cfg, prev}: a HUD text the fist turned red, restored after a moment or by E.reset
 E.hidden = {}    -- UI element -> true: counters a recount overlay hides, shown again when it ends or by E.reset
@@ -44,20 +45,42 @@ end
 
 -- Layer -------------------------------------------------------------------------------------------
 
-local function host()
-  if E.host and not E.host.REMOVED then return E.host end
-  E.host = UIBox{
+--- The layer (top = true: the top layer). Game:draw draws attention_text UIBoxes after the cards, in
+--- G.I.UIBOX order (game.lua:2822-2829).
+local function host(top)
+  local key = top and 'top' or 'host'
+  local h = E[key]
+  if h and not h.REMOVED then return h end
+  h = UIBox{
     definition = {n = G.UIT.ROOT, config = {align = 'cm', colour = G.C.CLEAR, minw = 0.01, minh = 0.01}, nodes = {}},
     config = {major = G.ROOM_ATTACH, align = 'tl', offset = {x = 0, y = 0}, bond = 'Weak', can_collide = false},
   }
-  E.host.attention_text = true -- Game:draw draws attention_text UIBoxes after the cards
-  return E.host
+  h.attention_text = true
+  E[key] = h
+  return h
 end
 
---- Give an effect object to the layer: UIBox:draw draws its children; the MOVEABLE draw pass skips
---- parented objects; G.MOVEABLES still moves and updates them every frame.
-local function adopt(obj)
-  local h = host()
+--- Keep the top layer last in G.I.UIBOX, so it draws after vanilla's popups (attention_text adds its
+--- UIBox at the end of the list when its event runs, functions/UI_definitions.lua:909-923 and
+--- engine/ui.lua:92-97; UIBox:remove finds its box by value, engine/ui.lua:270-281). Called every
+--- frame from the move of a top effect (G.MOVEABLES move after the event queue runs, game.lua:2509 and
+--- :2626-2628), never while Game:draw walks the list.
+local function keep_top()
+  local top, list = E.top, G.I and G.I.UIBOX
+  if not top or top.REMOVED or not list or list[#list] == top then return end
+  for i = #list - 1, 1, -1 do
+    if list[i] == top then
+      table.remove(list, i)
+      list[#list + 1] = top
+      return
+    end
+  end
+end
+
+--- Give an effect object to the layer (top = true: the top layer): UIBox:draw draws its children; the
+--- MOVEABLE draw pass skips parented objects; G.MOVEABLES still moves and updates them every frame.
+local function adopt(obj, top)
+  local h = host(top)
   obj.parent = h
   h.children[obj] = obj
   return obj
@@ -65,7 +88,8 @@ end
 
 local function drop(obj)
   if not obj or obj.REMOVED then return end
-  if E.host and E.host.children then E.host.children[obj] = nil end
+  local p = obj.parent
+  if p and p.children then p.children[obj] = nil end
   obj.parent = nil
   obj:remove()
 end
@@ -208,8 +232,8 @@ function E.flash_at(x, y, w, h, colour)
   expire(adopt(Mark(x, y, w, h, {shape = 'flash', colour = colour, life = 0.35})), 0.35)
 end
 
-local function flash_rect(T, colour)
-  expire(adopt(Mark(T.x, T.y, T.w, T.h, {shape = 'bar', colour = colour, alpha = 0.5, life = 0.3})), 0.3)
+local function flash_rect(T, colour, top)
+  expire(adopt(Mark(T.x, T.y, T.w, T.h, {shape = 'bar', colour = colour, alpha = 0.5, life = 0.3}), top), 0.3)
 end
 
 --- The performer reacts to its own move: juice (vanilla Moveable:juice_up is a no-op under reduced
@@ -422,7 +446,8 @@ local FIST_APPEAR = 0.12 -- seconds it takes to materialise (dissolve 1 -> 0)
 --- Node:remove removes its sprite child, engine/node.lua:339-343). The sprite is glued to the fist like
 --- a card's sprites are to the card (card.lua:159) and drawn with the dissolve shader, so it
 --- materialises and fades the way vanilla cards do. Timeline (REAL seconds): born; t_fall..t_land
---- falls from y_from onto y_rest (accelerating); t_fade: dissolves over logic.FIST_FADE.
+--- falls from y_from onto y_rest (accelerating); t_fade: dissolves over logic.FIST_FADE. The Needle's
+--- needle is one too (sprite: its curse_marks frame; top = true: it lives in the top layer).
 local Fist = Moveable:extend()
 E.Fist = Fist
 
@@ -444,6 +469,7 @@ function Fist:init(x, y, w, h, sprite)
 end
 
 function Fist:move(dt)
+  if self.top then keep_top() end
   local t = now()
   local y = self.y_rest
   if not self.landed and t < self.t_land then
@@ -587,12 +613,29 @@ end
 --- Vanilla's own popup over the counter (ease_discard / ease_hands_played: attention_text with
 --- cover = the counter's row, common_events.lua:128-135 and :167-174; its UIBox's config.major is the
 --- cover, functions/UI_definitions.lua:903-907 and engine/ui.lua:31). The count waits until it is gone.
+local function popup_on(b, uie)
+  local m = b.attention_text and b ~= E.host and b ~= E.top and b.config and b.config.major
+  return m and (m == uie or m == uie.parent) and true or false
+end
+
 local function covered(uie)
   for _, b in ipairs(G.I and G.I.UIBOX or {}) do
-    local m = b.attention_text and b ~= E.host and b.config and b.config.major
-    if m and (m == uie or m == uie.parent) then return true end
+    if popup_on(b, uie) then return true end
   end
   return false
+end
+
+--- A top overlay draws over vanilla's popup instead of waiting for it: the popup's red cover stays (a
+--- red flash under the overlay) and its "-N" text is hidden so the two numbers never overlap. The
+--- text is the popup's first node (functions/UI_definitions.lua:915-923), hidden the way the counter
+--- is (states.visible, engine/ui.lua:663-666); the popup removes itself as usual.
+local function quiet_popups(uie)
+  for _, b in ipairs(G.I and G.I.UIBOX or {}) do
+    if popup_on(b, uie) then
+      local node = b.UIRoot and b.UIRoot.children and b.UIRoot.children[1]
+      if node and node.states and node.config and node.config.object then node.states.visible = false end
+    end
+  end
 end
 
 --- Whether uie's UIBox was drawn in the last frame (UIBox:draw stamps FRAME.DRAW first thing,
@@ -616,10 +659,15 @@ local Recount = Moveable:extend()
 E.Recount = Recount
 
 --- args: from, to, hold, time, chips (format as a score: number_format), on_count (the cue), impact
---- (sound at the landing), pitch, locate (finds the counter), blind. Timeline: it waits (old value
---- shown) until the counter is drawn, on screen, still and not covered by vanilla's popup (at most
+--- (sound at the landing), pitch, locate (finds the counter), blind; stepwise: step (seconds per step),
+--- lead, tick (sound per step); top (above vanilla's popup). Timeline: it waits (old value shown) until
+--- the counter is drawn, on screen, still and (unless top) not covered by vanilla's popup (at most
 --- logic.RECOUNT_WAIT_MAX); then holds `hold` seconds, counts over `time` (cue at the start, impact at
 --- the end) and keeps the new value logic.RECOUNT_LINGER seconds before the real counter shows again.
+--- Stepwise, the count moves one step at a time (logic.count_steps), each `step` seconds, each step
+--- pops the number and plays `tick`; the first step comes with a hit (Recount:hit: the Needle's needle
+--- landing) or `lead` seconds after the cue when nothing hits. on_finish (set by an effect) runs once
+--- the overlay is done.
 function Recount:init(args)
   Moveable.init(self, 0, 0, 0, 0)
   self.states.collide.can, self.states.hover.can = false, false
@@ -627,8 +675,20 @@ function Recount:init(args)
   self.args = args
   self.born = now()
   self.value = args.from
+  if args.step then
+    self.seq = FinalBoss.logic.count_steps(args.from, args.to)
+    self.k = 0
+  end
   self:set_text()
   self:hard_set_VT()
+end
+
+--- Something struck the counter (E.needle): the number turns red and shakes (no shake under reduced
+--- motion: logic.shake_offset) until it lands; a stepwise count takes its first step now.
+function Recount:hit()
+  if self.finished or self.hit_t then return end
+  self.hit_t = now()
+  self:juice_up(0.7, 0.35)
 end
 
 function Recount:set_text()
@@ -646,6 +706,7 @@ function Recount:finish()
     reveal(uie)
     drop(self)
   end)
+  if self.on_finish then after(0, self.on_finish) end
 end
 
 --- An error in move/draw (run outside util.guard by the engine) goes through the guard in an event:
@@ -679,18 +740,23 @@ function Recount:tick(dt)
     end
     return
   end
+  if a.top then
+    keep_top()
+    quiet_popups(uie)
+  end
   local vt = uie.VT
   local moving = self.last_y ~= nil and math.abs(vt.y - self.last_y) > 0.002
   self.last_y = vt.y
   self.T.x, self.T.y, self.T.w, self.T.h = vt.x, vt.y, vt.w, vt.h
   self:move_juice(dt) -- Moveable:juice_up is a no-op under reduced motion
   local j = self.juice
-  self.VT.x, self.VT.y, self.VT.w, self.VT.h = vt.x, vt.y, vt.w, vt.h
+  local shake = self.hit_t and LG.shake_offset(t - self.hit_t, reduced()) or 0
+  self.VT.x, self.VT.y, self.VT.w, self.VT.h = vt.x + shake, vt.y, vt.w, vt.h
   self.VT.scale = 1 + (j and j.scale or 0)
   self.VT.r = j and j.r or 0
   local room = G.ROOM and G.ROOM.T
   local onscreen = vt.y + vt.h > 0 and (not room or vt.y < room.h)
-  local ready = box_drawn(uie, 1) and onscreen and not moving and not covered(uie)
+  local ready = box_drawn(uie, 1) and onscreen and not moving and (a.top or not covered(uie))
   local late = waited > LG.RECOUNT_WAIT_MAX
   if not self.t0 then
     if ready or late then self.t0 = t end
@@ -699,6 +765,7 @@ function Recount:tick(dt)
   end
   if not self.t0 then return end
   local el = t - self.t0
+  if a.step then return self:tick_steps(t, el) end
   local v = LG.recount_value(a.from, a.to, el, a.hold, a.time, reduced())
   if v ~= self.value then
     self.value = v
@@ -717,6 +784,38 @@ function Recount:tick(dt)
   if self.landed and el >= a.hold + a.time + LG.RECOUNT_LINGER then self:finish() end
 end
 
+--- The stepwise count, `el` seconds after it stopped waiting: the cue after `hold`, then the steps
+--- from the hit (or `lead` seconds after the cue), one every a.step seconds; a slow frame that passes
+--- several steps shows the latest with one pop and one tick.
+function Recount:tick_steps(t, el)
+  local a, LG = self.args, FinalBoss.logic
+  if not self.cued and el >= a.hold then
+    self.cued, self.t_cue = true, t
+    self:juice_up(0.4, 0.2)
+    if a.on_count then after(0, a.on_count) end
+  end
+  if not self.cued then return end
+  if not self.s0 then
+    if self.hit_t then self.s0 = self.hit_t
+    elseif t - self.t_cue >= (tonumber(a.lead) or 0) then self.s0 = t end
+  end
+  if not self.s0 then return end
+  local n = #self.seq
+  local k = LG.step_index(t - self.s0, a.step, n)
+  if k > self.k then
+    self.k = k
+    self.value = self.seq[k]
+    self:set_text()
+    self:juice_up(0.5, 0.25)
+    if a.tick then after(0, function() play(a.tick, a.pitch) end) end
+  end
+  if not self.landed and self.k >= n then
+    self.landed, self.t_land = true, t
+    if a.impact then after(0, function() play(a.impact, a.pitch) end) end
+  end
+  if self.landed and t >= self.t_land + LG.RECOUNT_LINGER then self:finish() end
+end
+
 function Recount:move(dt)
   if self.finished then return end
   local ok, err = pcall(self.tick, self, dt)
@@ -725,6 +824,7 @@ end
 
 local function draw_number(self)
   local font, scale, colour = text_style(self.uie)
+  if self.hit_t and not self.landed then colour = G.C.RED end -- struck: red until the count lands
   if self.args.chips and type(scale_number) == 'function' then
     scale = scale_number(self.value, 0.7, 100000) -- as G.FUNCS.blind_chip_UI_scale (smods overrides.lua:2916-2924)
   end
@@ -760,6 +860,10 @@ end
 --- react and the cue steps) runs as the count starts, opts.impact sounds as it lands. opts.locate finds
 --- a counter that does not exist yet (the hand label). Nothing to show (unknown or equal values): the
 --- cue plays at once. Reduced motion: no counting, the old value then the new one.
+--- opts.step (seconds): count one step at a time instead (opts.tick sounds on each step, opts.lead =
+--- the longest wait for a hit before the first step; steps are text, so they stay under reduced
+--- motion). opts.top: the overlay lives in the top layer, above vanilla's popup, and starts without
+--- waiting for it.
 function E.recount(src, uie, opts)
   local d = opts.data or {}
   local from = d.before and d.before[opts.value]
@@ -768,13 +872,88 @@ function E.recount(src, uie, opts)
     if opts.on_count then opts.on_count() end
     return
   end
+  local step = tonumber(opts.step)
   local r = adopt(Recount({from = from, to = to, hold = tonumber(opts.hold) or 0.2, time = tonumber(opts.time) or 0.8,
     chips = opts.value == 'target', on_count = opts.on_count, impact = opts.impact, pitch = voice_pitch(opts),
-    locate = opts.locate or function() return uie end, blind = opts.blind}))
+    locate = opts.locate or function() return uie end, blind = opts.blind,
+    step = step and step > 0 and step or nil, lead = opts.lead, tick = opts.tick, top = opts.top and true or nil}),
+    opts.top)
   if uie and uie.states then
     r.uie = uie
     hide(uie)
   end
+end
+
+-- The Needle ----------------------------------------------------------------------------------------
+
+local NEEDLE_W = 0.9    -- room units: the needle's frame (71 x 95 px, like a card)
+local NEEDLE_DROP = 1.4 -- how far above its landing spot it starts its stab
+local NEEDLE_TIP = {x = 12 / 71, y = 84 / 95} -- its point in the frame (tools/make_art.py NEEDLE_TIP)
+
+--- The live recount overlay over uie, if any.
+local function overlay_on(uie)
+  for _, h in ipairs({E.top or false, E.host or false}) do
+    if h and not h.REMOVED then
+      for k in pairs(h.children) do
+        if type(k) == 'table' and getmetatable(k) == Recount and k.uie == uie and not k.finished then return k end
+      end
+    end
+  end
+  return nil
+end
+
+--- needle(uie): a needle (the curse_marks atlas, drawn in the top layer above vanilla's popup) stabs
+--- down into a HUD counter over logic.NEEDLE_FALL seconds, materialising as it falls (the Fist
+--- object above). At the stab: opts.impact sounds (times the boss voice pitch), the counter's row
+--- flashes red, a red ring, and the recount overlay on that counter is hit (Recount:hit: red, a
+--- shake, its first step). It stays stuck until that overlay is done (logic.NEEDLE_HOLD seconds when
+--- there is none), then dissolves. Reduced motion: no fall, it appears in place and stabs at once.
+function E.needle(src, uie, opts)
+  if not (uie and uie.T) then return end
+  local LG = FinalBoss.logic
+  local T = uie.T
+  local w, h = NEEDLE_W, NEEDLE_W * 95 / 71
+  local x = T.x + T.w * 0.62 - w * NEEDLE_TIP.x -- the point lands on the number's upper right
+  local y = T.y + T.h * 0.4 - h * NEEDLE_TIP.y
+  local prefix = (FinalBoss.mod and FinalBoss.mod.prefix) or 'FinalBoss'
+  local sprite = SMODS.create_sprite(x, y, w, h, prefix .. '_curse_marks', {x = LG.MARK_FRAMES.needle, y = 0})
+  local f = adopt(Fist(x, y, w, h, sprite), true)
+  f.top = true
+  local fall = reduced() and 0 or LG.NEEDLE_FALL
+  if fall > 0 then
+    local t = now()
+    f.y_from, f.t_fall, f.t_land = y - NEEDLE_DROP, t, t + fall
+    f.T.y = f.y_from
+    f:hard_set_VT()
+  end
+
+  local function out()
+    if f.REMOVED or f.t_fade then return end
+    f.t_fade = now()
+    after(LG.FIST_FADE + 0.05, function() drop(f) end)
+  end
+
+  local function stab()
+    if f.REMOVED then return end
+    f.landed = true
+    f:juice_up(0.3, 0.05)
+    play(opts.impact, voice_pitch(opts))
+    local row = (uie.parent and uie.parent.T) or T
+    flash_rect(row, G.C.RED, true)
+    local px, py = x + w * NEEDLE_TIP.x, y + h * NEEDLE_TIP.y
+    expire(adopt(Mark(px - 0.35, py - 0.35, 0.7, 0.7, {shape = 'ring', colour = G.C.RED, life = 0.35, width = 0.06}),
+      true), 0.35)
+    local r = overlay_on(uie)
+    if r then
+      r:hit()
+      r.on_finish = out
+      after(LG.RECOUNT_WAIT_MAX + 2, out) -- the overlay failed: do not stay forever
+    else
+      if uie.juice_up then uie:juice_up(0.6, 0.3) end
+      after(LG.NEEDLE_HOLD, out)
+    end
+  end
+  if fall > 0 then after(fall, stab) else stab() end
 end
 
 -- Land and snake (draw-timed moves) -----------------------------------------------------------------
@@ -886,16 +1065,19 @@ function E.reset()
   for uie in pairs(hidden) do
     if not uie.REMOVED and uie.states then uie.states.visible = true end
   end
-  local h = E.host
-  E.host = nil
-  if not h or h.REMOVED then return end
-  for k, v in pairs(h.children) do
-    if type(k) == 'table' then
-      h.children[k] = nil
-      if not v.REMOVED then v:remove() end
+  local layers = {E.host or false, E.top or false}
+  E.host, E.top = nil, nil
+  for _, h in ipairs(layers) do
+    if h and not h.REMOVED then
+      for k, v in pairs(h.children) do
+        if type(k) == 'table' then
+          h.children[k] = nil
+          if not v.REMOVED then v:remove() end
+        end
+      end
+      h:remove()
     end
   end
-  h:remove()
 end
 
 return E
