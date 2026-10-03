@@ -14,6 +14,7 @@ return {
             fb_speed_normal = "보통",
             fb_speed_fast = "빠름",
             fb_cfg_min_ante = "대사 시작 앤티",
+            fb_cfg_memory = "보스 기억",
             fb_cfg_dev_mode = "개발자 키 (F5-F7)",
             fb_cfg_showdown_enabled = "결전 일정 직접 설정",
             fb_cfg_start_ante = "첫 결전 앤티",

@@ -14,6 +14,7 @@ return {
             fb_speed_normal = "Normal",
             fb_speed_fast = "Schnell",
             fb_cfg_min_ante = "Boss-Dialoge ab Ante",
+            fb_cfg_memory = "Boss-Gedächtnis",
             fb_cfg_dev_mode = "Entwicklertasten (F5-F7)",
             fb_cfg_showdown_enabled = "Eigener Showdown-Plan",
             fb_cfg_start_ante = "Erster Showdown im Ante",

@@ -14,6 +14,7 @@ return {
             fb_speed_normal = "Normal",
             fb_speed_fast = "Cepat",
             fb_cfg_min_ante = "Dialog boss mulai Ante",
+            fb_cfg_memory = "Ingatan boss",
             fb_cfg_dev_mode = "Tombol developer (F5-F7)",
             fb_cfg_showdown_enabled = "Jadwal duel final kustom",
             fb_cfg_start_ante = "Ante duel final pertama",

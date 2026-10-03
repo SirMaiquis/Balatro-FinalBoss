@@ -222,6 +222,7 @@ function UI.encounters_tab()
         cycle('fb_cfg_intro_speed', cfg, 'intro_speed', {1, 2, 3},
           {localize('fb_speed_slow'), localize('fb_speed_normal'), localize('fb_speed_fast')}),
         cycle('fb_cfg_min_ante', cfg, 'min_ante', ANTES),
+        toggle('fb_cfg_memory', cfg, 'memory'),
       }),
       group(localize('fb_cfg_group_stage'), {
         toggle('fb_cfg_music', cfg, 'music'),

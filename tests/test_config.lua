@@ -13,4 +13,8 @@ T['config: phase twists are off by default'] = function()
   assert(defaults().phase_twists == false, 'phase_twists must default to false')
 end
 
+T['config: boss memory is on by default'] = function()
+  assert(defaults().memory == true, 'memory must default to true')
+end
+
 return T

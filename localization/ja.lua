@@ -14,6 +14,7 @@ return {
             fb_speed_normal = "普通",
             fb_speed_fast = "速い",
             fb_cfg_min_ante = "セリフ開始アンティ",
+            fb_cfg_memory = "ボスの記憶",
             fb_cfg_dev_mode = "開発者キー (F5-F7)",
             fb_cfg_showdown_enabled = "決戦スケジュール設定",
             fb_cfg_start_ante = "最初の決戦アンティ",

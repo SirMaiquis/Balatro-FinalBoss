@@ -14,6 +14,7 @@ return {
             fb_speed_normal = "Normalnie",
             fb_speed_fast = "Szybko",
             fb_cfg_min_ante = "Dialogi bossów od Wejścia",
+            fb_cfg_memory = "Pamięć bossów",
             fb_cfg_dev_mode = "Klawisze deweloperskie (F5-F7)",
             fb_cfg_showdown_enabled = "Własny harmonogram pojedynków",
             fb_cfg_start_ante = "Pierwszy pojedynek: Wejście",

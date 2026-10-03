@@ -14,6 +14,7 @@ return {
             fb_speed_normal = "Normal",
             fb_speed_fast = "Rápida",
             fb_cfg_min_ante = "Diálogo desde apuesta inicial",
+            fb_cfg_memory = "Memoria de los jefes",
             fb_cfg_dev_mode = "Teclas de desarrollo (F5-F7)",
             fb_cfg_showdown_enabled = "Enfrentamientos personalizados",
             fb_cfg_start_ante = "Primer enfrentamiento: apuesta inicial",

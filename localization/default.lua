@@ -14,6 +14,7 @@ return {
             fb_speed_normal = "Normal",
             fb_speed_fast = "Fast",
             fb_cfg_min_ante = "Boss dialogue from ante",
+            fb_cfg_memory = "Boss memory",
             fb_cfg_dev_mode = "Developer keys (F5-F7)",
             fb_cfg_showdown_enabled = "Custom showdown schedule",
             fb_cfg_start_ante = "First showdown ante",

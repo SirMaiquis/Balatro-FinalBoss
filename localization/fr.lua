@@ -14,6 +14,7 @@ return {
             fb_speed_normal = "Normale",
             fb_speed_fast = "Rapide",
             fb_cfg_min_ante = "Dialogues dès la mise initiale",
+            fb_cfg_memory = "Mémoire des boss",
             fb_cfg_dev_mode = "Touches dev (F5-F7)",
             fb_cfg_showdown_enabled = "Calendrier de duels perso",
             fb_cfg_start_ante = "Premier duel à la mise",

@@ -31,6 +31,7 @@ SMODS.Keybind{key_pressed = 'f7', action = function()
   if not DT.on() then return end
   local blind = G.GAME.blind
   FinalBoss.util.log('info', 'dev: state = ' .. FinalBoss.util.dump(G.GAME.FinalBoss))
+  FinalBoss.util.log('info', 'dev: memory = ' .. FinalBoss.util.dump(FinalBoss.memory.data()))
   FinalBoss.util.log('info', ('dev: chips=%s blind.chips=%s last_hand_score=%s hands_left=%s'):format(
     tostring(G.GAME.chips), tostring(blind and blind.chips), tostring(SMODS.last_hand_score),
     tostring(G.GAME.current_round and G.GAME.current_round.hands_left)))

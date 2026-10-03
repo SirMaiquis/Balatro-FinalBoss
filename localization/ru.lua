@@ -14,6 +14,7 @@ return {
             fb_speed_normal = "Обычно",
             fb_speed_fast = "Быстро",
             fb_cfg_min_ante = "Диалоги боссов с анте",
+            fb_cfg_memory = "Память боссов",
             fb_cfg_dev_mode = "Клавиши разработчика (F5-F7)",
             fb_cfg_showdown_enabled = "Свое расписание поединков",
             fb_cfg_start_ante = "Первый поединок на анте",

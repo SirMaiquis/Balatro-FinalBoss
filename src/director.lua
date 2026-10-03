@@ -60,6 +60,14 @@ function Dir.on_blind_set(blind)
     -- phases, so they follow cinematics.
     twists_on = (cinematic and FinalBoss.config.phase_twists) and true or false,
     twists = {applied = {}, leaf_sold = false}}
+  -- 1.1 memory: one fight per boss encounter, recorded at blind set (Continue never re-records).
+  local enc = st.encounter
+  enc.boss = blind.boss and true or false
+  if enc.boss then
+    FinalBoss.memory.on_fight(proto.key)
+    enc.last = FinalBoss.memory.last(proto.key)
+    enc.nemesis = FinalBoss.memory.is_nemesis(proto.key)
+  end
   st.lost_to = nil
   if tier == 'none' then Dir.schedule_start(proto.key); return end
   if tier == 'full' then
@@ -137,6 +145,10 @@ function Dir.on_round_end()
   if not enc then return end
   if G.STATE == G.STATES.GAME_OVER then
     enc.ended = true
+    if enc.boss and not enc.recorded then
+      enc.recorded = true
+      FinalBoss.memory.on_loss(enc.key) -- this boss ended the run
+    end
     FinalBoss.fx.stop()
     FinalBoss.arena.stop(true)
     if enc.cinematic then
@@ -298,6 +310,13 @@ end
 function Dir.on_blind_defeated()
   FinalBoss.curse.clear() -- the curse marks go with the blind (any tier)
   Dir.flush_pending() -- (the twist clean-up runs ungated in hooks.lua's mod.calculate)
+  -- 1.1 memory: the win, for any boss encounter (also below the dialogue ante, tier 'none').
+  local raw = FinalBoss.util.state().encounter
+  local gb = G.GAME.blind
+  if raw and raw.boss and not raw.recorded and gb and gb.config.blind and gb.config.blind.key == raw.key then
+    raw.recorded = true
+    FinalBoss.memory.on_win(raw)
+  end
   local enc, blind = current()
   if not enc then return end
   enc.ended = true
@@ -337,6 +356,7 @@ function Dir.check_interrupt()
   FinalBoss.util.guard('start_move', FinalBoss.moves.start, enc.key)
   FinalBoss.avatar.anger(blind)
   Dir.fire('interrupted', {force = true})
+  FinalBoss.memory.on_interrupt(enc.key)
 end
 
 --- Per-frame tick (hooks: Game:update wrap). Cheap when nothing is on stage or pending.

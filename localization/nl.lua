@@ -14,6 +14,7 @@ return {
             fb_speed_normal = "Normaal",
             fb_speed_fast = "Snel",
             fb_cfg_min_ante = "Baasdialogen vanaf Ante",
+            fb_cfg_memory = "Baasgeheugen",
             fb_cfg_dev_mode = "Ontwikkelaarstoetsen (F5-F7)",
             fb_cfg_showdown_enabled = "Eigen showdown-schema",
             fb_cfg_start_ante = "Eerste showdown bij Ante",

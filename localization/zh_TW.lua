@@ -14,6 +14,7 @@ return {
             fb_speed_normal = "普通",
             fb_speed_fast = "快速",
             fb_cfg_min_ante = "對話起始底注",
+            fb_cfg_memory = "Boss記憶",
             fb_cfg_dev_mode = "開發者按鍵 (F5-F7)",
             fb_cfg_showdown_enabled = "自訂決戰安排",
             fb_cfg_start_ante = "首次決戰底注",

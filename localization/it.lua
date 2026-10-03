@@ -14,6 +14,7 @@ return {
             fb_speed_normal = "Normale",
             fb_speed_fast = "Veloce",
             fb_cfg_min_ante = "Dialoghi dall'Ante",
+            fb_cfg_memory = "Memoria dei boss",
             fb_cfg_dev_mode = "Tasti sviluppatore (F5-F7)",
             fb_cfg_showdown_enabled = "Scontri finali personalizzati",
             fb_cfg_start_ante = "Primo scontro all'Ante",

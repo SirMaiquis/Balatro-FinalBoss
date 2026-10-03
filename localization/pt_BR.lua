@@ -14,6 +14,7 @@ return {
             fb_speed_normal = "Normal",
             fb_speed_fast = "Rápida",
             fb_cfg_min_ante = "Diálogos a partir da Aposta",
+            fb_cfg_memory = "Memória dos chefes",
             fb_cfg_dev_mode = "Teclas de dev (F5-F7)",
             fb_cfg_showdown_enabled = "Calendário de confrontos",
             fb_cfg_start_ante = "Primeiro confronto na Aposta",
