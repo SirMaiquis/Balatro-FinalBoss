@@ -38,17 +38,30 @@ T['the 23 regular bosses have their spec recipe kind'] = function()
   assert(n == 23, 'spec lists 23 regular bosses, got ' .. n)
 end
 
-T['every vanilla recipe is valid, has a sound and known glyphs'] = function()
+--- A recipe sounds when it plays (recipe.sound), or at its impact (a fist step's own impact sound,
+--- played when the fist lands in sync with the game's level change).
+local function has_sound(recipe)
+  if recipe.sound and type(recipe.sound[1]) == 'string' then return true end
+  for _, step in ipairs(recipe) do
+    if step.effect == 'fist' and type(step.impact) == 'table' and type(step.impact[1]) == 'string' then return true end
+  end
+  return false
+end
+
+T['every vanilla recipe is valid, has a sound, known glyphs and curse styles'] = function()
   for key, def in pairs(bosses()) do
     if def.moves then
       local clean, warnings = logic.clean_moves(def.moves)
       assert(clean, key .. ' moves invalid')
       assert(#warnings == 0, key .. ': ' .. table.concat(warnings, '; '))
       for kind, recipe in pairs(def.moves) do
-        assert(recipe.sound and type(recipe.sound[1]) == 'string', key .. '.' .. kind .. ' needs a sound')
+        assert(has_sound(recipe), key .. '.' .. kind .. ' needs a sound')
         for _, step in ipairs(recipe) do
           if step.effect == 'stamp' then
             assert(logic.GLYPHS[step.glyph], key .. '.' .. kind .. ': unknown glyph ' .. tostring(step.glyph))
+          end
+          if step.effect == 'curse' then
+            assert(logic.CURSE_STYLES[step.style], key .. '.' .. kind .. ': unknown style ' .. tostring(step.style))
           end
         end
       end
@@ -56,15 +69,24 @@ T['every vanilla recipe is valid, has a sound and known glyphs'] = function()
   end
 end
 
-T['card-debuff and flip stamps use the spec glyphs'] = function()
+T['card-debuff bosses leave persistent curse marks in the spec styles'] = function()
   local b = bosses()
   for _, k in ipairs({'bl_club', 'bl_goad', 'bl_window', 'bl_head'}) do
     local step = b[k].moves.card_debuff[1]
-    assert(step.effect == 'stamp' and step.glyph == 'hex' and step.colour == 'suit', k .. ': suit-coloured hex')
+    assert(step.effect == 'curse' and step.style == 'suit' and step.colour == 'suit', k .. ': suit frame')
+    assert(step.target == 'cards', k .. ': on the cursed cards')
   end
-  assert(b.bl_plant.moves.card_debuff[1].glyph == 'vine', 'Plant: vine')
-  assert(b.bl_pillar.moves.card_debuff[1].glyph == 'crack', 'Pillar: crack')
+  local plant, pillar = b.bl_plant.moves.card_debuff[1], b.bl_pillar.moves.card_debuff[1]
+  assert(plant.effect == 'curse' and plant.style == 'vine', 'Plant: vines')
+  assert(pillar.effect == 'curse' and pillar.style == 'crack', 'Pillar: cracks')
   assert(b.bl_mark.moves.flipped[1].glyph == 'x', 'Mark: x')
+end
+
+T['the Arm slams a fist onto the hand level'] = function()
+  local r = bosses().bl_arm.moves.hand_debuff
+  assert(#r == 1 and r[1].effect == 'fist' and r[1].target == 'hud_hand_level', 'fist on the level')
+  assert(type(r[1].impact) == 'table' and type(r[1].impact[1]) == 'string', 'impact sound')
+  assert(r.sound == nil, 'the impact sound replaces the recipe sound (it would play before the slam)')
 end
 
 T['the Hook reads its hooked cards in a deferred event'] = function()

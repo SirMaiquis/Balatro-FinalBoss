@@ -84,6 +84,7 @@ function M.perform(blind, recipe, data, opts)
       local o = {}
       for k, v in pairs(step) do o[k] = v end
       o.colour = M.step_colour(step, blind, src)
+      o.blind, o.data = blind, data -- curse: the cursing blind; fist: data.queue_from
       o.amount = FinalBoss.director.num(L().step_amount(step, data)) -- Talisman big numbers
       if opts.big then
         o.scale = (step.scale or 1) * 1.8
@@ -134,6 +135,9 @@ function M.release()
   local q = M.queue
   M.queue, M.hold_until = {}, 0
   for _, item in ipairs(q) do
+    -- Queue positions recorded when the move was held are stale now (effects.fist must not insert
+    -- events by them): a held fist slams at once.
+    item.data.queue_from = nil
     if item.blind == (G.GAME and G.GAME.blind) and M.enabled(item.blind, item.kind) then
       M.perform(item.blind, item.recipe, item.data)
     end
@@ -202,10 +206,27 @@ end
 function M.on_modify(blind) M.trigger('modify', blind, {}) end
 
 --- After a real debuff_hand that fired. money_before: dollars before the call (the Ox empties them).
-function M.on_debuff_hand(blind, cards, money_before)
+--- queued_before: events in vanilla's base queue before the call; the ones after it are the blind's
+--- own (The Arm's level change: effects.fist syncs its slam with them).
+function M.on_debuff_hand(blind, cards, money_before, queued_before)
   local num = FinalBoss.director.num -- Talisman big numbers
   local lost = math.max(0, num(money_before or 0) - num(G.GAME.dollars))
-  M.trigger('hand_debuff', blind, {cards = cards, played = cards, money = lost})
+  M.trigger('hand_debuff', blind, {cards = cards, played = cards, money = lost,
+    queue_from = queued_before and (queued_before + 1) or nil})
+end
+
+--- Curse marks stay on the cards (src/curse.lua): every newly cursed card is marked at once, so a
+--- throttled or held move (the grow-in sound and juice) never loses a mark.
+function M.mark_cursed(blind, cards)
+  if not M.enabled(blind, 'card_debuff') then return end
+  local recipe = L().recipe_for(FinalBoss.registry.get(blind.config.blind.key).moves, 'card_debuff')
+  if not recipe then return end
+  local src = {colour = M.boss_colour(blind)} -- step_colour reads only the colour
+  for _, step in ipairs(recipe) do
+    if step.effect == 'curse' then
+      FinalBoss.curse.mark(cards, step.style, M.step_colour(step, blind, src), blind)
+    end
+  end
 end
 
 --- Cards debuffed by the blind (smods sets card.debuffed_by_blind, lovely/blind.toml:9-22) that are
@@ -228,7 +249,10 @@ function M.on_drawn(blind, snap)
   M.batch = {}
   if #flipped > 0 then M.trigger('flipped', blind, {cards = flipped}) end
   local cursed = newly_cursed()
-  if #cursed > 0 then M.trigger('card_debuff', blind, {cards = cursed}) end
+  if #cursed > 0 then
+    M.mark_cursed(blind, cursed)
+    M.trigger('card_debuff', blind, {cards = cursed})
+  end
   local cr = G.GAME.current_round
   if L().serpent_draw{key = blind.config.blind.key, disabled = blind.disabled,
       hands_played = cr.hands_played, discards_used = cr.discards_used} then
@@ -252,10 +276,11 @@ end
 
 function M.on_wiggle(blind) M.trigger('generic', blind, {}) end
 
---- A new blind: forget the previous blind's throttle, batches and queue.
+--- A new blind: forget the previous blind's throttle, batches, queue and curse marks.
 function M.on_blind_set()
   M.last, M.batch, M.queue, M.hold_until = {}, {}, {}, 0
   M.stamped = setmetatable({}, {__mode = 'k'})
+  FinalBoss.curse.clear()
 end
 
 function M.reset()

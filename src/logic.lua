@@ -273,9 +273,13 @@ end
 
 -- Boss moves (1.1) --------------------------------------------------------------------------------
 
---- Effect primitives a recipe step may name (src/effects.lua).
+--- Effect primitives a recipe step may name (src/effects.lua). curse = a persistent mark on cursed
+--- cards (step.style, logic.CURSE_STYLES); fist = the Raised Fist slams onto a HUD element.
 logic.EFFECTS = {fling = true, drain = true, crack = true, stamp = true, sweep = true, glare = true,
-  chain = true, ring = true, spin = true, burst = true}
+  chain = true, ring = true, spin = true, burst = true, curse = true, fist = true}
+
+--- Curse mark styles (src/curse.lua): a suit-coloured frame with the suit badge, vines, cracks.
+logic.CURSE_STYLES = {suit = true, vine = true, crack = true}
 
 --- Trigger kinds (hooks.lua -> moves.lua). 'signature' is no trigger: phases play it big.
 logic.MOVE_KINDS = {play = true, modify = true, hand_debuff = true, card_debuff = true, flipped = true,
@@ -284,8 +288,8 @@ logic.MOVE_KINDS = {play = true, modify = true, hand_debuff = true, card_debuff 
 --- Where a step lands (resolved by moves.lua): the performer, the trigger's cards, the played
 --- cards, a card area or a HUD element.
 logic.TARGETS = {source = true, cards = true, played = true, hand = true, jokers = true,
-  hud_chips = true, hud_mult = true, hud_hand_name = true, hud_hands = true, hud_discards = true,
-  hud_target = true, hud_dollars = true}
+  hud_chips = true, hud_mult = true, hud_hand_name = true, hud_hand_level = true, hud_hands = true,
+  hud_discards = true, hud_target = true, hud_dollars = true}
 
 --- Built-in final-boss deaths (src/deaths.lua).
 logic.DEATHS = {hearts = true, leaves = true, acorn = true, flood = true, bell = true}
@@ -307,6 +311,8 @@ function logic.clean_recipe(recipe)
         tostring(type(step) == 'table' and step.effect or step))
     elseif step.target ~= nil and not logic.TARGETS[step.target] then
       warnings[#warnings + 1] = ('step %d: unknown target %s'):format(i, tostring(step.target))
+    elseif step.effect == 'curse' and not logic.CURSE_STYLES[step.style] then
+      warnings[#warnings + 1] = ('step %d: unknown curse style %s'):format(i, tostring(step.style))
     else
       out[#out + 1] = step
     end
@@ -392,8 +398,108 @@ end
 --- HUD element ids of the hud_* targets (functions/UI_definitions.lua). hud_target lives in
 --- G.HUD_blind, the others in G.HUD.
 logic.HUD_IDS = {hud_chips = 'hand_chip_area', hud_mult = 'hand_mult_area', hud_hand_name = 'hand_name',
-  hud_hands = 'hand_UI_count', hud_discards = 'discard_UI_count', hud_dollars = 'dollar_text_UI',
-  hud_target = 'HUD_blind_count'}
+  hud_hand_level = 'hand_level', hud_hands = 'hand_UI_count', hud_discards = 'discard_UI_count',
+  hud_dollars = 'dollar_text_UI', hud_target = 'HUD_blind_count'}
+
+-- Curse marks (src/curse.lua) -----------------------------------------------------------------------
+
+logic.CURSE_GROW = 0.5     -- seconds a new mark takes to grow onto its card
+logic.CURSE_STAGGER = 0.06 -- seconds between two cards of one batch (reads as one stroke)
+
+--- Mark shapes in card units (x across, y down, both in [0, 1], scaled to the card's width and
+--- height). strokes: polylines, flat x1, y1, x2, y2, ...; they grow from their first point.
+--- vine.leaves: {x, y, angle (radians), reveal (the growth fraction at which the leaf appears)}.
+logic.CURSE_SHAPES = {
+  vine = {
+    strokes = {
+      {0.06, 1.0, 0.1, 0.84, 0.05, 0.68, 0.12, 0.52, 0.06, 0.36, 0.14, 0.2, 0.1, 0.07, 0.24, 0.03},
+      {0.94, 1.0, 0.88, 0.86, 0.95, 0.72, 0.87, 0.58, 0.94, 0.44, 0.86, 0.32},
+      {0.1, 0.84, 0.26, 0.8, 0.36, 0.86, 0.5, 0.82},
+      {0.88, 0.58, 0.74, 0.62, 0.66, 0.56},
+      {0.06, 0.36, 0.2, 0.4, 0.28, 0.34},
+    },
+    leaves = {
+      {0.12, 0.6, -0.6, 0.3}, {0.05, 0.28, 0.5, 0.55}, {0.18, 0.06, -0.3, 0.85},
+      {0.9, 0.79, 0.6, 0.35}, {0.92, 0.5, -0.5, 0.65}, {0.42, 0.85, 0.2, 0.75},
+      {0.68, 0.56, -0.8, 0.9}, {0.27, 0.35, 0.9, 0.95},
+    },
+  },
+  crack = {
+    strokes = {
+      {0.62, 0.0, 0.55, 0.14, 0.6, 0.27, 0.47, 0.42, 0.53, 0.55, 0.42, 0.7, 0.48, 0.84, 0.4, 1.0},
+      {0.47, 0.42, 0.33, 0.47, 0.24, 0.43, 0.1, 0.5, 0.0, 0.48},
+      {0.53, 0.55, 0.66, 0.6, 0.76, 0.56, 0.9, 0.63, 1.0, 0.61},
+      {0.6, 0.27, 0.72, 0.24, 0.8, 0.3},
+      {0.42, 0.7, 0.3, 0.76, 0.26, 0.86},
+    },
+  },
+}
+
+--- Growth of a mark born `elapsed` seconds ago, 0..1 (ease out over CURSE_GROW). A negative age is a
+--- staggered card not shown yet. Reduced motion: whole at once.
+function logic.curse_grow(elapsed, reduced)
+  if reduced or elapsed == nil then return 1 end
+  if elapsed <= 0 then return 0 end
+  local p = elapsed / logic.CURSE_GROW
+  if p >= 1 then return 1 end
+  return 1 - (1 - p) ^ 3
+end
+
+--- Whether a curse mark is drawn this frame. debuff, by_blind: the card is debuffed and smods marks the
+--- blind as the cause (card.debuffed_by_blind, smods lovely/blind.toml:9-35); mark_key: the blind
+--- that cursed it; blind_key / blind_disabled: the current blind; facing: G.GAME.facing_blind (the
+--- round is on); on: boss moves and screen effects are enabled and FinalBoss is live this run.
+function logic.curse_visible(debuff, by_blind, mark_key, blind_key, blind_disabled, facing, on)
+  if not (on and facing and debuff and by_blind) then return false end
+  if blind_disabled or blind_key == nil then return false end
+  return mark_key == blind_key
+end
+
+--- A polyline of n segments revealed to fraction g: k whole segments, then fraction f of segment k + 1.
+function logic.reveal(g, n)
+  if not n or n <= 0 or not g or g <= 0 then return 0, 0 end
+  if g >= 1 then return n, 0 end
+  local x = g * n
+  local k = math.floor(x)
+  return k, x - k
+end
+
+-- The Arm's fist (effects.fist) -----------------------------------------------------------------------
+
+logic.FIST_FALL = 0.35 -- seconds the fist falls onto the panel
+logic.FIST_HOLD = 0.25 -- seconds it rests there after the impact
+logic.FIST_FADE = 0.4  -- seconds it dissolves away
+logic.LEVEL_WAIT = 0.9 -- game seconds between the level sound event and the level text (smods)
+
+--- Where the fist syncs with a hand's level change in the event queue. smods routes level_up_hand to
+--- SMODS.upgrade_poker_hands (lovely/scoring_calculation.toml:229-262), which queues for the level
+--- (src/utils.lua:4089-4097): an 'after' 0.9 event (sound), a 'before' event (update_hand_text: the
+--- level text changes) and delay(1.3). queue: event list (each {trigger, delay}); from: the first
+--- index queued by the Arm's own call. Returns the insert positions (fall, hit): an event inserted at
+--- `fall` runs when the queue reaches the 0.9 s wait, one inserted at `hit` (insert it first) runs in
+--- the same frame as the level text change. nil when the pattern is not there.
+function logic.level_tick_slots(queue, from)
+  from = from or 1
+  for j = math.max(from + 2, 3), #queue do
+    local e = queue[j]
+    if e.trigger == 'after' and e.delay == 1.3 then
+      local text, wait = queue[j - 1], queue[j - 2]
+      if text.trigger == 'before' and wait.trigger == 'after' and wait.delay == logic.LEVEL_WAIT then
+        return j - 2, j
+      end
+    end
+  end
+  return nil
+end
+
+--- The fist's fall for a level change `lead` real seconds away: wait, then fall (seconds), so it lands
+--- on the tick. A fast game shortens the fall; reduced motion: no fall.
+function logic.fist_timing(lead, reduced)
+  lead = math.max(0, lead or 0)
+  if reduced then return lead, 0 end
+  local fall = math.min(logic.FIST_FALL, lead)
+  return lead - fall, fall
+end
 
 --- A step's amount (drain): 'played' = cards played, 'money' = dollars the blind took, or a number.
 function logic.step_amount(step, data)

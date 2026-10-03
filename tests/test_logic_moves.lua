@@ -7,13 +7,123 @@ local function eq(actual, expected, msg)
   end
 end
 
-T['EFFECTS lists the ten primitives'] = function()
+T['EFFECTS lists the ten primitives plus curse and fist'] = function()
   local n = 0
   for _ in pairs(logic.EFFECTS) do n = n + 1 end
-  eq(n, 10, 'effect count')
-  for _, name in ipairs({'fling', 'drain', 'crack', 'stamp', 'sweep', 'glare', 'chain', 'ring', 'spin', 'burst'}) do
+  eq(n, 12, 'effect count')
+  for _, name in ipairs({'fling', 'drain', 'crack', 'stamp', 'sweep', 'glare', 'chain', 'ring', 'spin', 'burst',
+      'curse', 'fist'}) do
     assert(logic.EFFECTS[name], 'missing effect ' .. name)
   end
+end
+
+T['clean_recipe: a curse step needs a known style'] = function()
+  local r, w = logic.clean_recipe({{effect = 'curse', target = 'cards', style = 'suit'},
+    {effect = 'curse', target = 'cards', style = 'lava'}, {effect = 'curse', target = 'cards'}})
+  eq(#r, 1); eq(r[1].style, 'suit'); eq(#w, 2, 'unknown and missing style')
+  for style in pairs(logic.CURSE_STYLES) do
+    local ok, ww = logic.clean_recipe({{effect = 'curse', target = 'cards', style = style}})
+    assert(ok and #ww == 0, 'style ' .. style)
+  end
+end
+
+T['CURSE_STYLES: suit, vine, crack'] = function()
+  local n = 0
+  for _ in pairs(logic.CURSE_STYLES) do n = n + 1 end
+  eq(n, 3)
+  for _, s in ipairs({'suit', 'vine', 'crack'}) do assert(logic.CURSE_STYLES[s], s) end
+end
+
+T['CURSE_SHAPES: vine and crack strokes inside the unit square, leaves with a reveal point'] = function()
+  for _, name in ipairs({'vine', 'crack'}) do
+    local shape = logic.CURSE_SHAPES[name]
+    assert(type(shape) == 'table' and #shape.strokes >= 2, name .. ' needs strokes')
+    for _, s in ipairs(shape.strokes) do
+      assert(#s >= 4 and #s % 2 == 0, name .. ': a stroke needs at least two points')
+      for _, v in ipairs(s) do assert(v >= 0 and v <= 1, name .. ': point outside the unit square') end
+    end
+  end
+  local leaves = logic.CURSE_SHAPES.vine.leaves
+  assert(#leaves >= 3, 'vines carry leaves')
+  for _, l in ipairs(leaves) do
+    assert(l[1] >= 0 and l[1] <= 1 and l[2] >= 0 and l[2] <= 1, 'leaf inside the card')
+    assert(l[4] > 0 and l[4] <= 1, 'leaf reveal point in (0, 1]')
+  end
+end
+
+T['curse_grow: eases 0 -> 1 over CURSE_GROW, at once under reduced motion'] = function()
+  eq(logic.curse_grow(-0.2, false), 0, 'staggered card not born yet')
+  eq(logic.curse_grow(0, false), 0)
+  local mid = logic.curse_grow(logic.CURSE_GROW / 2, false)
+  assert(mid > 0.5 and mid < 1, 'ease out: past half at half time, got ' .. mid)
+  eq(logic.curse_grow(logic.CURSE_GROW, false), 1)
+  eq(logic.curse_grow(10, false), 1)
+  eq(logic.curse_grow(0, true), 1, 'reduced motion: no growth')
+  eq(logic.curse_grow(-0.2, true), 1)
+  eq(logic.curse_grow(nil, false), 1, 'no birth time: fully grown')
+  assert(logic.CURSE_GROW >= 0.4 and logic.CURSE_GROW <= 0.6, 'about half a second')
+end
+
+T['curse_visible: only while the card is cursed by this live, facing, enabled blind'] = function()
+  eq(logic.curse_visible(true, true, 'bl_club', 'bl_club', false, true, true), true)
+  eq(logic.curse_visible(false, true, 'bl_club', 'bl_club', false, true, true), false, 'no longer debuffed')
+  eq(logic.curse_visible(true, false, 'bl_club', 'bl_club', false, true, true), false, 'debuffed by something else')
+  eq(logic.curse_visible(true, nil, 'bl_club', 'bl_club', false, true, true), false)
+  eq(logic.curse_visible(true, true, 'bl_club', 'bl_goad', false, true, true), false, 'another blind')
+  eq(logic.curse_visible(true, true, 'bl_club', nil, false, true, true), false, 'blind cleared after defeat')
+  eq(logic.curse_visible(true, true, 'bl_club', 'bl_club', true, true, true), false, 'disabled (Chicot)')
+  eq(logic.curse_visible(true, true, 'bl_club', 'bl_club', false, nil, true), false, 'round over')
+  eq(logic.curse_visible(true, true, 'bl_club', 'bl_club', false, true, false), false, 'moves or fx off')
+end
+
+T['reveal: whole segments and the fraction of the next one'] = function()
+  local k, f = logic.reveal(0, 4)
+  eq(k, 0); eq(f, 0)
+  k, f = logic.reveal(1, 4)
+  eq(k, 4); eq(f, 0)
+  k, f = logic.reveal(0.5, 4)
+  eq(k, 2); eq(f, 0)
+  k, f = logic.reveal(0.6, 4)
+  eq(k, 2); assert(math.abs(f - 0.4) < 1e-9, 'fraction ' .. f)
+  k, f = logic.reveal(2, 3)
+  eq(k, 3); eq(f, 0)
+  k, f = logic.reveal(-1, 3)
+  eq(k, 0); eq(f, 0)
+  k, f = logic.reveal(0.5, 0)
+  eq(k, 0); eq(f, 0)
+end
+
+-- smods SMODS.upgrade_poker_hands (src/utils.lua:4089-4097) for one level change queues
+-- after 0.9 (sound), before (level text), then delay(1.3).
+local function ev(trigger, delay) return {trigger = trigger, delay = delay} end
+
+T['level_tick_slots: finds the level-text event of a level change'] = function()
+  local q = {ev('after', 0.5), ev('before', 0), -- older events, before the hook's mark
+    ev('before', 0.3), ev('before', 0), ev('before', 0), -- handname, chips, mult texts
+    ev('after', 0.2), ev('before', 0), ev('after', 0.9), ev('before', 0), -- chips and mult deltas
+    ev('after', 0.9), ev('before', 0), ev('after', 1.3), -- level: sound, text, delay
+    ev('immediate', 0), ev('after', 0.06)}
+  local fall, hit = logic.level_tick_slots(q, 3)
+  eq(fall, 10, 'before the level sound wait'); eq(hit, 12, 'right after the level text')
+end
+
+T['level_tick_slots: nil when the pattern is missing or before the mark'] = function()
+  eq(logic.level_tick_slots({ev('after', 0.9), ev('before', 0), ev('after', 1.0)}, 1), nil)
+  eq(logic.level_tick_slots({ev('after', 0.9), ev('before', 0), ev('after', 1.3)}, 2), nil, 'starts before the mark')
+  eq(logic.level_tick_slots({}, 1), nil)
+  eq(logic.level_tick_slots({ev('after', 0.9), ev('before', 0), ev('after', 1.3)}, nil), 1, 'default mark 1')
+end
+
+T['fist_timing: wait then fall so it lands at the level tick'] = function()
+  local wait, fall = logic.fist_timing(0.9, false)
+  eq(fall, logic.FIST_FALL); assert(math.abs(wait - (0.9 - logic.FIST_FALL)) < 1e-9, 'wait')
+  wait, fall = logic.fist_timing(0.2, false)
+  eq(wait, 0); eq(fall, 0.2, 'fast game speed: shorter fall')
+  wait, fall = logic.fist_timing(0.9, true)
+  eq(fall, 0, 'reduced motion: no fall'); eq(wait, 0.9)
+  wait, fall = logic.fist_timing(-1, false)
+  eq(wait, 0); eq(fall, 0)
+  assert(logic.FIST_FALL >= 0.3 and logic.FIST_FALL <= 0.4, 'about 0.35 s')
 end
 
 T['MOVE_KINDS has every trigger kind plus signature'] = function()
@@ -143,6 +253,7 @@ T['HUD_IDS covers every hud_* target'] = function()
   end
   eq(logic.HUD_IDS.hud_target, 'HUD_blind_count')
   eq(logic.HUD_IDS.hud_dollars, 'dollar_text_UI')
+  eq(logic.HUD_IDS.hud_hand_level, 'hand_level')
 end
 
 T['step_amount reads played cards, money or a number'] = function()

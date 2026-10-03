@@ -285,6 +285,7 @@ function Dir.on_blind_disabled()
 end
 
 function Dir.on_blind_defeated()
+  FinalBoss.curse.clear() -- the curse marks go with the blind (any tier)
   Dir.flush_pending()
   local enc, blind = current()
   if not enc then return end

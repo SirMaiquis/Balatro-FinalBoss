@@ -1,5 +1,6 @@
---- Effects library (1.1): ten visual primitives shared by boss moves, deaths and phase changes:
---- fling, drain, crack, stamp, sweep, glare, chain, ring, spin, burst (logic.EFFECTS).
+--- Effects library (1.1): visual primitives shared by boss moves, deaths and phase changes:
+--- fling, drain, crack, stamp, sweep, glare, chain, ring, spin, burst, plus curse (persistent card
+--- marks, src/curse.lua) and fist (The Arm) (logic.EFFECTS).
 --- E.<name>(src, target, opts):
 ---   src    = performer {x, y, w, h, obj, colour, avatar} (moves.performer) or any rectangle
 ---   target = list of cards | CardArea | UIElement | nil (each primitive says which it reads)
@@ -10,6 +11,7 @@
 local E = {}
 E.host = nil -- invisible attention_text UIBox: its children draw in vanilla's late pass (above cards)
 E.gen = 0    -- bumped by E.reset(): timers of a torn-down run do nothing
+E.reddened = nil -- {cfg, prev}: a HUD text the fist turned red, restored after a moment or by E.reset
 
 local function reduced() return G.SETTINGS.reduced_motion end
 local function now() return FinalBoss.util.now() end
@@ -234,7 +236,8 @@ function E.drain(src, _, opts)
 end
 
 --- crack(uie): a HUD element juices, flashes and shows a split. opts.style 'fill': a rising bar
---- (Violet Vessel); 'slam': a bar drops onto it first (The Arm; no drop under reduced motion).
+--- (Violet Vessel); 'slam': a bar drops onto it first (recipe option for modded bosses; no drop under
+--- reduced motion). The Arm now uses fist.
 function E.crack(src, uie, opts)
   if not (uie and uie.T) then return end
   local T = uie.T
@@ -364,6 +367,174 @@ function E.burst(src, _, opts)
   end
 end
 
+--- curse(cards): persistent curse marks (src/curse.lua) on the cursed cards in opts.style ('suit',
+--- 'vine', 'crack') and opts.colour; each card juices as its mark starts to grow. Marks already made
+--- this blind (moves.on_drawn marks every newly cursed card, throttled or not) keep their birth time.
+function E.curse(src, target, opts)
+  local cards = cards_of(target)
+  FinalBoss.curse.mark(cards, opts.style, opts.colour, opts.blind)
+  local t = now()
+  for _, card in ipairs(cards) do
+    local m = card.fb_curse
+    after(m and math.max(0, m.born - t) or 0, function()
+      if not card.REMOVED then card:juice_up(0.25, 0.1) end
+    end)
+  end
+end
+
+-- The Arm's fist ----------------------------------------------------------------------------------
+
+local FIST_W = 0.8     -- room units; the joker card art is 71 x 95 px
+local FIST_DROP = 2.2  -- how far above its landing spot the fist starts to fall
+local FIST_APPEAR = 0.12 -- seconds it takes to materialise (dissolve 1 -> 0)
+
+--- The Raised Fist joker's own art as an effect object (adopted by the layer: E.reset removes it, and
+--- Node:remove removes its sprite child, engine/node.lua:339-343). The sprite is glued to the fist like
+--- a card's sprites are to the card (card.lua:159) and drawn with the dissolve shader, so it
+--- materialises and fades the way vanilla cards do. Timeline (REAL seconds): born; t_fall..t_land
+--- falls from y_from onto y_rest (accelerating); t_fade: dissolves over logic.FIST_FADE.
+local Fist = Moveable:extend()
+E.Fist = Fist
+
+function Fist:init(x, y, w, h, sprite)
+  Moveable.init(self, x, y, w, h)
+  for _, o in ipairs({self, sprite}) do
+    o.states.collide.can, o.states.hover.can = false, false
+    o.states.click.can, o.states.drag.can = false, false
+  end
+  sprite:set_role({major = self, role_type = 'Glued', draw_major = self})
+  self.children.sprite = sprite
+  self.sprite = sprite
+  self.y_rest, self.y_from = y, y
+  self.born = now()
+  self.t_fall, self.t_land, self.t_fade = self.born, self.born, nil
+  self.dissolve = 1
+  self.dissolve_colours = {G.C.RED, G.C.BLACK}
+  self:hard_set_VT()
+end
+
+function Fist:move(dt)
+  local t = now()
+  local y = self.y_rest
+  if not self.landed and t < self.t_land then
+    local p = (t <= self.t_fall) and 0 or (t - self.t_fall) / (self.t_land - self.t_fall)
+    y = self.y_from + (self.y_rest - self.y_from) * p * p
+  end
+  self.T.y = y
+  if self.t_fade then
+    self.dissolve = math.max(0, math.min(1, (t - self.t_fade) / FinalBoss.logic.FIST_FADE))
+  else
+    self.dissolve = math.max(0, 1 - (t - self.born) / FIST_APPEAR)
+  end
+  self:move_juice(dt) -- the impact squash (Moveable:juice_up is a no-op under reduced motion)
+  local j = self.juice
+  self.VT.x, self.VT.y, self.VT.w, self.VT.h = self.T.x, self.T.y, self.T.w, self.T.h
+  self.VT.scale = 1 + (j and j.scale or 0)
+  self.VT.r = j and j.r or 0
+end
+
+function Fist:draw()
+  local s = self.sprite
+  if not s or s.REMOVED then return end
+  s:glue_to_major(self) -- this frame's position, whatever order G.MOVEABLES moved them in
+  s:draw_shader('dissolve', nil, nil, true)
+end
+
+--- A HUD text (UIT.T config) flashes red for a moment; vanilla reads config.colour every frame.
+local function redden(cfg)
+  if not cfg or cfg.colour == G.C.RED then return end
+  local mine = {cfg = cfg, prev = cfg.colour}
+  E.reddened = mine
+  cfg.colour = G.C.RED
+  after(0.45, function()
+    if E.reddened == mine then E.reddened = nil end
+    if cfg.colour == G.C.RED then cfg.colour = mine.prev end
+  end)
+end
+
+--- fist(uie): the Raised Fist joker (G.P_CENTERS.j_raised_fist, its own atlas art through
+--- SMODS.create_sprite like the avatar) drops onto a HUD element - The Arm: the hand level - and slams
+--- onto it as the game lowers the level: a red flash on the hand panel, a ring, a jiggle (not under
+--- reduced motion), the level text flashes red, then the fist dissolves away.
+--- Sync: vanilla's Arm calls level_up_hand(..., -1) inside debuff_hand (blind.lua:550-557); smods
+--- queues the level change as events (logic.level_tick_slots). Two guarded events are inserted into
+--- that queue: one where the 0.9 s wait before the level text starts (the fist falls to land 0.9 game
+--- seconds later: logic.fist_timing), one right after the level-text event (the impact, in the same
+--- frame as the level change). opts.data.queue_from = the first queue index of the Arm's own events
+--- (hooks.lua); without it or the pattern, the fist falls and slams at once.
+--- opts.impact = {sound, pitch, volume} played at the impact. Reduced motion: no fall; the fist appears
+--- on the panel with the flash and dissolves.
+function E.fist(src, uie, opts)
+  if not (uie and uie.T) then return end
+  local center = G.P_CENTERS and G.P_CENTERS.j_raised_fist
+  if not (center and center.pos) then return end
+  local LG = FinalBoss.logic
+  local T = uie.T
+  local w, h = FIST_W, FIST_W * 95 / 71
+  local x, y = T.x + T.w / 2 - w / 2, T.y + T.h * 0.6 - h -- its base lands on the level text
+  local state = {fist = nil, hit = false}
+
+  local function appear(fall)
+    if state.fist then return end
+    local sprite = SMODS.create_sprite(x, y, w, h, center.atlas or 'Joker', center.pos)
+    local f = adopt(Fist(x, y, w, h, sprite))
+    if fall > 0 then
+      local t = now()
+      f.y_from, f.t_fall, f.t_land = y - FIST_DROP, t, t + fall
+      f.T.y = f.y_from
+      f:hard_set_VT()
+    end
+    state.fist = f
+  end
+
+  -- sync: called right after vanilla's level-text event (it has just set the level text and colour).
+  local function hit(sync)
+    if sync then redden(uie.config) end
+    if state.hit then return end
+    state.hit = true
+    appear(0)
+    local f = state.fist
+    f.landed = true
+    f:juice_up(0.5, 0.12)
+    if not reduced() then G.ROOM.jiggle = G.ROOM.jiggle + 2 end
+    local panel = G.HUD and G.HUD:get_UIE_by_ID('hand_text_area')
+    if panel and panel.T then flash_rect(panel.T, G.C.RED) end
+    if uie.juice_up then uie:juice_up(0.8, 0.4) end
+    local cx, by = x + w / 2, y + h
+    expire(adopt(Mark(cx - 0.7, by - 0.7, 1.4, 1.4, {shape = 'ring', colour = G.C.RED, life = 0.4, width = 0.08})), 0.4)
+    local s = opts.impact
+    if type(s) == 'table' and type(s[1]) == 'string' then play_sound(s[1], s[2] or 1, s[3] or 0.5) end
+    f.t_fade = now() + LG.FIST_HOLD
+    after(LG.FIST_HOLD + LG.FIST_FADE + 0.05, function() drop(f) end)
+  end
+
+  local q = G.E_MANAGER and G.E_MANAGER.queues and G.E_MANAGER.queues.base
+  local from = opts.data and opts.data.queue_from
+  local fall_at, hit_at
+  if q and from then fall_at, hit_at = LG.level_tick_slots(q, from) end
+  if not fall_at then
+    local _, fall = LG.fist_timing(LG.FIST_FALL, reduced())
+    appear(fall)
+    return after(fall, function() hit(false) end)
+  end
+  local gen = E.gen
+  local function queued(name, fn)
+    -- blockable, not blocking: runs when the queue reaches it and holds nothing up
+    return Event({blocking = false, func = function()
+      if E.gen == gen then FinalBoss.util.guard(name, fn) end
+      return true
+    end})
+  end
+  table.insert(q, hit_at, queued('effect_fist_hit', function() hit(true) end)) -- first: fall_at < hit_at
+  table.insert(q, fall_at, queued('effect_fist_fall', function()
+    -- The 0.9 s wait starts now on the game clock (G.TIMERS.TOTAL runs at G.SPEEDFACTOR, game.lua).
+    local lead = LG.LEVEL_WAIT / math.max(0.05, G.SPEEDFACTOR or 1)
+    local wait, fall = LG.fist_timing(lead, reduced())
+    if fall > 0 then after(wait, function() appear(fall) end) end
+    after(lead + 1.5, function() hit(false) end) -- the queue was cleared or stalled: slam anyway
+  end))
+end
+
 -- Helpers for deaths, stances and the nemesis -------------------------------------------------------
 
 --- opts.count shapes (opts.shape: heart, leaf, glyph with opts.glyph, ...) fly out of the source;
@@ -403,6 +574,9 @@ end
 --- Run teardown or a guard failure: drop every live effect and cancel pending timers.
 function E.reset()
   E.gen = E.gen + 1
+  local r = E.reddened
+  E.reddened = nil
+  if r and r.cfg.colour == G.C.RED then r.cfg.colour = r.prev end
   local h = E.host
   E.host = nil
   if not h or h.REMOVED then return end

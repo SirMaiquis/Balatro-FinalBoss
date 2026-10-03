@@ -147,13 +147,17 @@ end
 
 -- Psychic, Eye, Mouth return true; Arm and Ox act and set triggered (blind.lua:519-570). Only the real
 -- call counts (state_events.lua:614), not the highlight preview (cardarea.lua:168, check = true).
--- Money is read first: the Ox empties it instantly.
+-- Money is read first: the Ox empties it instantly. The base queue's length is read first too: the
+-- events after it are the blind's own (The Arm's level change, blind.lua:550-557), which the fist
+-- move syncs its slam with (effects.fist).
 local orig_debuff_hand = Blind.debuff_hand
 function Blind:debuff_hand(cards, hand, handname, check, ...)
   local money = (not check and live()) and director().num(G.GAME.dollars) or nil
+  local base = money and G.E_MANAGER and G.E_MANAGER.queues and G.E_MANAGER.queues.base
+  local queued = base and #base or nil
   local r = pack(orig_debuff_hand(self, cards, hand, handname, check, ...))
   if money and FinalBoss.logic.hand_debuff_fired(r[1], self.triggered, check, self.disabled) then
-    U.guard('move_hand_debuff', moves().on_debuff_hand, self, cards, money)
+    U.guard('move_hand_debuff', moves().on_debuff_hand, self, cards, money, queued)
   end
   return unpack(r, 1, r.n)
 end
@@ -172,7 +176,7 @@ end
 
 -- Runs once each draw to hand is complete (game.lua:3238): Cerulean Bell forces a card and Crimson
 -- Heart disables a joker (blind.lua:572-603). moves.on_drawn also flushes the face-down batch,
--- stamps newly cursed cards and detects the Serpent's refill.
+-- marks newly cursed cards and detects the Serpent's refill.
 local orig_drawn_to_hand = Blind.drawn_to_hand
 function Blind:drawn_to_hand(...)
   local snap

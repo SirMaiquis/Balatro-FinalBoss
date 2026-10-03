@@ -2,6 +2,8 @@
 --- full tier, regular bosses light tier). A recipe is a list of effect steps for one trigger kind
 --- (see src/moves.lua and README "Boss moves"): target = where it lands, colour = 'suit' or a
 --- G.C name (default: the boss colour), sound = {vanilla sound, pitch, volume} (times the voice pitch).
+--- The card_debuff bosses leave curse marks (effect 'curse', style suit/vine/crack: src/curse.lua) that
+--- stay on each cursed card while the curse holds.
 local BOSSES = {
   -- The Hook: discards 2 random cards per hand. A chain whips the two hooked cards, which jolt.
   bl_hook = {pitch = 0.95, moves = {
@@ -24,13 +26,14 @@ local BOSSES = {
   bl_wheel = {pitch = 1.15, moves = {
     flipped = {{effect = 'spin', target = 'cards'}, sound = {'cardSlide1', 1.2, 0.4}},
   }},
-  -- The Arm: lowers the played hand's level. The hand name is slammed.
+  -- The Arm: lowers the played hand's level. The Raised Fist slams onto the level as it drops (the
+  -- impact sound plays with the slam, in sync with the game's level change).
   bl_arm = {pitch = 0.85, moves = {
-    hand_debuff = {{effect = 'crack', target = 'hud_hand_name', style = 'slam'}, sound = {'multhit2', 0.7, 0.5}},
+    hand_debuff = {{effect = 'fist', target = 'hud_hand_level', impact = {'multhit2', 0.7, 0.55}}},
   }},
-  -- The Club: Clubs debuffed. Club-coloured hexes on the cursed cards.
+  -- The Club: Clubs debuffed. A dark Club-coloured frame and a Club badge stay on each cursed card.
   bl_club = {pitch = 1.1, moves = {
-    card_debuff = {{effect = 'stamp', target = 'cards', glyph = 'hex', colour = 'suit'}, sound = {'tarot1', 0.8, 0.35}},
+    card_debuff = {{effect = 'curse', target = 'cards', style = 'suit', colour = 'suit'}, sound = {'tarot1', 0.8, 0.35}},
   }},
   -- The Fish: cards drawn face down after each hand. A splash over the hand.
   bl_fish = {pitch = 1.2, moves = {
@@ -40,18 +43,18 @@ local BOSSES = {
   bl_psychic = {pitch = 1.25, moves = {
     hand_debuff = {{effect = 'glare', target = 'cards'}, sound = {'magic_crumple', 1.2, 0.4}},
   }},
-  -- The Goad: Spades debuffed.
+  -- The Goad: Spades debuffed (suit frame and badge).
   bl_goad = {pitch = 0.9, moves = {
-    card_debuff = {{effect = 'stamp', target = 'cards', glyph = 'hex', colour = 'suit'}, sound = {'tarot1', 0.75, 0.35}},
+    card_debuff = {{effect = 'curse', target = 'cards', style = 'suit', colour = 'suit'}, sound = {'tarot1', 0.75, 0.35}},
   }},
   -- The Water: starts with 0 discards. A wash over the discards counter.
   bl_water = {pitch = 1.05, moves = {
     start = {{effect = 'sweep', target = 'hud_discards', colour = 'blue'}, {effect = 'crack', target = 'hud_discards'},
       sound = {'whoosh_long', 1.2, 0.35}},
   }},
-  -- The Window: Diamonds debuffed.
+  -- The Window: Diamonds debuffed (suit frame and badge).
   bl_window = {pitch = 1.1, moves = {
-    card_debuff = {{effect = 'stamp', target = 'cards', glyph = 'hex', colour = 'suit'}, sound = {'tarot1', 0.85, 0.35}},
+    card_debuff = {{effect = 'curse', target = 'cards', style = 'suit', colour = 'suit'}, sound = {'tarot1', 0.85, 0.35}},
   }},
   -- The Manacle: -1 hand size. Chains clamp the hand.
   bl_manacle = {pitch = 0.85, moves = {
@@ -65,25 +68,25 @@ local BOSSES = {
   bl_mouth = {pitch = 1.0, moves = {
     hand_debuff = {{effect = 'glare', target = 'cards'}, sound = {'crumple3', 0.8, 0.5}},
   }},
-  -- The Plant: face cards debuffed. Vines on them.
+  -- The Plant: face cards debuffed. Vines grow over them and stay.
   bl_plant = {pitch = 1.15, moves = {
-    card_debuff = {{effect = 'stamp', target = 'cards', glyph = 'vine'}, sound = {'paper1', 0.8, 0.4}},
+    card_debuff = {{effect = 'curse', target = 'cards', style = 'vine'}, sound = {'paper1', 0.8, 0.4}},
   }},
   -- The Serpent: always draws 3. A snake trail over the hand.
   bl_serpent = {pitch = 0.8, moves = {
     draw = {{effect = 'sweep', target = 'hand'}, sound = {'whoosh1', 0.7, 0.45}},
   }},
-  -- The Pillar: cards played this ante debuffed. Cracks on them.
+  -- The Pillar: cards played this ante debuffed. Cracks spread across them and stay.
   bl_pillar = {pitch = 0.75, moves = {
-    card_debuff = {{effect = 'stamp', target = 'cards', glyph = 'crack'}, sound = {'crumple2', 0.7, 0.4}},
+    card_debuff = {{effect = 'curse', target = 'cards', style = 'crack'}, sound = {'crumple2', 0.7, 0.4}},
   }},
   -- The Needle: one hand only. A pierce flash on the hands counter.
   bl_needle = {pitch = 1.3, moves = {
     start = {{effect = 'crack', target = 'hud_hands'}, sound = {'slice1', 1.4, 0.45}},
   }},
-  -- The Head: Hearts debuffed.
+  -- The Head: Hearts debuffed (suit frame and badge).
   bl_head = {pitch = 1.05, moves = {
-    card_debuff = {{effect = 'stamp', target = 'cards', glyph = 'hex', colour = 'suit'}, sound = {'tarot1', 0.9, 0.35}},
+    card_debuff = {{effect = 'curse', target = 'cards', style = 'suit', colour = 'suit'}, sound = {'tarot1', 0.9, 0.35}},
   }},
   -- The Tooth: -$1 per card played. Bite marks on the played cards + coins drained.
   bl_tooth = {pitch = 0.95, moves = {
