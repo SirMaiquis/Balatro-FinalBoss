@@ -158,4 +158,47 @@ T['the Serpent delivers its cards with a snake'] = function()
   assert(r[1].effect == 'snake' and r[1].target == 'hand', 'snake to the hand')
 end
 
+-- Spec §2.4: final boss -> trigger kinds of its recipes. The blind-start finals (Acorn, Vessel) play at
+-- blind set ('set'), like The Wall; the Leaf curses cards like The Plant.
+local FINAL = {
+  bl_final_acorn = {'set'}, bl_final_leaf = {'card_debuff', 'joker_sold'}, bl_final_vessel = {'set'},
+  bl_final_heart = {'drawn'}, bl_final_bell = {'drawn'},
+}
+
+T['the 5 final bosses have their spec kinds and a signature'] = function()
+  local b = bosses()
+  for key, kinds in pairs(FINAL) do
+    local moves = b[key].moves
+    assert(moves, key .. ' needs moves')
+    for _, kind in ipairs(kinds) do assert(moves[kind], key .. ' needs a ' .. kind .. ' recipe') end
+    assert(moves.start == nil, key .. ': no delayed start move (blind-start finals play at set)')
+    assert(moves.signature, key .. ' needs a signature recipe')
+    for _, step in ipairs(moves.signature) do
+      assert(step.target ~= 'cards' and step.target ~= 'played', key .. ': a signature has no trigger cards')
+    end
+  end
+end
+
+T['final-boss recipes follow the spec'] = function()
+  local b = bosses()
+  local vessel = b.bl_final_vessel.moves.set[1]
+  assert(vessel.effect == 'recount' and vessel.target == 'hud_target' and vessel.value == 'target',
+    'Vessel counts its target from the normal one up to its own')
+  assert(vessel.cue[1].effect == 'crack' and vessel.cue[1].target == 'hud_target' and vessel.cue[1].style == 'fill',
+    'Vessel fills its target')
+  assert(type(vessel.impact) == 'table', 'the count lands with a thud')
+  local total = (vessel.hold or 0) + (vessel.time or 0)
+  assert(total >= 0.5 and total <= 1.4, 'about a second, got ' .. total)
+  assert(not vessel.step and not vessel.top, 'counts smoothly and waits for the popup, like the Wall')
+  local heart = b.bl_final_heart.moves.drawn[1]
+  assert(heart.effect == 'glare' and heart.target == 'cards' and heart.line, 'Heart beams onto the disabled joker')
+  local bell = b.bl_final_bell.moves.drawn
+  assert(bell[1].effect == 'ring' and bell[2].effect == 'ring' and bell[2].target == 'cards', 'Bell rings + forced card')
+  local acorn = b.bl_final_acorn.moves.set
+  assert(acorn[1].effect == 'sweep' and acorn[1].target == 'jokers' and acorn[2].effect == 'burst', 'Acorn sweeps jokers')
+  local leaf = b.bl_final_leaf.moves.card_debuff[1]
+  assert(leaf.effect == 'curse' and leaf.style == 'vine' and leaf.target == 'cards', 'Leaf vines stay on the cards')
+  assert(b.bl_final_leaf.moves.joker_sold[1].effect == 'burst', 'Leaf leaves burst')
+end
+
 return T
