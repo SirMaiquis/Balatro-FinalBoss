@@ -9,13 +9,15 @@ return {
             fb_cfg_moves = "ボスの技",
             fb_cfg_phase_twists = "ボスのフェーズでルールが変わる",
             fb_showdown_title = "決戦",
+            fb_nemesis_title = "宿敵",
+            fb_nemesis_defeated = "宿敵撃破",
             fb_cfg_intro_speed = "イントロの速さ",
             fb_speed_slow = "遅い",
             fb_speed_normal = "普通",
             fb_speed_fast = "速い",
             fb_cfg_min_ante = "セリフ開始アンティ",
             fb_cfg_memory = "ボスの記憶",
-            fb_cfg_dev_mode = "開発者キー (F5-F7)",
+            fb_cfg_dev_mode = "開発者キー (F5-F9)",
             fb_cfg_showdown_enabled = "決戦スケジュール設定",
             fb_cfg_start_ante = "最初の決戦アンティ",
             fb_cfg_every = "以降Nアンティごと",
@@ -84,6 +86,14 @@ return {
             fb_generic_rematch_lost_1 = {"またボコられに", "来たのか？"},
             fb_generic_rematch_lost_2 = {"前回で", "懲りなかったか？"},
             fb_generic_rematch_lost_3 = {"ああ、貴様か。", "負け犬め。"},
+
+            -- Nemesis (shared, #1# = boss name)
+            fb_nemesis_intro_1 = {"覚えているか？", "#1#は忘れんぞ。"},
+            fb_nemesis_intro_2 = {"また#1#だ。", "貴様の宿敵よ。"},
+            fb_nemesis_intro_3 = {"宿敵からは", "逃げられんぞ。"},
+            fb_nemesis_defeat_1 = {"なぜだ！？", "俺は宿敵だぞ！"},
+            fb_nemesis_defeat_2 = {"#1#が…", "砕けた…"},
+            fb_nemesis_defeat_3 = {"まだ終わらんぞ、", "ライバル…"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"だが俺は", "フックだ！"},

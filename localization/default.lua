@@ -9,13 +9,15 @@ return {
             fb_cfg_moves = "Boss moves",
             fb_cfg_phase_twists = "Boss phases change the rules",
             fb_showdown_title = "SHOWDOWN",
+            fb_nemesis_title = "NEMESIS",
+            fb_nemesis_defeated = "NEMESIS DEFEATED",
             fb_cfg_intro_speed = "Intro speed",
             fb_speed_slow = "Slow",
             fb_speed_normal = "Normal",
             fb_speed_fast = "Fast",
             fb_cfg_min_ante = "Boss dialogue from ante",
             fb_cfg_memory = "Boss memory",
-            fb_cfg_dev_mode = "Developer keys (F5-F7)",
+            fb_cfg_dev_mode = "Developer keys (F5-F9)",
             fb_cfg_showdown_enabled = "Custom showdown schedule",
             fb_cfg_start_ante = "First showdown ante",
             fb_cfg_every = "Then every N antes",
@@ -84,6 +86,14 @@ return {
             fb_generic_rematch_lost_1 = {"Back for another", "beating?"},
             fb_generic_rematch_lost_2 = {"Didn't learn", "last time?"},
             fb_generic_rematch_lost_3 = {"Oh, it's you.", "The loser."},
+
+            -- Nemesis (shared, #1# = boss name)
+            fb_nemesis_intro_1 = {"Remember me?", "#1# never forgets."},
+            fb_nemesis_intro_2 = {"#1# again.", "Your nemesis."},
+            fb_nemesis_intro_3 = {"You can't escape", "your nemesis."},
+            fb_nemesis_defeat_1 = {"How?! I'm your", "nemesis!"},
+            fb_nemesis_defeat_2 = {"#1#... broken."},
+            fb_nemesis_defeat_3 = {"This isn't over,", "rival..."},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"But I'm The Hook"},

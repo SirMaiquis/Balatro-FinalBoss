@@ -9,13 +9,15 @@ return {
             fb_cfg_moves = "보스 기술",
             fb_cfg_phase_twists = "보스 페이즈가 규칙을 바꿈",
             fb_showdown_title = "결전",
+            fb_nemesis_title = "숙적",
+            fb_nemesis_defeated = "숙적 격파",
             fb_cfg_intro_speed = "인트로 속도",
             fb_speed_slow = "느림",
             fb_speed_normal = "보통",
             fb_speed_fast = "빠름",
             fb_cfg_min_ante = "대사 시작 앤티",
             fb_cfg_memory = "보스 기억",
-            fb_cfg_dev_mode = "개발자 키 (F5-F7)",
+            fb_cfg_dev_mode = "개발자 키 (F5-F9)",
             fb_cfg_showdown_enabled = "결전 일정 직접 설정",
             fb_cfg_start_ante = "첫 결전 앤티",
             fb_cfg_every = "이후 N앤티마다",
@@ -84,6 +86,14 @@ return {
             fb_generic_rematch_lost_1 = {"또 얻어맞으러", "왔나?"},
             fb_generic_rematch_lost_2 = {"지난번에", "배운 게 없나?"},
             fb_generic_rematch_lost_3 = {"아, 너구나.", "패배자."},
+
+            -- Nemesis (shared, #1# = boss name)
+            fb_nemesis_intro_1 = {"날 기억하나?", "#1#, 절대 잊지 않지."},
+            fb_nemesis_intro_2 = {"또 만났군.", "네 숙적, #1#!"},
+            fb_nemesis_intro_3 = {"숙적에게서", "도망칠 순 없다."},
+            fb_nemesis_defeat_1 = {"어떻게?! 나는", "네 숙적인데!"},
+            fb_nemesis_defeat_2 = {"#1#... 무너졌다."},
+            fb_nemesis_defeat_3 = {"이걸로 끝이 아니다,", "라이벌..."},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"하지만 나는", "훅이다!"},

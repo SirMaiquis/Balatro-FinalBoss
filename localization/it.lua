@@ -9,13 +9,15 @@ return {
             fb_cfg_moves = "Mosse dei boss",
             fb_cfg_phase_twists = "Le fasi dei boss cambiano le regole",
             fb_showdown_title = "SCONTRO FINALE",
+            fb_nemesis_title = "NEMESI",
+            fb_nemesis_defeated = "NEMESI SCONFITTA",
             fb_cfg_intro_speed = "Velocità intro",
             fb_speed_slow = "Lenta",
             fb_speed_normal = "Normale",
             fb_speed_fast = "Veloce",
             fb_cfg_min_ante = "Dialoghi dall'Ante",
             fb_cfg_memory = "Memoria dei boss",
-            fb_cfg_dev_mode = "Tasti sviluppatore (F5-F7)",
+            fb_cfg_dev_mode = "Tasti sviluppatore (F5-F9)",
             fb_cfg_showdown_enabled = "Scontri finali personalizzati",
             fb_cfg_start_ante = "Primo scontro all'Ante",
             fb_cfg_every = "Poi ogni N Ante",
@@ -84,6 +86,14 @@ return {
             fb_generic_rematch_lost_1 = {"Torni per un'altra", "batosta?"},
             fb_generic_rematch_lost_2 = {"Non hai imparato", "l'ultima volta?"},
             fb_generic_rematch_lost_3 = {"Ah, sei tu.", "Il perdente."},
+
+            -- Nemesis (shared, #1# = boss name)
+            fb_nemesis_intro_1 = {"Ti ricordi di me?", "#1# non dimentica."},
+            fb_nemesis_intro_2 = {"Ancora #1#.", "La tua nemesi."},
+            fb_nemesis_intro_3 = {"Non puoi sfuggire", "alla tua nemesi."},
+            fb_nemesis_defeat_1 = {"Come?! Sono la", "tua nemesi!"},
+            fb_nemesis_defeat_2 = {"#1#... spezzato."},
+            fb_nemesis_defeat_3 = {"Non finisce qui,", "rivale..."},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Ma io sono", "L'uncino"},

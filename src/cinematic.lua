@@ -66,7 +66,10 @@ local function show_title(blind)
   local name = blind.loc_name or (blind.config.blind and blind.config.blind.name) or ''
   local band = mix_colours(c, G.C.BLACK, 0.25)
   band[4] = 0.85
-  local sub = DynaText({string = {localize('fb_showdown_title')},
+  -- 1.1: against the profile's nemesis the band reads NEMESIS (hidden with Boss memory off).
+  local enc = G.GAME and G.GAME.FinalBoss and G.GAME.FinalBoss.encounter
+  local title_key = (enc and enc.nemesis and FinalBoss.config.memory) and 'fb_nemesis_title' or 'fb_showdown_title'
+  local sub = DynaText({string = {localize(title_key)},
     colours = {G.C.WHITE}, scale = 0.6, shadow = true, pop_in = 0, pop_in_rate = 4, silent = true})
   local big = DynaText({string = {name}, colours = {c}, scale = 1.4,
     shadow = true, bump = true, pop_in = 0.2, pop_in_rate = 3, silent = true})
@@ -105,6 +108,7 @@ local function spawn_stage(fall)
   if not enc or enc.ended or total >= required then return end
   FinalBoss.avatar.spawn(C.blind, {fall = fall})
   FinalBoss.hpbar.create(FinalBoss.avatar.anchor(), C.blind, total, required)
+  FinalBoss.memory.present(C.blind) -- nemesis: crimson aura on the avatar
 end
 
 local function land()

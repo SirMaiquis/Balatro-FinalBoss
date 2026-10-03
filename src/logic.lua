@@ -138,7 +138,10 @@ function logic.detect_moments(a)
   return nil
 end
 
-logic.SHARED_MOMENTS = {opener = true, closer = true, nemesis_intro = true, nemesis_defeat = true}
+-- generic_name: the generic set's name line (fb_generic_name_N) for a boss that has its own, said
+-- after a rematch or nemesis opener (logic.intro_plan).
+logic.SHARED_MOMENTS = {opener = true, closer = true, nemesis_intro = true, nemesis_defeat = true,
+  generic_name = true}
 
 --- Find the localization key prefix for a moment: boss-specific, then generic.
 --- count_of(prefix) returns how many variants (prefix_1, prefix_2, ...) exist.
@@ -801,7 +804,8 @@ end
 
 --- Intro moments with memory. a: {tier, memory (setting), last ('won'|'lost'|nil: the player's
 --- last result against this boss), nemesis (bool), roll (math.random() in [0, 1))}.
---- Full: nemesis_intro (nemesis) or rematch_<last> replaces the shared opener.
+--- Full: nemesis_intro (nemesis) or rematch_<last> replaces the shared opener, and the name step
+--- becomes generic_name: a boss's own name line ("But I'm The Hook") answers the shared opener.
 --- Light: nemesis_intro, or on a REMATCH_CHANCE roll rematch_<last>, replaces the intro.
 function logic.intro_plan(a)
   local seq = logic.intro_sequence(a.tier)
@@ -815,7 +819,9 @@ function logic.intro_plan(a)
   end
   if not swap then return seq end
   local out = {}
-  for i, m in ipairs(seq) do out[i] = (m == slot) and swap or m end
+  for i, m in ipairs(seq) do
+    if m == slot then out[i] = swap elseif m == 'name' then out[i] = 'generic_name' else out[i] = m end
+  end
   return out
 end
 

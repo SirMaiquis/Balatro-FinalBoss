@@ -9,13 +9,15 @@ return {
             fb_cfg_moves = "Baasacties",
             fb_cfg_phase_twists = "Baasfases veranderen de regels",
             fb_showdown_title = "SHOWDOWN",
+            fb_nemesis_title = "NEMESIS",
+            fb_nemesis_defeated = "NEMESIS VERSLAGEN",
             fb_cfg_intro_speed = "Introsnelheid",
             fb_speed_slow = "Langzaam",
             fb_speed_normal = "Normaal",
             fb_speed_fast = "Snel",
             fb_cfg_min_ante = "Baasdialogen vanaf Ante",
             fb_cfg_memory = "Baasgeheugen",
-            fb_cfg_dev_mode = "Ontwikkelaarstoetsen (F5-F7)",
+            fb_cfg_dev_mode = "Ontwikkelaarstoetsen (F5-F9)",
             fb_cfg_showdown_enabled = "Eigen showdown-schema",
             fb_cfg_start_ante = "Eerste showdown bij Ante",
             fb_cfg_every = "Daarna elke N Ante's",
@@ -84,6 +86,14 @@ return {
             fb_generic_rematch_lost_1 = {"Kom je voor nog", "een pak slaag?"},
             fb_generic_rematch_lost_2 = {"Niks geleerd", "van vorige keer?"},
             fb_generic_rematch_lost_3 = {"O, jij bent het.", "De verliezer."},
+
+            -- Nemesis (shared, #1# = boss name)
+            fb_nemesis_intro_1 = {"Weet je nog?", "#1# vergeet nooit."},
+            fb_nemesis_intro_2 = {"#1# weer.", "Je aartsvijand."},
+            fb_nemesis_intro_3 = {"Je ontsnapt niet", "aan je aartsvijand."},
+            fb_nemesis_defeat_1 = {"Hoe?! Ik ben je", "aartsvijand!"},
+            fb_nemesis_defeat_2 = {"#1#... gebroken."},
+            fb_nemesis_defeat_3 = {"Dit is niet voorbij,", "rivaal..."},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Maar ik ben", "De haak"},

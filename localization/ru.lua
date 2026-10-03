@@ -9,13 +9,15 @@ return {
             fb_cfg_moves = "Приёмы боссов",
             fb_cfg_phase_twists = "Фазы боссов меняют правила",
             fb_showdown_title = "ПОЕДИНОК",
+            fb_nemesis_title = "НЕМЕЗИДА",
+            fb_nemesis_defeated = "НЕМЕЗИДА ПОВЕРЖЕНА",
             fb_cfg_intro_speed = "Скорость заставки",
             fb_speed_slow = "Медленно",
             fb_speed_normal = "Обычно",
             fb_speed_fast = "Быстро",
             fb_cfg_min_ante = "Диалоги боссов с анте",
             fb_cfg_memory = "Память боссов",
-            fb_cfg_dev_mode = "Клавиши разработчика (F5-F7)",
+            fb_cfg_dev_mode = "Клавиши разработчика (F5-F9)",
             fb_cfg_showdown_enabled = "Свое расписание поединков",
             fb_cfg_start_ante = "Первый поединок на анте",
             fb_cfg_every = "Затем каждые N анте",
@@ -84,6 +86,14 @@ return {
             fb_generic_rematch_lost_1 = {"Пришёл за новой", "взбучкой?"},
             fb_generic_rematch_lost_2 = {"Ничему не научился", "в прошлый раз?"},
             fb_generic_rematch_lost_3 = {"А, это ты.", "Неудачник."},
+
+            -- Nemesis (shared, #1# = boss name)
+            fb_nemesis_intro_1 = {"Помнишь меня?", "#1# не забывает."},
+            fb_nemesis_intro_2 = {"Снова #1#.", "Твой заклятый враг."},
+            fb_nemesis_intro_3 = {"От заклятого врага", "не сбежать."},
+            fb_nemesis_defeat_1 = {"Как?! Я же твой", "заклятый враг!"},
+            fb_nemesis_defeat_2 = {"#1#... сломлен."},
+            fb_nemesis_defeat_3 = {"Это ещё не конец,", "соперник..."},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Но я", "Крюк"},

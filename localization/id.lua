@@ -9,13 +9,15 @@ return {
             fb_cfg_moves = "Gerakan boss",
             fb_cfg_phase_twists = "Fase boss mengubah aturan",
             fb_showdown_title = "DUEL FINAL",
+            fb_nemesis_title = "NEMESIS",
+            fb_nemesis_defeated = "NEMESIS DIKALAHKAN",
             fb_cfg_intro_speed = "Kecepatan intro",
             fb_speed_slow = "Lambat",
             fb_speed_normal = "Normal",
             fb_speed_fast = "Cepat",
             fb_cfg_min_ante = "Dialog boss mulai Ante",
             fb_cfg_memory = "Ingatan boss",
-            fb_cfg_dev_mode = "Tombol developer (F5-F7)",
+            fb_cfg_dev_mode = "Tombol developer (F5-F9)",
             fb_cfg_showdown_enabled = "Jadwal duel final kustom",
             fb_cfg_start_ante = "Ante duel final pertama",
             fb_cfg_every = "Lalu setiap N Ante",
@@ -84,6 +86,14 @@ return {
             fb_generic_rematch_lost_1 = {"Mau dihajar", "lagi?"},
             fb_generic_rematch_lost_2 = {"Belum kapok", "yang kemarin?"},
             fb_generic_rematch_lost_3 = {"Oh, kamu.", "Si pecundang."},
+
+            -- Nemesis (shared, #1# = boss name)
+            fb_nemesis_intro_1 = {"Ingat aku?", "#1# tak pernah lupa."},
+            fb_nemesis_intro_2 = {"#1# lagi.", "Musuh bebuyutanmu."},
+            fb_nemesis_intro_3 = {"Kau tak bisa lari", "dari musuh bebuyutanmu."},
+            fb_nemesis_defeat_1 = {"Bagaimana?! Aku musuh", "bebuyutanmu!"},
+            fb_nemesis_defeat_2 = {"#1#... hancur."},
+            fb_nemesis_defeat_3 = {"Ini belum selesai,", "rival..."},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Tapi aku", "The Hook"},

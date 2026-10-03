@@ -9,13 +9,15 @@ return {
             fb_cfg_moves = "Movimientos de jefe",
             fb_cfg_phase_twists = "Las fases del jefe cambian las reglas",
             fb_showdown_title = "ENFRENTAMIENTO",
+            fb_nemesis_title = "NÉMESIS",
+            fb_nemesis_defeated = "NÉMESIS DERROTADA",
             fb_cfg_intro_speed = "Velocidad de la intro",
             fb_speed_slow = "Lenta",
             fb_speed_normal = "Normal",
             fb_speed_fast = "Rápida",
             fb_cfg_min_ante = "Diálogo desde apuesta inicial",
             fb_cfg_memory = "Memoria de los jefes",
-            fb_cfg_dev_mode = "Teclas de desarrollo (F5-F7)",
+            fb_cfg_dev_mode = "Teclas de desarrollo (F5-F9)",
             fb_cfg_showdown_enabled = "Enfrentamientos personalizados",
             fb_cfg_start_ante = "Primer enfrentamiento: apuesta inicial",
             fb_cfg_every = "Luego cada N apuestas iniciales",
@@ -84,6 +86,14 @@ return {
             fb_generic_rematch_lost_1 = {"¿Vienes a por otra", "paliza?"},
             fb_generic_rematch_lost_2 = {"¿No aprendiste", "la última vez?"},
             fb_generic_rematch_lost_3 = {"Ah, eres tú.", "El perdedor."},
+
+            -- Nemesis (shared, #1# = boss name)
+            fb_nemesis_intro_1 = {"¿Te acuerdas de mí?", "#1# nunca olvida."},
+            fb_nemesis_intro_2 = {"#1# otra vez.", "Tu némesis."},
+            fb_nemesis_intro_3 = {"No puedes escapar", "de tu némesis."},
+            fb_nemesis_defeat_1 = {"¡¿Cómo?! ¡Soy tu", "némesis!"},
+            fb_nemesis_defeat_2 = {"#1#... vencido."},
+            fb_nemesis_defeat_3 = {"Esto no acaba", "aquí, rival..."},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Pero soy", "El garfio"},

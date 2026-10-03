@@ -128,4 +128,83 @@ function Mem.on_interrupt(key)
   end)
 end
 
+-- Nemesis presentation (visual, rebuilt on Continue, hidden with the Boss memory setting off) --------
+
+Mem.CRIMSON = {0.86, 0.08, 0.24, 1}
+Mem.tag, Mem.hud_aura = nil, nil -- the NEMESIS tag and aura on the HUD blind chip (never saved)
+
+--- enc.recorded: the result is in (a 'none' tier encounter is never marked ended).
+local function presenting(enc)
+  return enc and enc.nemesis and FinalBoss.config.memory and not enc.ended and not enc.recorded
+end
+
+function Mem.unpresent()
+  if Mem.tag then
+    if not Mem.tag.REMOVED then Mem.tag:remove() end
+    Mem.tag = nil
+  end
+  FinalBoss.effects.remove_aura(Mem.hud_aura)
+  Mem.hud_aura = nil
+  if FinalBoss.avatar.exists() then FinalBoss.avatar.set_aura('nemesis', 0) end
+end
+
+--- Show that this boss is the player's nemesis: a crimson aura on the showdown avatar when it is on
+--- the table (moves.performer), otherwise a red NEMESIS tag above the HUD blind chip and a faint
+--- crimson aura on it. Decided by enc.nemesis (set at blind set); nothing with Boss memory off.
+function Mem.present(blind)
+  local st = G.GAME and G.GAME.FinalBoss
+  local enc = st and st.encounter
+  if not presenting(enc) then return end
+  if not (blind and blind.config and blind.config.blind and blind.config.blind.key == enc.key) then return end
+  Mem.unpresent()
+  local p = FinalBoss.moves.performer(blind)
+  if p.avatar then
+    FinalBoss.avatar.set_aura('nemesis', 2, Mem.CRIMSON)
+    return
+  end
+  Mem.hud_aura = FinalBoss.effects.aura(p.obj, Mem.CRIMSON, 1)
+  Mem.tag = UIBox{
+    definition = {n = G.UIT.ROOT, config = {align = 'cm', colour = Mem.CRIMSON, r = 0.1, padding = 0.05}, nodes = {
+      {n = G.UIT.T, config = {text = localize('fb_nemesis_title'), scale = 0.3, colour = G.C.WHITE, shadow = true}}}},
+    config = {major = p.obj, align = 'tm', offset = {x = 0, y = -0.05}, bond = 'Weak', can_collide = false},
+  }
+  -- Drawn in vanilla's late pass (game.lua:2822-2829), so the HUD panel never covers it.
+  Mem.tag.attention_text = true
+end
+
+--- The nemesis's own defeat line replaces its normal one (Dir.fire opts.line).
+function Mem.defeat_line(enc, moment)
+  if moment == 'defeat' and enc and enc.nemesis and FinalBoss.config.memory then return 'nemesis_defeat' end
+  return nil
+end
+
+--- The nemesis fell: a gold burst over the play area (needs screen effects), a gold banner and a gong.
+function Mem.celebrate()
+  if FinalBoss.config.fx and G.play and G.play.T then
+    local T = G.play.T
+    FinalBoss.effects.burst({x = T.x, y = T.y, w = T.w, h = T.h}, nil, {colour = G.C.GOLD, scale = 1.6})
+  end
+  attention_text{text = localize('fb_nemesis_defeated'), scale = 1.1, hold = 2.5, major = G.play,
+    align = 'cm', offset = {x = 0, y = -1.6}, colour = G.C.GOLD}
+  play_sound('gong', 1.25, 0.45)
+end
+
+--- Developer key F9: make the current boss the profile's nemesis (saved like a real one) and
+--- present it now. Returns the boss key, or nil when no boss fight is on.
+function Mem.fake_nemesis()
+  local st = G.GAME and G.GAME.FinalBoss
+  local enc = st and st.encounter
+  local blind = G.GAME and G.GAME.blind
+  if not (enc and enc.boss and not enc.ended and not enc.recorded and blind and blind.config
+      and blind.config.blind and blind.config.blind.key == enc.key) then return nil end
+  local m = Mem.data()
+  if not m then return nil end
+  m.nemesis = enc.key
+  m.broken[enc.key] = nil
+  enc.nemesis = true
+  Mem.save()
+  Mem.present(blind)
+  return enc.key
+end
+
 return Mem

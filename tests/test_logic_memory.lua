@@ -95,9 +95,9 @@ end
 
 T['intro_plan: a final boss rematch replaces the opener'] = function()
   eq(table.concat(logic.intro_plan{tier = 'full', memory = true, last = 'won', roll = 0.99}, ','),
-    'rematch_won,name,intro,closer')
+    'rematch_won,generic_name,intro,closer')
   eq(table.concat(logic.intro_plan{tier = 'full', memory = true, last = 'lost', roll = 0.99}, ','),
-    'rematch_lost,name,intro,closer')
+    'rematch_lost,generic_name,intro,closer')
 end
 
 T['intro_plan: a regular boss rematch replaces the intro on a 50% roll'] = function()
@@ -108,7 +108,7 @@ end
 
 T['intro_plan: the nemesis line takes precedence'] = function()
   eq(table.concat(logic.intro_plan{tier = 'full', memory = true, last = 'lost', nemesis = true, roll = 0}, ','),
-    'nemesis_intro,name,intro,closer')
+    'nemesis_intro,generic_name,intro,closer')
   eq(table.concat(logic.intro_plan{tier = 'light', memory = true, last = 'won', nemesis = true, roll = 0.99}, ','),
     'nemesis_intro')
 end
@@ -213,7 +213,18 @@ end
 
 T['intro_plan: nemesis line shown even without last'] = function()
   local ids = logic.intro_plan{tier = 'full', memory = true, last = nil, nemesis = true, roll = 0}
-  eq(table.concat(ids, ','), 'nemesis_intro,name,intro,closer')
+  eq(table.concat(ids, ','), 'nemesis_intro,generic_name,intro,closer')
+end
+
+T['intro_plan: the name step goes generic only when the opener was replaced'] = function()
+  -- "But I'm The X" answers the shared opener; after a rematch or nemesis line it has nothing to contrast.
+  eq(table.concat(logic.intro_plan{tier = 'full', memory = true, last = nil, nemesis = false, roll = 0}, ','),
+    'opener,name,intro,closer')
+  eq(table.concat(logic.intro_plan{tier = 'full', memory = true, last = 'won', nemesis = true, roll = 0}, ','),
+    'nemesis_intro,generic_name,intro,closer')
+  local count = function(p) return (p == 'fb_generic_name' or p == 'fb_bl_hook_name') and 3 or 0 end
+  eq(logic.resolve_prefix('bl_hook', 'generic_name', count), 'fb_generic_name', 'skips the boss name line')
+  eq(logic.resolve_prefix('bl_hook', 'name', count), 'fb_bl_hook_name', 'the plain name step is unchanged')
 end
 
 T['record_result: works on records with missing fields (or 0 guards)'] = function()

@@ -42,6 +42,7 @@ function Dir.on_blind_set(blind)
   local st = FinalBoss.util.state()
   FinalBoss.dialogue.reset(blind)
   FinalBoss.moves.on_blind_set()
+  FinalBoss.memory.unpresent()
   local proto = blind.config.blind or {}
   if not proto.key then st.encounter = nil; return end
   local entry = FinalBoss.registry.get(proto.key)
@@ -67,6 +68,8 @@ function Dir.on_blind_set(blind)
     FinalBoss.memory.on_fight(proto.key)
     enc.last = FinalBoss.memory.last(proto.key)
     enc.nemesis = FinalBoss.memory.is_nemesis(proto.key)
+    -- Cinematic showdowns present the nemesis when the avatar lands (cinematic.spawn_stage).
+    if not cinematic then FinalBoss.memory.present(blind) end
   end
   st.lost_to = nil
   if tier == 'none' then Dir.schedule_start(proto.key); return end
@@ -123,6 +126,10 @@ end
 function Dir.on_blind_loaded(blind)
   FinalBoss.dialogue.reset(blind) -- a loaded blind never has a live bubble
   local enc = (G.GAME.FinalBoss or {}).encounter
+  -- 1.1: the nemesis presentation is visual, so rebuild it (HUD now; the avatar's aura below).
+  -- present() checks the encounter: this blind, nemesis, not over, Boss memory on.
+  FinalBoss.memory.unpresent()
+  FinalBoss.memory.present(blind)
   if not enc or enc.tier ~= 'full' or enc.ended then return end
   if not (blind.config.blind and blind.config.blind.key == enc.key) then return end
   FinalBoss.fx.resume(blind)
@@ -136,6 +143,7 @@ function Dir.on_blind_loaded(blind)
     FinalBoss.avatar.set_wound(stage)
     FinalBoss.hpbar.create(FinalBoss.avatar.anchor(), blind, total, required)
     FinalBoss.phases.restore(enc, blind) -- after spawn and create: stance aura and phase marker
+    FinalBoss.memory.present(blind) -- the avatar is back: its crimson aura replaces the HUD tag
   end
 end
 
@@ -143,6 +151,7 @@ end
 function Dir.on_round_end()
   Dir.flush_pending()
   FinalBoss.phases.reset() -- (the twist clean-up runs ungated in hooks.lua's end_round wrap)
+  FinalBoss.memory.unpresent()
   local st = FinalBoss.util.state()
   local enc = st.encounter
   if not enc then return end
@@ -179,7 +188,8 @@ function Dir.fire(moment, opts)
     FinalBoss.fx.play('flash', blind)
   end
   if not FinalBoss.config.dialogue then return true end
-  local key = FinalBoss.registry.resolve(enc.key, moment, enc.last_variant)
+  -- opts.line: say another moment's line for this moment (1.1: the nemesis's own defeat line).
+  local key = FinalBoss.registry.resolve(enc.key, opts.line or moment, enc.last_variant)
   if not key then return true end
   local entry = FinalBoss.registry.get(enc.key)
   FinalBoss.dialogue.say(blind, key, Dir.vars(blind), entry.voice.pitch,
@@ -242,12 +252,13 @@ local function react(p)
   -- stays unfired, so a later hand can still trigger it), except the defeat line, which always
   -- plays (and may replace the interrupted bubble). The stage hit above still played.
   if FinalBoss.logic.moment_replaced(enc.interrupt_hand, p.hand, p.moment) then return end
-  if wait <= 0 then Dir.fire(p.moment); return end
+  local line = FinalBoss.memory.defeat_line(enc, p.moment) -- nil unless the nemesis falls
+  if wait <= 0 then Dir.fire(p.moment, {line = line}); return end
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = wait, timer = 'REAL', blocking = false,
     blockable = false, func = function()
       FinalBoss.util.guard('moment_after_laugh', function()
         local e = current()
-        if e and e == enc and not e.ended then Dir.fire(p.moment) end
+        if e and e == enc and not e.ended then Dir.fire(p.moment, {line = line}) end
       end)
       return true
     end}))
@@ -316,8 +327,12 @@ function Dir.on_blind_defeated()
   local raw = FinalBoss.util.state().encounter
   local gb = G.GAME.blind
   if raw and raw.boss and not raw.recorded and gb and gb.config.blind and gb.config.blind.key == raw.key then
-    if FinalBoss.memory.on_win(raw) then raw.recorded = true end
+    local m, beaten = FinalBoss.memory.on_win(raw)
+    if m then raw.recorded = true end
+    -- The nemesis fell (its own defeat line already played): burst, banner; it is now broken.
+    if beaten and FinalBoss.config.memory then FinalBoss.memory.celebrate() end
   end
+  FinalBoss.memory.unpresent()
   local enc, blind = current()
   if not enc then return end
   enc.ended = true
@@ -382,7 +397,8 @@ function Dir.reset_stage()
   local ok, err = pcall(function()
     for _, step in ipairs({FinalBoss.cinematic.reset, FinalBoss.hpbar.remove, FinalBoss.avatar.remove,
         FinalBoss.arena.reset, FinalBoss.fx.reset, FinalBoss.effects.reset, FinalBoss.moves.reset,
-        FinalBoss.phases.reset, FinalBoss.phases.clear_twists, FinalBoss.music.unduck}) do
+        FinalBoss.phases.reset, FinalBoss.phases.clear_twists, FinalBoss.music.unduck,
+        FinalBoss.memory.unpresent}) do
       local sok, serr = pcall(step)
       if not sok then FinalBoss.util.log('error', 'reset_stage step failed: ' .. tostring(serr)) end
     end

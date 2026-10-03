@@ -5,6 +5,7 @@
 ---   F6: fire the next moment (big_hand, close, last_hand, disabled, defeat)
 ---   F7: dump FinalBoss state to the Lovely log
 ---   F8: push the current final boss to its next phase (cinematic showdowns)
+---   F9: make the current boss your nemesis (profile memory) and show it
 local DT = {}
 DT.SHOWDOWNS = {'bl_final_acorn', 'bl_final_leaf', 'bl_final_vessel', 'bl_final_heart', 'bl_final_bell'}
 DT.force_idx = 0
@@ -83,6 +84,13 @@ SMODS.Keybind{key_pressed = 'f8', action = function()
   if not DT.on() then return end
   local ok, phase = FinalBoss.util.guard('dev_f8', FinalBoss.phases.force_next)
   FinalBoss.util.log('info', 'dev: next phase -> ' .. tostring(ok and phase))
+end}
+
+--- F9: fake a nemesis for the current boss (saved in the profile like a real one).
+SMODS.Keybind{key_pressed = 'f9', action = function()
+  if not DT.on() then return end
+  local ok, key = FinalBoss.util.guard('dev_f9', FinalBoss.memory.fake_nemesis)
+  FinalBoss.util.log('info', 'dev: fake nemesis -> ' .. tostring(ok and key))
 end}
 
 return DT

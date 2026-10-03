@@ -9,13 +9,15 @@ return {
             fb_cfg_moves = "Boss招式",
             fb_cfg_phase_twists = "Boss階段改變規則",
             fb_showdown_title = "決戰",
+            fb_nemesis_title = "宿敵",
+            fb_nemesis_defeated = "擊敗宿敵",
             fb_cfg_intro_speed = "開場速度",
             fb_speed_slow = "慢速",
             fb_speed_normal = "普通",
             fb_speed_fast = "快速",
             fb_cfg_min_ante = "對話起始底注",
             fb_cfg_memory = "Boss記憶",
-            fb_cfg_dev_mode = "開發者按鍵 (F5-F7)",
+            fb_cfg_dev_mode = "開發者按鍵 (F5-F9)",
             fb_cfg_showdown_enabled = "自訂決戰安排",
             fb_cfg_start_ante = "首次決戰底注",
             fb_cfg_every = "之後每N個底注",
@@ -84,6 +86,14 @@ return {
             fb_generic_rematch_lost_1 = {"又來", "討打了？"},
             fb_generic_rematch_lost_2 = {"上次還沒", "學乖？"},
             fb_generic_rematch_lost_3 = {"喔，是你啊。", "手下敗將。"},
+
+            -- Nemesis (shared, #1# = boss name)
+            fb_nemesis_intro_1 = {"還記得我嗎？", "#1#從不忘記。"},
+            fb_nemesis_intro_2 = {"又是#1#。", "你的宿敵。"},
+            fb_nemesis_intro_3 = {"你逃不出", "宿敵的手掌心。"},
+            fb_nemesis_defeat_1 = {"怎麼會？！", "我可是你的宿敵！"},
+            fb_nemesis_defeat_2 = {"#1#...", "被擊潰了。"},
+            fb_nemesis_defeat_3 = {"這事沒完，", "對手..."},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"但我是", "鉤子！"},
@@ -321,7 +331,7 @@ return {
             fb_bl_serpent_gloat_1 = {"嘶嘶，再見！"},
             fb_bl_serpent_interrupted_1 = {"嘶嘶！別插嘴！"},
             fb_bl_serpent_rematch_won_1 = {"你逃出過", "我的盤繞。"},
-            fb_bl_serpent_rematch_lost_1 = {"嘶嘶…", "你回來了…"},
+            fb_bl_serpent_rematch_lost_1 = {"嘶嘶...", "你回來了..."},
 
             -- The Pillar: cards played previously this ante are debuffed
             fb_bl_pillar_name_1 = {"但我是", "支柱！"},
@@ -362,7 +372,7 @@ return {
             fb_bl_head_defeat_1 = {"為你丟了腦袋..."},
             fb_bl_head_gloat_1 = {"沒心沒肺吧？"},
             fb_bl_head_interrupted_1 = {"你昏頭了嗎？", "我在說話！"},
-            fb_bl_head_rematch_won_1 = {"你曾贏得", "我的心…"},
+            fb_bl_head_rematch_won_1 = {"你曾贏得", "我的心..."},
             fb_bl_head_rematch_lost_1 = {"又來", "心碎一次？"},
 
             -- The Tooth: lose $1 per card played
