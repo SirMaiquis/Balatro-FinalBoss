@@ -8,7 +8,11 @@ local function director() return FinalBoss.director end
 local showdown_error_logged = false
 
 FinalBoss.mod.calculate = function(self, context)
-  if not G.GAME or not director().enabled() then return end
+  if not G.GAME then return end
+  -- Game-state cleanup, not a visual: the Leaf twist's saved debuffs go with the blind even when
+  -- FinalBoss disabled itself mid-fight (a guard failure: disabled_for_run).
+  if context.blind_defeated then U.guard('twist_cleanup', FinalBoss.phases.clear_twists) end
+  if not director().enabled() then return end
   if context.setting_blind then
     U.guard('setting_blind', director().on_blind_set, G.GAME.blind)
   elseif context.after then
@@ -44,6 +48,7 @@ function end_round(...)
   local ev = q[n + 1]
   G.E_MANAGER:add_event(Event({pause_force = true, blocking = false, func = function()
     if ev and not ev.complete then return false end
+    U.guard('twist_cleanup', FinalBoss.phases.clear_twists) -- game state: runs even when disabled
     if director().enabled() then U.guard('end_round', director().on_round_end) end
     return true
   end}))

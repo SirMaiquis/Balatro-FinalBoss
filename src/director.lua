@@ -131,8 +131,7 @@ end
 --- Runs after vanilla's end-of-round event, so Mr. Bones saves are resolved.
 function Dir.on_round_end()
   Dir.flush_pending()
-  FinalBoss.phases.reset()
-  FinalBoss.phases.clear_twists()
+  FinalBoss.phases.reset() -- (the twist clean-up runs ungated in hooks.lua's end_round wrap)
   local st = FinalBoss.util.state()
   local enc = st.encounter
   if not enc then return end
@@ -298,8 +297,7 @@ end
 
 function Dir.on_blind_defeated()
   FinalBoss.curse.clear() -- the curse marks go with the blind (any tier)
-  Dir.flush_pending()
-  FinalBoss.phases.clear_twists()
+  Dir.flush_pending() -- (the twist clean-up runs ungated in hooks.lua's mod.calculate)
   local enc, blind = current()
   if not enc then return end
   enc.ended = true
@@ -363,7 +361,7 @@ function Dir.reset_stage()
   local ok, err = pcall(function()
     for _, step in ipairs({FinalBoss.cinematic.reset, FinalBoss.hpbar.remove, FinalBoss.avatar.remove,
         FinalBoss.arena.reset, FinalBoss.fx.reset, FinalBoss.effects.reset, FinalBoss.moves.reset,
-        FinalBoss.phases.reset, FinalBoss.music.unduck}) do
+        FinalBoss.phases.reset, FinalBoss.phases.clear_twists, FinalBoss.music.unduck}) do
       local sok, serr = pcall(step)
       if not sok then FinalBoss.util.log('error', 'reset_stage step failed: ' .. tostring(serr)) end
     end

@@ -56,19 +56,27 @@ local function setup(opts)
   ctx.hand, ctx.jokers = cards(opts.hand or 0), cards(opts.jokers or 0)
   _G.G = {SETTINGS = {reduced_motion = opts.reduced or false},
     GAME = {FinalBoss = {encounter = enc}, blind = blind, chips = 600},
-    hand = {cards = ctx.hand, add_to_highlighted = rec('highlight')},
+    hand = {cards = ctx.hand, add_to_highlighted = function(_, c)
+      ctx.calls[#ctx.calls + 1] = 'highlight'
+      c.highlighted = true
+    end},
     jokers = {cards = ctx.jokers, unhighlight_all = function() end, set_ranks = rec('set_ranks')},
     playing_cards = ctx.hand,
     E_MANAGER = {add_event = function(_, ev) ctx.events[#ctx.events + 1] = {at = ctx.clock + (ev.delay or 0), func = ev.func} end}}
   _G.Event = function(t) return t end
   _G.play_sound = rec('sound')
   _G.number_format = function(n) return tostring(n) end
-  _G.SMODS = {debuff_card = function(c, debuff, source)
+  -- smods: a card is debuffed while a debuff source holds or (a joker) the Heart's flag is set
+  -- (Blind:debuff_card as smods lovely/fixes.toml patches it)
+  local function recalc(c)
+    local any = c.ability.crimson_heart_chosen or false
+    for _, v in pairs(c.ability.debuff_sources or {}) do any = any or v end
+    c.debuff = any and true or false
+  end
+  _G.SMODS = {recalc_debuff = recalc, debuff_card = function(c, debuff, source)
     c.ability.debuff_sources = c.ability.debuff_sources or {}
     c.ability.debuff_sources[source] = debuff
-    local any = false
-    for _, v in pairs(c.ability.debuff_sources) do any = any or v end
-    c.debuff = any and true or false
+    recalc(c)
   end}
   package.loaded['src.logic'] = nil
   _G.FinalBoss = {
@@ -344,8 +352,28 @@ T['twists: a Chicot-disabled Leaf (no sale) gets no regrowth'] = function()
   eq(ctx.count('curse_mark'), 0)
 end
 
+--- smods' Crimson Heart draw (lovely/fixes.toml:265-310): un-flag last hand's chosen jokers, then flag
+--- one joker that is not debuffed and was not chosen last hand (first one: deterministic).
+local function heart_draw(jokers)
+  local prev = {}
+  for _, j in ipairs(jokers) do
+    if j.ability.crimson_heart_chosen then
+      prev[j] = true
+      j.ability.crimson_heart_chosen = nil
+      SMODS.recalc_debuff(j)
+    end
+  end
+  for _, j in ipairs(jokers) do
+    if not j.debuff and not prev[j] then
+      j.ability.crimson_heart_chosen = true
+      SMODS.recalc_debuff(j)
+      return
+    end
+  end
+end
+
 T['twists: Crimson Heart disables one more joker after a played hand; phase III beams it'] = function()
-  local P, ctx = setup({key = 'bl_final_heart', twists = true, jokers = 4})
+  local P, ctx = setup({key = 'bl_final_heart', twists = true, jokers = 5})
   ctx.enc.phase = 2
   local function off()
     local n = 0
@@ -354,24 +382,122 @@ T['twists: Crimson Heart disables one more joker after a played hand; phase III 
   end
   P.on_drawn(ctx.blind, {prepped = false})
   eq(off(), 0, 'only after a played hand')
+  heart_draw(ctx.jokers)
   P.on_drawn(ctx.blind, {prepped = true})
-  eq(off(), 1)
+  eq(off(), 2, "the Heart's pick and the twist's")
   eq(ctx.count('glare'), 0, 'no beam in phase II')
   ctx.enc.phase = 3
+  heart_draw(ctx.jokers)
   P.on_drawn(ctx.blind, {prepped = true})
-  eq(off(), 2)
+  eq(off(), 2, 'phase III')
   eq(ctx.count('glare'), 1, 'beam in phase III')
 end
 
-T['twists: Cerulean Bell keeps two cards forced'] = function()
+T['twists: the Heart twist uses the flag, so it never piles up'] = function()
+  local P, ctx = setup({key = 'bl_final_heart', twists = true, jokers = 5})
+  ctx.enc.phase = 2
+  for hand_no = 1, 6 do
+    heart_draw(ctx.jokers)
+    P.on_drawn(ctx.blind, {prepped = true})
+    local n = 0
+    for _, j in ipairs(ctx.jokers) do
+      if j.debuff then
+        n = n + 1
+        eq(j.ability.crimson_heart_chosen, true, 'every disabled joker carries the flag')
+      end
+    end
+    eq(n, 2, 'hand ' .. hand_no)
+  end
+end
+
+T['twists: Cerulean Bell keeps two cards forced and selected'] = function()
   local P, ctx = setup({key = 'bl_final_bell', twists = true, hand = 6})
   ctx.enc.phase = 2
-  ctx.hand[1].ability.forced_selection = true -- vanilla's own
+  ctx.hand[1].ability.forced_selection = true -- vanilla's own, selected
+  ctx.hand[1].highlighted = true
   P.on_drawn(ctx.blind, {})
   local n = 0
-  for _, c in ipairs(ctx.hand) do if c.ability.forced_selection then n = n + 1 end end
+  for _, c in ipairs(ctx.hand) do
+    if c.ability.forced_selection then
+      n = n + 1
+      eq(c.highlighted, true, 'forced card ' .. c.id .. ' selected')
+    end
+  end
   eq(n, 2)
   eq(ctx.count('highlight'), 1)
+end
+
+T['twists: Cerulean Bell also selects a forced card left unselected'] = function()
+  local P, ctx = setup({key = 'bl_final_bell', twists = true, hand = 6})
+  ctx.enc.phase = 2
+  ctx.hand[2].ability.forced_selection = true
+  ctx.hand[4].ability.forced_selection = true
+  ctx.hand[2].highlighted = true -- vanilla re-selects only while nothing is selected
+  P.on_drawn(ctx.blind, {})
+  eq(ctx.hand[4].highlighted, true)
+  eq(ctx.count('highlight'), 1, 'no new forced card, one selection')
+end
+
+T['twists: applied keys are strings (saved data)'] = function()
+  local P, ctx = setup({key = 'bl_final_vessel', twists = true})
+  ctx.enc.phase = 2
+  P.apply_once(ctx.enc, ctx.blind, 2)
+  eq(ctx.enc.twists.applied['2'], true)
+  eq(ctx.enc.twists.applied[2], nil)
+end
+
+T['twists: a hand that skips phase II applies II and III'] = function()
+  local P, ctx = setup({key = 'bl_final_vessel', twists = true})
+  P.transform(ctx.enc, ctx.blind, 3, 1)
+  ctx.advance(2)
+  eq(ctx.blind.chips, 1200, 'healed 10% twice')
+  eq(ctx.enc.twists.applied['2'], true)
+  eq(ctx.enc.twists.applied['3'], true)
+end
+
+T['twists: Continue applies a one-shot twist a save cut off, once'] = function()
+  local P, ctx = setup({key = 'bl_final_vessel', twists = true})
+  ctx.enc.phase = 2 -- saved before the return step
+  P.restore(ctx.enc, ctx.blind)
+  eq(ctx.blind.chips, 1100)
+  P.restore(ctx.enc, ctx.blind)
+  eq(ctx.blind.chips, 1100, 'never twice')
+end
+
+T['twists: Continue rebuilds the Leaf vines on withered hand cards'] = function()
+  local P, ctx = setup({key = 'bl_final_leaf', twists = true, hand = 4})
+  ctx.enc.phase = 2
+  ctx.enc.twists.leaf_sold = true
+  ctx.blind.disabled = true
+  SMODS.debuff_card(ctx.hand[3], true, P.LEAF_SOURCE)
+  P.restore(ctx.enc, ctx.blind)
+  eq(ctx.count('curse_mark'), 1)
+  eq(#ctx.args.curse_mark[1], 1, 'one card')
+  eq(ctx.args.curse_mark[1][1], ctx.hand[3])
+  eq(ctx.args.curse_mark[2], 'vine')
+end
+
+T['twists: Continue selects the Bell forced cards again'] = function()
+  local P, ctx = setup({key = 'bl_final_bell', twists = true, hand = 5})
+  ctx.enc.phase = 2
+  ctx.hand[1].ability.forced_selection = true
+  ctx.hand[5].ability.forced_selection = true
+  P.restore(ctx.enc, ctx.blind)
+  ctx.advance(0)
+  eq(ctx.hand[1].highlighted, true)
+  eq(ctx.hand[5].highlighted, true)
+end
+
+T['twists: clear_twists is safe with nothing to clear or no blind'] = function()
+  local P, ctx = setup({hand = 3})
+  P.clear_twists()
+  G.playing_cards = nil
+  P.clear_twists()
+  G.playing_cards = ctx.hand
+  ctx.hand[1].ability.debuff_sources = {[P.LEAF_SOURCE] = true}
+  G.GAME.blind = nil -- run teardown
+  P.clear_twists()
+  eq(ctx.hand[1].ability.debuff_sources[P.LEAF_SOURCE], nil)
 end
 
 T['phases.restore: stance and marker come back without replaying; 1.0 saves stay phase I'] = function()

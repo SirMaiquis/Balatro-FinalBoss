@@ -134,7 +134,7 @@ function P.transform(enc, blind, phase, from)
     FinalBoss.hpbar.set_phase(phase)
     local A = FinalBoss.arena
     if A.state then A.on_hit(A.state.stage) end
-    P.apply_once(enc, blind, phase) -- twists: Acorn shuffle, Vessel heal (others act per draw)
+    P.apply_upto(enc, blind, phase) -- twists: Acorn shuffle, Vessel heal (others act per draw)
   end)
 end
 
@@ -218,7 +218,11 @@ function DRAW.leaf_debuff(enc, blind, t)
   end
 end
 
---- Crimson Heart: one more joker disabled per hand (phase III: with a crack beam on it).
+--- Crimson Heart: one more joker disabled per hand (phase III: with a crack beam on it). It uses the
+--- Heart's own smods mechanic (smods lovely/fixes.toml:265-360): the ability.crimson_heart_chosen
+--- flag, applied by SMODS.recalc_debuff (smods src/utils.lua:479-481 -> Blind:debuff_card, which keeps
+--- flagged jokers debuffed). So the next draw un-flags and re-enables it and leaves it out of that
+--- pick, Blind:disable / Blind:defeat clear it, and the flag is saved with the joker.
 function DRAW.heart_extra(enc, blind, t, snap)
   if not snap.prepped then return end -- the Heart only picks after a played hand (blind.lua:588)
   local pool = {}
@@ -227,13 +231,22 @@ function DRAW.heart_extra(enc, blind, t, snap)
   end
   local picked = FinalBoss.logic.sample(pool, t.count, math.random)
   for _, j in ipairs(picked) do
-    j:set_debuff(true)
-    j.debuffed_by_blind = true
+    j.ability.crimson_heart_chosen = true
+    SMODS.recalc_debuff(j)
     j:juice_up()
   end
   if t.beam and #picked > 0 and FinalBoss.config.fx then
     local M = FinalBoss.moves
     FinalBoss.effects.glare(M.performer(blind), picked, {colour = M.boss_colour(blind), line = true})
+  end
+end
+
+--- Select every forced card that is not selected. Vanilla only re-selects a forced card while nothing
+--- is selected (CardArea update, cardarea.lua:253-257), so a second forced card (or both after
+--- Continue: highlights are not saved) would stay unselected.
+local function select_forced()
+  for _, c in ipairs(G.hand and G.hand.cards or {}) do
+    if c.ability.forced_selection and not c.highlighted then G.hand:add_to_highlighted(c) end
   end
 end
 
@@ -245,18 +258,27 @@ function DRAW.bell_force(enc, blind, t)
   end
   for _, c in ipairs(FinalBoss.logic.sample(pool, t.count - forced, math.random)) do
     c.ability.forced_selection = true
-    G.hand:add_to_highlighted(c)
   end
+  select_forced()
 end
 
 --- One-shot twist when a phase is reached (Acorn shuffle, Vessel heal). enc.twists.applied keeps
---- Continue from repeating it.
+--- Continue from repeating it. Its keys are strings ('2', '3'): plain saved data whatever the
+--- serializer does with number keys.
 function P.apply_once(enc, blind, phase)
   if not twists_live(enc, blind) then return end
   local t = FinalBoss.logic.twist_for(enc.key, phase)
-  if not (t and t.once and ONCE[t.once]) or enc.twists.applied[phase] then return end
-  enc.twists.applied[phase] = true
+  local k = tostring(phase)
+  if not (t and t.once and ONCE[t.once]) or enc.twists.applied[k] then return end
+  enc.twists.applied[k] = true
   ONCE[t.once](enc, blind, t)
+end
+
+--- Every one-shot twist up to `phase` not applied yet: a hand that skips phase II applies II and III
+--- (the Vessel heals another 10% at III), and Continue applies one a save cut off (a save in the
+--- 1.5 s before the return step). apply_once keeps each one single.
+function P.apply_upto(enc, blind, phase)
+  for ph = 2, phase or 1 do P.apply_once(enc, blind, ph) end
 end
 
 --- hooks.lua, after vanilla's drawn_to_hand and moves.on_drawn: per-draw twists (Leaf, Heart, Bell).
@@ -280,21 +302,46 @@ function P.on_disable(blind, selling)
   end
 end
 
---- The fight is over (defeat or round end): remove the Leaf's regrowth debuffs.
+--- The fight is over (defeat, round end) or FinalBoss stopped (Dir.reset_stage): remove the Leaf's
+--- regrowth debuffs. Game-state cleanup: hooks.lua runs it even when FinalBoss is disabled for the
+--- run. A no-op when no card carries the source; a removed card (run teardown) only loses the field.
 function P.clear_twists()
+  if not G then return end
+  local can_recalc = G.GAME and G.GAME.blind and true or false
   for _, c in ipairs(G.playing_cards or {}) do
     local src = c.ability and c.ability.debuff_sources
-    if src and src[P.LEAF_SOURCE] then SMODS.debuff_card(c, nil, P.LEAF_SOURCE) end
+    if src and src[P.LEAF_SOURCE] then
+      if can_recalc and not c.REMOVED then SMODS.debuff_card(c, nil, P.LEAF_SOURCE) else src[P.LEAF_SOURCE] = nil end
+    end
   end
 end
 
 --- Continue mid-showdown (after the avatar and HP bar are rebuilt: H.create resets the marker and
 --- V.spawn has no aura): stance and marker come back, the transformation does not replay. 1.0 saves
---- have no enc.phase: phase I.
+--- have no enc.phase: phase I. Twists: a one-shot twist a save cut off is applied now, the Leaf's
+--- vines (transient marks) come back on the cards that carry its debuff, and the Bell's forced cards
+--- are selected again (highlights are not saved; queued until the load is complete).
 function P.restore(enc, blind)
   if not (enc and enc.phase and enc.phase > 1) or not P.active(enc, blind) then return end
-  FinalBoss.avatar.set_stance(enc.phase, FinalBoss.moves.boss_colour(blind))
+  local M = FinalBoss.moves
+  FinalBoss.avatar.set_stance(enc.phase, M.boss_colour(blind))
   FinalBoss.hpbar.set_phase(enc.phase)
+  P.apply_upto(enc, blind, enc.phase)
+  local withered = {}
+  for _, c in ipairs(G.hand and G.hand.cards or {}) do
+    local src = c.ability and c.ability.debuff_sources
+    if src and src[P.LEAF_SOURCE] then withered[#withered + 1] = c end
+  end
+  if #withered > 0 then FinalBoss.curse.mark(withered, 'vine', M.boss_colour(blind), blind) end
+  local t = twists_live(enc, blind) and FinalBoss.logic.twist_for(enc.key, enc.phase)
+  if t and t.draw == 'bell_force' then
+    G.E_MANAGER:add_event(Event({func = function()
+      FinalBoss.util.guard('twist_bell_restore', function()
+        if live(enc) then select_forced() end
+      end)
+      return true
+    end}))
+  end
 end
 
 --- Developer key F8: push the current final boss to its next phase (not while the finale plays).
