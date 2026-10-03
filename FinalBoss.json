@@ -3,7 +3,7 @@
 	"name": "Final Boss",
 	"display_name": "Final Boss",
 	"author": ["SirMaiquis"],
-	"description": "Bosses talk back, showdowns get cinematic, and you decide when final bosses appear.",
+	"description": "Bosses talk back and strike with signature moves, showdowns get cinematic with phase changes, bosses remember you, and you decide when final bosses appear.",
 	"prefix": "FinalBoss",
 	"main_file": "main.lua",
 	"priority": -10,
