@@ -222,6 +222,25 @@ T['clean_recipe returns nil when nothing valid remains'] = function()
   eq(r2, nil); eq(#w2, 1)
 end
 
+T['clean_recipe coerces numeric options and drops non-numeric ones with a warning'] = function()
+  local ring = {effect = 'ring', count = '3', scale = 'big'}
+  local recount = {effect = 'recount', target = 'hud_hands', value = 'hands', time = '0.5', hold = {},
+    cue = {{effect = 'burst', scale = '1.5'}}}
+  local r, w = logic.clean_recipe({ring, {effect = 'sweep', time = 0.8}, recount,
+    {effect = 'drain', amount = '4'}, {effect = 'drain', amount = 'money'}, {effect = 'drain', amount = 'lots'}})
+  eq(#r, 6, 'every step kept')
+  eq(r[1].count, 3, 'count coerced'); eq(r[1].scale, nil, 'scale dropped')
+  eq(r[2].time, 0.8, 'numbers untouched')
+  eq(r[3].time, 0.5, 'time coerced'); eq(r[3].hold, nil, 'hold dropped')
+  eq(r[3].cue[1].scale, 1.5, 'cue steps too')
+  eq(r[4].amount, 4, 'numeric amount coerced')
+  eq(r[5].amount, 'money', 'amount keywords kept')
+  eq(r[6].amount, nil, 'amount dropped')
+  eq(#w, 3, 'one warning per dropped value')
+  eq(ring.count, '3', 'the shared recipe table is never edited')
+  eq(recount.cue[1].scale, '1.5', 'nor its cue')
+end
+
 T['clean_moves validates kinds and recipes'] = function()
   local m, w = logic.clean_moves({play = {{effect = 'fling', target = 'cards'}}, dance = {{effect = 'burst'}},
     start = {{effect = 'nope'}}})

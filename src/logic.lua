@@ -325,6 +325,31 @@ local function step_problem(step)
   return nil
 end
 
+--- Step options that must be numbers (effects do arithmetic on them every frame). amount may also
+--- be a keyword (logic.step_amount).
+local NUMERIC_OPTS = {'scale', 'count', 'time', 'hold', 'amount'}
+local AMOUNT_WORDS = {played = true, money = true}
+
+--- The step with its numeric options as numbers: a numeric string is converted, anything else is
+--- dropped with a warning. Copies the step before changing it (recipe tables are shared).
+local function fix_numbers(step, where, warnings)
+  local copy = step
+  for _, k in ipairs(NUMERIC_OPTS) do
+    local v = step[k]
+    if v ~= nil and type(v) ~= 'number' and not (k == 'amount' and AMOUNT_WORDS[v]) then
+      if copy == step then
+        copy = {}
+        for kk, vv in pairs(step) do copy[kk] = vv end
+      end
+      copy[k] = tonumber(v)
+      if copy[k] == nil then
+        warnings[#warnings + 1] = ('%s: %s is not a number (%s), ignored'):format(where, k, tostring(v))
+      end
+    end
+  end
+  return copy
+end
+
 --- A recipe is a list of steps {effect = name, target = name, ...options} plus optional
 --- recipe.sound = {key, pitch, volume}, recipe.defer (moves.lua reads the trigger's cards in a
 --- queued event) and recipe.live (a flipped recipe plays while the cards are dealt). A step's cue (a
@@ -339,13 +364,14 @@ function logic.clean_recipe(recipe)
     if problem then
       warnings[#warnings + 1] = ('step %d: %s'):format(i, problem)
     else
+      step = fix_numbers(step, ('step %d'):format(i), warnings)
       if type(step.cue) == 'table' then
         local copy, cue = {}, {}
         for k, v in pairs(step) do copy[k] = v end
         for j, sub in ipairs(step.cue) do
           local p = step_problem(sub)
           if p then warnings[#warnings + 1] = ('step %d cue %d: %s'):format(i, j, p)
-          else cue[#cue + 1] = sub end
+          else cue[#cue + 1] = fix_numbers(sub, ('step %d cue %d'):format(i, j), warnings) end
         end
         copy.cue = cue
         step = copy
