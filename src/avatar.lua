@@ -402,8 +402,9 @@ end
 
 function V.set_tremble(on) V.tremble = on and true or false end
 
-function V.flash(duration)
-  if V.obj then flash(V.obj, duration or 0.15) end
+--- Flash the chip (white, or `colour`: a boss move flashes in the boss colour).
+function V.flash(duration, colour)
+  if V.obj then flash(V.obj, duration or 0.15, colour) end
 end
 
 --- No avatar: the HUD blind chip snaps instead (juice + a brief red burst drawn over the chip).

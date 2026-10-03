@@ -113,4 +113,26 @@ T['recipe_for: own recipe, generic fallback only without moves'] = function()
   eq(logic.recipe_for(nil, 'play'), nil)
 end
 
+T['GLYPHS: four glyphs of polylines inside the unit square'] = function()
+  for _, g in ipairs({'x', 'hex', 'vine', 'crack'}) do
+    local strokes = logic.GLYPHS[g]
+    assert(type(strokes) == 'table' and #strokes >= 1, 'glyph ' .. g)
+    for _, s in ipairs(strokes) do
+      assert(#s >= 4 and #s % 2 == 0, g .. ': a stroke needs at least two points')
+      for _, v in ipairs(s) do assert(v >= 0 and v <= 1, g .. ': point outside the unit square') end
+    end
+  end
+end
+
+T['coin_count: none below one dollar, floor, capped'] = function()
+  eq(logic.coin_count(0), 0)
+  eq(logic.coin_count(0.5), 0)
+  eq(logic.coin_count(-3), 0)
+  eq(logic.coin_count(1), 1)
+  eq(logic.coin_count(4.7), 4)
+  eq(logic.coin_count(250), 12)
+  eq(logic.coin_count(250, 5), 5)
+  eq(logic.coin_count(nil), 0)
+end
+
 return T

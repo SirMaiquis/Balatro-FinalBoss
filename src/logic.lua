@@ -373,4 +373,20 @@ function logic.recipe_for(moves, kind)
   return nil
 end
 
+--- Stamp glyphs (effects.lua draws them with love.graphics, no new art): each glyph is a list of
+--- polylines, flat x1, y1, x2, y2, ... in the unit square (scaled to the card).
+logic.GLYPHS = {
+  x = {{0.2, 0.2, 0.8, 0.8}, {0.8, 0.2, 0.2, 0.8}},
+  hex = {{0.5, 0.1, 0.85, 0.3, 0.85, 0.7, 0.5, 0.9, 0.15, 0.7, 0.15, 0.3, 0.5, 0.1}},
+  vine = {{0.15, 0.9, 0.35, 0.65, 0.3, 0.45, 0.5, 0.3, 0.55, 0.1}, {0.35, 0.65, 0.6, 0.6}, {0.5, 0.3, 0.75, 0.35}},
+  crack = {{0.45, 0.05, 0.6, 0.3, 0.4, 0.5, 0.6, 0.7, 0.45, 0.95}, {0.4, 0.5, 0.2, 0.6}},
+}
+
+--- Coins in a drain: one per dollar taken, none under a dollar, capped (default 12).
+function logic.coin_count(amount, max)
+  amount = tonumber(amount) or 0
+  if amount < 1 then return 0 end
+  return math.min(max or 12, math.floor(amount))
+end
+
 return logic
