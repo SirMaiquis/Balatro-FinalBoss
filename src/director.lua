@@ -120,12 +120,14 @@ function Dir.on_blind_loaded(blind)
     FinalBoss.avatar.spawn(blind, {fall = false})
     FinalBoss.avatar.set_wound(stage)
     FinalBoss.hpbar.create(FinalBoss.avatar.anchor(), blind, total, required)
+    FinalBoss.phases.restore(enc, blind) -- after spawn and create: stance aura and phase marker
   end
 end
 
 --- Runs after vanilla's end-of-round event, so Mr. Bones saves are resolved.
 function Dir.on_round_end()
   Dir.flush_pending()
+  FinalBoss.phases.reset()
   local st = FinalBoss.util.state()
   local enc = st.encounter
   if not enc then return end
@@ -188,7 +190,8 @@ function Dir.on_hand_after()
   -- The reaction waits until the game shows the score (Dir.tick -> logic.score_landed), or the
   -- boss would spoil it. Everything above is decided now.
   local p = {start = chips, delta = delta, total = total, required = required, moment = moment,
-    enc = enc, blind = blind, t0 = FinalBoss.util.now(), queued_done = false, hand = hands_played}
+    enc = enc, blind = blind, t0 = FinalBoss.util.now(), queued_done = false, hand = hands_played,
+    hands_left = hands_left}
   Dir.pending = p
   -- Completion signal in queue order: context.after runs inside evaluate_play (state_events.lua)
   -- after it has queued the score display (delay, chips2, the G.GAME.chips ease, the blocking
@@ -211,6 +214,10 @@ local function react(p)
   local wait = 0 -- a laugh is coming: the line must not overlap it
   if enc.tier == 'full' and enc.showdown then
     wait = Dir.stage_hit(enc, blind, p.delta, p.total, p.required, p.moment)
+    -- 1.1: crossing 50% / 25% transforms the boss. Its phase line replaces this hand's moment line
+    -- (the moment stays unfired); the hit, damage number and laugh above still play, and a weak
+    -- hit's transformation waits for the laugh (wait) so laugh, roar and line never overlap.
+    if FinalBoss.phases.check(enc, blind, p, wait) then return end
   end
   if not p.moment then return end
   -- This hand interrupted the intro: its interrupted line replaces the moment line (the moment
@@ -350,7 +357,7 @@ function Dir.reset_stage()
   local ok, err = pcall(function()
     for _, step in ipairs({FinalBoss.cinematic.reset, FinalBoss.hpbar.remove, FinalBoss.avatar.remove,
         FinalBoss.arena.reset, FinalBoss.fx.reset, FinalBoss.effects.reset, FinalBoss.moves.reset,
-        FinalBoss.music.unduck}) do
+        FinalBoss.phases.reset, FinalBoss.music.unduck}) do
       local sok, serr = pcall(step)
       if not sok then FinalBoss.util.log('error', 'reset_stage step failed: ' .. tostring(serr)) end
     end

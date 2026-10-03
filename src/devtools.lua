@@ -4,6 +4,7 @@
 ---   Shift+F5: cycle the forced boss through the 23 regular vanilla bosses (step after the last clears it).
 ---   F6: fire the next moment (big_hand, close, last_hand, disabled, defeat)
 ---   F7: dump FinalBoss state to the Lovely log
+---   F8: push the current final boss to its next phase (cinematic showdowns)
 local DT = {}
 DT.SHOWDOWNS = {'bl_final_acorn', 'bl_final_leaf', 'bl_final_vessel', 'bl_final_heart', 'bl_final_bell'}
 DT.force_idx = 0
@@ -75,5 +76,12 @@ end
 -- smods requires every listed held key (lovely/keybind.toml:18-23), so each Shift gets its own keybind.
 SMODS.Keybind{key_pressed = 'f5', held_keys = {'lshift'}, action = force_regular}
 SMODS.Keybind{key_pressed = 'f5', held_keys = {'rshift'}, action = force_regular}
+
+--- F8: next phase (plays the transformation; needs a cinematic showdown with the avatar out).
+SMODS.Keybind{key_pressed = 'f8', action = function()
+  if not DT.on() then return end
+  local ok, phase = FinalBoss.util.guard('dev_f8', FinalBoss.phases.force_next)
+  FinalBoss.util.log('info', 'dev: next phase -> ' .. tostring(ok and phase))
+end}
 
 return DT

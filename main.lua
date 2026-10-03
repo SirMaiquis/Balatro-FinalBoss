@@ -3,7 +3,7 @@ FinalBoss = {}
 FinalBoss.mod = SMODS.current_mod
 FinalBoss.config = SMODS.current_mod.config
 FinalBoss.VERSION = SMODS.current_mod.version
-FinalBoss.timescale = 1 -- slow-motion factor (lovely/timescale.toml); only cinematic.lua changes it
+FinalBoss.timescale = 1 -- slow-motion factor (lovely/timescale.toml); only cinematic.lua and phases.lua change it
 
 -- Mods list icon: Steamodded shows the atlas '<prefix>_modicon' (assets/1x|2x/icon.png, tools/make_art.py).
 SMODS.Atlas{key = 'modicon', path = 'icon.png', px = 34, py = 34}
@@ -19,7 +19,7 @@ end
 
 -- Order matters: util and logic first; hooks last (it wires everything together).
 local MODULES = {'util', 'logic', 'registry', 'music', 'fx', 'effects', 'curse', 'arena', 'avatar', 'hpbar',
-  'cinematic', 'moves', 'deaths', 'ui', 'dialogue', 'director', 'quips', 'devtools', 'hooks'}
+  'cinematic', 'moves', 'deaths', 'phases', 'ui', 'dialogue', 'director', 'quips', 'devtools', 'hooks'}
 
 for _, name in ipairs(MODULES) do
   FinalBoss[name] = load_file('src/' .. name .. '.lua')

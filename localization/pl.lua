@@ -74,6 +74,8 @@ return {
             fb_generic_interrupted_1 = {"Moja przemowa!"},
             fb_generic_interrupted_2 = {"Dobra... więc", "tak to wygląda."},
             fb_generic_interrupted_3 = {"Nawet nie", "powiesz cześć?"},
+            fb_generic_phase2_1 = {"Dość zabawy!"},
+            fb_generic_phase3_1 = {"Teraz jestem", "naprawdę wściekły!"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Ale ja jestem", "Hak"},
@@ -362,6 +364,8 @@ return {
             fb_bl_final_acorn_defeat_1 = {"Rozbiłeś", "moją skorupę..."},
             fb_bl_final_acorn_gloat_1 = {"Twardy orzech!"},
             fb_bl_final_acorn_interrupted_1 = {"Stój! Jeszcze nie", "wykiełkowałem!"},
+            fb_bl_final_acorn_phase2_1 = {"Teraz będzie", "SZALEŃSTWO!"},
+            fb_bl_final_acorn_phase3_1 = {"Totalny chaos!", "Skorupa precz!"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"Ale ja jestem", "Zielony liść"},
@@ -374,6 +378,8 @@ return {
             fb_bl_final_leaf_defeat_1 = {"Odchodzę...", "jak liść z drzewa."},
             fb_bl_final_leaf_gloat_1 = {"Spadasz jak liść!"},
             fb_bl_final_leaf_interrupted_1 = {"Dobrze. Pomińmy", "uprzejmości."},
+            fb_bl_final_leaf_phase2_1 = {"Moje korzenie", "sięgają głębiej!"},
+            fb_bl_final_leaf_phase3_1 = {"Zwiędnij ze mną!"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"Ale ja jestem", "Fioletowe naczynie"},
@@ -386,6 +392,8 @@ return {
             fb_bl_final_vessel_defeat_1 = {"Naczynie...", "zostało opróżnione."},
             fb_bl_final_vessel_gloat_1 = {"Pusto! Przegrałeś!"},
             fb_bl_final_vessel_interrupted_1 = {"Odpływasz przed moją", "mową? Śmiało."},
+            fb_bl_final_vessel_phase2_1 = {"Napełnić ładownię!"},
+            fb_bl_final_vessel_phase3_1 = {"Wszyscy", "na dno!"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"Ale ja jestem", "Szkarłatne serce"},
@@ -398,6 +406,8 @@ return {
             fb_bl_final_heart_defeat_1 = {"Moje serce...", "jest złamane."},
             fb_bl_final_heart_gloat_1 = {"Złamane serce?"},
             fb_bl_final_heart_interrupted_1 = {"Przerywasz mi?", "Bez serca!"},
+            fb_bl_final_heart_phase2_1 = {"Moje serce", "bije szybciej!"},
+            fb_bl_final_heart_phase3_1 = {"Poczuj mój", "karmazynowy gniew!"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"Ale ja jestem", "Modry dzwonek"},
@@ -410,6 +420,8 @@ return {
             fb_bl_final_bell_defeat_1 = {"Dzwon bije", "dla mnie."},
             fb_bl_final_bell_gloat_1 = {"Dzyń dzyń,", "przegrałeś!"},
             fb_bl_final_bell_interrupted_1 = {"Uratowany przez gong?", "Nie tym razem!"},
+            fb_bl_final_bell_phase2_1 = {"Słuchaj, jak", "dzwonię głośniej!"},
+            fb_bl_final_bell_phase3_1 = {"Bije ostatni dzwon!"},
         }
     }
 }

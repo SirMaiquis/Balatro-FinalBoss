@@ -74,6 +74,8 @@ return {
             fb_generic_interrupted_1 = {"Il mio discorso!"},
             fb_generic_interrupted_2 = {"Ok... quindi", "è così."},
             fb_generic_interrupted_3 = {"Neanche un ciao?"},
+            fb_generic_phase2_1 = {"Basta giochi!"},
+            fb_generic_phase3_1 = {"Ora sono", "davvero furioso!"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Ma io sono", "L'uncino"},
@@ -362,6 +364,8 @@ return {
             fb_bl_final_acorn_defeat_1 = {"Hai rotto il", "mio guscio..."},
             fb_bl_final_acorn_gloat_1 = {"Roba da matti!"},
             fb_bl_final_acorn_interrupted_1 = {"Fermo! Non sono", "nemmeno germogliato!"},
+            fb_bl_final_acorn_phase2_1 = {"Ora si fa", "da MATTI!"},
+            fb_bl_final_acorn_phase3_1 = {"Caos totale!", "Via il guscio!"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"Ma io sono", "Foglia verde"},
@@ -374,6 +378,8 @@ return {
             fb_bl_final_leaf_defeat_1 = {"Me ne vado...", "come una foglia."},
             fb_bl_final_leaf_gloat_1 = {"Foglia perdente!"},
             fb_bl_final_leaf_interrupted_1 = {"Bene. Salta i", "convenevoli."},
+            fb_bl_final_leaf_phase2_1 = {"Le mie radici", "affondano!"},
+            fb_bl_final_leaf_phase3_1 = {"Appassisci con me!"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"Ma io sono", "Contenitore violetto"},
@@ -386,6 +392,8 @@ return {
             fb_bl_final_vessel_defeat_1 = {"Il contenitore...", "è stato svuotato."},
             fb_bl_final_vessel_gloat_1 = {"Vasta sconfitta!"},
             fb_bl_final_vessel_interrupted_1 = {"Salpi prima del mio", "discorso? Audace."},
+            fb_bl_final_vessel_phase2_1 = {"Riempite la stiva!"},
+            fb_bl_final_vessel_phase3_1 = {"Tutti quanti", "negli abissi!"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"Ma io sono", "Cuore cremisi"},
@@ -398,6 +406,8 @@ return {
             fb_bl_final_heart_defeat_1 = {"Il mio cuore...", "è spezzato."},
             fb_bl_final_heart_gloat_1 = {"Cuore spezzato?"},
             fb_bl_final_heart_interrupted_1 = {"Mi interrompi?", "Che cuore di pietra!"},
+            fb_bl_final_heart_phase2_1 = {"Il mio cuore", "batte più forte!"},
+            fb_bl_final_heart_phase3_1 = {"Senti la mia", "furia cremisi!"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"Ma io sono", "Campana cerulea"},
@@ -410,6 +420,8 @@ return {
             fb_bl_final_bell_defeat_1 = {"La campana suona", "per me."},
             fb_bl_final_bell_gloat_1 = {"Din don,", "hai perso!"},
             fb_bl_final_bell_interrupted_1 = {"Salvato dal gong?", "Non stavolta!"},
+            fb_bl_final_bell_phase2_1 = {"Sentimi suonare", "più forte!"},
+            fb_bl_final_bell_phase3_1 = {"L'ultimo rintocco!"},
         }
     }
 }

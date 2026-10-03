@@ -74,6 +74,8 @@ return {
             fb_generic_interrupted_1 = {"Meine Rede!"},
             fb_generic_interrupted_2 = {"Okay... so läuft", "das also."},
             fb_generic_interrupted_3 = {"Nicht mal ein Hallo?"},
+            fb_generic_phase2_1 = {"Genug gespielt!"},
+            fb_generic_phase3_1 = {"Jetzt bin ich", "richtig wütend!"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Aber ich bin", "Der Haken"},
@@ -362,6 +364,8 @@ return {
             fb_bl_final_acorn_defeat_1 = {"Du hast meine", "Schale geknackt..."},
             fb_bl_final_acorn_gloat_1 = {"Total eichelhart!"},
             fb_bl_final_acorn_interrupted_1 = {"Harte Nuss, was?", "Ich war nicht fertig!"},
+            fb_bl_final_acorn_phase2_1 = {"Jetzt wird's eine", "HARTE NUSS!"},
+            fb_bl_final_acorn_phase3_1 = {"Totales Chaos!", "Die Schale ist ab!"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"Aber ich bin", "Grünes Blatt"},
@@ -374,6 +378,8 @@ return {
             fb_bl_final_leaf_defeat_1 = {"Ich geh dahin...", "wie ein Blatt im Wind."},
             fb_bl_final_leaf_gloat_1 = {"Blatt-ant", "verloren!"},
             fb_bl_final_leaf_interrupted_1 = {"Schön. Spar dir die", "Höflichkeiten."},
+            fb_bl_final_leaf_phase2_1 = {"Meine Wurzeln", "wachsen tiefer!"},
+            fb_bl_final_leaf_phase3_1 = {"Welke mit mir!"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"Aber ich bin", "Violette Hülle"},
@@ -386,6 +392,8 @@ return {
             fb_bl_final_vessel_defeat_1 = {"Die Hülle...", "ist geleert."},
             fb_bl_final_vessel_gloat_1 = {"Riesen-Niederlage!"},
             fb_bl_final_vessel_interrupted_1 = {"Ablegen vor meiner", "Rede? Kühn."},
+            fb_bl_final_vessel_phase2_1 = {"Laderaum füllen!"},
+            fb_bl_final_vessel_phase3_1 = {"Alle Mann", "in die Tiefe!"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"Aber ich bin", "Purpurrotes Herz"},
@@ -398,6 +406,8 @@ return {
             fb_bl_final_heart_defeat_1 = {"Mein Herz...", "ist gebrochen."},
             fb_bl_final_heart_gloat_1 = {"Schon", "Liebeskummer?"},
             fb_bl_final_heart_interrupted_1 = {"Du fällst mir ins Wort?", "Wie herzlos!"},
+            fb_bl_final_heart_phase2_1 = {"Mein Herz", "schlägt schneller!"},
+            fb_bl_final_heart_phase3_1 = {"Spür meine", "purpurne Wut!"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"Aber ich bin", "Himmelblaue Glocke"},
@@ -410,6 +420,8 @@ return {
             fb_bl_final_bell_defeat_1 = {"Die Glocke läutet", "für mich."},
             fb_bl_final_bell_gloat_1 = {"Ding dong,", "verloren!"},
             fb_bl_final_bell_interrupted_1 = {"Gerettet vom Gong?", "Diesmal nicht!"},
+            fb_bl_final_bell_phase2_1 = {"Hör mich", "lauter läuten!"},
+            fb_bl_final_bell_phase3_1 = {"Der letzte", "Glockenschlag!"},
         }
     }
 }

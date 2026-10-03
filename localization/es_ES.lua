@@ -74,6 +74,8 @@ return {
             fb_generic_interrupted_1 = {"¡Mi discurso!"},
             fb_generic_interrupted_2 = {"Vale... así que", "así van las cosas."},
             fb_generic_interrupted_3 = {"¿Ni un hola?"},
+            fb_generic_phase2_1 = {"¡Basta de juegos!"},
+            fb_generic_phase3_1 = {"¡Ahora sí que", "estoy furioso!"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Pero soy", "El garfio"},
@@ -362,6 +364,8 @@ return {
             fb_bl_final_acorn_defeat_1 = {"Has roto", "mi cáscara..."},
             fb_bl_final_acorn_gloat_1 = {"¡Qué locura,", "perdedor!"},
             fb_bl_final_acorn_interrupted_1 = {"¡Bellotas! No", "había acabado."},
+            fb_bl_final_acorn_phase2_1 = {"¡Ahora se pone", "de LOCOS!"},
+            fb_bl_final_acorn_phase3_1 = {"¡Caos total!", "¡Fuera cáscara!"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"Pero soy", "Hoja verde"},
@@ -374,6 +378,8 @@ return {
             fb_bl_final_leaf_defeat_1 = {"Me voy... como", "hoja en el viento."},
             fb_bl_final_leaf_gloat_1 = {"¡Pasa la hoja,", "perdedor!"},
             fb_bl_final_leaf_interrupted_1 = {"Bien. Sáltate las", "cortesías."},
+            fb_bl_final_leaf_phase2_1 = {"¡Mis raíces", "se hunden más!"},
+            fb_bl_final_leaf_phase3_1 = {"¡Marchítate", "conmigo!"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"Pero soy", "Contenedor violeta"},
@@ -386,6 +392,8 @@ return {
             fb_bl_final_vessel_defeat_1 = {"El contenedor...", "se ha vaciado."},
             fb_bl_final_vessel_gloat_1 = {"¿Derrota", "enorme, eh?"},
             fb_bl_final_vessel_interrupted_1 = {"¿Zarpar antes de mi", "discurso? Atrevido."},
+            fb_bl_final_vessel_phase2_1 = {"¡Llenad la bodega!"},
+            fb_bl_final_vessel_phase3_1 = {"¡Todos al fondo", "del mar!"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"Pero soy", "Corazón carmesí"},
@@ -398,6 +406,8 @@ return {
             fb_bl_final_heart_defeat_1 = {"Mi corazón...", "está roto."},
             fb_bl_final_heart_gloat_1 = {"¿Con el", "corazón roto?"},
             fb_bl_final_heart_interrupted_1 = {"¿Me interrumpes?", "¡Qué desalmado!"},
+            fb_bl_final_heart_phase2_1 = {"¡Mi corazón", "late más rápido!"},
+            fb_bl_final_heart_phase3_1 = {"¡Siente mi", "furia carmesí!"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"Pero soy", "Campana cerúlea"},
@@ -410,6 +420,8 @@ return {
             fb_bl_final_bell_defeat_1 = {"Silencio cerúleo...", "ya no repico."},
             fb_bl_final_bell_gloat_1 = {"¡Ding dong,", "perdiste!"},
             fb_bl_final_bell_interrupted_1 = {"¿Salvado por la", "campana? ¡Esta vez no!"},
+            fb_bl_final_bell_phase2_1 = {"¡Óyeme repicar", "más fuerte!"},
+            fb_bl_final_bell_phase3_1 = {"¡La campanada final!"},
         }
     }
 }

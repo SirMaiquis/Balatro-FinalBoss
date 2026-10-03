@@ -81,4 +81,16 @@ T['no v1 keys remain'] = function()
   for key in pairs(quips) do assert(key:sub(1, 3) ~= 'ml_', 'leftover v1 key ' .. key) end
 end
 
+T['final bosses and the generic set have phase lines'] = function()
+  local quips = load()
+  local missing = {}
+  for _, b in ipairs({'bl_final_acorn', 'bl_final_leaf', 'bl_final_vessel', 'bl_final_heart', 'bl_final_bell', 'generic'}) do
+    for _, m in ipairs({'phase2', 'phase3'}) do
+      local key = 'fb_' .. b .. '_' .. m .. '_1'
+      if not quips[key] then missing[#missing + 1] = key end
+    end
+  end
+  assert(#missing == 0, 'missing: ' .. table.concat(missing, ', '))
+end
+
 return T

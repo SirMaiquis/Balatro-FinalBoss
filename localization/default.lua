@@ -74,6 +74,8 @@ return {
             fb_generic_interrupted_1 = {"My speech!"},
             fb_generic_interrupted_2 = {"Ok... so that's", "how it is."},
             fb_generic_interrupted_3 = {"Not even a hello?"},
+            fb_generic_phase2_1 = {"Enough games!"},
+            fb_generic_phase3_1 = {"Now I'm", "really angry!"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"But I'm The Hook"},
@@ -362,6 +364,8 @@ return {
             fb_bl_final_acorn_defeat_1 = {"You cracked", "my shell..."},
             fb_bl_final_acorn_gloat_1 = {"Totally nuts!"},
             fb_bl_final_acorn_interrupted_1 = {"Nuts! I wasn't", "finished!"},
+            fb_bl_final_acorn_phase2_1 = {"Now it gets", "NUTS!"},
+            fb_bl_final_acorn_phase3_1 = {"Total chaos!", "Shell's off!"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"But I'm Verdant Leaf"},
@@ -374,6 +378,8 @@ return {
             fb_bl_final_leaf_defeat_1 = {"I'm leaving...", "like a leaf."},
             fb_bl_final_leaf_gloat_1 = {"Leaf it to me!"},
             fb_bl_final_leaf_interrupted_1 = {"Fine. Skip the", "pleasantries."},
+            fb_bl_final_leaf_phase2_1 = {"My roots grow", "deeper!"},
+            fb_bl_final_leaf_phase3_1 = {"Wither with me!"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"But I'm Violet Vessel"},
@@ -386,6 +392,8 @@ return {
             fb_bl_final_vessel_defeat_1 = {"The vessel...", "has been emptied."},
             fb_bl_final_vessel_gloat_1 = {"Vast defeat, huh?"},
             fb_bl_final_vessel_interrupted_1 = {"Setting sail before", "my speech? Bold."},
+            fb_bl_final_vessel_phase2_1 = {"Refill the hold!"},
+            fb_bl_final_vessel_phase3_1 = {"All hands", "to the deep!"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"But I'm Crimson Heart"},
@@ -398,6 +406,8 @@ return {
             fb_bl_final_heart_defeat_1 = {"My heart...", "is broken."},
             fb_bl_final_heart_gloat_1 = {"Heart-broken yet?"},
             fb_bl_final_heart_interrupted_1 = {"You'd cut me off?", "How heartless!"},
+            fb_bl_final_heart_phase2_1 = {"My heart beats", "faster!"},
+            fb_bl_final_heart_phase3_1 = {"Feel my", "crimson rage!"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"But I'm Cerulean Bell"},
@@ -410,6 +420,8 @@ return {
             fb_bl_final_bell_defeat_1 = {"Cerulean silence...", "I'm done ringing."},
             fb_bl_final_bell_gloat_1 = {"Ding dong,", "you lost!"},
             fb_bl_final_bell_interrupted_1 = {"Saved by the bell?", "Not this time!"},
+            fb_bl_final_bell_phase2_1 = {"Hear me", "ring louder!"},
+            fb_bl_final_bell_phase3_1 = {"The final toll!"},
         }
     }
 }

@@ -74,6 +74,8 @@ return {
             fb_generic_interrupted_1 = {"Моя речь!"},
             fb_generic_interrupted_2 = {"Ну... вот, значит,", "как."},
             fb_generic_interrupted_3 = {"Даже не", "поздороваешься?"},
+            fb_generic_phase2_1 = {"Хватит игр!"},
+            fb_generic_phase3_1 = {"Вот теперь я", "по-настоящему зол!"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Но я", "Крюк"},
@@ -362,6 +364,8 @@ return {
             fb_bl_final_acorn_defeat_1 = {"Ты расколол", "мою скорлупу..."},
             fb_bl_final_acorn_gloat_1 = {"Вот это орех!"},
             fb_bl_final_acorn_interrupted_1 = {"Стой! Я даже", "не пророс!"},
+            fb_bl_final_acorn_phase2_1 = {"Теперь начнётся", "БЕЗУМИЕ!"},
+            fb_bl_final_acorn_phase3_1 = {"Полный хаос!", "Долой скорлупу!"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"Но я", "Зеленый лист"},
@@ -374,6 +378,8 @@ return {
             fb_bl_final_leaf_defeat_1 = {"Я ухожу...", "как лист."},
             fb_bl_final_leaf_gloat_1 = {"Листай на выход!"},
             fb_bl_final_leaf_interrupted_1 = {"Ладно. Обойдёмся", "без любезностей."},
+            fb_bl_final_leaf_phase2_1 = {"Мои корни", "уходят глубже!"},
+            fb_bl_final_leaf_phase3_1 = {"Увядай со мной!"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"Но я", "Фиолетовый сосуд"},
@@ -386,6 +392,8 @@ return {
             fb_bl_final_vessel_defeat_1 = {"Сосуд...", "опустел."},
             fb_bl_final_vessel_gloat_1 = {"Полное поражение!"},
             fb_bl_final_vessel_interrupted_1 = {"Отплываешь до моей", "речи? Смело."},
+            fb_bl_final_vessel_phase2_1 = {"Наполнить трюм!"},
+            fb_bl_final_vessel_phase3_1 = {"Свистать всех", "на дно!"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"Но я", "Багровое сердце"},
@@ -398,6 +406,8 @@ return {
             fb_bl_final_heart_defeat_1 = {"Мое сердце...", "разбито."},
             fb_bl_final_heart_gloat_1 = {"Сердце разбито?"},
             fb_bl_final_heart_interrupted_1 = {"Перебиваешь меня?", "Какой бессердечный!"},
+            fb_bl_final_heart_phase2_1 = {"Моё сердце", "бьётся быстрее!"},
+            fb_bl_final_heart_phase3_1 = {"Почувствуй мой", "багровый гнев!"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"Но я", "Лазурный колокольчик"},
@@ -410,6 +420,8 @@ return {
             fb_bl_final_bell_defeat_1 = {"Колокол звонит", "по мне."},
             fb_bl_final_bell_gloat_1 = {"Динь-дон,", "проиграл!"},
             fb_bl_final_bell_interrupted_1 = {"Спасён гонгом?", "Не в этот раз!"},
+            fb_bl_final_bell_phase2_1 = {"Услышь, как я", "звоню громче!"},
+            fb_bl_final_bell_phase3_1 = {"Последний звон!"},
         }
     }
 }

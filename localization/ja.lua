@@ -74,6 +74,8 @@ return {
             fb_generic_interrupted_1 = {"俺の演説が！"},
             fb_generic_interrupted_2 = {"そうか…", "そういうことか。"},
             fb_generic_interrupted_3 = {"挨拶もなしか？"},
+            fb_generic_phase2_1 = {"遊びは終わりだ！"},
+            fb_generic_phase3_1 = {"今度こそ", "本気で怒ったぞ！"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"だが俺は", "フックだ！"},
@@ -362,6 +364,8 @@ return {
             fb_bl_final_acorn_defeat_1 = {"俺の殻を", "割ったな…"},
             fb_bl_final_acorn_gloat_1 = {"どんぐりころころ！"},
             fb_bl_final_acorn_interrupted_1 = {"待て待て！", "まだ芽も出てない！"},
+            fb_bl_final_acorn_phase2_1 = {"ここからは", "もっと堅いぞ！"},
+            fb_bl_final_acorn_phase3_1 = {"大混乱だ！", "殻を脱ぐぞ！"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"だが俺は", "青々とした葉だ！"},
@@ -374,6 +378,8 @@ return {
             fb_bl_final_leaf_defeat_1 = {"去るとしよう…", "葉のように。"},
             fb_bl_final_leaf_gloat_1 = {"枯れ葉のように", "散れ！"},
             fb_bl_final_leaf_interrupted_1 = {"いいだろう。", "挨拶は抜きだ。"},
+            fb_bl_final_leaf_phase2_1 = {"俺の根は", "さらに深く！"},
+            fb_bl_final_leaf_phase3_1 = {"共に枯れよ！"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"だが俺は", "バイオレットベッセルだ！"},
@@ -386,6 +392,8 @@ return {
             fb_bl_final_vessel_defeat_1 = {"船は…", "空になった。"},
             fb_bl_final_vessel_gloat_1 = {"大敗北だな！"},
             fb_bl_final_vessel_interrupted_1 = {"俺の話の前に出航か。", "大胆だな。"},
+            fb_bl_final_vessel_phase2_1 = {"船倉を満たせ！"},
+            fb_bl_final_vessel_phase3_1 = {"総員、", "深海へ！"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"だが俺は", "クリムゾンハートだ！"},
@@ -398,6 +406,8 @@ return {
             fb_bl_final_heart_defeat_1 = {"俺の心が…", "砕けた。"},
             fb_bl_final_heart_gloat_1 = {"失恋したか？"},
             fb_bl_final_heart_interrupted_1 = {"話を遮るのか？", "なんて薄情な！"},
+            fb_bl_final_heart_phase2_1 = {"俺の鼓動が", "速くなる！"},
+            fb_bl_final_heart_phase3_1 = {"真紅の怒りを", "思い知れ！"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"だが俺は", "セルリアンベルだ！"},
@@ -410,6 +420,8 @@ return {
             fb_bl_final_bell_defeat_1 = {"鐘が鳴る…", "俺のために。"},
             fb_bl_final_bell_gloat_1 = {"ゴーン、負けだ！"},
             fb_bl_final_bell_interrupted_1 = {"ゴングに救われた？", "今回は違う！"},
+            fb_bl_final_bell_phase2_1 = {"もっと強く", "鳴り響け！"},
+            fb_bl_final_bell_phase3_1 = {"最後の鐘だ！"},
         }
     }
 }

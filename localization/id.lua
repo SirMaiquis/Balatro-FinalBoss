@@ -74,6 +74,8 @@ return {
             fb_generic_interrupted_1 = {"Pidatoku!"},
             fb_generic_interrupted_2 = {"Oke... jadi", "begitu caranya."},
             fb_generic_interrupted_3 = {"Tak ada salam?"},
+            fb_generic_phase2_1 = {"Cukup main-mainnya!"},
+            fb_generic_phase3_1 = {"Sekarang aku", "benar-benar marah!"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Tapi aku", "The Hook"},
@@ -362,6 +364,8 @@ return {
             fb_bl_final_acorn_defeat_1 = {"Kamu memecahkan", "cangkangku..."},
             fb_bl_final_acorn_gloat_1 = {"Gila-gilaan!"},
             fb_bl_final_acorn_interrupted_1 = {"Tunggu! Aku bahkan", "belum bertunas!"},
+            fb_bl_final_acorn_phase2_1 = {"Sekarang makin", "GILA!"},
+            fb_bl_final_acorn_phase3_1 = {"Kacau total!", "Cangkang lepas!"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"Tapi aku", "Verdant Leaf"},
@@ -374,6 +378,8 @@ return {
             fb_bl_final_leaf_defeat_1 = {"Aku pergi...", "seperti daun gugur."},
             fb_bl_final_leaf_gloat_1 = {"Gugur, kamu kalah!"},
             fb_bl_final_leaf_interrupted_1 = {"Baiklah. Lewati", "basa-basinya."},
+            fb_bl_final_leaf_phase2_1 = {"Akarku tumbuh", "makin dalam!"},
+            fb_bl_final_leaf_phase3_1 = {"Layulah bersamaku!"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"Tapi aku", "Violet Vessel"},
@@ -386,6 +392,8 @@ return {
             fb_bl_final_vessel_defeat_1 = {"Bejana ini...", "telah kosong."},
             fb_bl_final_vessel_gloat_1 = {"Kalah telak!"},
             fb_bl_final_vessel_interrupted_1 = {"Berlayar sebelum", "pidatoku? Berani."},
+            fb_bl_final_vessel_phase2_1 = {"Isi lagi palkanya!"},
+            fb_bl_final_vessel_phase3_1 = {"Semua awak,", "ke dasar laut!"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"Tapi aku", "Crimson Heart"},
@@ -398,6 +406,8 @@ return {
             fb_bl_final_heart_defeat_1 = {"Hatiku...", "patah."},
             fb_bl_final_heart_gloat_1 = {"Sudah patah hati?"},
             fb_bl_final_heart_interrupted_1 = {"Memotongku?", "Tak punya hati!"},
+            fb_bl_final_heart_phase2_1 = {"Jantungku berdetak", "makin cepat!"},
+            fb_bl_final_heart_phase3_1 = {"Rasakan amarah", "merahku!"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"Tapi aku", "Cerulean Bell"},
@@ -410,6 +420,8 @@ return {
             fb_bl_final_bell_defeat_1 = {"Lonceng berdentang", "untukku."},
             fb_bl_final_bell_gloat_1 = {"Ting tong,", "kamu kalah!"},
             fb_bl_final_bell_interrupted_1 = {"Diselamatkan bel?", "Tidak kali ini!"},
+            fb_bl_final_bell_phase2_1 = {"Dengar aku", "berdentang keras!"},
+            fb_bl_final_bell_phase3_1 = {"Dentang terakhir!"},
         }
     }
 }

@@ -1,5 +1,6 @@
 --- Showdown cinematics: letterbox + title card + avatar fall-in before the
---- intro dialogue, and the slow-motion explosive finale. Owns FinalBoss.timescale.
+--- intro dialogue, and the slow-motion explosive finale. Owns FinalBoss.timescale (phases.lua
+--- borrows it for the transformation freeze).
 local C = {}
 C.BAR_H = 1.1
 C.token = 0        -- bumped to cancel pending intro beats

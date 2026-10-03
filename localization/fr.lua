@@ -74,6 +74,8 @@ return {
             fb_generic_interrupted_1 = {"Mon discours !"},
             fb_generic_interrupted_2 = {"Bon... alors", "c'est comme ça."},
             fb_generic_interrupted_3 = {"Même pas un bonjour ?"},
+            fb_generic_phase2_1 = {"Fini de jouer !"},
+            fb_generic_phase3_1 = {"Là, je suis", "vraiment furieux !"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Mais je suis", "L'hameçon"},
@@ -362,6 +364,8 @@ return {
             fb_bl_final_acorn_defeat_1 = {"Tu as brisé", "ma coquille..."},
             fb_bl_final_acorn_gloat_1 = {"Complètement", "glandu !"},
             fb_bl_final_acorn_interrupted_1 = {"Gland de malheur !", "Je n'avais pas fini !"},
+            fb_bl_final_acorn_phase2_1 = {"Ça va devenir", "DINGUE !"},
+            fb_bl_final_acorn_phase3_1 = {"Chaos total !", "Bas la coquille !"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"Mais je suis", "Feuille verte"},
@@ -374,6 +378,8 @@ return {
             fb_bl_final_leaf_defeat_1 = {"Je m'en vais...", "comme une feuille."},
             fb_bl_final_leaf_gloat_1 = {"Feuille morte !"},
             fb_bl_final_leaf_interrupted_1 = {"Bien. Passons", "les politesses."},
+            fb_bl_final_leaf_phase2_1 = {"Mes racines", "s'enfoncent !"},
+            fb_bl_final_leaf_phase3_1 = {"Fane avec moi !"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"Mais je suis", "Vase violet"},
@@ -386,6 +392,8 @@ return {
             fb_bl_final_vessel_defeat_1 = {"Le vase...", "a été vidé."},
             fb_bl_final_vessel_gloat_1 = {"Naufrage total !"},
             fb_bl_final_vessel_interrupted_1 = {"Lever l'ancre avant", "mon discours ? Osé."},
+            fb_bl_final_vessel_phase2_1 = {"Remplissez la cale !"},
+            fb_bl_final_vessel_phase3_1 = {"Tout le monde", "par le fond !"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"Mais je suis", "Cœur écarlate"},
@@ -398,6 +406,8 @@ return {
             fb_bl_final_heart_defeat_1 = {"Mon cœur...", "est brisé."},
             fb_bl_final_heart_gloat_1 = {"Le cœur brisé ?"},
             fb_bl_final_heart_interrupted_1 = {"Tu me coupes ?", "Quel sans-cœur !"},
+            fb_bl_final_heart_phase2_1 = {"Mon cœur bat", "plus vite !"},
+            fb_bl_final_heart_phase3_1 = {"Sens ma", "rage pourpre !"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"Mais je suis", "Cloche céruléenne"},
@@ -410,6 +420,8 @@ return {
             fb_bl_final_bell_defeat_1 = {"Le glas sonne", "pour moi."},
             fb_bl_final_bell_gloat_1 = {"Ding dong, perdu !"},
             fb_bl_final_bell_interrupted_1 = {"Sauvé par le gong ?", "Pas cette fois !"},
+            fb_bl_final_bell_phase2_1 = {"Écoute-moi", "sonner plus fort !"},
+            fb_bl_final_bell_phase3_1 = {"Le dernier glas !"},
         }
     }
 }

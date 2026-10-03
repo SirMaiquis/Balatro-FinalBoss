@@ -74,6 +74,8 @@ return {
             fb_generic_interrupted_1 = {"Mijn toespraak!"},
             fb_generic_interrupted_2 = {"Oké... dus zo", "zit het."},
             fb_generic_interrupted_3 = {"Niet eens een hallo?"},
+            fb_generic_phase2_1 = {"Genoeg spelletjes!"},
+            fb_generic_phase3_1 = {"Nu ben ik", "echt boos!"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Maar ik ben", "De haak"},
@@ -362,6 +364,8 @@ return {
             fb_bl_final_acorn_defeat_1 = {"Je hebt mijn", "schil gekraakt..."},
             fb_bl_final_acorn_gloat_1 = {"Eikelrijk", "verloren!"},
             fb_bl_final_acorn_interrupted_1 = {"Eikel! Ik was", "nog niet klaar!"},
+            fb_bl_final_acorn_phase2_1 = {"Nu wordt het", "een NOOTGEVAL!"},
+            fb_bl_final_acorn_phase3_1 = {"Totale chaos!", "De schil eraf!"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"Maar ik ben", "Groen blaadje"},
@@ -374,6 +378,8 @@ return {
             fb_bl_final_leaf_defeat_1 = {"Ik ga heen...", "als een blad."},
             fb_bl_final_leaf_gloat_1 = {"Blad, blad,", "verloren!"},
             fb_bl_final_leaf_interrupted_1 = {"Prima. Sla de", "beleefdheden over."},
+            fb_bl_final_leaf_phase2_1 = {"Mijn wortels", "groeien dieper!"},
+            fb_bl_final_leaf_phase3_1 = {"Verwelk met mij!"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"Maar ik ben", "Violet vat"},
@@ -386,6 +392,8 @@ return {
             fb_bl_final_vessel_defeat_1 = {"Het vat...", "is leeggemaakt."},
             fb_bl_final_vessel_gloat_1 = {"Vat je 'm?", "Verloren!"},
             fb_bl_final_vessel_interrupted_1 = {"Uitvaren voor mijn", "toespraak? Gedurfd."},
+            fb_bl_final_vessel_phase2_1 = {"Vul het ruim!"},
+            fb_bl_final_vessel_phase3_1 = {"Alle hens", "naar de diepte!"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"Maar ik ben", "Karmozijnrood hart"},
@@ -398,6 +406,8 @@ return {
             fb_bl_final_heart_defeat_1 = {"Mijn hart...", "is gebroken."},
             fb_bl_final_heart_gloat_1 = {"Al liefdesverdriet?"},
             fb_bl_final_heart_interrupted_1 = {"Je onderbreekt me?", "Wat harteloos!"},
+            fb_bl_final_heart_phase2_1 = {"Mijn hart", "klopt sneller!"},
+            fb_bl_final_heart_phase3_1 = {"Voel mijn", "karmijnrode woede!"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"Maar ik ben", "Azuurblauwe bel"},
@@ -410,6 +420,8 @@ return {
             fb_bl_final_bell_defeat_1 = {"De bel luidt", "voor mij."},
             fb_bl_final_bell_gloat_1 = {"Ding dong,", "verloren!"},
             fb_bl_final_bell_interrupted_1 = {"Gered door de bel?", "Deze keer niet!"},
+            fb_bl_final_bell_phase2_1 = {"Hoor me", "harder luiden!"},
+            fb_bl_final_bell_phase3_1 = {"De laatste slag!"},
         }
     }
 }

@@ -74,6 +74,8 @@ return {
             fb_generic_interrupted_1 = {"我的演講！"},
             fb_generic_interrupted_2 = {"好吧…原來", "是這樣。"},
             fb_generic_interrupted_3 = {"連聲招呼都不打？"},
+            fb_generic_phase2_1 = {"玩夠了！"},
+            fb_generic_phase3_1 = {"這下我", "真的生氣了！"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"但我是", "鉤子！"},
@@ -362,6 +364,8 @@ return {
             fb_bl_final_acorn_defeat_1 = {"你敲開了", "我的外殼..."},
             fb_bl_final_acorn_gloat_1 = {"殼都碎了！"},
             fb_bl_final_acorn_interrupted_1 = {"慢著！我還沒", "發芽呢！"},
+            fb_bl_final_acorn_phase2_1 = {"現在才是", "硬核時刻！"},
+            fb_bl_final_acorn_phase3_1 = {"徹底混亂！", "外殼脫落！"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"但我是", "翠綠樹葉！"},
@@ -374,6 +378,8 @@ return {
             fb_bl_final_leaf_defeat_1 = {"我要離開了...", "如一片落葉。"},
             fb_bl_final_leaf_gloat_1 = {"落葉歸根！"},
             fb_bl_final_leaf_interrupted_1 = {"好吧。客套話", "就免了。"},
+            fb_bl_final_leaf_phase2_1 = {"我的根", "紮得更深！"},
+            fb_bl_final_leaf_phase3_1 = {"與我一同枯萎！"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"但我是", "紫羅蘭花器！"},
@@ -386,6 +392,8 @@ return {
             fb_bl_final_vessel_defeat_1 = {"花器...", "空了。"},
             fb_bl_final_vessel_gloat_1 = {"一敗塗地！"},
             fb_bl_final_vessel_interrupted_1 = {"我還沒講完就", "起航？真大膽。"},
+            fb_bl_final_vessel_phase2_1 = {"裝滿貨艙！"},
+            fb_bl_final_vessel_phase3_1 = {"全員", "沉入深海！"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"但我是", "緋紅之心！"},
@@ -398,6 +406,8 @@ return {
             fb_bl_final_heart_defeat_1 = {"我的心...", "碎了。"},
             fb_bl_final_heart_gloat_1 = {"心碎了嗎？"},
             fb_bl_final_heart_interrupted_1 = {"打斷我？", "真無情！"},
+            fb_bl_final_heart_phase2_1 = {"我的心", "跳得更快！"},
+            fb_bl_final_heart_phase3_1 = {"感受我", "深紅的怒火！"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"但我是", "蔚藍鐘！"},
@@ -410,6 +420,8 @@ return {
             fb_bl_final_bell_defeat_1 = {"鐘聲響起", "為我而鳴。"},
             fb_bl_final_bell_gloat_1 = {"叮咚，你輸了！"},
             fb_bl_final_bell_interrupted_1 = {"被鈴聲救了？", "這次可不行！"},
+            fb_bl_final_bell_phase2_1 = {"聽我", "響得更大聲！"},
+            fb_bl_final_bell_phase3_1 = {"最後的鐘聲！"},
         }
     }
 }

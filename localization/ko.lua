@@ -74,6 +74,8 @@ return {
             fb_generic_interrupted_1 = {"내 연설이!"},
             fb_generic_interrupted_2 = {"그래... 그렇게", "나온다 이거지."},
             fb_generic_interrupted_3 = {"인사도 없이?"},
+            fb_generic_phase2_1 = {"장난은 끝이다!"},
+            fb_generic_phase3_1 = {"이제 진짜", "화났다!"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"하지만 나는", "훅이다!"},
@@ -362,6 +364,8 @@ return {
             fb_bl_final_acorn_defeat_1 = {"내 껍질을", "깨버렸군..."},
             fb_bl_final_acorn_gloat_1 = {"도토리 키 재기!"},
             fb_bl_final_acorn_interrupted_1 = {"잠깐! 아직 싹도", "안 텄다고!"},
+            fb_bl_final_acorn_phase2_1 = {"이제부터", "더 딱딱해진다!"},
+            fb_bl_final_acorn_phase3_1 = {"완전한 혼돈!", "껍질을 벗는다!"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"하지만 나는", "심록색 잎사귀다!"},
@@ -374,6 +378,8 @@ return {
             fb_bl_final_leaf_defeat_1 = {"떠나마...", "낙엽처럼."},
             fb_bl_final_leaf_gloat_1 = {"낙엽처럼 져라!"},
             fb_bl_final_leaf_interrupted_1 = {"좋다. 인사는", "생략하지."},
+            fb_bl_final_leaf_phase2_1 = {"내 뿌리가", "더 깊어진다!"},
+            fb_bl_final_leaf_phase3_1 = {"나와 함께", "시들어라!"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"하지만 나는", "보라색 술잔이다!"},
@@ -386,6 +392,8 @@ return {
             fb_bl_final_vessel_defeat_1 = {"술잔이...", "비어버렸다."},
             fb_bl_final_vessel_gloat_1 = {"완패했군!"},
             fb_bl_final_vessel_interrupted_1 = {"내 연설 전에", "출항이라니. 대담하군."},
+            fb_bl_final_vessel_phase2_1 = {"화물칸을 채워라!"},
+            fb_bl_final_vessel_phase3_1 = {"전원,", "심해로!"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"하지만 나는", "진홍색 술잔이다!"},
@@ -398,6 +406,8 @@ return {
             fb_bl_final_heart_defeat_1 = {"내 마음이...", "부서졌다."},
             fb_bl_final_heart_gloat_1 = {"상심했나?"},
             fb_bl_final_heart_interrupted_1 = {"내 말을 끊어?", "무정하군!"},
+            fb_bl_final_heart_phase2_1 = {"내 심장이", "더 빨리 뛴다!"},
+            fb_bl_final_heart_phase3_1 = {"진홍빛 분노를", "느껴라!"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"하지만 나는", "하늘색 종이다!"},
@@ -410,6 +420,8 @@ return {
             fb_bl_final_bell_defeat_1 = {"종이 울린다", "나를 위해."},
             fb_bl_final_bell_gloat_1 = {"땡땡, 졌구나!"},
             fb_bl_final_bell_interrupted_1 = {"종소리에 살았다고?", "이번엔 아니다!"},
+            fb_bl_final_bell_phase2_1 = {"더 크게", "울려주마!"},
+            fb_bl_final_bell_phase3_1 = {"마지막 종소리다!"},
         }
     }
 }
