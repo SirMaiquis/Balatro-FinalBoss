@@ -658,4 +658,56 @@ function logic.shake_offset(elapsed, reduced)
   return S.amp * fade * fade * math.sin(2 * math.pi * S.freq * elapsed)
 end
 
+-- Phases (1.1) ------------------------------------------------------------------------------------
+
+--- Phase I above 50% HP, II below 50%, III below 25% (the 1.0 wound stages + 1). old_stage is the
+--- stage of the phase already reached (phase - 1): a hand through both thresholds returns 3 once,
+--- and a phase is never undone (a Violet Vessel heal can lower the wound stage again).
+function logic.phase_cross(old_stage, new_stage)
+  old_stage, new_stage = old_stage or 0, new_stage or 0
+  if new_stage > old_stage then return new_stage + 1 end
+  return nil
+end
+
+--- Whether a scored hand transforms the boss. a: {cinematic, moment, target (phase_cross), hands_left}.
+--- Never on the defeat hand (the death plays) or the last hand (the round ends right after).
+function logic.should_transform(a)
+  if not a.cinematic or not a.target then return nil end
+  if a.moment == 'defeat' or (a.hands_left or 1) <= 0 then return nil end
+  return a.target
+end
+
+--- Rule twists (setting "Boss phases change the rules"), always through the boss's own mechanic.
+--- once: applied when the phase is reached; draw: applied after every draw while in that phase.
+logic.TWISTS = {
+  bl_final_acorn = {[2] = {once = 'acorn_shuffle'}, [3] = {once = 'acorn_shuffle'}},
+  bl_final_leaf = {[2] = {draw = 'leaf_debuff', count = 1}, [3] = {draw = 'leaf_debuff', count = 2}},
+  bl_final_vessel = {[2] = {once = 'vessel_heal', ratio = 0.10}, [3] = {once = 'vessel_heal', ratio = 0.10}},
+  bl_final_heart = {[2] = {draw = 'heart_extra', count = 1}, [3] = {draw = 'heart_extra', count = 1, beam = true}},
+  bl_final_bell = {[2] = {draw = 'bell_force', count = 2}, [3] = {draw = 'bell_force', count = 2}},
+}
+
+function logic.twist_for(boss, phase)
+  local t = boss and logic.TWISTS[boss]
+  return t and t[phase] or nil
+end
+
+--- Up to n distinct random elements of list (rand = math.random signature); list is not changed.
+function logic.sample(list, n, rand)
+  local pool = {}
+  for i, v in ipairs(list or {}) do pool[i] = v end
+  local out = {}
+  for _ = 1, math.min(n or 0, #pool) do out[#out + 1] = table.remove(pool, rand(#pool)) end
+  return out
+end
+
+--- Fisher-Yates shuffle in place (rand = math.random signature). Returns list.
+function logic.shuffle(list, rand)
+  for i = #list, 2, -1 do
+    local j = rand(i)
+    list[i], list[j] = list[j], list[i]
+  end
+  return list
+end
+
 return logic
