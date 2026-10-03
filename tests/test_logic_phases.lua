@@ -29,7 +29,7 @@ T['should_transform: cinematic, crossed, not the defeat hand, not the last hand'
   eq(logic.should_transform{cinematic = true, moment = nil, target = nil, hands_left = 3}, nil, 'no crossing')
 end
 
-T['twist_for: the spec table'] = function()
+T['twist_for: each final boss twist and its strength in phases II and III'] = function()
   eq(logic.twist_for('bl_final_acorn', 2).once, 'acorn_shuffle')
   eq(logic.twist_for('bl_final_acorn', 3).once, 'acorn_shuffle')
   eq(logic.twist_for('bl_final_leaf', 2).draw, 'leaf_debuff')

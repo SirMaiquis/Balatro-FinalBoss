@@ -270,7 +270,7 @@ Writing tips: each quip is 1 or 2 lines, and each line should stay under about 2
 
 ## Compatibility
 
-- Big-number scores (Talisman) are converted to plain numbers before FinalBoss compares them, but this path has not been playtested.
+- Big-number scores (Talisman) are converted to plain numbers before FinalBoss compares them, but this path has not been tested with Talisman installed.
 - FinalBoss ships one Lovely patch (`lovely/timescale.toml`) for the finale's slow motion; if a game update changes its target line, the finale simply runs at normal speed.
 - Boss moves observe `Blind:set_blind`, `press_play`, `modify_hand`, `debuff_hand`, `stay_flipped`, `drawn_to_hand`, `disable` and `wiggle`, and `G.FUNCS.draw_from_deck_to_hand`, by wrapping them: the original always runs first and its results are returned unchanged. A mod that replaces one of these instead of wrapping it loses the moves tied to it.
 - Boss memory is stored in your Balatro profile (`profile.jkr`); resetting the profile resets it.

@@ -352,7 +352,7 @@ T['serpent_draw: only the Serpent after the first play or discard'] = function()
   eq(logic.serpent_draw{key = 'bl_hook', disabled = false, hands_played = 1, discards_used = 0}, false)
 end
 
--- Blind-start before -> after (Task A2b) ------------------------------------------------------------
+-- Blind-start before -> after ------------------------------------------------------------------------
 
 T['normal_target: a regular boss target (mult 2) at the ante scaling'] = function()
   eq(logic.normal_target(300, 1), 600)

@@ -224,7 +224,7 @@ function Blind:drawn_to_hand(...)
   local r = pack(orig_drawn_to_hand(self, ...))
   if snap then
     U.guard('move_drawn', moves().on_drawn, self, snap)
-    U.guard('phase_drawn', FinalBoss.phases.on_drawn, self, snap) -- twists after the move (Task 11)
+    U.guard('phase_drawn', FinalBoss.phases.on_drawn, self, snap) -- phase twists after the boss's move
   end
   return unpack(r, 1, r.n)
 end

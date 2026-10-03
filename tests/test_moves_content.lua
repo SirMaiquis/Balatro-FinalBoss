@@ -7,7 +7,7 @@ local function bosses()
   return require('src.encounters.vanilla')
 end
 
--- Spec §2.4: regular boss -> trigger kind of its recipe.
+-- Regular boss -> trigger kind of its recipe.
 local REGULAR = {
   bl_hook = 'play', bl_tooth = 'play', bl_flint = 'modify',
   bl_arm = 'hand_debuff', bl_ox = 'hand_debuff', bl_psychic = 'hand_debuff', bl_eye = 'hand_debuff',
@@ -28,14 +28,14 @@ T['every vanilla boss has a numeric voice pitch'] = function()
   assert(n == 28, 'expected 28 vanilla bosses, got ' .. n)
 end
 
-T['the 23 regular bosses have their spec recipe kind'] = function()
+T['the 23 regular bosses each have a recipe for their trigger kind'] = function()
   local b = bosses()
   local n = 0
   for key, kind in pairs(REGULAR) do
     n = n + 1
     assert(b[key] and b[key].moves and b[key].moves[kind], key .. ' needs a ' .. kind .. ' recipe')
   end
-  assert(n == 23, 'spec lists 23 regular bosses, got ' .. n)
+  assert(n == 23, 'the table lists 23 regular bosses, got ' .. n)
 end
 
 --- A recipe sounds when it plays (recipe.sound), when one of its steps runs (step.sound, also on a
@@ -76,7 +76,7 @@ T['every vanilla recipe is valid, has a sound, known glyphs and curse styles'] =
   end
 end
 
-T['card-debuff bosses leave persistent curse marks in the spec styles'] = function()
+T['card-debuff bosses leave persistent curse marks in their own styles'] = function()
   local b = bosses()
   for _, k in ipairs({'bl_club', 'bl_goad', 'bl_window', 'bl_head'}) do
     local step = b[k].moves.card_debuff[1]
@@ -158,14 +158,14 @@ T['the Serpent delivers its cards with a snake'] = function()
   assert(r[1].effect == 'snake' and r[1].target == 'hand', 'snake to the hand')
 end
 
--- Spec §2.4: final boss -> trigger kinds of its recipes. The blind-start finals (Acorn, Vessel) play at
+-- Final boss -> trigger kinds of its recipes. The blind-start finals (Acorn, Vessel) play at
 -- blind set ('set'), like The Wall; the Leaf curses cards like The Plant.
 local FINAL = {
   bl_final_acorn = {'set'}, bl_final_leaf = {'card_debuff', 'joker_sold'}, bl_final_vessel = {'set'},
   bl_final_heart = {'drawn'}, bl_final_bell = {'drawn'},
 }
 
-T['the 5 final bosses have their spec kinds and a signature'] = function()
+T['the 5 final bosses have recipes for their trigger kinds and a signature'] = function()
   local b = bosses()
   for key, kinds in pairs(FINAL) do
     local moves = b[key].moves
@@ -179,7 +179,7 @@ T['the 5 final bosses have their spec kinds and a signature'] = function()
   end
 end
 
-T['final-boss recipes follow the spec'] = function()
+T['final-boss recipes use their signature effects'] = function()
   local b = bosses()
   local vessel = b.bl_final_vessel.moves.set[1]
   assert(vessel.effect == 'recount' and vessel.target == 'hud_target' and vessel.value == 'target',

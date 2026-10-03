@@ -113,7 +113,7 @@ T['intro_plan: the nemesis line takes precedence'] = function()
     'nemesis_intro')
 end
 
-T['ACHIEVEMENTS: the ten spec ids'] = function()
+T['ACHIEVEMENTS: ten achievements'] = function()
   eq(#logic.ACHIEVEMENTS, 10)
   for _, id in ipairs({'fb_showdown_survivor', 'fb_clean_sweep', 'fb_rude', 'fb_no_manners', 'fb_last_laugh',
       'fb_overkill', 'fb_phase_skipper', 'fb_comeback', 'fb_nemesis_slayer', 'fb_twisted'}) do
