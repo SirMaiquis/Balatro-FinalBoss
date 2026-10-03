@@ -271,4 +271,106 @@ function logic.arena_params(stage)
   return ARENA[stage] or ARENA[0]
 end
 
+-- Boss moves (1.1) --------------------------------------------------------------------------------
+
+--- Effect primitives a recipe step may name (src/effects.lua).
+logic.EFFECTS = {fling = true, drain = true, crack = true, stamp = true, sweep = true, glare = true,
+  chain = true, ring = true, spin = true, burst = true}
+
+--- Trigger kinds (hooks.lua -> moves.lua). 'signature' is no trigger: phases play it big.
+logic.MOVE_KINDS = {play = true, modify = true, hand_debuff = true, card_debuff = true, flipped = true,
+  drawn = true, start = true, draw = true, joker_sold = true, generic = true, signature = true}
+
+--- Where a step lands (resolved by moves.lua): the performer, the trigger's cards, the played
+--- cards, a card area or a HUD element.
+logic.TARGETS = {source = true, cards = true, played = true, hand = true, jokers = true,
+  hud_chips = true, hud_mult = true, hud_hand_name = true, hud_hands = true, hud_discards = true,
+  hud_target = true, hud_dollars = true}
+
+--- Built-in final-boss deaths (src/deaths.lua).
+logic.DEATHS = {hearts = true, leaves = true, acorn = true, flood = true, bell = true}
+
+logic.THROTTLE_GAP = 0.6 -- seconds between two moves of the same kind (one per batch)
+
+--- Bosses without a recipe (modded) burst on the generic trigger (Blind:wiggle).
+logic.GENERIC_RECIPE = {{effect = 'burst', target = 'source'}, sound = {'tarot1', 1, 0.4}}
+
+--- A recipe is a list of steps {effect = name, target = name, ...options} plus optional
+--- recipe.sound = {key, pitch, volume} and recipe.defer (moves.lua reads the trigger's cards in a
+--- queued event). Returns the cleaned recipe (nil when no step is valid) and warning strings.
+function logic.clean_recipe(recipe)
+  if type(recipe) ~= 'table' then return nil, {'recipe is not a table'} end
+  local out, warnings = {}, {}
+  for i, step in ipairs(recipe) do
+    if type(step) ~= 'table' or not logic.EFFECTS[step.effect] then
+      warnings[#warnings + 1] = ('step %d: unknown effect %s'):format(i,
+        tostring(type(step) == 'table' and step.effect or step))
+    elseif step.target ~= nil and not logic.TARGETS[step.target] then
+      warnings[#warnings + 1] = ('step %d: unknown target %s'):format(i, tostring(step.target))
+    else
+      out[#out + 1] = step
+    end
+  end
+  if #out == 0 then return nil, warnings end
+  if type(recipe.sound) == 'table' and type(recipe.sound[1]) == 'string' then out.sound = recipe.sound end
+  if recipe.defer then out.defer = true end
+  return out, warnings
+end
+
+--- moves: kind -> recipe. Returns the cleaned table (nil when empty) and warning strings.
+function logic.clean_moves(moves)
+  if type(moves) ~= 'table' then return nil, {'moves is not a table'} end
+  local out, warnings, any = {}, {}, false
+  for kind, recipe in pairs(moves) do
+    if not logic.MOVE_KINDS[kind] then
+      warnings[#warnings + 1] = 'unknown kind ' .. tostring(kind)
+    else
+      local clean, w = logic.clean_recipe(recipe)
+      for _, msg in ipairs(w) do warnings[#warnings + 1] = tostring(kind) .. ' ' .. msg end
+      if clean then out[kind] = clean; any = true end
+    end
+  end
+  return any and out or nil, warnings
+end
+
+--- death: a built-in name (logic.DEATHS) or a recipe.
+function logic.clean_death(death)
+  if type(death) == 'string' then
+    if logic.DEATHS[death] then return death, {} end
+    return nil, {'unknown death ' .. death}
+  end
+  return logic.clean_recipe(death)
+end
+
+--- Rate limit: true (and records now) when `key` last passed at least min_gap seconds ago.
+--- last: key -> time, owned by the caller.
+function logic.throttle_ok(last, key, now, min_gap)
+  local t = last[key]
+  if t and now - t < (min_gap or logic.THROTTLE_GAP) then return false end
+  last[key] = now
+  return true
+end
+
+--- Moves held while a phase transformation plays: keep at most max (default 2), oldest dropped.
+function logic.queue_push(queue, item, max)
+  queue[#queue + 1] = item
+  if #queue > (max or 2) then return queue, table.remove(queue, 1) end
+  return queue, nil
+end
+
+--- Whether a boss move may run. a: {moves, fx (settings), disabled_run, is_boss, blind_disabled, kind}.
+--- joker_sold is the one move of a disabled blind (Verdant Leaf withers as the sale disables it).
+function logic.move_allowed(a)
+  if not (a.moves and a.fx) or a.disabled_run or not a.is_boss then return false end
+  if a.blind_disabled and a.kind ~= 'joker_sold' then return false end
+  return true
+end
+
+--- The recipe a trigger plays: the boss's own, or the generic burst for bosses without moves.
+function logic.recipe_for(moves, kind)
+  if moves then return moves[kind] end
+  if kind == 'generic' then return logic.GENERIC_RECIPE end
+  return nil
+end
+
 return logic
