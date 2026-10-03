@@ -474,7 +474,18 @@ function Fist:init(x, y, w, h, sprite)
 end
 
 function Fist:move(dt)
-  if self.top then keep_top() end
+  -- The engine calls move outside any guard (as Recount:move): a failure stops the top-layer upkeep
+  -- and is reported through util.guard from an event.
+  if self.top then
+    local ok, err = pcall(keep_top)
+    if not ok then
+      self.top = nil
+      G.E_MANAGER:add_event(Event({blocking = false, blockable = false, func = function()
+        FinalBoss.util.guard('effect_fist', error, err, 0)
+        return true
+      end}))
+    end
+  end
   local t = now()
   local y = self.y_rest
   if not self.landed and t < self.t_land then
