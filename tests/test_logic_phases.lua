@@ -75,4 +75,26 @@ T['shuffle: a permutation, in place'] = function()
   for v = 1, 5 do assert(seen[v], 'lost ' .. v) end
 end
 
+T['stance: phase II roams faster with a faint aura, III a strong aura'] = function()
+  eq(logic.stance(1).roam, 1); eq(logic.stance(1).aura, 0)
+  assert(logic.stance(2).roam < 1, 'phase II roams faster'); eq(logic.stance(2).aura, 1)
+  eq(logic.stance(3).aura, 2)
+  eq(logic.stance(nil), logic.stance(1)); eq(logic.stance(7), logic.stance(1))
+end
+
+T['phase_marker: II and III, nothing in phase I'] = function()
+  eq(logic.phase_marker(1), ''); eq(logic.phase_marker(2), 'II'); eq(logic.phase_marker(3), 'III')
+  eq(logic.phase_marker(nil), '')
+end
+
+T['roar_scale: 1 outside the roar, peak in the middle'] = function()
+  local R = logic.ROAR
+  eq(logic.roar_scale(-0.1, 0.5), 1)
+  eq(logic.roar_scale(0.5, 0.5), 1)
+  eq(logic.roar_scale(nil, 0.5), 1)
+  local peak = logic.roar_scale(0.25, 0.5)
+  assert(math.abs(peak - (1 + R.grow)) < 1e-9, 'peak ' .. tostring(peak))
+  assert(logic.roar_scale(0.1, 0.5) > 1 and logic.roar_scale(0.1, 0.5) < peak, 'grows toward the peak')
+end
+
 return T

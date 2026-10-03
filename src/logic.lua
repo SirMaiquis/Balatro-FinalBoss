@@ -710,4 +710,24 @@ function logic.shuffle(list, rand)
   return list
 end
 
+--- Avatar stance per phase: roam interval factor and aura level (0 none, 1 faint, 2 strong).
+logic.STANCES = {[1] = {roam = 1, aura = 0}, [2] = {roam = 0.6, aura = 1}, [3] = {roam = 0.6, aura = 2}}
+
+function logic.stance(phase) return logic.STANCES[phase] or logic.STANCES[1] end
+
+--- HP-bar phase marker (roman numerals, not localized).
+function logic.phase_marker(phase)
+  if phase == 2 then return 'II' end
+  if phase == 3 then return 'III' end
+  return ''
+end
+
+--- Transformation roar: the chip swells (and shakes) for ROAR.duration seconds.
+logic.ROAR = {duration = 0.5, grow = 0.25, shake = 0.08}
+
+function logic.roar_scale(elapsed, duration)
+  if not elapsed or not duration or elapsed < 0 or elapsed >= duration then return 1 end
+  return 1 + logic.ROAR.grow * math.sin(math.pi * elapsed / duration)
+end
+
 return logic
