@@ -84,7 +84,7 @@ local function setup(opts)
     logic = require('src.logic'),
     config = {cinematic = true, fx = true, moves = opts.moves ~= false},
     avatar = {exists = function() return not opts.no_avatar end, roar = rec('roar'), flash = rec('avatar_flash'),
-      set_stance = rec('set_stance'), set_wound = rec('set_wound')},
+      set_stance = rec('set_stance'), set_wound = rec('set_wound'), anger = rec('anger')},
     hpbar = {set_phase = rec('set_phase'), heal = rec('heal')},
     moves = {hold = rec('hold'), boss_colour = function() return {1, 0, 0, 1} end,
       performer = function() return {x = 0, y = 0, w = 1, h = 1} end, voice = function() return 1 end,
@@ -268,7 +268,12 @@ end
 T['phases: a disabled final boss (Chicot) never transforms'] = function()
   local P, ctx = setup()
   ctx.blind.disabled = true
-  eq(P.check(ctx.enc, ctx.blind, hand(600)), false, 'check')
+  eq(P.check(ctx.enc, ctx.blind, hand(300)), false, 'check above 50%')
+  P.check(ctx.enc, ctx.blind, hand(600))
+  ctx.advance(3)
+  eq(ctx.enc.phase, nil, 'no phase')
+  eq(ctx.count('hold') + ctx.count('set_stance') + ctx.count('set_phase') + ctx.count('roar'), 0, 'no transformation')
+  eq(FinalBoss.timescale, 1, 'no slow motion')
   eq(P.force_next(), nil, 'F8')
   ctx.enc.phase = 2
   P.restore(ctx.enc, ctx.blind)
@@ -286,12 +291,84 @@ T['phases.powerless: a disabled boss, except a Leaf disabled by a joker sale'] =
   eq(P.powerless(ctx.enc, ctx.blind), false, 'Leaf after a sale')
 end
 
+T['phases: a disabled final boss gets mad at 50% and 25%: anger and its disabled line, forced'] = function()
+  local P, ctx = setup()
+  ctx.blind.disabled = true
+  eq(P.check(ctx.enc, ctx.blind, hand(600)), true, 'replaces the moment line')
+  eq(ctx.enc.mad_phase, 2, 'threshold recorded (saved data)')
+  eq(ctx.count('anger'), 1, 'anger')
+  eq(ctx.args.anger[1], ctx.blind)
+  eq(ctx.args.fire[1], 'disabled', 'disabled line')
+  eq(ctx.args.fire[2].force, true, 'forced past the once-per-blind rule')
+  eq(P.check(ctx.enc, ctx.blind, hand(700)), false, 'once per threshold')
+  eq(P.check(ctx.enc, ctx.blind, hand(800)), true, '25%')
+  eq(ctx.enc.mad_phase, 3)
+  eq(ctx.count('anger'), 2)
+  eq(P.check(ctx.enc, ctx.blind, hand(900)), false, 'nothing left')
+  eq(ctx.enc.phase, nil, 'never a phase')
+  eq(ctx.count('set_phase') + ctx.count('set_stance') + ctx.count('hold') + ctx.count('fx_flash'), 0,
+    'no marker, stance, freeze or transformation flash')
+end
+
+T['phases: a disabled boss is never mad on the winning or last hand, or without the avatar'] = function()
+  local P, ctx = setup()
+  ctx.blind.disabled = true
+  eq(P.check(ctx.enc, ctx.blind, hand(1000, 'defeat')), false, 'winning hand')
+  eq(P.check(ctx.enc, ctx.blind, hand(600, nil, 0)), false, 'last hand')
+  eq(ctx.enc.mad_phase, nil)
+  P, ctx = setup({no_avatar = true})
+  ctx.blind.disabled = true
+  eq(P.check(ctx.enc, ctx.blind, hand(600)), false, 'no avatar')
+  P, ctx = setup()
+  ctx.blind.disabled = true
+  ctx.enc.showdown = false
+  eq(P.check(ctx.enc, ctx.blind, hand(600)), false, 'not a showdown')
+  eq(ctx.count('anger') + ctx.count('fire'), 0)
+end
+
+T['phases: a disabled boss waits for the laugh before getting mad; Continue does not repeat it'] = function()
+  local P, ctx = setup()
+  ctx.blind.disabled = true
+  eq(P.check(ctx.enc, ctx.blind, hand(600), 1.2), true)
+  eq(ctx.enc.mad_phase, 2, 'recorded at once')
+  eq(ctx.count('anger'), 0, 'not yet')
+  ctx.advance(1.3)
+  eq(ctx.count('anger'), 1, 'after the laugh')
+  eq(ctx.args.fire[1], 'disabled')
+  -- Continue: the saved encounter keeps mad_phase, so the same threshold stays handled
+  P.restore(ctx.enc, ctx.blind)
+  eq(P.check(ctx.enc, ctx.blind, hand(600)), false)
+  eq(ctx.count('anger'), 1)
+end
+
+T['phases: a disabled boss already in phase II only gets mad at 25%'] = function()
+  local P, ctx = setup()
+  ctx.enc.phase = 2 -- transformed, then disabled (Luchador)
+  ctx.blind.disabled = true
+  eq(P.check(ctx.enc, ctx.blind, hand(700)), false, 'phase II threshold already crossed')
+  eq(P.check(ctx.enc, ctx.blind, hand(800)), true)
+  eq(ctx.enc.phase, 2, 'no transformation')
+  eq(ctx.args.fire[1], 'disabled')
+end
+
+T['phases: a reset during the laugh cancels a pending anger'] = function()
+  local P, ctx = setup()
+  ctx.blind.disabled = true
+  P.check(ctx.enc, ctx.blind, hand(600), 1.2)
+  P.reset()
+  ctx.advance(3)
+  eq(ctx.count('anger') + ctx.count('fire'), 0)
+end
+
 T['phases: Verdant Leaf disabled by a joker sale keeps transforming'] = function()
   local P, ctx = setup({key = 'bl_final_leaf'})
   P.on_disable(ctx.blind, true)
   ctx.blind.disabled = true
   eq(ctx.enc.twists.leaf_sold, true)
   eq(P.check(ctx.enc, ctx.blind, hand(600)), true)
+  eq(ctx.enc.phase, 2, 'a phase')
+  eq(ctx.enc.mad_phase, nil, 'not mad')
+  eq(ctx.count('anger'), 0)
 end
 
 -- Twists ------------------------------------------------------------------------------------------

@@ -1,6 +1,7 @@
 --- Phases (1.1): final bosses transform at 50% and 25% HP (the 1.0 wound stages) with a short
---- cinematic, a phase line, a new stance and an HP-bar marker. enc.phase is plain saved data;
---- visuals are rebuilt on Continue and the transformation is never replayed.
+--- cinematic, a phase line, a new stance and an HP-bar marker; a disabled one gets mad instead.
+--- enc.phase and enc.mad_phase are plain saved data; visuals are rebuilt on Continue and the
+--- transformation is never replayed.
 local P = {}
 P.token = 0
 P.slowing = false -- this module set FinalBoss.timescale (the finale's own slow motion is not ours)
@@ -33,7 +34,8 @@ local function finale_playing()
   return (C and C.phase == 'finale') and true or false
 end
 
---- A disabled final boss (Chicot, Luchador) has lost its power: no transformation, no twist. Verdant
+--- A disabled final boss (Chicot, Luchador) has lost its power: no transformation, no twist (it gets
+--- mad at the thresholds instead, P.check). Verdant
 --- Leaf disabled by a joker sale is the exception: that is its normal fight, and its twist is the
 --- leaf regrowing after the sale (enc.twists.leaf_sold, P.on_disable).
 local function powerless(enc, blind)
@@ -43,27 +45,54 @@ end
 
 P.powerless = powerless -- also read by Dir.on_blind_defeated (a powerless win is not twisted)
 
+--- A cinematic showdown with the avatar on the table (phases, or a powerless boss's anger).
+local function staged(enc)
+  return (enc and enc.showdown and enc.cinematic and FinalBoss.config.cinematic
+    and FinalBoss.avatar.exists()) and true or false
+end
+
 --- Phases run in cinematic showdowns while the avatar is on the table and the boss has its power.
 --- blind: default the current blind.
 function P.active(enc, blind)
   blind = blind or (G.GAME and G.GAME.blind)
-  return (enc and enc.showdown and enc.cinematic and FinalBoss.config.cinematic
-    and FinalBoss.avatar.exists() and not powerless(enc, blind)) and true or false
+  return (staged(enc) and not powerless(enc, blind)) and true or false
+end
+
+--- A powerless final boss crossing 50% / 25%: no transformation, it gets mad instead (the interrupt
+--- anger: red flash and a short shake, the flash only under reduced motion) and says its disabled
+--- line again, forced.
+function P.mad(enc, blind)
+  FinalBoss.avatar.anger(blind)
+  FinalBoss.director.fire('disabled', {force = true})
 end
 
 --- The director's deferred reaction (score landed). Returns true when a transformation started (or
 --- is scheduled): its phase line then replaces this hand's moment line. delay: REAL seconds before
 --- it starts (a weak hit's laugh, Dir.stage_hit), so laugh, roar and phase line never overlap.
 --- enc.phase is recorded at once, so a save during the delay keeps the phase (Continue restores it).
+--- A powerless boss gets mad instead (P.mad, also true: its disabled line replaces the moment line);
+--- enc.mad_phase records the threshold at once, so it is mad once per threshold, Continue included.
 function P.check(enc, blind, p, delay)
   if p.total >= p.required then return false end -- the winning hand: the death plays, never a phase
-  if not P.active(enc, blind) then return false end
+  if not staged(enc) then return false end
   local L = FinalBoss.logic
   local from = enc.phase or 1
-  local stage = L.wound_stage(L.hp_fraction(p.total, p.required))
-  local target = L.should_transform{cinematic = true, moment = p.moment,
-    target = L.phase_cross(from - 1, stage), hands_left = p.hands_left}
-  if not target then return false end
+  local kind, target = L.phase_reaction{cinematic = true, moment = p.moment, hands_left = p.hands_left,
+    stage = L.wound_stage(L.hp_fraction(p.total, p.required)), phase = enc.phase,
+    powerless = powerless(enc, blind), mad_phase = enc.mad_phase}
+  if not kind then return false end
+  if kind == 'mad' then
+    enc.mad_phase = target
+    if (delay or 0) <= 0 then
+      P.mad(enc, blind)
+      return true
+    end
+    P.token = P.token + 1
+    after(delay, P.token, function()
+      if live(enc) and staged(enc) then P.mad(enc, blind) end
+    end)
+    return true
+  end
   enc.phase = target
   -- One-shot twists change the game now (the Vessel's requirement, the Acorn's joker order), while
   -- the player has no control: the next hand must read the new state even if it is played before

@@ -29,6 +29,49 @@ T['should_transform: cinematic, crossed, not the defeat hand, not the last hand'
   eq(logic.should_transform{cinematic = true, moment = nil, target = nil, hands_left = 3}, nil, 'no crossing')
 end
 
+local function reaction(a)
+  local r = {cinematic = true, moment = nil, hands_left = 2, stage = 1}
+  for k, v in pairs(a) do r[k] = v end
+  return logic.phase_reaction(r)
+end
+
+T['phase_reaction: a boss with its power transforms at 50% and 25%'] = function()
+  local kind, target = reaction{}
+  eq(kind, 'transform'); eq(target, 2)
+  kind, target = reaction{phase = 2, stage = 2}
+  eq(kind, 'transform'); eq(target, 3)
+  kind, target = reaction{stage = 2}
+  eq(kind, 'transform'); eq(target, 3, 'both thresholds at once')
+  eq(reaction{stage = 0}, nil, 'above 50%')
+  eq(reaction{phase = 3, stage = 2}, nil, 'phase III is the last')
+end
+
+T['phase_reaction: a powerless boss gets mad instead, once per threshold'] = function()
+  local kind, target = reaction{powerless = true}
+  eq(kind, 'mad'); eq(target, 2)
+  eq(reaction{powerless = true, mad_phase = 2}, nil, 'already mad at 50%')
+  kind, target = reaction{powerless = true, mad_phase = 2, stage = 2}
+  eq(kind, 'mad'); eq(target, 3, 'then at 25%')
+  eq(reaction{powerless = true, mad_phase = 3, stage = 2}, nil, 'both handled')
+  kind, target = reaction{powerless = true, stage = 2}
+  eq(kind, 'mad'); eq(target, 3, 'both thresholds at once: mad once')
+end
+
+T['phase_reaction: a phase reached before losing its power is not a new threshold'] = function()
+  eq(reaction{powerless = true, phase = 2, stage = 1}, nil, 'phase II already reached')
+  local kind, target = reaction{powerless = true, phase = 2, stage = 2}
+  eq(kind, 'mad'); eq(target, 3)
+  local k2 = reaction{phase = 1, mad_phase = 3, stage = 1}
+  eq(k2, 'transform', 'mad_phase only counts while powerless')
+end
+
+T['phase_reaction: never on the winning hand, the last hand or without cinematics'] = function()
+  eq(reaction{powerless = true, moment = 'defeat', stage = 2}, nil, 'defeat hand')
+  eq(reaction{powerless = true, hands_left = 0}, nil, 'last hand')
+  eq(reaction{powerless = true, cinematic = false}, nil, 'no cinematic')
+  eq(reaction{moment = 'defeat'}, nil, 'defeat hand, with power')
+end
+
 T['twist_for: each final boss twist and its strength in phases II and III'] = function()
   eq(logic.twist_for('bl_final_acorn', 2).once, 'acorn_shuffle')
   eq(logic.twist_for('bl_final_acorn', 3).once, 'acorn_shuffle')

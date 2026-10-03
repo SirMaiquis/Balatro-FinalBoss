@@ -255,6 +255,7 @@ local function react(p)
     -- 1.1: crossing 50% / 25% transforms the boss. Its phase line replaces this hand's moment line
     -- (the moment stays unfired); the hit, damage number and laugh above still play, and a weak
     -- hit's transformation waits for the laugh (wait) so laugh, roar and line never overlap.
+    -- A powerless (disabled) boss gets mad there instead: anger and its disabled line, same rules.
     if FinalBoss.phases.check(enc, blind, p, wait) then return end
   end
   if not p.moment then return end

@@ -13,7 +13,7 @@ Boss personality, phases and memory.
 
 ### Final bosses
 - Each final boss dies its own way: Crimson Heart shatters into hearts, Verdant Leaf blows away in a gust of leaves, Amber Acorn cracks open into shards, Violet Vessel spills purple liquid over the table, Cerulean Bell rings one last time and breaks.
-- Phases: at 50% and 25% HP a final boss transforms with a short cinematic (slow motion, a flash, the music dips, its own move erupts), says a phase line and gets a new stance and a II / III marker on its HP bar. The winning hand and your last hand never transform it, and a boss that has been disabled (for example by Chicot) has no phases.
+- Phases: at 50% and 25% HP a final boss transforms with a short cinematic (slow motion, a flash, the music dips, its own move erupts), says a phase line and gets a new stance and a II / III marker on its HP bar. The winning hand and your last hand never transform it, and a boss that has been disabled (for example by Chicot) has no phases: it gets angry at 50% and 25% instead and says its disabled line again.
 - New setting: Boss phases change the rules (off by default). Each final boss twists its own mechanic in phase II and III: Amber Acorn reshuffles your jokers, Verdant Leaf withers 1 then 2 cards with vines once you have sold a joker, Violet Vessel heals 10% of its requirement per phase (jumping to phase III heals twice), Crimson Heart disables 2 jokers per hand, Cerulean Bell forces 2 cards.
 
 ### Memory
