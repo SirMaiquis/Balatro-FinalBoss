@@ -8,6 +8,7 @@ H.ui = nil
 H.view = {text = '', frac = 1, ghost = 1, phase = ''} -- read by the bar nodes every frame
 H.ghost_from, H.ghost_until, H.flash_until, H.stage = 1, 0, 0, 0
 H.heal_until = 0 -- REAL time the heal refill ends (the trail waits for it)
+H.heal_gen, H.heal_ease = 0, nil -- heal refill: token bumped by update/remove, eased private value
 H.colour = {1, 0, 0, 1}
 H.fill_col = {1, 0, 0, 1}
 H.trail_col = {1, 1, 1, 0.85}
@@ -64,6 +65,7 @@ function H.create(avatar, blind, total, required)
 end
 
 function H.update(total, required, instant)
+  H.heal_gen, H.heal_until = H.heal_gen + 1, 0 -- any fresh value cancels a refill in progress
   local frac = FinalBoss.logic.hp_fraction(total, required)
   local stage = FinalBoss.logic.wound_stage(frac)
   local flash = stage ~= H.stage and not instant
@@ -122,13 +124,25 @@ function H.heal(total, required)
   if G.SETTINGS.reduced_motion or to <= from then return end
   H.view.frac, H.view.ghost = from, from
   H.heal_until = now() + 0.6
-  G.E_MANAGER:add_event(Event({trigger = 'ease', ref_table = H.view, ref_value = 'frac', ease_to = to,
+  -- The ease writes a private value that H.tick copies into view.frac while the token still matches,
+  -- so an update/remove/create inside the window is never overwritten when the ease completes.
+  local e = {v = from, to = to, gen = H.heal_gen}
+  H.heal_ease = e
+  G.E_MANAGER:add_event(Event({trigger = 'ease', ref_table = e, ref_value = 'v', ease_to = to,
     delay = 0.6, timer = 'REAL', blocking = false, blockable = false, func = function(t) return t end}))
 end
 
 function H.tick(dt)
   if not H.ui then return end
   local v = H.view
+  local e = H.heal_ease
+  if e then
+    if e.gen ~= H.heal_gen then H.heal_ease = nil
+    else
+      v.frac = e.v
+      if e.v >= e.to then H.heal_ease = nil end
+    end
+  end
   if H.flash_until > 0 and now() >= H.flash_until then
     H.flash_until = 0
     paint_fill(false)
@@ -144,6 +158,7 @@ function H.remove()
   if H.ui then H.ui:remove(); H.ui = nil end
   H.view.frac, H.view.ghost, H.ghost_from, H.stage = 1, 1, 1, 0
   H.view.text, H.view.phase, H.flash_until, H.ghost_until, H.heal_until = '', '', 0, 0, 0
+  H.heal_gen, H.heal_ease = H.heal_gen + 1, nil
 end
 
 return H

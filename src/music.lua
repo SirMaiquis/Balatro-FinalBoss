@@ -69,13 +69,14 @@ function M.duck(seconds)
   M.duck_gen = M.duck_gen + 1
   local gen = M.duck_gen
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = seconds, timer = 'REAL', blocking = false,
-    blockable = false, func = function()
+    blockable = false, pause_force = true, func = function()
       if M.duck_gen == gen then FinalBoss.util.guard('music_unduck', M.unduck) end
       return true
     end}))
 end
 
---- Back to full volume (the arena keeps its stage pitch). Only clears our own override.
+--- Back to full volume (the arena keeps its stage pitch). Only clears our own override; safe when
+--- not ducking (Dir.reset_stage calls it: quit/restart clear the event queue and delete the timer).
 function M.unduck()
   if G.video_soundtrack == M.DUCK_TRACK then G.video_soundtrack = nil end
 end

@@ -518,7 +518,10 @@ function V.remove()
   V.obj = nil
   restore_hud_blind()
   V.talking, V.fading, V.tremble, V.wound, V.scoring = false, false, false, 0, false
-  V.stance, V.auras, V.roar_start, V.roar_until = 1, {}, 0, 0 -- auras go with the chip's children
+  -- Remove every aura explicitly: Avatar:remove walks the children with pairs while Particles:remove
+  -- table.removes itself from that list, which would skip the second aura.
+  for _, p in pairs(V.auras) do FinalBoss.effects.remove_aura(p) end
+  V.stance, V.auras, V.roar_start, V.roar_until = 1, {}, 0, 0
   V.laugh_start, V.laugh_until, V.anger_until = 0, 0, 0
   V.gloating = nil
   V.perch = V.RINGSIDE
