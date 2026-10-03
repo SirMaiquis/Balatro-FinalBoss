@@ -7,6 +7,7 @@ return {
             fb_cfg_fx = "Efectos de pantalla",
             fb_cfg_cinematic = "Cinemáticas de enfrentamiento",
             fb_cfg_moves = "Movimientos de jefe",
+            fb_cfg_phase_twists = "Las fases del jefe cambian las reglas",
             fb_showdown_title = "ENFRENTAMIENTO",
             fb_cfg_intro_speed = "Velocidad de la intro",
             fb_speed_slow = "Lenta",

@@ -479,10 +479,14 @@ end
 --- blind as the cause (card.debuffed_by_blind, smods lovely/blind.toml:9-35); mark_key: the blind
 --- that cursed it; blind_key / blind_disabled: the current blind; facing: G.GAME.facing_blind (the
 --- round is on); on: boss moves and screen effects are enabled and FinalBoss is live this run.
-function logic.curse_visible(debuff, by_blind, mark_key, blind_key, blind_disabled, facing, on)
-  if not (on and facing and debuff and by_blind) then return false end
-  if blind_disabled or blind_key == nil then return false end
-  return mark_key == blind_key
+--- twist: the card is debuffed by a FinalBoss phase twist (the Verdant Leaf regrowth's
+--- SMODS.debuff_card source, phases.LEAF_SOURCE); that debuff lives on the blind a sale disabled, so
+--- it shows the mark without by_blind and while the blind is disabled, for as long as it lasts.
+function logic.curse_visible(debuff, by_blind, mark_key, blind_key, blind_disabled, facing, on, twist)
+  if not (on and facing and debuff) then return false end
+  if blind_key == nil or mark_key ~= blind_key then return false end
+  if twist then return true end
+  return (by_blind and not blind_disabled) and true or false
 end
 
 -- The Arm's fist (effects.fist) -----------------------------------------------------------------------

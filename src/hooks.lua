@@ -219,6 +219,7 @@ function Blind:drawn_to_hand(...)
   local r = pack(orig_drawn_to_hand(self, ...))
   if snap then
     U.guard('move_drawn', moves().on_drawn, self, snap)
+    U.guard('phase_drawn', FinalBoss.phases.on_drawn, self, snap) -- twists after the move (Task 11)
   end
   return unpack(r, 1, r.n)
 end
@@ -234,6 +235,7 @@ function Blind:disable(...)
   local r = pack(orig_disable(self, ...))
   if not was_disabled and live() then
     U.guard('move_disable', moves().on_disable, self, selling)
+    U.guard('phase_disable', FinalBoss.phases.on_disable, self, selling)
   end
   return unpack(r, 1, r.n)
 end

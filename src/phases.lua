@@ -20,16 +20,33 @@ local function after(delay, token, fn)
     end}))
 end
 
---- The same encounter is still running (a new blind or the end of the fight stops the rest).
+--- The same encounter is still running (a new blind, the end of the fight or the winning hand's
+--- finale stops the rest).
 local function live(enc)
   local st = G.GAME and G.GAME.FinalBoss
-  return (st and st.encounter == enc and not enc.ended) and true or false
+  return (st and st.encounter == enc and not enc.ended and not enc.finale) and true or false
 end
 
---- Phases run in cinematic showdowns while the avatar is on the table (spec §3.6).
-function P.active(enc)
+--- The finale (cinematic.play_finale) owns FinalBoss.timescale while it plays, with the same 0.35.
+local function finale_playing()
+  local C = FinalBoss.cinematic
+  return (C and C.phase == 'finale') and true or false
+end
+
+--- A disabled final boss (Chicot, Luchador) has lost its power: no transformation, no twist. Verdant
+--- Leaf disabled by a joker sale is the exception: that is its normal fight, and its twist is the
+--- leaf regrowing after the sale (enc.twists.leaf_sold, P.on_disable).
+local function powerless(enc, blind)
+  if not (blind and blind.disabled) then return false end
+  return not (enc.key == 'bl_final_leaf' and enc.twists and enc.twists.leaf_sold == true)
+end
+
+--- Phases run in cinematic showdowns while the avatar is on the table (spec §3.6) and the boss has
+--- its power. blind: default the current blind.
+function P.active(enc, blind)
+  blind = blind or (G.GAME and G.GAME.blind)
   return (enc and enc.showdown and enc.cinematic and FinalBoss.config.cinematic
-    and FinalBoss.avatar.exists()) and true or false
+    and FinalBoss.avatar.exists() and not powerless(enc, blind)) and true or false
 end
 
 --- The director's deferred reaction (score landed). Returns true when a transformation started (or
@@ -37,7 +54,8 @@ end
 --- it starts (a weak hit's laugh, Dir.stage_hit), so laugh, roar and phase line never overlap.
 --- enc.phase is recorded at once, so a save during the delay keeps the phase (Continue restores it).
 function P.check(enc, blind, p, delay)
-  if not P.active(enc) then return false end
+  if p.total >= p.required then return false end -- the winning hand: the death plays, never a phase
+  if not P.active(enc, blind) then return false end
   local L = FinalBoss.logic
   local from = enc.phase or 1
   local stage = L.wound_stage(L.hp_fraction(p.total, p.required))
@@ -51,7 +69,7 @@ function P.check(enc, blind, p, delay)
   end
   P.token = P.token + 1
   after(delay, P.token, function()
-    if live(enc) and P.active(enc) then P.transform(enc, blind, target, from) end
+    if live(enc) and P.active(enc, blind) then P.transform(enc, blind, target, from) end
   end)
   return true
 end
@@ -77,7 +95,8 @@ function P.transform(enc, blind, phase, from)
         FinalBoss.util.guard('phase_slowmo', function()
           if P.slowing and P.slow_gen == gen then
             P.slowing = false
-            if FinalBoss.timescale == P.SLOW then FinalBoss.timescale = 1 end -- never the finale's
+            -- never the finale's (it uses the same 0.35, so the value alone cannot tell)
+            if FinalBoss.timescale == P.SLOW and not finale_playing() then FinalBoss.timescale = 1 end
           end
         end)
         return true
@@ -115,33 +134,188 @@ function P.transform(enc, blind, phase, from)
     FinalBoss.hpbar.set_phase(phase)
     local A = FinalBoss.arena
     if A.state then A.on_hit(A.state.stage) end
+    P.apply_once(enc, blind, phase) -- twists: Acorn shuffle, Vessel heal (others act per draw)
   end)
+end
+
+-- Twists (setting "Boss phases change the rules") ----------------------------------------------------
+
+P.LEAF_SOURCE = 'FinalBoss_leaf' -- SMODS.debuff_card source of the Leaf's regrowth (saved with the card)
+
+--- Twists run when the encounter enabled them (enc.twists_on, captured at blind set) and the blind
+--- still has its power. Verdant Leaf is the exception: a joker sale disables it by design, and its
+--- twist is the leaf regrowing after that sale. logic.TWISTS entries (twist_for) are read-only.
+local function twists_live(enc, blind)
+  if not (enc and enc.twists_on and enc.twists and (enc.phase or 1) > 1) then return false end
+  if blind.disabled then return enc.key == 'bl_final_leaf' and enc.twists.leaf_sold == true end
+  return true
+end
+
+local ONCE, DRAW = {}, {}
+
+--- Amber Acorn: hide the jokers again and shuffle them three times (vanilla routine, blind.lua:190-205).
+function ONCE.acorn_shuffle(enc, blind, t)
+  local J = G.jokers
+  if not (J and #J.cards > 0) then return end
+  J:unhighlight_all()
+  for _, j in ipairs(J.cards) do
+    if j.facing == 'front' then j:flip() end
+  end
+  if #J.cards < 2 then return end
+  G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.2, func = function()
+    FinalBoss.util.guard('twist_acorn', function()
+      for _, pitch in ipairs({0.85, 1.15, 1}) do
+        G.E_MANAGER:add_event(Event({trigger = 'after', delay = 0.15, func = function()
+          FinalBoss.util.guard('twist_acorn_shuffle', function()
+            FinalBoss.logic.shuffle(J.cards, math.random)
+            J:set_ranks()
+            play_sound('cardSlide1', pitch)
+          end)
+          return true
+        end}))
+      end
+    end)
+    return true
+  end}))
+end
+
+--- Violet Vessel: heal 10% of the original requirement; the HP bar refills visibly.
+function ONCE.vessel_heal(enc, blind, t)
+  local num = FinalBoss.director.num
+  enc.twists.vessel_base = enc.twists.vessel_base or num(blind.chips) -- plain number: saved data
+  -- Raw arithmetic on blind.chips on purpose: with Talisman it is a big number, and adding to it
+  -- keeps that type (Blind:save, the HUD's chip_text and Talisman's own comparisons expect it).
+  -- Only the copies handed to FinalBoss code below go through num.
+  blind.chips = blind.chips + enc.twists.vessel_base * t.ratio
+  blind.chip_text = number_format(blind.chips)
+  local L = FinalBoss.logic
+  local total, required = num(G.GAME.chips), num(blind.chips)
+  local stage = L.wound_stage(L.hp_fraction(total, required))
+  FinalBoss.hpbar.heal(total, required)
+  FinalBoss.avatar.set_wound(stage)
+  if FinalBoss.arena.state then FinalBoss.arena.on_hit(stage) end
+  play_sound('magic_crumple3', 0.8, 0.5)
+end
+
+--- Verdant Leaf (after a joker sale): N random hand cards wither again, re-rolled every draw. They
+--- carry the Leaf's own vine curse mark (src/curse.lua draws it while the LEAF_SOURCE debuff holds).
+function DRAW.leaf_debuff(enc, blind, t)
+  if not blind.disabled then return end -- with its power the leaf already debuffs every card
+  P.clear_twists()
+  local pool = {}
+  for _, c in ipairs(G.hand and G.hand.cards or {}) do
+    if not c.debuff then pool[#pool + 1] = c end
+  end
+  local picked = FinalBoss.logic.sample(pool, t.count, math.random)
+  for _, c in ipairs(picked) do
+    SMODS.debuff_card(c, true, P.LEAF_SOURCE)
+    c.debuffed_by_blind = true
+  end
+  if #picked > 0 then
+    -- fresh: a card picked again grows its vine in again
+    FinalBoss.curse.mark(picked, 'vine', FinalBoss.moves.boss_colour(blind), blind, true)
+    if FinalBoss.config.moves and FinalBoss.config.fx then play_sound('paper1', 0.9, 0.45) end
+  end
+end
+
+--- Crimson Heart: one more joker disabled per hand (phase III: with a crack beam on it).
+function DRAW.heart_extra(enc, blind, t, snap)
+  if not snap.prepped then return end -- the Heart only picks after a played hand (blind.lua:588)
+  local pool = {}
+  for _, j in ipairs(G.jokers and G.jokers.cards or {}) do
+    if not j.debuff then pool[#pool + 1] = j end
+  end
+  local picked = FinalBoss.logic.sample(pool, t.count, math.random)
+  for _, j in ipairs(picked) do
+    j:set_debuff(true)
+    j.debuffed_by_blind = true
+    j:juice_up()
+  end
+  if t.beam and #picked > 0 and FinalBoss.config.fx then
+    local M = FinalBoss.moves
+    FinalBoss.effects.glare(M.performer(blind), picked, {colour = M.boss_colour(blind), line = true})
+  end
+end
+
+--- Cerulean Bell: keep t.count cards forced (vanilla forces one per draw).
+function DRAW.bell_force(enc, blind, t)
+  local forced, pool = 0, {}
+  for _, c in ipairs(G.hand and G.hand.cards or {}) do
+    if c.ability.forced_selection then forced = forced + 1 else pool[#pool + 1] = c end
+  end
+  for _, c in ipairs(FinalBoss.logic.sample(pool, t.count - forced, math.random)) do
+    c.ability.forced_selection = true
+    G.hand:add_to_highlighted(c)
+  end
+end
+
+--- One-shot twist when a phase is reached (Acorn shuffle, Vessel heal). enc.twists.applied keeps
+--- Continue from repeating it.
+function P.apply_once(enc, blind, phase)
+  if not twists_live(enc, blind) then return end
+  local t = FinalBoss.logic.twist_for(enc.key, phase)
+  if not (t and t.once and ONCE[t.once]) or enc.twists.applied[phase] then return end
+  enc.twists.applied[phase] = true
+  ONCE[t.once](enc, blind, t)
+end
+
+--- hooks.lua, after vanilla's drawn_to_hand and moves.on_drawn: per-draw twists (Leaf, Heart, Bell).
+--- They read enc.phase, so Continue restores them with no extra state.
+function P.on_drawn(blind, snap)
+  local st = G.GAME and G.GAME.FinalBoss
+  local enc = st and st.encounter
+  if not enc or enc.ended or not (blind.config and blind.config.blind) or blind.config.blind.key ~= enc.key then return end
+  if not twists_live(enc, blind) then return end
+  local t = FinalBoss.logic.twist_for(enc.key, enc.phase)
+  if t and t.draw and DRAW[t.draw] then DRAW[t.draw](enc, blind, t, snap or {}) end
+end
+
+--- hooks.lua, after Blind:disable: a sale disabled Verdant Leaf, so its regrowth may begin.
+function P.on_disable(blind, selling)
+  local st = G.GAME and G.GAME.FinalBoss
+  local enc = st and st.encounter
+  if selling and enc and enc.twists and enc.key == 'bl_final_leaf'
+      and blind.config and blind.config.blind and blind.config.blind.key == enc.key then
+    enc.twists.leaf_sold = true
+  end
+end
+
+--- The fight is over (defeat or round end): remove the Leaf's regrowth debuffs.
+function P.clear_twists()
+  for _, c in ipairs(G.playing_cards or {}) do
+    local src = c.ability and c.ability.debuff_sources
+    if src and src[P.LEAF_SOURCE] then SMODS.debuff_card(c, nil, P.LEAF_SOURCE) end
+  end
 end
 
 --- Continue mid-showdown (after the avatar and HP bar are rebuilt: H.create resets the marker and
 --- V.spawn has no aura): stance and marker come back, the transformation does not replay. 1.0 saves
 --- have no enc.phase: phase I.
 function P.restore(enc, blind)
-  if not (enc and enc.phase and enc.phase > 1) or not P.active(enc) then return end
+  if not (enc and enc.phase and enc.phase > 1) or not P.active(enc, blind) then return end
   FinalBoss.avatar.set_stance(enc.phase, FinalBoss.moves.boss_colour(blind))
   FinalBoss.hpbar.set_phase(enc.phase)
 end
 
---- Developer key F8: push the current final boss to its next phase.
+--- Developer key F8: push the current final boss to its next phase (not while the finale plays).
 function P.force_next()
   local st = G.GAME and G.GAME.FinalBoss
   local enc = st and st.encounter
-  if not P.active(enc) or enc.ended then return nil end
+  if not P.active(enc, G.GAME.blind) or enc.ended or enc.finale then return nil end
   local from = enc.phase or 1
   if from >= 3 then return nil end
   P.transform(enc, G.GAME.blind, from + 1, from)
   return from + 1
 end
 
---- Round end, teardown or a guard failure: cancel pending steps; restore time and music if ours.
+--- Round end, teardown or a guard failure: cancel pending steps; restore time and music if ours
+--- (never the finale's slow motion, which uses the same 0.35).
 function P.reset()
   P.token = P.token + 1
-  if P.slowing then P.slowing = false; FinalBoss.timescale = 1 end
+  if P.slowing then
+    P.slowing = false
+    if not finale_playing() then FinalBoss.timescale = 1 end
+  end
   FinalBoss.music.unduck()
 end
 

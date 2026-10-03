@@ -100,6 +100,18 @@ T['curse_visible: only while the card is cursed by this live, facing, enabled bl
   eq(logic.curse_visible(true, true, 'bl_club', 'bl_club', false, true, false), false, 'moves or fx off')
 end
 
+T['curse_visible: a FinalBoss twist debuff shows the mark on the disabled blind while it lasts'] = function()
+  local leaf = 'bl_final_leaf'
+  eq(logic.curse_visible(true, false, leaf, leaf, true, true, true, true), true, 'regrowth after a sale')
+  eq(logic.curse_visible(true, true, leaf, leaf, true, true, true, true), true, 'by_blind set too')
+  eq(logic.curse_visible(false, true, leaf, leaf, true, true, true, true), false, 'twist debuff gone')
+  eq(logic.curse_visible(true, false, leaf, leaf, true, true, true, false), false, 'no twist: disabled hides it')
+  eq(logic.curse_visible(true, false, leaf, nil, true, true, true, true), false, 'blind over')
+  eq(logic.curse_visible(true, false, leaf, 'bl_club', true, true, true, true), false, 'another blind')
+  eq(logic.curse_visible(true, false, leaf, leaf, true, nil, true, true), false, 'round over')
+  eq(logic.curse_visible(true, false, leaf, leaf, true, true, false, true), false, 'moves or fx off')
+end
+
 local function seq(t) return table.concat(t, ',') end
 
 T['count_steps: the values shown after each step, one at a time'] = function()

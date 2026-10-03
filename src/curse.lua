@@ -40,9 +40,9 @@ function C.clear()
 end
 
 --- Mark cards cursed by `blind` (default: the current blind). A card already marked this epoch keeps
---- its mark (and its birth time). Cards of one batch are born CURSE_STAGGER apart. Returns the number
---- of new marks.
-function C.mark(cards, style, colour, blind)
+--- its mark (and its birth time), unless `fresh` (a re-roll curses it anew: the mark grows in again).
+--- Cards of one batch are born CURSE_STAGGER apart. Returns the number of new marks.
+function C.mark(cards, style, colour, blind, fresh)
   blind = blind or (G.GAME and G.GAME.blind)
   local proto = blind and blind.config and blind.config.blind
   if not (proto and proto.key and L().CURSE_STYLES[style]) then return 0 end
@@ -52,7 +52,7 @@ function C.mark(cards, style, colour, blind)
   local t, n = now(), 0
   for _, card in ipairs(cards or {}) do
     local old = type(card) == 'table' and card.fb_curse
-    if type(card) == 'table' and not card.REMOVED and not (old and old.epoch == C.epoch) then
+    if type(card) == 'table' and not card.REMOVED and (fresh or not (old and old.epoch == C.epoch)) then
       local m = {style = style, burn = burn, suit = suit, key = proto.key,
         born = t + n * L().CURSE_STAGGER, epoch = C.epoch, card = card}
       card.fb_curse = m
@@ -90,7 +90,8 @@ local lg = love.graphics
 
 --- Draw card's mark m (the DrawStep below, through util.guard). Visible only while the card (and, for
 --- a deck-view copy, its original) is debuffed by the blind that cursed it, that blind is current and
---- not disabled, the round is on, and moves and screen effects are enabled.
+--- not disabled (or the debuff is the Leaf regrowth twist's), the round is on, and moves and screen
+--- effects are enabled.
 function C.draw(card, m)
   if m.epoch ~= C.epoch then
     if card.fb_curse == m then card.fb_curse = nil end
@@ -101,8 +102,12 @@ function C.draw(card, m)
   local on = (cfg.moves and cfg.fx and not (st and st.disabled_for_run)) and true or false
   local b = G.GAME and G.GAME.blind
   local bkey = b and b.config and b.config.blind and b.config.blind.key
+  -- the Verdant Leaf regrowth twist (phases.lua) debuffs through its own SMODS.debuff_card source on
+  -- the blind a sale disabled: its vine shows while that source holds
+  local src = owner.ability and owner.ability.debuff_sources
+  local twist = (src and src[FinalBoss.phases.LEAF_SOURCE]) and true or false
   if not L().curse_visible(owner.debuff and card.debuff, owner.debuffed_by_blind, m.key, bkey,
-      b and b.disabled, G.GAME and G.GAME.facing_blind, on) then return end
+      b and b.disabled, G.GAME and G.GAME.facing_blind, on, twist) then return end
   local center = card.children and card.children.center
   if not center then return end
   -- the suit's palette as smods picks it (G.FUNCS.update_suit_colours, smods src/utils.lua:1274-1286)

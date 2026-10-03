@@ -53,9 +53,13 @@ function Dir.on_blind_set(blind)
     ante = G.GAME.round_resets.ante,
     min_ante = FinalBoss.config.min_ante,
   }
+  local cinematic = (tier == 'full' and is_showdown and FinalBoss.config.cinematic) and true or false
   st.encounter = {key = proto.key, tier = tier, fired = {}, reactions = 0, track = nil,
-    last_variant = {}, ended = false, last_hand_seen = nil, showdown = is_showdown,
-    cinematic = (tier == 'full' and is_showdown and FinalBoss.config.cinematic) and true or false}
+    last_variant = {}, ended = false, last_hand_seen = nil, showdown = is_showdown, cinematic = cinematic,
+    -- 1.1 phases: enc.phase (nil = phase I) and the twist state are plain saved data. Twists need
+    -- phases, so they follow cinematics.
+    twists_on = (cinematic and FinalBoss.config.phase_twists) and true or false,
+    twists = {applied = {}, leaf_sold = false}}
   st.lost_to = nil
   if tier == 'none' then Dir.schedule_start(proto.key); return end
   if tier == 'full' then
@@ -128,6 +132,7 @@ end
 function Dir.on_round_end()
   Dir.flush_pending()
   FinalBoss.phases.reset()
+  FinalBoss.phases.clear_twists()
   local st = FinalBoss.util.state()
   local enc = st.encounter
   if not enc then return end
@@ -294,6 +299,7 @@ end
 function Dir.on_blind_defeated()
   FinalBoss.curse.clear() -- the curse marks go with the blind (any tier)
   Dir.flush_pending()
+  FinalBoss.phases.clear_twists()
   local enc, blind = current()
   if not enc then return end
   enc.ended = true

@@ -7,6 +7,7 @@ return {
             fb_cfg_fx = "Efek layar",
             fb_cfg_cinematic = "Sinematik duel final",
             fb_cfg_moves = "Gerakan boss",
+            fb_cfg_phase_twists = "Fase boss mengubah aturan",
             fb_showdown_title = "DUEL FINAL",
             fb_cfg_intro_speed = "Kecepatan intro",
             fb_speed_slow = "Lambat",

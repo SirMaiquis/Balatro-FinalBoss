@@ -228,6 +228,7 @@ function UI.encounters_tab()
         toggle('fb_cfg_fx', cfg, 'fx'),
         toggle('fb_cfg_cinematic', cfg, 'cinematic'),
         dependent(toggle('fb_cfg_moves', cfg, 'moves'), function() return cfg.fx end),
+        dependent(toggle('fb_cfg_phase_twists', cfg, 'phase_twists'), function() return cfg.cinematic end),
       }),
     }},
     divider(),

@@ -7,6 +7,7 @@ return {
             fb_cfg_fx = "Schermeffecten",
             fb_cfg_cinematic = "Showdown-filmpjes",
             fb_cfg_moves = "Baasacties",
+            fb_cfg_phase_twists = "Baasfases veranderen de regels",
             fb_showdown_title = "SHOWDOWN",
             fb_cfg_intro_speed = "Introsnelheid",
             fb_speed_slow = "Langzaam",

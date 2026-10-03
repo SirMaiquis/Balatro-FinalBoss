@@ -7,6 +7,7 @@ return {
             fb_cfg_fx = "Screen effects",
             fb_cfg_cinematic = "Showdown cinematics",
             fb_cfg_moves = "Boss moves",
+            fb_cfg_phase_twists = "Boss phases change the rules",
             fb_showdown_title = "SHOWDOWN",
             fb_cfg_intro_speed = "Intro speed",
             fb_speed_slow = "Slow",

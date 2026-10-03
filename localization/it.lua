@@ -7,6 +7,7 @@ return {
             fb_cfg_fx = "Effetti sullo schermo",
             fb_cfg_cinematic = "Cinematiche degli scontri",
             fb_cfg_moves = "Mosse dei boss",
+            fb_cfg_phase_twists = "Le fasi dei boss cambiano le regole",
             fb_showdown_title = "SCONTRO FINALE",
             fb_cfg_intro_speed = "Velocità intro",
             fb_speed_slow = "Lenta",
