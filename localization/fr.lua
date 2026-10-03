@@ -6,6 +6,7 @@ return {
             fb_cfg_music = "Musique des duels",
             fb_cfg_fx = "Effets d'écran",
             fb_cfg_cinematic = "Cinématiques de duel",
+            fb_cfg_moves = "Actions des boss",
             fb_showdown_title = "DUEL FINAL",
             fb_cfg_intro_speed = "Vitesse de l'intro",
             fb_speed_slow = "Lente",

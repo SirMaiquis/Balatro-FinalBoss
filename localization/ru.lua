@@ -6,6 +6,7 @@ return {
             fb_cfg_music = "Музыка поединков",
             fb_cfg_fx = "Эффекты экрана",
             fb_cfg_cinematic = "Сцены поединков",
+            fb_cfg_moves = "Приёмы боссов",
             fb_showdown_title = "ПОЕДИНОК",
             fb_cfg_intro_speed = "Скорость заставки",
             fb_speed_slow = "Медленно",

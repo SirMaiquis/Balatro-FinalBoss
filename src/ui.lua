@@ -4,6 +4,7 @@ local UI = {}
 UI.preview = {warn = ''}
 UI.static = {note = ''}
 UI.cells = nil -- ante track cells {box, text, chip} of the open Showdowns tab, restyled in place
+UI.dims = {} -- labels of toggles that depend on another setting: {colour = table, enabled = fn}
 
 local ANTES = {1, 2, 3, 4, 5, 6, 7, 8}
 local TRACK_LAST, TRACK_ROW = 16, 8 -- antes on the track, boxes per row
@@ -163,6 +164,26 @@ local function track_rows()
   return rows
 end
 
+--- A toggle whose label greys out, in place, while enabled() is false (Boss moves needs Screen
+--- effects; phase twists need cinematics). Its T nodes share one colour table that refresh_dims
+--- rewrites, like the ante track cells.
+local function dependent(node, enabled)
+  local c = copy_table(G.C.UI.TEXT_LIGHT)
+  local function paint(n)
+    if n.n == G.UIT.T then n.config.colour = c end
+    for _, child in ipairs(n.nodes or {}) do paint(child) end
+  end
+  paint(node)
+  UI.dims[#UI.dims + 1] = {colour = c, enabled = enabled}
+  return node
+end
+
+function UI.refresh_dims()
+  for _, d in ipairs(UI.dims) do
+    set_colour(d.colour, d.enabled() and G.C.UI.TEXT_LIGHT or G.C.UI.TEXT_INACTIVE)
+  end
+end
+
 --- Light the showdown antes in place: crimson box, light number and the chip shown; other antes get a
 --- dim box, grey number and a hidden chip. No-op once the Showdowns tab is gone (its sprites were
 --- removed with it).
@@ -185,13 +206,15 @@ function UI.refresh_preview()
   local sd = FinalBoss.config.showdown
   UI.preview.warn = (sd.enabled and sd.start_ante < 4) and localize('fb_cfg_hard') or ''
   UI.refresh_track()
+  UI.refresh_dims()
 end
 
 -- Tabs ------------------------------------------------------------------------------------------
 
 function UI.encounters_tab()
   local cfg = FinalBoss.config
-  return root{
+  UI.dims = {}
+  local tab = root{
     quip_card('fb_cfg_header'),
     {n = G.UIT.R, config = {align = 'tm', padding = 0.1}, nodes = {
       group(localize('fb_cfg_group_dialogue'), {
@@ -204,11 +227,14 @@ function UI.encounters_tab()
         toggle('fb_cfg_music', cfg, 'music'),
         toggle('fb_cfg_fx', cfg, 'fx'),
         toggle('fb_cfg_cinematic', cfg, 'cinematic'),
+        dependent(toggle('fb_cfg_moves', cfg, 'moves'), function() return cfg.fx end),
       }),
     }},
     divider(),
     dim(toggle('fb_cfg_dev_mode', cfg, 'dev_mode', {w = 2.5, scale = 0.75, label_scale = 0.3})),
   }
+  UI.refresh_dims()
+  return tab
 end
 
 function UI.showdowns_tab()

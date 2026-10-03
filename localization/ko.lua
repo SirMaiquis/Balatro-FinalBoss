@@ -6,6 +6,7 @@ return {
             fb_cfg_music = "결전 음악",
             fb_cfg_fx = "화면 효과",
             fb_cfg_cinematic = "결전 연출",
+            fb_cfg_moves = "보스 기술",
             fb_showdown_title = "결전",
             fb_cfg_intro_speed = "인트로 속도",
             fb_speed_slow = "느림",

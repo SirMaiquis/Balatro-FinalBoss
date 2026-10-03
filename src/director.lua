@@ -334,7 +334,7 @@ function Dir.reset_stage()
   resetting = true
   local ok, err = pcall(function()
     for _, step in ipairs({FinalBoss.cinematic.reset, FinalBoss.hpbar.remove, FinalBoss.avatar.remove,
-        FinalBoss.arena.reset, FinalBoss.fx.reset, FinalBoss.effects.reset}) do
+        FinalBoss.arena.reset, FinalBoss.fx.reset, FinalBoss.effects.reset, FinalBoss.moves.reset}) do
       local sok, serr = pcall(step)
       if not sok then FinalBoss.util.log('error', 'reset_stage step failed: ' .. tostring(serr)) end
     end

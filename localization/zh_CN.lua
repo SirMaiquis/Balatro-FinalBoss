@@ -6,6 +6,7 @@ return {
             fb_cfg_music = "决战音乐",
             fb_cfg_fx = "屏幕特效",
             fb_cfg_cinematic = "决战过场动画",
+            fb_cfg_moves = "Boss招式",
             fb_showdown_title = "决战",
             fb_cfg_intro_speed = "开场速度",
             fb_speed_slow = "慢速",

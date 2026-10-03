@@ -6,6 +6,7 @@ return {
             fb_cfg_music = "Música de enfrentamientos",
             fb_cfg_fx = "Efectos de pantalla",
             fb_cfg_cinematic = "Cinemáticas de enfrentamiento",
+            fb_cfg_moves = "Movimientos de jefe",
             fb_showdown_title = "ENFRENTAMIENTO",
             fb_cfg_intro_speed = "Velocidad de la intro",
             fb_speed_slow = "Lenta",

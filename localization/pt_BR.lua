@@ -6,6 +6,7 @@ return {
             fb_cfg_music = "Música dos confrontos",
             fb_cfg_fx = "Efeitos de tela",
             fb_cfg_cinematic = "Cinemáticas de confronto",
+            fb_cfg_moves = "Golpes dos chefes",
             fb_showdown_title = "CONFRONTO FINAL",
             fb_cfg_intro_speed = "Velocidade da intro",
             fb_speed_slow = "Lenta",

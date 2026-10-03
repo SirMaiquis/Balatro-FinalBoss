@@ -135,4 +135,24 @@ T['coin_count: none below one dollar, floor, capped'] = function()
   eq(logic.coin_count(nil), 0)
 end
 
+T['HUD_IDS covers every hud_* target'] = function()
+  for target in pairs(logic.TARGETS) do
+    if target:sub(1, 4) == 'hud_' then
+      assert(type(logic.HUD_IDS[target]) == 'string', 'no HUD id for ' .. target)
+    end
+  end
+  eq(logic.HUD_IDS.hud_target, 'HUD_blind_count')
+  eq(logic.HUD_IDS.hud_dollars, 'dollar_text_UI')
+end
+
+T['step_amount reads played cards, money or a number'] = function()
+  local data = {played = {1, 2, 3}, money = 12}
+  eq(logic.step_amount({amount = 'played'}, data), 3)
+  eq(logic.step_amount({amount = 'money'}, data), 12)
+  eq(logic.step_amount({amount = 4}, data), 4)
+  eq(logic.step_amount({}, data), 0)
+  eq(logic.step_amount({amount = 'played'}, {}), 0)
+  eq(logic.step_amount({amount = 'money'}, {}), 0)
+end
+
 return T

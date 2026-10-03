@@ -389,4 +389,18 @@ function logic.coin_count(amount, max)
   return math.min(max or 12, math.floor(amount))
 end
 
+--- HUD element ids of the hud_* targets (functions/UI_definitions.lua). hud_target lives in
+--- G.HUD_blind, the others in G.HUD.
+logic.HUD_IDS = {hud_chips = 'hand_chip_area', hud_mult = 'hand_mult_area', hud_hand_name = 'hand_name',
+  hud_hands = 'hand_UI_count', hud_discards = 'discard_UI_count', hud_dollars = 'dollar_text_UI',
+  hud_target = 'HUD_blind_count'}
+
+--- A step's amount (drain): 'played' = cards played, 'money' = dollars the blind took, or a number.
+function logic.step_amount(step, data)
+  local a = step.amount
+  if a == 'played' then return #(data.played or {}) end
+  if a == 'money' then return tonumber(data.money) or 0 end
+  return tonumber(a) or 0
+end
+
 return logic

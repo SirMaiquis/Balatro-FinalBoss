@@ -6,6 +6,7 @@ return {
             fb_cfg_music = "Muzyka pojedynków",
             fb_cfg_fx = "Efekty ekranu",
             fb_cfg_cinematic = "Przerywniki pojedynków",
+            fb_cfg_moves = "Ruchy bossów",
             fb_showdown_title = "POJEDYNEK",
             fb_cfg_intro_speed = "Prędkość intra",
             fb_speed_slow = "Wolno",

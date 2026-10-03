@@ -13,6 +13,8 @@ E.gen = 0    -- bumped by E.reset(): timers of a torn-down run do nothing
 
 local function reduced() return G.SETTINGS.reduced_motion end
 local function now() return FinalBoss.util.now() end
+--- A colour list must never hold nil (vanilla Particles:draw does not guard it).
+local function col(c) return c or G.C.WHITE end
 
 local function after(delay, fn)
   local gen = E.gen
@@ -133,7 +135,7 @@ function Mark:draw()
     paint(self.colour, self.alpha * math.min(1, 4 * a))
     love.graphics.rectangle('fill', 0, 0, w, h)
   elseif s == 'fill' then
-    local rise = math.min(1, 2 * p)
+    local rise = reduced() and 1 or math.min(1, 2 * p)
     paint(self.colour, 0.65 * math.min(1, 3 * a))
     love.graphics.rectangle('fill', 0, h * (1 - rise), w, h * rise)
   elseif s == 'beam' then
@@ -201,7 +203,7 @@ function E.fling(src, target, opts)
       card:juice_up(0.5, 0.4)
       local cx, cy = centre(T)
       local trail = adopt(Particles(cx, cy, 0.2, 0.2, {timer = 0.015, scale = 0.25, speed = 0.6,
-        lifespan = 0.45, colours = {opts.colour, G.C.WHITE}, fill = true}))
+        lifespan = 0.45, colours = {col(opts.colour), G.C.WHITE}, fill = true}))
       expire(adopt(Mark(cx, cy, 0, 0, {life = 0.35, path = {cx, cy, sx, sy}, follower = trail})), 0.35)
       expire(trail, 0.8)
     end)
@@ -274,7 +276,7 @@ function E.sweep(src, area, opts)
   local life = 0.6
   local calm = reduced()
   local band = adopt(Particles(T.x, T.y, calm and T.w or 0.6, T.h, {timer = 0.01,
-    scale = 0.3 * (opts.scale or 1), speed = 1.2, lifespan = 0.5, colours = {opts.colour, G.C.WHITE}, fill = true}))
+    scale = 0.3 * (opts.scale or 1), speed = 1.2, lifespan = 0.5, colours = {col(opts.colour), G.C.WHITE}, fill = true}))
   if not calm then
     expire(adopt(Mark(T.x - 0.3, T.y, 0, 0, {life = life, path = {T.x - 0.3, T.y, T.x + T.w - 0.3, T.y},
       follower = band})), life)
@@ -314,7 +316,7 @@ function E.chain(src, area, opts)
   if not (area and area.T) then return end
   local T = area.T
   local bw, life = 0.22, 0.9
-  local dark = darken(opts.colour, 0.5)
+  local dark = darken(col(opts.colour), 0.5)
   local calm = reduced()
   for _, side in ipairs({{T.x - bw, T.x - bw - 1.5}, {T.x + T.w, T.x + T.w + 1.5}}) do
     local x, from = side[1], side[2]
@@ -358,7 +360,7 @@ function E.burst(src, _, opts)
   local s = opts.scale or 1
   for _ = 1, math.max(1, math.ceil(s)) do
     expire(adopt(Particles(src.x, src.y, src.w, src.h, {timer = 0.005, max = 0, pulse_max = 20,
-      scale = 0.35 * s, speed = 5 * s, lifespan = 0.9, colours = {opts.colour, G.C.WHITE}, fill = true})), 1.0)
+      scale = 0.35 * s, speed = 5 * s, lifespan = 0.9, colours = {col(opts.colour), G.C.WHITE}, fill = true})), 1.0)
   end
 end
 
@@ -391,7 +393,7 @@ function E.aura(obj, colour, level)
   local strong = (level or 1) >= 2
   return Particles(0, 0, 0, 0, {attach = obj, fill = true, timer = strong and 0.03 or 0.09,
     scale = strong and 0.3 or 0.2, speed = strong and 1.2 or 0.7, lifespan = 1.0,
-    colours = {colour, lighten(colour, 0.3)}})
+    colours = {col(colour), lighten(col(colour), 0.3)}})
 end
 
 function E.remove_aura(p)
