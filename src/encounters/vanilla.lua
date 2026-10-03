@@ -118,7 +118,7 @@ local BOSSES = {
   }},
   -- Amber Acorn: flips and shuffles the jokers as the blind is set (blind.lua:190-205). Acorns sweep
   -- the joker row with a burst, played at blind set ('set'); the signature is the same, played big.
-  bl_final_acorn = {pitch = 0.8, moves = {
+  bl_final_acorn = {pitch = 0.8, death = 'acorn', moves = {
     set = {{effect = 'sweep', target = 'jokers'}, {effect = 'burst', target = 'source'},
       sound = {'cardSlide1', 0.85, 0.6}},
     signature = {{effect = 'sweep', target = 'jokers'}, {effect = 'burst', target = 'source'},
@@ -126,7 +126,7 @@ local BOSSES = {
   }},
   -- Verdant Leaf: every card debuffed until a joker is sold. Vines stay on the cursed cards (like The
   -- Plant); leaves burst when the sale disables it.
-  bl_final_leaf = {pitch = 0.9, moves = {
+  bl_final_leaf = {pitch = 0.9, death = 'leaves', moves = {
     card_debuff = {{effect = 'curse', target = 'cards', style = 'vine'}, sound = {'paper1', 0.9, 0.45}},
     joker_sold = {{effect = 'burst', target = 'source', scale = 1.5}, sound = {'whoosh2', 1.1, 0.5}},
     signature = {{effect = 'sweep', target = 'hand'}, {effect = 'burst', target = 'source'},
@@ -134,7 +134,7 @@ local BOSSES = {
   }},
   -- Violet Vessel: a 6x blind (game.lua:288). Like The Wall, its target shows the normal boss target and
   -- counts up to the Vessel's real one, a purple fill rising over the target as the count starts.
-  bl_final_vessel = {pitch = 0.7, moves = {
+  bl_final_vessel = {pitch = 0.7, death = 'flood', moves = {
     set = {{effect = 'recount', target = 'hud_target', value = 'target', hold = 0.3, time = 0.85,
       impact = {'multhit1', 0.5, 0.55}, cue = {{effect = 'crack', target = 'hud_target', style = 'fill',
       sound = {'whoosh_long', 0.7, 0.4}}}}},
@@ -142,13 +142,13 @@ local BOSSES = {
       sound = {'whoosh_long', 0.6, 0.5}},
   }},
   -- Crimson Heart: one joker disabled every hand. A beam onto the disabled joker.
-  bl_final_heart = {pitch = 0.75, moves = {
+  bl_final_heart = {pitch = 0.75, death = 'hearts', moves = {
     drawn = {{effect = 'glare', target = 'cards', line = true}, sound = {'glass2', 0.8, 0.45}},
     signature = {{effect = 'glare', target = 'jokers', line = true}, {effect = 'burst', target = 'source'},
       sound = {'glass2', 0.7, 0.55}},
   }},
   -- Cerulean Bell: one card always selected. A ring from the boss and a blue ring on the forced card.
-  bl_final_bell = {pitch = 1.0, moves = {
+  bl_final_bell = {pitch = 1.0, death = 'bell', moves = {
     drawn = {{effect = 'ring', target = 'source'}, {effect = 'ring', target = 'cards', colour = 'blue'},
       sound = {'highlight2', 1.6, 0.5}},
     signature = {{effect = 'ring', target = 'source', count = 3}, sound = {'highlight2', 1.4, 0.6}},

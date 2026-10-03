@@ -201,4 +201,20 @@ T['final-boss recipes follow the spec'] = function()
   assert(b.bl_final_leaf.moves.joker_sold[1].effect == 'burst', 'Leaf leaves burst')
 end
 
+T['every vanilla final boss has its own death'] = function()
+  local b = bosses()
+  local want = {bl_final_heart = 'hearts', bl_final_leaf = 'leaves', bl_final_acorn = 'acorn',
+    bl_final_vessel = 'flood', bl_final_bell = 'bell'}
+  for key, death in pairs(want) do
+    assert(b[key].death == death, key .. ' death should be ' .. death .. ', got ' .. tostring(b[key].death))
+    assert(logic.DEATHS[death], death .. ' is not a built-in death')
+  end
+end
+
+T['regular bosses keep no death (only final bosses explode)'] = function()
+  for key, def in pairs(bosses()) do
+    if not key:find('^bl_final_') then assert(def.death == nil, key .. ' should have no death') end
+  end
+end
+
 return T

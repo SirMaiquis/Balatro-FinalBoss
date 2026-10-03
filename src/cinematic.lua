@@ -196,6 +196,8 @@ local function explode(blind, calm)
   FinalBoss.hpbar.remove()
   FinalBoss.avatar.remove()
   if not x then return end
+  -- 1.1: the boss's own death (deaths.lua); bosses without one keep the shared explosion below.
+  if FinalBoss.deaths.play(blind, x, y, w, h, calm) then return end
   local c = (blind.config.blind and blind.config.blind.boss_colour) or G.C.RED
   local p = Particles(x, y, w, h, {timer = 0.005, scale = 0.6, speed = 8, lifespan = 2.0,
     colours = {c, G.C.WHITE, darken(c, 0.3)}, fill = true})
