@@ -128,4 +128,10 @@ T['entries without moves have nil moves and death'] = function()
   eq(e.moves, nil); eq(e.death, nil)
 end
 
+T['resolve: nemesis lines are shared, never per boss'] = function()
+  local R = setup{fb_nemesis_intro_1 = {'a'}, fb_bl_hook_nemesis_intro_1 = {'b'}, fb_nemesis_defeat_1 = {'c'}}
+  eq(R.resolve('bl_hook', 'nemesis_intro', {}), 'fb_nemesis_intro_1')
+  eq(R.resolve('bl_mod', 'nemesis_defeat', {}), 'fb_nemesis_defeat_1')
+end
+
 return T

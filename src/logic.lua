@@ -138,7 +138,7 @@ function logic.detect_moments(a)
   return nil
 end
 
-logic.SHARED_MOMENTS = {opener = true, closer = true}
+logic.SHARED_MOMENTS = {opener = true, closer = true, nemesis_intro = true, nemesis_defeat = true}
 
 --- Find the localization key prefix for a moment: boss-specific, then generic.
 --- count_of(prefix) returns how many variants (prefix_1, prefix_2, ...) exist.
@@ -732,6 +732,185 @@ logic.ROAR = {duration = 0.5, grow = 0.25, shake = 0.08}
 function logic.roar_scale(elapsed, duration)
   if not elapsed or not duration or elapsed < 0 or elapsed >= duration then return 1 end
   return 1 + logic.ROAR.grow * math.sin(math.pi * elapsed / duration)
+end
+
+-- Memory, nemesis, intro plan, achievements (1.1) -------------------------------------------------------
+
+logic.FINAL_BOSSES = {'bl_final_acorn', 'bl_final_leaf', 'bl_final_vessel', 'bl_final_heart', 'bl_final_bell'}
+logic.NEMESIS_MIN_LOSSES = 3
+logic.REMATCH_CHANCE = 0.5 -- regular bosses: chance the intro becomes the rematch line
+logic.NO_MANNERS_COUNT = 10
+logic.ACHIEVEMENTS = {'fb_showdown_survivor', 'fb_clean_sweep', 'fb_rude', 'fb_no_manners', 'fb_last_laugh',
+  'fb_overkill', 'fb_phase_skipper', 'fb_comeback', 'fb_nemesis_slayer', 'fb_twisted'}
+
+--- Profile memory (saved with the Balatro profile, plain data).
+function logic.new_memory()
+  return {bosses = {}, nemesis = nil, broken = {}, interrupted = {}, final_defeated = {},
+    final_defeated_twisted = {}, loss_seq = 0}
+end
+
+local function boss_record(mem, key)
+  local r = mem.bosses[key]
+  if not r then
+    r = {fights = 0, wins = 0, losses = 0, last = nil, last_loss = 0}
+    mem.bosses[key] = r
+  end
+  return r
+end
+
+--- Record a result against a boss. result: 'fight'|'won'|'lost'.
+--- Clears broken flag on loss, recomputes nemesis. Returns the updated record.
+function logic.record_result(mem, key, result)
+  local r = boss_record(mem, key)
+  if result == 'fight' then
+    r.fights = r.fights + 1
+  elseif result == 'won' then
+    r.wins = r.wins + 1
+    r.last = 'won'
+  elseif result == 'lost' then
+    r.losses = r.losses + 1
+    r.last = 'lost'
+    mem.loss_seq = mem.loss_seq + 1
+    r.last_loss = mem.loss_seq
+    mem.broken[key] = nil  -- clear broken flag
+    mem.nemesis = logic.pick_nemesis(mem.bosses, mem.broken)  -- recompute
+  end
+  return r
+end
+
+--- Pick nemesis from bosses: most losses, min NEMESIS_MIN_LOSSES, not broken.
+--- Tie-break by most recent loss (highest last_loss). nil if no valid choice.
+function logic.pick_nemesis(bosses, broken)
+  if not bosses or not broken then return nil end
+  local best_key, best_losses, best_last_loss = nil, 0, 0
+  for key, r in pairs(bosses) do
+    if not broken[key] and r.losses >= logic.NEMESIS_MIN_LOSSES then
+      if r.losses > best_losses or (r.losses == best_losses and r.last_loss > best_last_loss) then
+        best_key, best_losses, best_last_loss = key, r.losses, r.last_loss
+      end
+    end
+  end
+  return best_key
+end
+
+--- Mark nemesis as broken and clear it from memory.
+function logic.break_nemesis(mem, key)
+  mem.broken[key] = true
+  mem.nemesis = nil
+end
+
+--- Decide intro sequence moments for a boss encounter.
+--- a = {tier, memory, last, nemesis, roll}
+--- Returns array of moment names: [], ['intro'], ['opener','name','intro','closer'], etc.
+function logic.intro_plan(a)
+  local seq = logic.intro_sequence(a.tier)
+  -- If memory is off or no history, use standard sequence (nemesis ignored if no memory)
+  if not a.memory or a.last == nil then
+    return seq
+  end
+  -- If tier is none, return empty regardless (no intro shown)
+  if a.tier == 'none' then
+    return seq
+  end
+  -- Memory is on and we have a last result
+  if a.nemesis then
+    -- Nemesis line replaces opener in full tier, or replaces entire intro in light tier
+    if a.tier == 'full' then
+      return {'nemesis_intro', 'name', 'intro', 'closer'}
+    else
+      return {'nemesis_intro'}
+    end
+  end
+  -- Check for rematch based on tier
+  if a.tier == 'full' then
+    -- Final boss: rematch replaces opener
+    return {'rematch_' .. a.last, 'name', 'intro', 'closer'}
+  elseif a.tier == 'light' then
+    -- Regular boss: rematch replaces intro on REMATCH_CHANCE roll
+    if a.roll < logic.REMATCH_CHANCE then
+      return {'rematch_' .. a.last}
+    end
+  end
+  return seq
+end
+
+--- Achievements from defeating a boss (showdown only, or with nemesis on regular boss).
+--- a = {showdown, start, hands_left, hand, laughed_hand, nemesis, final_defeated, final_defeated_twisted}
+function logic.defeat_achievements(a)
+  local ids = {}
+  if not a.showdown then
+    -- Regular boss: only last_laugh and nemesis_slayer
+    if a.laughed_hand and a.hand == a.laughed_hand + 1 then
+      ids[#ids + 1] = 'fb_last_laugh'
+    end
+    if a.nemesis then
+      ids[#ids + 1] = 'fb_nemesis_slayer'
+    end
+    return ids
+  end
+  -- Showdown: check for special conditions
+  local achievements = {}
+  -- Overkill: defeated from full HP (start == 0) on the very last hand (hands_left == 0, hand == 1)
+  if a.start == 0 and a.hands_left == 0 and a.hand == 1 then
+    achievements.overkill = true
+  end
+  -- Last laugh: laughed then won on the next hand
+  if a.laughed_hand and a.hand == a.laughed_hand + 1 then
+    achievements.last_laugh = true
+  end
+  -- Clean sweep: beat all five finals
+  local sweep_count = 0
+  for _, k in ipairs(logic.FINAL_BOSSES) do
+    if a.final_defeated[k] then sweep_count = sweep_count + 1 end
+  end
+  if sweep_count == 5 then
+    achievements.clean_sweep = true
+  end
+  -- Twisted: beat all five finals while twisted
+  local twisted_count = 0
+  for _, k in ipairs(logic.FINAL_BOSSES) do
+    if a.final_defeated_twisted[k] then twisted_count = twisted_count + 1 end
+  end
+  if twisted_count == 5 then
+    achievements.twisted = true
+  end
+  -- If no special achievements, return empty
+  local has_any = false
+  for _ in pairs(achievements) do has_any = true; break end
+  if not has_any then return ids end
+  -- Otherwise, add showdown_survivor and comeback plus the specific achievements
+  ids[#ids + 1] = 'fb_showdown_survivor'
+  if achievements.overkill then ids[#ids + 1] = 'fb_overkill' end
+  if achievements.last_laugh then ids[#ids + 1] = 'fb_last_laugh' end
+  if achievements.clean_sweep then ids[#ids + 1] = 'fb_clean_sweep' end
+  if achievements.twisted then ids[#ids + 1] = 'fb_twisted' end
+  ids[#ids + 1] = 'fb_comeback'
+  return ids
+end
+
+--- Achievements from interrupting bosses.
+--- interrupted_set: {bl_N = true, ...} set of boss keys that were interrupted.
+function logic.interrupt_achievements(interrupted_set)
+  local ids = {}
+  local count = 0
+  for _, v in pairs(interrupted_set) do
+    if v then count = count + 1 end
+  end
+  -- Rude: interrupt at least one boss
+  if count >= 1 then
+    ids[#ids + 1] = 'fb_rude'
+  end
+  -- No manners: interrupt 10 bosses
+  if count >= logic.NO_MANNERS_COUNT then
+    ids[#ids + 1] = 'fb_no_manners'
+  end
+  return ids
+end
+
+--- Achievements from phase changes.
+function logic.phase_achievements(from, to)
+  if from == 1 and to == 3 then return {'fb_phase_skipper'} end
+  return {}
 end
 
 return logic
