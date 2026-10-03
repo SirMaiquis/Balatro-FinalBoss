@@ -93,4 +93,21 @@ T['final bosses and the generic set have phase lines'] = function()
   assert(#missing == 0, 'missing: ' .. table.concat(missing, ', '))
 end
 
+T['every vanilla boss and the generic set have rematch lines'] = function()
+  local quips, bosses = load()
+  local missing = {}
+  for blind in pairs(bosses) do
+    for _, m in ipairs({'rematch_won', 'rematch_lost'}) do
+      if not quips['fb_' .. blind .. '_' .. m .. '_1'] then missing[#missing + 1] = blind .. '.' .. m end
+    end
+  end
+  for _, m in ipairs({'rematch_won', 'rematch_lost'}) do
+    for i = 1, 3 do
+      if not quips['fb_generic_' .. m .. '_' .. i] then missing[#missing + 1] = 'generic.' .. m .. '_' .. i end
+    end
+  end
+  table.sort(missing)
+  assert(#missing == 0, 'missing: ' .. table.concat(missing, ', '))
+end
+
 return T

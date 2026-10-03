@@ -78,6 +78,12 @@ return {
             fb_generic_interrupted_3 = {"挨拶もなしか？"},
             fb_generic_phase2_1 = {"遊びは終わりだ！"},
             fb_generic_phase3_1 = {"今度こそ", "本気で怒ったぞ！"},
+            fb_generic_rematch_won_1 = {"また貴様か？", "覚えているぞ。"},
+            fb_generic_rematch_won_2 = {"前回はまぐれだ。", "認めろ。"},
+            fb_generic_rematch_won_3 = {"リベンジの時だ。", "鍛えてきたぞ。"},
+            fb_generic_rematch_lost_1 = {"またボコられに", "来たのか？"},
+            fb_generic_rematch_lost_2 = {"前回で", "懲りなかったか？"},
+            fb_generic_rematch_lost_3 = {"ああ、貴様か。", "負け犬め。"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"だが俺は", "フックだ！"},
@@ -90,6 +96,8 @@ return {
             fb_bl_hook_defeat_1 = {"よかろう…", "見逃してやる。"},
             fb_bl_hook_gloat_1 = {"釣れたな！"},
             fb_bl_hook_interrupted_1 = {"無礼な！まだ", "話の途中だ！"},
+            fb_bl_hook_rematch_won_1 = {"前回は針から", "逃げやがったな。"},
+            fb_bl_hook_rematch_lost_1 = {"また釣られに", "来たのか？"},
 
             -- The Ox: playing your most played hand sets money to $0
             fb_bl_ox_name_1 = {"だが俺は", "雄牛だ！"},
@@ -102,6 +110,8 @@ return {
             fb_bl_ox_defeat_1 = {"闘牛の角を", "掴んだな…"},
             fb_bl_ox_gloat_1 = {"文無しだな！"},
             fb_bl_ox_interrupted_1 = {"ほう、そういう", "つもりか。"},
+            fb_bl_ox_rematch_won_1 = {"一度は俺の角を", "かわしたな…"},
+            fb_bl_ox_rematch_lost_1 = {"前回から", "まだ文無しか？"},
 
             -- The House: first hand is drawn face down
             fb_bl_house_name_1 = {"だが俺は", "家だ！"},
@@ -114,6 +124,8 @@ return {
             fb_bl_house_defeat_1 = {"家が…", "崩れていく。"},
             fb_bl_house_gloat_1 = {"胴元の勝ち！"},
             fb_bl_house_interrupted_1 = {"家のルールだ、", "まだ打つな！"},
+            fb_bl_house_rematch_won_1 = {"胴元の負けは一度だけ。", "二度はない。"},
+            fb_bl_house_rematch_lost_1 = {"おかえり。", "胴元は覚えてるぞ。"},
 
             -- The Wall: extra large blind
             fb_bl_wall_name_1 = {"だが俺は", "壁だ！"},
@@ -126,6 +138,8 @@ return {
             fb_bl_wall_defeat_1 = {"壁が…", "崩れ落ちる。"},
             fb_bl_wall_gloat_1 = {"壁にぶつかったな！"},
             fb_bl_wall_interrupted_1 = {"壁に話してる気分だ…", "あ、俺が壁か。"},
+            fb_bl_wall_rematch_won_1 = {"一度は俺を越えたな。", "二度目はない。"},
+            fb_bl_wall_rematch_lost_1 = {"また同じ壁に", "ぶつかりに来たか？"},
 
             -- The Wheel: 1 in 7 cards get drawn face down
             fb_bl_wheel_name_1 = {"だが俺は", "ホイールだ！"},
@@ -138,6 +152,8 @@ return {
             fb_bl_wheel_defeat_1 = {"運命の輪が", "俺に背を向けた。"},
             fb_bl_wheel_gloat_1 = {"運も尽きたな！"},
             fb_bl_wheel_interrupted_1 = {"待て！まだ", "回ってる途中だ！"},
+            fb_bl_wheel_rematch_won_1 = {"前回の回転は", "運が良かったな…"},
+            fb_bl_wheel_rematch_lost_1 = {"もう一回転？", "胴元有利だぜ。"},
 
             -- The Arm: decrease level of played poker hand
             fb_bl_arm_name_1 = {"だが俺は", "腕だ！"},
@@ -150,6 +166,8 @@ return {
             fb_bl_arm_defeat_1 = {"俺の剛腕を", "破ったか。"},
             fb_bl_arm_gloat_1 = {"レベルダウン！"},
             fb_bl_arm_interrupted_1 = {"手を出すな！", "自慢の途中だ！"},
+            fb_bl_arm_rematch_won_1 = {"前回の腕相撲は", "貴様の勝ちだった。"},
+            fb_bl_arm_rematch_lost_1 = {"また腕相撲を", "しに来たか？"},
 
             -- The Club: all Club cards are debuffed
             fb_bl_club_name_1 = {"だが俺は", "クラブだ！"},
@@ -162,6 +180,8 @@ return {
             fb_bl_club_defeat_1 = {"クラブは閉店だ。", "帰る時間か…"},
             fb_bl_club_gloat_1 = {"閉店ガラガラ！"},
             fb_bl_club_interrupted_1 = {"おい！俺のクラブ", "では俺が先だ！"},
+            fb_bl_club_rematch_won_1 = {"前回は俺のクラブに", "殴り込んだな。"},
+            fb_bl_club_rematch_lost_1 = {"会員更新か？", "おかえり。"},
 
             -- The Fish: cards drawn face down after each hand played
             fb_bl_fish_name_1 = {"だが俺は", "魚だ！"},
@@ -174,6 +194,8 @@ return {
             fb_bl_fish_defeat_1 = {"釣られた…", "プロの腕だ。"},
             fb_bl_fish_gloat_1 = {"ずぶ濡れだな！"},
             fb_bl_fish_interrupted_1 = {"糸を切りやがった！"},
+            fb_bl_fish_rematch_won_1 = {"逃した魚は", "大きい…"},
+            fb_bl_fish_rematch_lost_1 = {"また俺の針に", "かかったか、小魚？"},
 
             -- The Psychic: must play 5 cards
             fb_bl_psychic_name_1 = {"だが俺は", "サイキックだ！"},
@@ -186,6 +208,8 @@ return {
             fb_bl_psychic_defeat_1 = {"予知していた。", "…いや、違う？"},
             fb_bl_psychic_gloat_1 = {"予知通りだ！"},
             fb_bl_psychic_interrupted_1 = {"そうすると思ったよ。", "…それでも無礼だ。"},
+            fb_bl_psychic_rematch_won_1 = {"前回の貴様の勝利は", "予知できなかった。"},
+            fb_bl_psychic_rematch_lost_1 = {"戻ってくると", "分かっていた。"},
 
             -- The Goad: all Spade cards are debuffed
             fb_bl_goad_name_1 = {"だが俺は", "ゴアドだ！"},
@@ -198,6 +222,8 @@ return {
             fb_bl_goad_defeat_1 = {"くそっ、", "貴様の勝ちだ。"},
             fb_bl_goad_gloat_1 = {"墓穴を掘れ！"},
             fb_bl_goad_interrupted_1 = {"俺を挑発するか？", "いいだろう！"},
+            fb_bl_goad_rematch_won_1 = {"前回は墓穴から", "這い出たな。"},
+            fb_bl_goad_rematch_lost_1 = {"もっと深い墓穴を", "掘りに来たか？"},
 
             -- The Water: start with 0 discards
             fb_bl_water_name_1 = {"だが俺は", "水だ！"},
@@ -210,6 +236,8 @@ return {
             fb_bl_water_defeat_1 = {"俺は干上がった…"},
             fb_bl_water_gloat_1 = {"水の泡だな！"},
             fb_bl_water_interrupted_1 = {"遮ったな？", "水に流さんぞ！"},
+            fb_bl_water_rematch_won_1 = {"前回はなんとか", "浮いていたな。"},
+            fb_bl_water_rematch_lost_1 = {"また溺れに", "来たのか？"},
 
             -- The Window: all Diamond cards are debuffed
             fb_bl_window_name_1 = {"だが俺は", "窓だ！"},
@@ -222,6 +250,8 @@ return {
             fb_bl_window_defeat_1 = {"俺の好機の窓が", "閉じた。"},
             fb_bl_window_gloat_1 = {"ダイヤ？弱体化！"},
             fb_bl_window_interrupted_1 = {"俺の言葉を", "窓から捨てる気か！"},
+            fb_bl_window_rematch_won_1 = {"一度は俺の窓を", "割ったな。"},
+            fb_bl_window_rematch_lost_1 = {"またウィンドウ", "ショッピングか？"},
 
             -- The Manacle: -1 hand size
             fb_bl_manacle_name_1 = {"だが俺は", "手枷だ！"},
@@ -234,6 +264,8 @@ return {
             fb_bl_manacle_defeat_1 = {"ついに自由か…", "俺から。"},
             fb_bl_manacle_gloat_1 = {"手も足も出ない！"},
             fb_bl_manacle_interrupted_1 = {"止まれ！その手、", "縛ってやる！"},
+            fb_bl_manacle_rematch_won_1 = {"一度は俺の鎖を", "すり抜けたな。"},
+            fb_bl_manacle_rematch_lost_1 = {"また鎖に", "つながれに来たか。"},
 
             -- The Eye: no repeat hand types this round
             fb_bl_eye_name_1 = {"だが俺は", "目だ！"},
@@ -246,6 +278,8 @@ return {
             fb_bl_eye_defeat_1 = {"目に見えなければ", "気にならん…"},
             fb_bl_eye_gloat_1 = {"言った通りだ！"},
             fb_bl_eye_interrupted_1 = {"見たぞ！", "無礼な。"},
+            fb_bl_eye_rematch_won_1 = {"あの敗北以来、", "ずっと見ていたぞ。"},
+            fb_bl_eye_rematch_lost_1 = {"戻ってきたのが", "見えるぞ。"},
 
             -- The Mouth: play only 1 hand type this round
             fb_bl_mouth_name_1 = {"だが俺は", "口だ！"},
@@ -258,6 +292,8 @@ return {
             fb_bl_mouth_defeat_1 = {"言葉も出ない…"},
             fb_bl_mouth_gloat_1 = {"黙れ、負け犬！"},
             fb_bl_mouth_interrupted_1 = {"おい！この口は", "まだ喋ってた！"},
+            fb_bl_mouth_rematch_won_1 = {"前回は口を", "封じられた。"},
+            fb_bl_mouth_rematch_lost_1 = {"前回と同じ", "ルーティンか？"},
 
             -- The Plant: all face cards are debuffed
             fb_bl_plant_name_1 = {"だが俺は", "プラントだ！"},
@@ -270,6 +306,8 @@ return {
             fb_bl_plant_defeat_1 = {"枯れた…", "また生えてやる。"},
             fb_bl_plant_gloat_1 = {"現実を見ろ！"},
             fb_bl_plant_interrupted_1 = {"まず育たせろ、", "せっかちめ！"},
+            fb_bl_plant_rematch_won_1 = {"根こそぎ抜かれたが、", "また生えたぞ。"},
+            fb_bl_plant_rematch_lost_1 = {"また俺の庭に", "来たのか。"},
 
             -- The Serpent: after play or discard, always draw 3 cards
             fb_bl_serpent_name_1 = {"だが俺は", "サーペントだ！"},
@@ -282,6 +320,8 @@ return {
             fb_bl_serpent_defeat_1 = {"脱皮した…", "プライドも。"},
             fb_bl_serpent_gloat_1 = {"シャー！またな！"},
             fb_bl_serpent_interrupted_1 = {"シャー！話を", "遮るな！"},
+            fb_bl_serpent_rematch_won_1 = {"一度は俺のとぐろから", "逃げたな。"},
+            fb_bl_serpent_rematch_lost_1 = {"シャー…", "戻ってきたか…"},
 
             -- The Pillar: cards played previously this ante are debuffed
             fb_bl_pillar_name_1 = {"だが俺は", "柱だ！"},
@@ -294,6 +334,8 @@ return {
             fb_bl_pillar_defeat_1 = {"大黒柱が", "倒れたか…"},
             fb_bl_pillar_gloat_1 = {"まだ立ってる！"},
             fb_bl_pillar_interrupted_1 = {"年長者を", "敬わんのか？"},
+            fb_bl_pillar_rematch_won_1 = {"貴様の勝ち方、", "覚えているぞ。"},
+            fb_bl_pillar_rematch_lost_1 = {"貴様の負け方、", "覚えているぞ。"},
 
             -- The Needle: play only 1 hand
             fb_bl_needle_name_1 = {"だが俺は", "ニードルだ！"},
@@ -306,6 +348,8 @@ return {
             fb_bl_needle_defeat_1 = {"鋭い一手だ。", "やられた。"},
             fb_bl_needle_gloat_1 = {"要点は、負けだ！"},
             fb_bl_needle_interrupted_1 = {"チクリと来たな。", "まだ途中だ！"},
+            fb_bl_needle_rematch_won_1 = {"前回はたった1ハンドに", "やられた。"},
+            fb_bl_needle_rematch_lost_1 = {"またチャンスは1回。", "また外すか？"},
 
             -- The Head: all Heart cards are debuffed
             fb_bl_head_name_1 = {"だが俺は", "頭だ！"},
@@ -318,6 +362,8 @@ return {
             fb_bl_head_defeat_1 = {"貴様のせいで", "頭を失った…"},
             fb_bl_head_gloat_1 = {"ハートレスか？"},
             fb_bl_head_interrupted_1 = {"頭がおかしいのか？", "俺が話してる！"},
+            fb_bl_head_rematch_won_1 = {"一度は俺の心を", "奪ったな…"},
+            fb_bl_head_rematch_lost_1 = {"また失恋しに", "来たのか？"},
 
             -- The Tooth: lose $1 per card played
             fb_bl_tooth_name_1 = {"だが俺は", "歯だ！"},
@@ -330,6 +376,8 @@ return {
             fb_bl_tooth_defeat_1 = {"歯を食いしばって", "も負けたか。"},
             fb_bl_tooth_gloat_1 = {"払え、カモ！"},
             fb_bl_tooth_interrupted_1 = {"グルル！その分、", "払ってもらう！"},
+            fb_bl_tooth_rematch_won_1 = {"前回の分、まだ", "払ってもらってないぞ。"},
+            fb_bl_tooth_rematch_lost_1 = {"借金を返しに", "来たのか？"},
 
             -- The Flint: base Chips and Mult are halved
             fb_bl_flint_name_1 = {"だが俺は", "フリントだ！"},
@@ -342,6 +390,8 @@ return {
             fb_bl_flint_defeat_1 = {"俺の火花が", "消えた。"},
             fb_bl_flint_gloat_1 = {"楽しさ半減！"},
             fb_bl_flint_interrupted_1 = {"火花を散らすな！", "話の途中だ！"},
+            fb_bl_flint_rematch_won_1 = {"前回は税金を", "逃れやがったな。"},
+            fb_bl_flint_rematch_lost_1 = {"また納税の季節だ。", "払え。"},
 
             -- The Mark: all face cards are drawn face down
             fb_bl_mark_name_1 = {"だが俺は", "マークだ！"},
@@ -354,6 +404,8 @@ return {
             fb_bl_mark_defeat_1 = {"貴様は俺に", "印を刻んだ。"},
             fb_bl_mark_gloat_1 = {"負けの印付き！"},
             fb_bl_mark_interrupted_1 = {"目をつけたぞ。", "覚えておけ。"},
+            fb_bl_mark_rematch_won_1 = {"前回は俺の正体を", "見破ったな。"},
+            fb_bl_mark_rematch_lost_1 = {"まだ俺の顔が", "見えないか？"},
 
             -- Amber Acorn: flips and shuffles all Joker cards
             fb_bl_final_acorn_name_1 = {"だが俺は", "琥珀色のドングリだ！"},
@@ -368,6 +420,8 @@ return {
             fb_bl_final_acorn_interrupted_1 = {"待て待て！", "まだ芽も出てない！"},
             fb_bl_final_acorn_phase2_1 = {"ここからは", "もっと堅いぞ！"},
             fb_bl_final_acorn_phase3_1 = {"大混乱だ！", "殻を脱ぐぞ！"},
+            fb_bl_final_acorn_rematch_won_1 = {"一度は俺を割ったな。", "二度とさせん！"},
+            fb_bl_final_acorn_rematch_lost_1 = {"またカオスを", "求めて来たか？"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"だが俺は", "青々とした葉だ！"},
@@ -382,6 +436,8 @@ return {
             fb_bl_final_leaf_interrupted_1 = {"いいだろう。", "挨拶は抜きだ。"},
             fb_bl_final_leaf_phase2_1 = {"俺の根は", "さらに深く！"},
             fb_bl_final_leaf_phase3_1 = {"共に枯れよ！"},
+            fb_bl_final_leaf_rematch_won_1 = {"一度は手放せたな。", "もう一度やってみろ。"},
+            fb_bl_final_leaf_rematch_lost_1 = {"まだジョーカーに", "しがみつくのか？"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"だが俺は", "バイオレットベッセルだ！"},
@@ -396,6 +452,8 @@ return {
             fb_bl_final_vessel_interrupted_1 = {"俺の話の前に出航か。", "大胆だな。"},
             fb_bl_final_vessel_phase2_1 = {"船倉を満たせ！"},
             fb_bl_final_vessel_phase3_1 = {"総員、", "深海へ！"},
+            fb_bl_final_vessel_rematch_won_1 = {"一度は沈められたが、", "修理済みだ。"},
+            fb_bl_final_vessel_rematch_lost_1 = {"俺の航跡で", "溺れに来たか？"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"だが俺は", "クリムゾンハートだ！"},
@@ -410,6 +468,8 @@ return {
             fb_bl_final_heart_interrupted_1 = {"話を遮るのか？", "なんて薄情な！"},
             fb_bl_final_heart_phase2_1 = {"俺の鼓動が", "速くなる！"},
             fb_bl_final_heart_phase3_1 = {"真紅の怒りを", "思い知れ！"},
+            fb_bl_final_heart_rematch_won_1 = {"前回は俺の心を", "砕いたな。"},
+            fb_bl_final_heart_rematch_lost_1 = {"俺の心はまだ", "貴様に高鳴る。"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"だが俺は", "セルリアンベルだ！"},
@@ -424,6 +484,8 @@ return {
             fb_bl_final_bell_interrupted_1 = {"ゴングに救われた？", "今回は違う！"},
             fb_bl_final_bell_phase2_1 = {"もっと強く", "鳴り響け！"},
             fb_bl_final_bell_phase3_1 = {"最後の鐘だ！"},
+            fb_bl_final_bell_rematch_won_1 = {"前回はガツンと", "鳴らされたな。"},
+            fb_bl_final_bell_rematch_lost_1 = {"鐘はまた", "貴様のために鳴る。"},
         }
     }
 }

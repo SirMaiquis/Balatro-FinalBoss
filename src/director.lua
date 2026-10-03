@@ -106,7 +106,10 @@ function Dir.play_intro(blind_key)
   -- encounter rather than start it only to cut it at once.
   if G.STATES and G.STATE == G.STATES.HAND_PLAYED then return finish() end
   local steps = {}
-  for _, moment in ipairs(FinalBoss.logic.intro_sequence(enc.tier)) do
+  -- 1.1 memory: a rematch or nemesis line may replace the opener (full) or the intro (light).
+  local plan = FinalBoss.logic.intro_plan{tier = enc.tier, memory = FinalBoss.config.memory,
+    last = enc.last, nemesis = enc.nemesis, roll = math.random()}
+  for _, moment in ipairs(plan) do
     local key = FinalBoss.registry.resolve(enc.key, moment, enc.last_variant)
     if key then steps[#steps + 1] = {key = key, vars = Dir.vars(blind)} end
   end

@@ -78,6 +78,12 @@ return {
             fb_generic_interrupted_3 = {"連聲招呼都不打？"},
             fb_generic_phase2_1 = {"玩夠了！"},
             fb_generic_phase3_1 = {"這下我", "真的生氣了！"},
+            fb_generic_rematch_won_1 = {"又是你？", "我記得你。"},
+            fb_generic_rematch_won_2 = {"上次只是運氣。", "承認吧。"},
+            fb_generic_rematch_won_3 = {"復仇時間到。", "我練過了。"},
+            fb_generic_rematch_lost_1 = {"又來", "討打了？"},
+            fb_generic_rematch_lost_2 = {"上次還沒", "學乖？"},
+            fb_generic_rematch_lost_3 = {"喔，是你啊。", "手下敗將。"},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"但我是", "鉤子！"},
@@ -90,6 +96,8 @@ return {
             fb_bl_hook_defeat_1 = {"好吧...", "放你走。"},
             fb_bl_hook_gloat_1 = {"上鉤了！"},
             fb_bl_hook_interrupted_1 = {"沒禮貌！我話還", "沒說完！"},
+            fb_bl_hook_rematch_won_1 = {"上次讓你", "脫鉤了。"},
+            fb_bl_hook_rematch_lost_1 = {"又來上鉤了？"},
 
             -- The Ox: playing your most played hand sets money to $0
             fb_bl_ox_name_1 = {"但我是", "公牛！"},
@@ -102,6 +110,8 @@ return {
             fb_bl_ox_defeat_1 = {"你抓住了", "牛角..."},
             fb_bl_ox_gloat_1 = {"現在你破產了！"},
             fb_bl_ox_interrupted_1 = {"哦，原來你是", "這個態度。"},
+            fb_bl_ox_rematch_won_1 = {"上次讓你", "躲過了牛角..."},
+            fb_bl_ox_rematch_lost_1 = {"上次破產後", "還沒緩過來？"},
 
             -- The House: first hand is drawn face down
             fb_bl_house_name_1 = {"但我是", "房子！"},
@@ -114,6 +124,8 @@ return {
             fb_bl_house_defeat_1 = {"房子...", "塌了。"},
             fb_bl_house_gloat_1 = {"莊家通吃！"},
             fb_bl_house_interrupted_1 = {"家規：還不許", "出牌！"},
+            fb_bl_house_rematch_won_1 = {"莊家只輸過一次。", "絕無下次。"},
+            fb_bl_house_rematch_lost_1 = {"歡迎回來。", "莊家記得你。"},
 
             -- The Wall: extra large blind
             fb_bl_wall_name_1 = {"但我是", "高牆！"},
@@ -126,6 +138,8 @@ return {
             fb_bl_wall_defeat_1 = {"高牆...", "倒塌了。"},
             fb_bl_wall_gloat_1 = {"撞牆了吧？"},
             fb_bl_wall_interrupted_1 = {"像在對牆說話…", "等等，我就是牆。"},
+            fb_bl_wall_rematch_won_1 = {"你翻過我一次。", "沒有第二次。"},
+            fb_bl_wall_rematch_lost_1 = {"又來撞", "同一堵牆？"},
 
             -- The Wheel: 1 in 7 cards get drawn face down
             fb_bl_wheel_name_1 = {"但我是", "巨輪！"},
@@ -138,6 +152,8 @@ return {
             fb_bl_wheel_defeat_1 = {"命運之輪...", "轉向了我。"},
             fb_bl_wheel_gloat_1 = {"輪到你輸了！"},
             fb_bl_wheel_interrupted_1 = {"慢著！我還在", "轉呢！"},
+            fb_bl_wheel_rematch_won_1 = {"上一輪", "算你走運..."},
+            fb_bl_wheel_rematch_lost_1 = {"再轉一輪？", "莊家占優喔。"},
 
             -- The Arm: decrease level of played poker hand
             fb_bl_arm_name_1 = {"但我是", "手臂！"},
@@ -150,6 +166,8 @@ return {
             fb_bl_arm_defeat_1 = {"你擊敗了", "我的強臂。"},
             fb_bl_arm_gloat_1 = {"降級！"},
             fb_bl_arm_interrupted_1 = {"放手！我還沒", "秀完肌肉！"},
+            fb_bl_arm_rematch_won_1 = {"上次比腕力", "你贏了。"},
+            fb_bl_arm_rematch_lost_1 = {"又來", "比腕力了？"},
 
             -- The Club: all Club cards are debuffed
             fb_bl_club_name_1 = {"但我是", "梅花！"},
@@ -162,6 +180,8 @@ return {
             fb_bl_club_defeat_1 = {"俱樂部打烊。", "該走了..."},
             fb_bl_club_gloat_1 = {"打烊啦！"},
             fb_bl_club_interrupted_1 = {"喂！在我的俱樂部", "我先說話！"},
+            fb_bl_club_rematch_won_1 = {"上次你闖進了", "我的俱樂部。"},
+            fb_bl_club_rematch_lost_1 = {"會員續約了？", "歡迎回來。"},
 
             -- The Fish: cards drawn face down after each hand played
             fb_bl_fish_name_1 = {"但我是", "魚！"},
@@ -174,6 +194,8 @@ return {
             fb_bl_fish_defeat_1 = {"被釣上來了...", "高手啊。"},
             fb_bl_fish_gloat_1 = {"你落水了！"},
             fb_bl_fish_interrupted_1 = {"你扯斷了", "我的魚線！"},
+            fb_bl_fish_rematch_won_1 = {"那個從我鉤上", "溜走的傢伙..."},
+            fb_bl_fish_rematch_lost_1 = {"又上我的鉤了，", "小魚？"},
 
             -- The Psychic: must play 5 cards
             fb_bl_psychic_name_1 = {"但我是", "靈媒！"},
@@ -186,6 +208,8 @@ return {
             fb_bl_psychic_defeat_1 = {"我早預見了。", "...是嗎？"},
             fb_bl_psychic_gloat_1 = {"我早說了！"},
             fb_bl_psychic_interrupted_1 = {"我就知道你會這樣。", "…還是沒禮貌。"},
+            fb_bl_psychic_rematch_won_1 = {"你上次的勝利", "我沒預見到。"},
+            fb_bl_psychic_rematch_lost_1 = {"我就知道", "你會回來。"},
 
             -- The Goad: all Spade cards are debuffed
             fb_bl_goad_name_1 = {"但我是", "鞭策！"},
@@ -198,6 +222,8 @@ return {
             fb_bl_goad_defeat_1 = {"該死，", "你贏了。"},
             fb_bl_goad_gloat_1 = {"自己挖墳吧！"},
             fb_bl_goad_interrupted_1 = {"挑釁我？", "好啊！"},
+            fb_bl_goad_rematch_won_1 = {"上次你從墳裡", "爬出來了。"},
+            fb_bl_goad_rematch_lost_1 = {"又來給自己", "挖更深的墳？"},
 
             -- The Water: start with 0 discards
             fb_bl_water_name_1 = {"但我是", "清水！"},
@@ -210,6 +236,8 @@ return {
             fb_bl_water_defeat_1 = {"我徹底", "乾涸了..."},
             fb_bl_water_gloat_1 = {"你泡湯了！"},
             fb_bl_water_interrupted_1 = {"打斷我？你要", "陷入深水了！"},
+            fb_bl_water_rematch_won_1 = {"上次你", "勉強沒沉。"},
+            fb_bl_water_rematch_lost_1 = {"又來", "泡湯了？"},
 
             -- The Window: all Diamond cards are debuffed
             fb_bl_window_name_1 = {"但我是", "窗戶！"},
@@ -222,6 +250,8 @@ return {
             fb_bl_window_defeat_1 = {"我的機會之窗", "關上了。"},
             fb_bl_window_gloat_1 = {"方塊？削弱！"},
             fb_bl_window_interrupted_1 = {"我的話被你", "扔出窗外？！"},
+            fb_bl_window_rematch_won_1 = {"你砸破過", "我的窗戶。"},
+            fb_bl_window_rematch_lost_1 = {"又來", "逛櫥窗？"},
 
             -- The Manacle: -1 hand size
             fb_bl_manacle_name_1 = {"但我是", "手銬！"},
@@ -234,6 +264,8 @@ return {
             fb_bl_manacle_defeat_1 = {"終於自由了...", "擺脫了我。"},
             fb_bl_manacle_gloat_1 = {"束手就擒！"},
             fb_bl_manacle_interrupted_1 = {"站住！就憑這個", "我要鎖住你！"},
+            fb_bl_manacle_rematch_won_1 = {"你掙脫過", "我的手銬。"},
+            fb_bl_manacle_rematch_lost_1 = {"看來你又", "被銬上了。"},
 
             -- The Eye: no repeat hand types this round
             fb_bl_eye_name_1 = {"但我是", "眼睛！"},
@@ -246,6 +278,8 @@ return {
             fb_bl_eye_defeat_1 = {"眼不見，", "心不煩..."},
             fb_bl_eye_gloat_1 = {"早就看穿了！"},
             fb_bl_eye_interrupted_1 = {"我看見了！", "真沒禮貌。"},
+            fb_bl_eye_rematch_won_1 = {"那次輸後，", "我一直盯著你。"},
+            fb_bl_eye_rematch_lost_1 = {"我看見", "你回來了。"},
 
             -- The Mouth: play only 1 hand type this round
             fb_bl_mouth_name_1 = {"但我是", "嘴巴！"},
@@ -258,6 +292,8 @@ return {
             fb_bl_mouth_defeat_1 = {"我無話可說..."},
             fb_bl_mouth_gloat_1 = {"閉嘴，輸家！"},
             fb_bl_mouth_interrupted_1 = {"喂！這張嘴", "還在說話！"},
+            fb_bl_mouth_rematch_won_1 = {"上次你", "堵住了我的嘴。"},
+            fb_bl_mouth_rematch_lost_1 = {"還是上次", "那套路？"},
 
             -- The Plant: all face cards are debuffed
             fb_bl_plant_name_1 = {"但我是", "星球！"},
@@ -270,6 +306,8 @@ return {
             fb_bl_plant_defeat_1 = {"枯萎了...", "我會再長出來。"},
             fb_bl_plant_gloat_1 = {"面對現實吧！"},
             fb_bl_plant_interrupted_1 = {"先讓我長大，", "急什麼！"},
+            fb_bl_plant_rematch_won_1 = {"你把我連根拔起，", "我又長回來了。"},
+            fb_bl_plant_rematch_lost_1 = {"又來我的", "花園了啊。"},
 
             -- The Serpent: after play or discard, always draw 3 cards
             fb_bl_serpent_name_1 = {"但我是", "蛇！"},
@@ -282,6 +320,8 @@ return {
             fb_bl_serpent_defeat_1 = {"蛻了皮...", "也丟了尊嚴。"},
             fb_bl_serpent_gloat_1 = {"嘶嘶，再見！"},
             fb_bl_serpent_interrupted_1 = {"嘶嘶！別插嘴！"},
+            fb_bl_serpent_rematch_won_1 = {"你逃出過", "我的盤繞。"},
+            fb_bl_serpent_rematch_lost_1 = {"嘶嘶…", "你回來了…"},
 
             -- The Pillar: cards played previously this ante are debuffed
             fb_bl_pillar_name_1 = {"但我是", "支柱！"},
@@ -294,6 +334,8 @@ return {
             fb_bl_pillar_defeat_1 = {"社區的支柱", "倒下了。"},
             fb_bl_pillar_gloat_1 = {"我還站著！"},
             fb_bl_pillar_interrupted_1 = {"不懂得", "敬老嗎？"},
+            fb_bl_pillar_rematch_won_1 = {"我記得你", "怎麼贏的。"},
+            fb_bl_pillar_rematch_lost_1 = {"我記得你", "怎麼輸的。"},
 
             -- The Needle: play only 1 hand
             fb_bl_needle_name_1 = {"但我是", "細針！"},
@@ -306,6 +348,8 @@ return {
             fb_bl_needle_defeat_1 = {"打得犀利。", "你贏了。"},
             fb_bl_needle_gloat_1 = {"重點是你輸了！"},
             fb_bl_needle_interrupted_1 = {"真扎人。", "我還沒說完！"},
+            fb_bl_needle_rematch_won_1 = {"上次一手牌", "就打敗了我。"},
+            fb_bl_needle_rematch_lost_1 = {"又只有一次機會。", "還要失手？"},
 
             -- The Head: all Heart cards are debuffed
             fb_bl_head_name_1 = {"但我是", "頭顱！"},
@@ -318,6 +362,8 @@ return {
             fb_bl_head_defeat_1 = {"為你丟了腦袋..."},
             fb_bl_head_gloat_1 = {"沒心沒肺吧？"},
             fb_bl_head_interrupted_1 = {"你昏頭了嗎？", "我在說話！"},
+            fb_bl_head_rematch_won_1 = {"你曾贏得", "我的心…"},
+            fb_bl_head_rematch_lost_1 = {"又來", "心碎一次？"},
 
             -- The Tooth: lose $1 per card played
             fb_bl_tooth_name_1 = {"但我是", "尖齒！"},
@@ -330,6 +376,8 @@ return {
             fb_bl_tooth_defeat_1 = {"拼盡全力，", "我還是輸了。"},
             fb_bl_tooth_gloat_1 = {"付錢吧，", "冤大頭！"},
             fb_bl_tooth_interrupted_1 = {"咕嚕！你要為此", "付出代價！"},
+            fb_bl_tooth_rematch_won_1 = {"上次的帳", "你還欠著。"},
+            fb_bl_tooth_rematch_lost_1 = {"來還債了？"},
 
             -- The Flint: base Chips and Mult are halved
             fb_bl_flint_name_1 = {"但我是", "燧石！"},
@@ -342,6 +390,8 @@ return {
             fb_bl_flint_defeat_1 = {"我的火花", "熄滅了。"},
             fb_bl_flint_gloat_1 = {"樂趣減半！"},
             fb_bl_flint_interrupted_1 = {"別冒火星！", "我在說話！"},
+            fb_bl_flint_rematch_won_1 = {"上次你", "逃了我的稅。"},
+            fb_bl_flint_rematch_lost_1 = {"又到繳稅季。", "掏錢吧。"},
 
             -- The Mark: all face cards are drawn face down
             fb_bl_mark_name_1 = {"但我是", "標記！"},
@@ -354,6 +404,8 @@ return {
             fb_bl_mark_defeat_1 = {"你在我身上", "留下了標記。"},
             fb_bl_mark_gloat_1 = {"標記為輸家！"},
             fb_bl_mark_interrupted_1 = {"記住了。你被", "盯上了。"},
+            fb_bl_mark_rematch_won_1 = {"上次你", "看穿了我。"},
+            fb_bl_mark_rematch_lost_1 = {"還看不清", "我的臉嗎？"},
 
             -- Amber Acorn: flips and shuffles all Joker cards
             fb_bl_final_acorn_name_1 = {"但我是", "琥珀橡果！"},
@@ -368,6 +420,8 @@ return {
             fb_bl_final_acorn_interrupted_1 = {"慢著！我還沒", "發芽呢！"},
             fb_bl_final_acorn_phase2_1 = {"現在才是", "硬核時刻！"},
             fb_bl_final_acorn_phase3_1 = {"徹底混亂！", "外殼脫落！"},
+            fb_bl_final_acorn_rematch_won_1 = {"你敲開過我一次。", "休想再來！"},
+            fb_bl_final_acorn_rematch_lost_1 = {"還想要", "更多混亂？"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"但我是", "翠綠樹葉！"},
@@ -382,6 +436,8 @@ return {
             fb_bl_final_leaf_interrupted_1 = {"好吧。客套話", "就免了。"},
             fb_bl_final_leaf_phase2_1 = {"我的根", "紮得更深！"},
             fb_bl_final_leaf_phase3_1 = {"與我一同枯萎！"},
+            fb_bl_final_leaf_rematch_won_1 = {"你放手過一次。", "再試試。"},
+            fb_bl_final_leaf_rematch_lost_1 = {"還捨不得", "你的小丑？"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"但我是", "紫羅蘭花器！"},
@@ -396,6 +452,8 @@ return {
             fb_bl_final_vessel_interrupted_1 = {"我還沒講完就", "起航？真大膽。"},
             fb_bl_final_vessel_phase2_1 = {"裝滿貨艙！"},
             fb_bl_final_vessel_phase3_1 = {"全員", "沉入深海！"},
+            fb_bl_final_vessel_rematch_won_1 = {"你擊沉過我一次。", "我已修好了。"},
+            fb_bl_final_vessel_rematch_lost_1 = {"又來我的", "航跡裡淹死？"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"但我是", "緋紅之心！"},
@@ -410,6 +468,8 @@ return {
             fb_bl_final_heart_interrupted_1 = {"打斷我？", "真無情！"},
             fb_bl_final_heart_phase2_1 = {"我的心", "跳得更快！"},
             fb_bl_final_heart_phase3_1 = {"感受我", "深紅的怒火！"},
+            fb_bl_final_heart_rematch_won_1 = {"上次你", "傷了我的心。"},
+            fb_bl_final_heart_rematch_lost_1 = {"我的心", "仍為你跳動。"},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"但我是", "蔚藍鐘！"},
@@ -424,6 +484,8 @@ return {
             fb_bl_final_bell_interrupted_1 = {"被鈴聲救了？", "這次可不行！"},
             fb_bl_final_bell_phase2_1 = {"聽我", "響得更大聲！"},
             fb_bl_final_bell_phase3_1 = {"最後的鐘聲！"},
+            fb_bl_final_bell_rematch_won_1 = {"上次你把我", "敲得叮噹響。"},
+            fb_bl_final_bell_rematch_lost_1 = {"鐘聲再次", "為你而鳴。"},
         }
     }
 }
