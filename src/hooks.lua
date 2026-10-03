@@ -185,12 +185,15 @@ function Blind:drawn_to_hand(...)
 end
 
 -- A joker sale disables Verdant Leaf: Card:sell_card sets G.CONTROLLER.locks.selling_card
--- (card.lua:1590) and calls G.GAME.blind:disable() inside the sale's event (card.lua:1616-1620).
+-- (card.lua:1590) and calls G.GAME.blind:disable() inside the sale's event (card.lua:1616-1620),
+-- with no `not disabled` check: every later joker sale calls it again, and Chicot or Luchador may have
+-- disabled the blind first. Only a disable that takes effect now (was not disabled before) counts.
 local orig_disable = Blind.disable
 function Blind:disable(...)
   local selling = (G.CONTROLLER and G.CONTROLLER.locks and G.CONTROLLER.locks.selling_card) and true or false
+  local was_disabled = self.disabled
   local r = pack(orig_disable(self, ...))
-  if live() then
+  if not was_disabled and live() then
     U.guard('move_disable', moves().on_disable, self, selling)
   end
   return unpack(r, 1, r.n)

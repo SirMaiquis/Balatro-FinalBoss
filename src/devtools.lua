@@ -52,7 +52,7 @@ DT.regular_idx = 0
 local function regular_bosses()
   local list = {}
   for key, b in pairs(G.P_BLINDS) do
-    if b.boss and not b.boss.showdown and key:sub(1, 3) == 'bl_' and not b.mod then list[#list + 1] = b end
+    if b.boss and not b.boss.showdown and key:sub(1, 3) == 'bl_' and not b.original_mod then list[#list + 1] = b end
   end
   table.sort(list, function(a, b) return (a.order or 0) < (b.order or 0) end)
   return list
