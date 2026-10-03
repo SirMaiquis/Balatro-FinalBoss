@@ -291,13 +291,18 @@ end
 
 --- crack(uie): a HUD element juices, flashes and shows a split. opts.style 'fill': a rising bar
 --- (Violet Vessel); 'slam': a bar drops onto it first (recipe option for modded bosses; no drop under
---- reduced motion). The Arm now uses fist.
+--- reduced motion). opts.bare: only the crack lines, no filled flash behind them (deaths). The Arm
+--- now uses fist.
 function E.crack(src, uie, opts)
   if not (uie and uie.T) then return end
   local T = uie.T
   local o = uie.config and uie.config.object
   if o and o.juice_up then o:juice_up(0.6, 0.3)
   elseif uie.juice_up then uie:juice_up(0.6, 0.3) end
+  if opts.bare then
+    return expire(adopt(Mark(T.x, T.y, T.w, T.h, {shape = 'glyph', glyph = 'crack', colour = G.C.WHITE,
+      life = 0.9, width = 0.06})), 0.9)
+  end
   if opts.style == 'fill' then
     return expire(adopt(Mark(T.x, T.y, T.w, T.h, {shape = 'fill', colour = opts.colour, life = 1.1})), 1.1)
   end
@@ -1037,6 +1042,40 @@ function E.scatter(src, opts)
       colour = (i % 3 == 0) and G.C.WHITE or opts.colour, life = life, width = 0.08,
       path = (not calm) and {cx - size / 2, cy - size / 2, tx - size / 2, ty - size / 2} or nil,
       spin = (not calm) and (math.random() - 0.5) * 8 or nil})), life)
+  end
+end
+
+--- pour(area): liquid in opts.colour pours out of the source and spreads over the area (a CardArea or
+--- any object with T; default: a band around the source). Droplets only, never a filled rectangle.
+--- opts.count droplets (default 24). Reduced motion: no pouring, a few soft colour flashes over the area.
+function E.pour(src, area, opts)
+  local T = (area and area.T) or {x = src.x - 3, y = src.y, w = src.w + 6, h = src.h}
+  local c = col(opts.colour)
+  if reduced() then
+    local size = math.max(T.h, 1.5)
+    for i = 1, 3 do
+      local cx = T.x + T.w * (i - 0.5) / 3
+      expire(adopt(Mark(cx - size / 2, T.y + (T.h - size) / 2, size, size, {shape = 'flash', colour = c,
+        life = 0.9})), 0.9)
+    end
+    return
+  end
+  local sx, sy = centre(src)
+  for i = 1, opts.count or 24 do
+    after((i - 1) * 0.04, function()
+      local size = 0.25 + 0.3 * math.random()
+      local tx, ty = T.x + T.w * math.random(), T.y + T.h * math.random()
+      local drop = adopt(Mark(sx - size / 2, sy - size / 2, size, size, {shape = 'dot',
+        colour = (i % 4 == 0) and darken(c, 0.25) or c, life = 1.1,
+        path = {sx - size / 2, sy - size / 2, tx - size / 2, ty - size / 2}}))
+      expire(drop, 1.1)
+      if i % 3 == 0 then
+        local trail = adopt(Particles(sx, sy, 0.2, 0.2, {timer = 0.015, scale = 0.25, speed = 0.6,
+          lifespan = 0.5, colours = {c, G.C.WHITE}, fill = true}))
+        expire(adopt(Mark(sx, sy, 0, 0, {life = 0.8, path = {sx, sy, tx, ty}, follower = trail})), 0.8)
+        expire(trail, 1.0)
+      end
+    end)
   end
 end
 
