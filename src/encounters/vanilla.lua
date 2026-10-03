@@ -1,7 +1,10 @@
 --- Vanilla boss encounters: voice pitch and boss moves (1.1). All use tier 'auto' (showdowns become
 --- full tier, regular bosses light tier). A recipe is a list of effect steps for one trigger kind
 --- (see src/moves.lua and README "Boss moves"): target = where it lands, colour = 'suit' or a
---- G.C name (default: the boss colour), sound = {vanilla sound, pitch, volume} (times the voice pitch).
+--- G.C name (default: the boss colour), sound = {vanilla sound, pitch, volume} (times the voice pitch;
+--- on a step: played when that step runs). The blind-start bosses (kind 'set') play the moment the blind
+--- is set: a recount overlay shows their counter going from its old value to its new one, and its cue
+--- steps play as the count starts (src/effects.lua recount).
 --- The card_debuff bosses leave curse marks (effect 'curse', style suit/vine/crack: src/curse.lua) that
 --- stay on each cursed card while the curse holds.
 local BOSSES = {
@@ -14,13 +17,18 @@ local BOSSES = {
   bl_ox = {pitch = 0.8, moves = {
     hand_debuff = {{effect = 'drain', target = 'source', amount = 'money'}, sound = {'crumple1', 0.7, 0.5}},
   }},
-  -- The House: first hand drawn face down. A sweep over the hand.
+  -- The House: first hand drawn face down. While the cards are dealt (live), a sweep runs over the
+  -- hand and each face-down card flashes as it lands in its slot (each: once per card).
   bl_house = {pitch = 1.0, moves = {
-    flipped = {{effect = 'sweep', target = 'hand'}, sound = {'whoosh2', 0.8, 0.4}},
+    flipped = {live = true, {effect = 'sweep', target = 'hand', time = 1.0}, {effect = 'land', target = 'cards', each = true},
+      sound = {'whoosh2', 0.8, 0.4}},
   }},
-  -- The Wall: extra large blind. The target cracks and grows.
+  -- The Wall: extra large blind. The target shows the normal boss target, a bar slams it, it cracks
+  -- and counts up to the Wall's real target, landing with a thud.
   bl_wall = {pitch = 0.75, moves = {
-    start = {{effect = 'crack', target = 'hud_target'}, sound = {'multhit1', 0.6, 0.5}},
+    set = {{effect = 'recount', target = 'hud_target', value = 'target', hold = 0.3, time = 0.85,
+      impact = {'multhit1', 0.55, 0.55}, cue = {{effect = 'crack', target = 'hud_target', style = 'slam',
+      sound = {'glass1', 0.6, 0.35}}}}},
   }},
   -- The Wheel: 1 in 7 cards face down. The flipped card spins.
   bl_wheel = {pitch = 1.15, moves = {
@@ -47,18 +55,20 @@ local BOSSES = {
   bl_goad = {pitch = 0.9, moves = {
     card_debuff = {{effect = 'curse', target = 'cards', style = 'suit', colour = 'suit'}, sound = {'tarot1', 0.75, 0.35}},
   }},
-  -- The Water: starts with 0 discards. A wash over the discards counter.
+  -- The Water: starts with 0 discards. The discards counter shows the old count, a wash drains it to 0.
   bl_water = {pitch = 1.05, moves = {
-    start = {{effect = 'sweep', target = 'hud_discards', colour = 'blue'}, {effect = 'crack', target = 'hud_discards'},
-      sound = {'whoosh_long', 1.2, 0.35}},
+    set = {{effect = 'recount', target = 'hud_discards', value = 'discards', hold = 0.2, time = 0.8,
+      cue = {{effect = 'sweep', target = 'hud_discards', colour = 'blue', time = 0.8, sound = {'whoosh_long', 1.2, 0.35}}}}},
   }},
   -- The Window: Diamonds debuffed (suit frame and badge).
   bl_window = {pitch = 1.1, moves = {
     card_debuff = {{effect = 'curse', target = 'cards', style = 'suit', colour = 'suit'}, sound = {'tarot1', 0.85, 0.35}},
   }},
-  -- The Manacle: -1 hand size. Chains clamp the hand.
+  -- The Manacle: -1 hand size. The hand's card-count label shows the old size, chains clamp the hand
+  -- and it drops by one.
   bl_manacle = {pitch = 0.85, moves = {
-    start = {{effect = 'chain', target = 'hand'}, sound = {'cardSlide2', 0.6, 0.6}},
+    set = {{effect = 'recount', target = 'hand_limit', value = 'hand_size', hold = 0.2, time = 0.8,
+      cue = {{effect = 'chain', target = 'hand', sound = {'cardSlide2', 0.6, 0.6}}}}},
   }},
   -- The Eye: no repeated hand type. A piercing glare (beam + rings).
   bl_eye = {pitch = 1.2, moves = {
@@ -72,17 +82,19 @@ local BOSSES = {
   bl_plant = {pitch = 1.15, moves = {
     card_debuff = {{effect = 'curse', target = 'cards', style = 'vine'}, sound = {'paper1', 0.8, 0.4}},
   }},
-  -- The Serpent: always draws 3. A snake trail over the hand.
+  -- The Serpent: always draws 3. A snake crawls from the deck to the hand as the 3 cards are dealt,
+  -- arriving with the last one.
   bl_serpent = {pitch = 0.8, moves = {
-    draw = {{effect = 'sweep', target = 'hand'}, sound = {'whoosh1', 0.7, 0.45}},
+    draw = {{effect = 'snake', target = 'hand'}, sound = {'whoosh1', 0.7, 0.45}},
   }},
   -- The Pillar: cards played this ante debuffed. Cracks spread across them and stay.
   bl_pillar = {pitch = 0.75, moves = {
     card_debuff = {{effect = 'curse', target = 'cards', style = 'crack'}, sound = {'crumple2', 0.7, 0.4}},
   }},
-  -- The Needle: one hand only. A pierce flash on the hands counter.
+  -- The Needle: one hand only. The hands counter shows the old count, a pierce drops it to 1.
   bl_needle = {pitch = 1.3, moves = {
-    start = {{effect = 'crack', target = 'hud_hands'}, sound = {'slice1', 1.4, 0.45}},
+    set = {{effect = 'recount', target = 'hud_hands', value = 'hands', hold = 0.2, time = 0.8,
+      cue = {{effect = 'crack', target = 'hud_hands', sound = {'slice1', 1.4, 0.45}}}}},
   }},
   -- The Head: Hearts debuffed (suit frame and badge).
   bl_head = {pitch = 1.05, moves = {

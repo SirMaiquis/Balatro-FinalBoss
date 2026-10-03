@@ -122,6 +122,41 @@ local function pack(...) return {n = select('#', ...), ...} end
 local function moves() return FinalBoss.moves end
 local function live() return G.GAME and director().enabled() end
 
+-- Wall, Water, Needle and Manacle apply in set_blind (blind.lua:78-216: chips at :107, The Water at
+-- :179-182, The Needle at :183-186, The Manacle at :187-189; smods routes change_size to
+-- card_limits.mod, lovely/card_limit.toml:84-100). new_round calls it (state_events.lua:333) right
+-- after resetting hands and discards (:296-297), so the counters read before the call are the ones the
+-- player sees; the 'set' move plays right after it with both snapshots. Resets (reset = true) apply
+-- nothing and are ignored.
+local orig_set_blind = Blind.set_blind
+function Blind:set_blind(blind, reset, ...)
+  local before
+  if blind and not reset and live() then
+    U.guard('move_capture', function() before = moves().capture() end)
+  end
+  local r = pack(orig_set_blind(self, blind, reset, ...))
+  if before then U.guard('move_set', moves().on_set_blind, self, before) end
+  return unpack(r, 1, r.n)
+end
+
+-- The Serpent's refill: every draw to hand runs G.FUNCS.draw_from_deck_to_hand inside an event
+-- (game.lua:3219-3222), which queues delay(0.3) and one draw_card event per card at the end of the base
+-- queue (state_events.lua:369-376, smods lovely/card_limit.toml:283-338, lovely/better_calc.toml).
+-- Observing this call is the reliable start: it is the one place the refill's size is decided and its
+-- events are queued, so moves can start the snake exactly when the queue reaches them (a state watch in
+-- Dir.tick would only see DRAW_TO_HAND begin, before the queue gets to the draw). The base queue's
+-- length is read first: its events start right after it.
+local orig_draw_to_hand = G.FUNCS and G.FUNCS.draw_from_deck_to_hand
+if orig_draw_to_hand then
+  G.FUNCS.draw_from_deck_to_hand = function(...)
+    local base = live() and G.E_MANAGER and G.E_MANAGER.queues and G.E_MANAGER.queues.base
+    local n = base and #base
+    local r = pack(orig_draw_to_hand(...))
+    if n then U.guard('move_draw_start', moves().on_draw_start, G.GAME.blind, n + 1) end
+    return unpack(r, 1, r.n)
+  end
+end
+
 -- Hook and Tooth act in press_play (blind.lua:464-505). The played cards are still
 -- G.hand.highlighted here: vanilla moves them with queued draw events (state_events.lua:479-486).
 local orig_press_play = Blind.press_play
@@ -164,7 +199,7 @@ end
 
 -- Wheel, House, Mark and Fish keep cards face down (blind.lua:605-622; called per card by draw_card,
 -- common_events.lua:402, and CardArea:emplace, cardarea.lua:600). Collected during the draw and
--- flushed by drawn_to_hand as one batch.
+-- flushed by drawn_to_hand as one batch; a live recipe (The House) plays as the cards are dealt.
 local orig_stay_flipped = Blind.stay_flipped
 function Blind:stay_flipped(area, card, ...)
   local r = pack(orig_stay_flipped(self, area, card, ...))
@@ -175,8 +210,8 @@ function Blind:stay_flipped(area, card, ...)
 end
 
 -- Runs once each draw to hand is complete (game.lua:3238): Cerulean Bell forces a card and Crimson
--- Heart disables a joker (blind.lua:572-603). moves.on_drawn also flushes the face-down batch,
--- marks newly cursed cards and detects the Serpent's refill.
+-- Heart disables a joker (blind.lua:572-603). moves.on_drawn also flushes the face-down batch and
+-- marks newly cursed cards.
 local orig_drawn_to_hand = Blind.drawn_to_hand
 function Blind:drawn_to_hand(...)
   local snap

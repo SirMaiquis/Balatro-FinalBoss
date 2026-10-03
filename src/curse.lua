@@ -78,25 +78,31 @@ function C.badge(suit)
   return b
 end
 
+local JOINT_SEGMENTS = 12 -- the joint dots are tiny
+local CIRCLE_SEGMENTS = 24
+local ELLIPSE_SEGMENTS = 16
+
 --- A polyline (card units) revealed to growth g: whole segments, then part of the next one. Round
---- dots at the joints stand in for line joins (each segment is its own line: no allocation).
-local function stroke(pts, w, h, g, lw)
+--- dots at the joints stand in for line joins (each segment is its own line: no allocation). ox, oy
+--- shift it (room units) without touching the transform stack.
+local function stroke(pts, w, h, g, lw, ox, oy)
   local n = #pts / 2 - 1
   local k, f = L().reveal(g, n)
   if k == 0 and f == 0 then return end
+  ox, oy = ox or 0, oy or 0
   local r = lw / 2
-  lg.circle('fill', pts[1] * w, pts[2] * h, r)
+  lg.circle('fill', pts[1] * w + ox, pts[2] * h + oy, r, JOINT_SEGMENTS)
   for i = 1, k do
-    local x2, y2 = pts[2 * i + 1] * w, pts[2 * i + 2] * h
-    lg.line(pts[2 * i - 1] * w, pts[2 * i] * h, x2, y2)
-    lg.circle('fill', x2, y2, r)
+    local x2, y2 = pts[2 * i + 1] * w + ox, pts[2 * i + 2] * h + oy
+    lg.line(pts[2 * i - 1] * w + ox, pts[2 * i] * h + oy, x2, y2)
+    lg.circle('fill', x2, y2, r, JOINT_SEGMENTS)
   end
   if f > 0 and k < n then
     local i = k + 1
-    local x1, y1 = pts[2 * i - 1] * w, pts[2 * i] * h
-    local x2, y2 = x1 + (pts[2 * i + 1] * w - x1) * f, y1 + (pts[2 * i + 2] * h - y1) * f
+    local x1, y1 = pts[2 * i - 1] * w + ox, pts[2 * i] * h + oy
+    local x2, y2 = x1 + (pts[2 * i + 1] * w + ox - x1) * f, y1 + (pts[2 * i + 2] * h + oy - y1) * f
     lg.line(x1, y1, x2, y2)
-    lg.circle('fill', x2, y2, r)
+    lg.circle('fill', x2, y2, r, JOINT_SEGMENTS)
   end
 end
 
@@ -119,10 +125,10 @@ local function draw_suit(m, w, h, g, a)
   local br = w * 0.14
   local cx, cy = w - br - lw * 0.35, br + lw * 0.35
   paint(m.dark, a)
-  lg.circle('fill', cx, cy, br)
+  lg.circle('fill', cx, cy, br, CIRCLE_SEGMENTS)
   paint(m.colour, a)
   lg.setLineWidth(lw * 0.35)
-  lg.circle('line', cx, cy, br)
+  lg.circle('line', cx, cy, br, CIRCLE_SEGMENTS)
   local b = C.badge(m.suit)
   if b then
     local sz = br * 1.35
@@ -131,8 +137,20 @@ local function draw_suit(m, w, h, g, a)
   end
 end
 
+--- One leaf: moves and turns the transform onto it (inside the caller's push), then draws it.
+local function draw_leaf(m, w, h, leaf, ls, lw, a)
+  lg.translate(leaf[1] * w, leaf[2] * h)
+  lg.rotate(leaf[3])
+  paint(m.colour, a)
+  lg.ellipse('fill', 0, 0, ls * w * 0.08, ls * w * 0.042, ELLIPSE_SEGMENTS)
+  paint(m.dark, a)
+  lg.setLineWidth(lw * 0.3)
+  lg.line(-ls * w * 0.07, 0, ls * w * 0.07, 0)
+end
+
 --- The Plant: dark stems climb from the bottom corners and creep across the face, leaves in the boss
---- colour open as the stems pass them. Grows along the stems.
+--- colour open as the stems pass them. Grows along the stems. Each leaf's push is popped even when its
+--- drawing fails, so the transform stack always stays balanced.
 local function draw_vine(m, w, h, g, a)
   local shape = L().CURSE_SHAPES.vine
   local lw = w * 0.045
@@ -143,32 +161,25 @@ local function draw_vine(m, w, h, g, a)
     if g >= leaf[4] then
       local ls = (g >= 1) and 1 or math.min(1, (g - leaf[4]) / 0.12)
       lg.push()
-      lg.translate(leaf[1] * w, leaf[2] * h)
-      lg.rotate(leaf[3])
-      paint(m.colour, a)
-      lg.ellipse('fill', 0, 0, ls * w * 0.08, ls * w * 0.042)
-      paint(m.dark, a)
-      lg.setLineWidth(lw * 0.3)
-      lg.line(-ls * w * 0.07, 0, ls * w * 0.07, 0)
+      local ok, err = pcall(draw_leaf, m, w, h, leaf, ls, lw, a) -- no closure: drawn every frame
       lg.pop()
+      if not ok then error(err, 0) end
     end
   end
 end
 
 --- The Pillar: dark fractures run across the card from top to bottom and edge to edge, each with a
---- pale highlight on one side so it reads as a split in the card, not a drawn line.
+--- pale highlight on one side so it reads as a split in the card, not a drawn line (the highlight is
+--- offset by coordinates, no push/pop).
 local function draw_crack(m, w, h, g, a)
   local strokes = L().CURSE_SHAPES.crack.strokes
   local lw = w * 0.038
   paint(m.deep, 0.95 * a)
   lg.setLineWidth(lw)
   for _, pts in ipairs(strokes) do stroke(pts, w, h, g, lw) end
-  lg.push()
-  lg.translate(lw * 0.6, lw * 0.45)
   lg.setColor(1, 1, 1, 0.55 * a)
   lg.setLineWidth(lw * 0.35)
-  for _, pts in ipairs(strokes) do stroke(pts, w, h, g, lw * 0.35) end
-  lg.pop()
+  for _, pts in ipairs(strokes) do stroke(pts, w, h, g, lw * 0.35, lw * 0.6, lw * 0.45) end
 end
 
 local STYLES = {suit = draw_suit, vine = draw_vine, crack = draw_crack}

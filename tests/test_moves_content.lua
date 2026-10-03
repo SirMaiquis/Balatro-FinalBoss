@@ -15,7 +15,7 @@ local REGULAR = {
   bl_club = 'card_debuff', bl_goad = 'card_debuff', bl_window = 'card_debuff', bl_head = 'card_debuff',
   bl_plant = 'card_debuff', bl_pillar = 'card_debuff',
   bl_wheel = 'flipped', bl_house = 'flipped', bl_mark = 'flipped', bl_fish = 'flipped',
-  bl_manacle = 'start', bl_wall = 'start', bl_needle = 'start', bl_water = 'start',
+  bl_manacle = 'set', bl_wall = 'set', bl_needle = 'set', bl_water = 'set',
   bl_serpent = 'draw',
 }
 
@@ -38,12 +38,18 @@ T['the 23 regular bosses have their spec recipe kind'] = function()
   assert(n == 23, 'spec lists 23 regular bosses, got ' .. n)
 end
 
---- A recipe sounds when it plays (recipe.sound), or at its impact (a fist step's own impact sound,
---- played when the fist lands in sync with the game's level change).
+--- A recipe sounds when it plays (recipe.sound), when one of its steps runs (step.sound, also on a
+--- recount's cue steps), or at its impact (a fist's or recount's own impact sound: the fist landing in
+--- sync with the game's level change, the count landing on the new value).
+local function is_sound(s) return type(s) == 'table' and type(s[1]) == 'string' end
+
 local function has_sound(recipe)
-  if recipe.sound and type(recipe.sound[1]) == 'string' then return true end
+  if is_sound(recipe.sound) then return true end
   for _, step in ipairs(recipe) do
-    if step.effect == 'fist' and type(step.impact) == 'table' and type(step.impact[1]) == 'string' then return true end
+    if is_sound(step.sound) or is_sound(step.impact) then return true end
+    for _, cue in ipairs(step.cue or {}) do
+      if is_sound(cue.sound) then return true end
+    end
   end
   return false
 end
@@ -93,6 +99,43 @@ T['the Hook reads its hooked cards in a deferred event'] = function()
   local play = bosses().bl_hook.moves.play
   assert(play.defer == true, 'defer')
   assert(play[1].effect == 'glare' and play[1].line and play[2].effect == 'fling', 'chain whip + fling')
+end
+
+T['blind-start bosses recount their counter from the old value to the new one'] = function()
+  local b = bosses()
+  local want = {bl_wall = {'hud_target', 'target'}, bl_water = {'hud_discards', 'discards'},
+    bl_needle = {'hud_hands', 'hands'}, bl_manacle = {'hand_limit', 'hand_size'}}
+  for key, w in pairs(want) do
+    local r = b[key].moves.set
+    assert(b[key].moves.start == nil, key .. ': no delayed start move any more')
+    local step = r[1]
+    assert(step.effect == 'recount' and step.target == w[1] and step.value == w[2], key .. ': recount ' .. w[2])
+    assert(type(step.cue) == 'table' and #step.cue >= 1, key .. ': a cue plays as the count starts')
+    local total = (step.hold or 0) + (step.time or 0)
+    assert(total >= 0.8 and total <= 1.4, key .. ': about a second, got ' .. total)
+  end
+  local wall = b.bl_wall.moves.set[1]
+  assert(wall.cue[1].effect == 'crack', 'the Wall cracks')
+  assert(type(wall.impact) == 'table', 'the Wall lands with a thud')
+  assert(b.bl_water.moves.set[1].cue[1].effect == 'sweep', 'the Water washes')
+  assert(b.bl_manacle.moves.set[1].cue[1].effect == 'chain', 'the Manacle clamps')
+end
+
+T['the House sweeps while the face-down cards are dealt, each flashes as it lands'] = function()
+  local r = bosses().bl_house.moves.flipped
+  assert(r.live == true, 'live: plays during the draw')
+  local sweep, land
+  for _, step in ipairs(r) do
+    if step.effect == 'sweep' then sweep = step end
+    if step.effect == 'land' then land = step end
+  end
+  assert(sweep and sweep.target == 'hand' and not sweep.each and (sweep.time or 0) >= 0.9, 'a ~1 s sweep, once')
+  assert(land and land.each and land.target == 'cards', 'a flash on each card')
+end
+
+T['the Serpent delivers its cards with a snake'] = function()
+  local r = bosses().bl_serpent.moves.draw
+  assert(r[1].effect == 'snake' and r[1].target == 'hand', 'snake to the hand')
 end
 
 return T

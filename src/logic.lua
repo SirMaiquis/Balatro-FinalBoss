@@ -274,22 +274,30 @@ end
 -- Boss moves (1.1) --------------------------------------------------------------------------------
 
 --- Effect primitives a recipe step may name (src/effects.lua). curse = a persistent mark on cursed
---- cards (step.style, logic.CURSE_STYLES); fist = the Raised Fist slams onto a HUD element.
+--- cards (step.style, logic.CURSE_STYLES); fist = the Raised Fist slams onto a HUD element;
+--- recount = a counter shown going from its old value to its new one (step.value,
+--- logic.RECOUNT_VALUES; step.cue = steps played as the count starts); land = a flash on each card as
+--- it reaches its slot; snake = a snake crawls from the deck to the hand.
 logic.EFFECTS = {fling = true, drain = true, crack = true, stamp = true, sweep = true, glare = true,
-  chain = true, ring = true, spin = true, burst = true, curse = true, fist = true}
+  chain = true, ring = true, spin = true, burst = true, curse = true, fist = true, recount = true,
+  land = true, snake = true}
 
 --- Curse mark styles (src/curse.lua): a suit-coloured frame with the suit badge, vines, cracks.
 logic.CURSE_STYLES = {suit = true, vine = true, crack = true}
 
---- Trigger kinds (hooks.lua -> moves.lua). 'signature' is no trigger: phases play it big.
+--- Trigger kinds (hooks.lua -> moves.lua). 'signature' is no trigger: phases play it big. 'set' plays
+--- the moment the blind is set (with the counters from just before); 'start' when the intro ends.
 logic.MOVE_KINDS = {play = true, modify = true, hand_debuff = true, card_debuff = true, flipped = true,
-  drawn = true, start = true, draw = true, joker_sold = true, generic = true, signature = true}
+  drawn = true, start = true, set = true, draw = true, joker_sold = true, generic = true, signature = true}
 
 --- Where a step lands (resolved by moves.lua): the performer, the trigger's cards, the played
---- cards, a card area or a HUD element.
+--- cards, a card area, a HUD element or the hand's card-count label (hand_limit: "0/8" under it).
 logic.TARGETS = {source = true, cards = true, played = true, hand = true, jokers = true,
   hud_chips = true, hud_mult = true, hud_hand_name = true, hud_hand_level = true, hud_hands = true,
-  hud_discards = true, hud_target = true, hud_dollars = true}
+  hud_discards = true, hud_target = true, hud_dollars = true, hand_limit = true}
+
+--- Counters a recount step can show (moves.lua snapshots them just before the blind applies).
+logic.RECOUNT_VALUES = {hands = true, discards = true, hand_size = true, target = true}
 
 --- Built-in final-boss deaths (src/deaths.lua).
 logic.DEATHS = {hearts = true, leaves = true, acorn = true, flood = true, bell = true}
@@ -299,27 +307,52 @@ logic.THROTTLE_GAP = 0.6 -- seconds between two moves of the same kind (one per 
 --- Bosses without a recipe (modded) burst on the generic trigger (Blind:wiggle).
 logic.GENERIC_RECIPE = {{effect = 'burst', target = 'source'}, sound = {'tarot1', 1, 0.4}}
 
+--- Why one step is invalid (nil when it is fine).
+local function step_problem(step)
+  if type(step) ~= 'table' or not logic.EFFECTS[step.effect] then
+    return 'unknown effect ' .. tostring(type(step) == 'table' and step.effect or step)
+  elseif step.target ~= nil and not logic.TARGETS[step.target] then
+    return 'unknown target ' .. tostring(step.target)
+  elseif step.effect == 'curse' and not logic.CURSE_STYLES[step.style] then
+    return 'unknown curse style ' .. tostring(step.style)
+  elseif step.effect == 'recount' and not logic.RECOUNT_VALUES[step.value] then
+    return 'unknown recount value ' .. tostring(step.value)
+  end
+  return nil
+end
+
 --- A recipe is a list of steps {effect = name, target = name, ...options} plus optional
---- recipe.sound = {key, pitch, volume} and recipe.defer (moves.lua reads the trigger's cards in a
---- queued event). Returns the cleaned recipe (nil when no step is valid) and warning strings.
+--- recipe.sound = {key, pitch, volume}, recipe.defer (moves.lua reads the trigger's cards in a
+--- queued event) and recipe.live (a flipped recipe plays while the cards are dealt). A step's cue (a
+--- recount's steps played as the count starts) is cleaned the same way; a step with a cue is copied,
+--- never edited (recipe tables are shared). Returns the cleaned recipe (nil when no step is valid) and
+--- warning strings.
 function logic.clean_recipe(recipe)
   if type(recipe) ~= 'table' then return nil, {'recipe is not a table'} end
   local out, warnings = {}, {}
   for i, step in ipairs(recipe) do
-    if type(step) ~= 'table' or not logic.EFFECTS[step.effect] then
-      warnings[#warnings + 1] = ('step %d: unknown effect %s'):format(i,
-        tostring(type(step) == 'table' and step.effect or step))
-    elseif step.target ~= nil and not logic.TARGETS[step.target] then
-      warnings[#warnings + 1] = ('step %d: unknown target %s'):format(i, tostring(step.target))
-    elseif step.effect == 'curse' and not logic.CURSE_STYLES[step.style] then
-      warnings[#warnings + 1] = ('step %d: unknown curse style %s'):format(i, tostring(step.style))
+    local problem = step_problem(step)
+    if problem then
+      warnings[#warnings + 1] = ('step %d: %s'):format(i, problem)
     else
+      if type(step.cue) == 'table' then
+        local copy, cue = {}, {}
+        for k, v in pairs(step) do copy[k] = v end
+        for j, sub in ipairs(step.cue) do
+          local p = step_problem(sub)
+          if p then warnings[#warnings + 1] = ('step %d cue %d: %s'):format(i, j, p)
+          else cue[#cue + 1] = sub end
+        end
+        copy.cue = cue
+        step = copy
+      end
       out[#out + 1] = step
     end
   end
   if #out == 0 then return nil, warnings end
   if type(recipe.sound) == 'table' and type(recipe.sound[1]) == 'string' then out.sound = recipe.sound end
   if recipe.defer then out.defer = true end
+  if recipe.live then out.live = true end
   return out, warnings
 end
 
@@ -521,6 +554,81 @@ end
 function logic.serpent_draw(a)
   return a.key == 'bl_serpent' and not a.disabled
     and ((a.hands_played or 0) > 0 or (a.discards_used or 0) > 0) or false
+end
+
+logic.CARD_SETTLE = 0.3 -- real seconds a dealt card takes to glide into its slot in the hand
+
+--- Where the draw sits in the event queue after G.FUNCS.draw_from_deck_to_hand (from = the first index
+--- it queued): its delay(0.3) (state_events.lua:369, an 'after' 0.3 event) and the draw_card events
+--- that follow (common_events.lua:395-397: 'before', default delay 0.1, one per card; smods may add
+--- 'immediate' events between them, lovely/better_calc.toml). Returns the delay's index and the number
+--- of cards dealt; nil when no card is dealt.
+function logic.draw_slots(queue, from)
+  local start
+  for j = math.max(1, from or 1), #queue do
+    local e = queue[j]
+    if e.trigger == 'after' and e.delay == 0.3 then start = j; break end
+  end
+  if not start then return nil end
+  local n = 0
+  for j = start + 1, #queue do
+    local e = queue[j]
+    if e.trigger == 'before' and e.delay == 0.1 then n = n + 1 end
+  end
+  if n == 0 then return nil end
+  return start, n
+end
+
+--- Real seconds from the draw's start until its last card is in the hand: the 0.3 s delay and 0.1 s
+--- per card before it run on the game clock (G.TIMERS.TOTAL, x speed), then the card glides in.
+function logic.serpent_lead(count, speed)
+  speed = math.max(0.05, tonumber(speed) or 1)
+  return (0.3 + 0.1 * math.max(0, (count or 0) - 1)) / speed + logic.CARD_SETTLE
+end
+
+-- Blind-start before -> after (recount) ---------------------------------------------------------------
+
+logic.RECOUNT_LINGER = 0.25  -- seconds the new value stays on the overlay before the real counter shows
+logic.RECOUNT_WAIT_MAX = 2.5 -- the longest an overlay waits for its counter (hidden, moving, covered)
+
+--- The score target the blind would have as a regular boss: vanilla Blind:set_blind computes
+--- get_blind_amount(ante) * mult * ante_scaling (blind.lua:107) and a regular boss has mult 2.
+function logic.normal_target(amount, scaling)
+  return (tonumber(amount) or 0) * 2 * (tonumber(scaling) or 1)
+end
+
+--- The counters once the blind's effect has applied, from the ones just before it: a.hands_sub and
+--- a.discards_sub (The Needle, The Water: blind.lua:179-186), a.mod_delta (The Manacle's change of the
+--- hand's card_limits.mod, smods lovely/card_limit.toml:84-100) and a.chips (the real target).
+function logic.recount_after(before, a)
+  if type(before) ~= 'table' then return {} end
+  a = a or {}
+  local function sub(v, d)
+    if v == nil then return nil end
+    return math.max(0, v - (tonumber(d) or 0))
+  end
+  return {
+    hands = sub(before.hands, a.hands_sub),
+    discards = sub(before.discards, a.discards_sub),
+    hand_size = sub(before.hand_size, -(tonumber(a.mod_delta) or 0)),
+    target = tonumber(a.chips),
+  }
+end
+
+--- The number a recount overlay shows `elapsed` seconds after it started: `from` while it holds, then
+--- it counts to `to` over `time` (ease out, whole numbers: rounded towards `from`, so a drop by one lands
+--- at the end). Reduced motion: no counting, `to` right after the hold.
+function logic.recount_value(from, to, elapsed, hold, time, reduced)
+  if from == nil then return to end
+  if to == nil then return from end
+  elapsed, hold, time = elapsed or 0, hold or 0, time or 0
+  if elapsed < hold then return from end
+  if reduced or time <= 0 then return to end
+  local p = (elapsed - hold) / time
+  if p >= 1 then return to end
+  local v = from + (to - from) * (1 - (1 - p) * (1 - p))
+  if to < from then return math.ceil(v) end
+  return math.floor(v)
 end
 
 return logic

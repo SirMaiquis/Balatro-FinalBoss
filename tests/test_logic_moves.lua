@@ -7,12 +7,12 @@ local function eq(actual, expected, msg)
   end
 end
 
-T['EFFECTS lists the ten primitives plus curse and fist'] = function()
+T['EFFECTS lists the ten primitives plus curse, fist, recount, land and snake'] = function()
   local n = 0
   for _ in pairs(logic.EFFECTS) do n = n + 1 end
-  eq(n, 12, 'effect count')
+  eq(n, 15, 'effect count')
   for _, name in ipairs({'fling', 'drain', 'crack', 'stamp', 'sweep', 'glare', 'chain', 'ring', 'spin', 'burst',
-      'curse', 'fist'}) do
+      'curse', 'fist', 'recount', 'land', 'snake'}) do
     assert(logic.EFFECTS[name], 'missing effect ' .. name)
   end
 end
@@ -127,7 +127,7 @@ T['fist_timing: wait then fall so it lands at the level tick'] = function()
 end
 
 T['MOVE_KINDS has every trigger kind plus signature'] = function()
-  for _, k in ipairs({'play', 'modify', 'hand_debuff', 'card_debuff', 'flipped', 'drawn', 'start', 'draw',
+  for _, k in ipairs({'play', 'modify', 'hand_debuff', 'card_debuff', 'flipped', 'drawn', 'start', 'set', 'draw',
       'joker_sold', 'generic', 'signature'}) do
     assert(logic.MOVE_KINDS[k], 'missing kind ' .. k)
   end
@@ -280,6 +280,110 @@ T['serpent_draw: only the Serpent after the first play or discard'] = function()
   eq(logic.serpent_draw{key = 'bl_serpent', disabled = false, hands_played = 0, discards_used = 0}, false, 'opening draw')
   eq(logic.serpent_draw{key = 'bl_serpent', disabled = true, hands_played = 1, discards_used = 0}, false)
   eq(logic.serpent_draw{key = 'bl_hook', disabled = false, hands_played = 1, discards_used = 0}, false)
+end
+
+-- Blind-start before -> after (Task A2b) ------------------------------------------------------------
+
+T['normal_target: a regular boss target (mult 2) at the ante scaling'] = function()
+  eq(logic.normal_target(300, 1), 600)
+  eq(logic.normal_target(5000, 2), 20000, 'Plasma-style scaling')
+  eq(logic.normal_target(nil, 1), 0)
+  eq(logic.normal_target(300, nil), 600, 'missing scaling = 1')
+end
+
+T['recount_after: what each counter shows once the boss effect applied'] = function()
+  local before = {hands = 4, discards = 3, hand_size = 8, target = 600}
+  local a = logic.recount_after(before, {hands_sub = 3, discards_sub = 3, mod_delta = -1, chips = 1200})
+  eq(a.hands, 1, 'Needle'); eq(a.discards, 0, 'Water'); eq(a.hand_size, 7, 'Manacle'); eq(a.target, 1200, 'Wall')
+  local same = logic.recount_after(before, {})
+  eq(same.hands, 4); eq(same.discards, 3); eq(same.hand_size, 8); eq(same.target, nil, 'no chips: unknown')
+  local floor = logic.recount_after({hands = 1, discards = 0, hand_size = 0}, {hands_sub = 2, discards_sub = 1, mod_delta = -1})
+  eq(floor.discards, 0, 'never below 0'); eq(floor.hand_size, 0, 'never below 0'); eq(floor.hands, 0)
+  eq(logic.recount_after(nil, {}).hands, nil, 'no snapshot')
+end
+
+T['RECOUNT_VALUES names the four counters'] = function()
+  for _, v in ipairs({'hands', 'discards', 'hand_size', 'target'}) do assert(logic.RECOUNT_VALUES[v], v) end
+end
+
+T['recount_value: holds the old value, then counts to the new one'] = function()
+  eq(logic.recount_value(3, 0, 0, 0.3, 0.8, false), 3, 'start')
+  eq(logic.recount_value(3, 0, 0.29, 0.3, 0.8, false), 3, 'hold')
+  eq(logic.recount_value(3, 0, 1.1, 0.3, 0.8, false), 0, 'end')
+  eq(logic.recount_value(3, 0, 5, 0.3, 0.8, false), 0, 'after the end')
+  local mid = logic.recount_value(3, 0, 0.5, 0.3, 0.8, false)
+  assert(mid == 2 or mid == 1, 'whole steps on the way down, got ' .. tostring(mid))
+  local up = logic.recount_value(600, 1200, 0.7, 0.3, 0.8, false)
+  assert(up > 600 and up < 1200, 'counts up')
+  eq(math.floor(up), up, 'counts in whole numbers')
+  eq(logic.recount_value(8, 7, 0.35, 0.3, 0.8, false), 8, 'a drop by one waits until it lands')
+  -- monotonic
+  local last = 4
+  for i = 0, 20 do
+    local v = logic.recount_value(4, 1, i * 0.06, 0.1, 1.0, false)
+    assert(v <= last, 'never climbs back while draining'); last = v
+  end
+end
+
+T['recount_value: reduced motion jumps from old to new after the hold'] = function()
+  eq(logic.recount_value(3, 0, 0.1, 0.3, 0.8, true), 3)
+  eq(logic.recount_value(3, 0, 0.31, 0.3, 0.8, true), 0, 'no counting')
+  eq(logic.recount_value(600, 1200, 0.31, 0.3, 0.8, true), 1200)
+end
+
+T['recount_value: missing numbers fall back safely'] = function()
+  eq(logic.recount_value(nil, 5, 0, 0.3, 0.8, false), 5)
+  eq(logic.recount_value(5, nil, 2, 0.3, 0.8, false), 5)
+  eq(logic.recount_value(3, 0, 0.5, 0.3, 0, false), 0, 'zero time: at once')
+end
+
+T['clean_recipe: recount needs a known value; cue sub-steps are cleaned too; live is kept'] = function()
+  local r, w = logic.clean_recipe({live = true,
+    {effect = 'recount', target = 'hud_target', value = 'target',
+      cue = {{effect = 'crack', target = 'hud_target'}, {effect = 'laser'}}},
+    {effect = 'recount', target = 'hud_hands', value = 'gold'},
+    {effect = 'sweep', target = 'hand', each = true}})
+  eq(#r, 2); eq(r.live, true)
+  eq(r[1].effect, 'recount'); eq(#r[1].cue, 1, 'unknown cue effect dropped'); eq(r[1].cue[1].effect, 'crack')
+  eq(r[2].each, true)
+  eq(#w, 2, 'one bad cue step, one bad value')
+end
+
+T['clean_recipe never edits the shared step tables'] = function()
+  local cue = {{effect = 'crack', target = 'hud_target'}, {effect = 'laser'}}
+  local step = {effect = 'recount', target = 'hud_target', value = 'target', cue = cue}
+  logic.clean_recipe({step})
+  eq(step.cue, cue); eq(#cue, 2)
+end
+
+T['the hand_limit target and set kind exist; new effects are listed'] = function()
+  assert(logic.TARGETS.hand_limit, 'hand_limit target')
+  assert(logic.MOVE_KINDS.set, 'set kind')
+  for _, e in ipairs({'recount', 'land', 'snake'}) do assert(logic.EFFECTS[e], e) end
+end
+
+-- The Serpent's draw (smods draw_from_deck_to_hand: delay(0.3) then draw_card 'before' 0.1 events).
+local function ev(trigger, delay) return {trigger = trigger, delay = delay} end
+
+T['draw_slots: finds the draw delay and counts the dealt cards'] = function()
+  local q = {ev('after', 2), ev('immediate', 0), ev('after', 0.3), ev('before', 0.1), ev('immediate', 0),
+    ev('before', 0.1), ev('before', 0.1), ev('immediate', 0), ev('immediate', 0)}
+  local start, n = logic.draw_slots(q, 3)
+  eq(start, 3); eq(n, 3)
+  start, n = logic.draw_slots(q, 1)
+  eq(start, 3, 'skips events before the draw'); eq(n, 3)
+  eq(logic.draw_slots({ev('after', 0.3), ev('immediate', 0)}, 1), nil, 'no card dealt')
+  eq(logic.draw_slots({ev('before', 0.1)}, 1), nil, 'no draw delay')
+  eq(logic.draw_slots({}, 1), nil)
+end
+
+T['serpent_lead: real seconds until the last card is in the hand'] = function()
+  local t = logic.serpent_lead(3, 1)
+  assert(math.abs(t - (0.3 + 0.2 + logic.CARD_SETTLE)) < 1e-9, 'three cards at normal speed')
+  assert(logic.serpent_lead(3, 2) < t, 'faster game, shorter snake')
+  assert(logic.serpent_lead(1, 1) < t)
+  assert(logic.serpent_lead(0, 1) > 0, 'never zero')
+  assert(logic.serpent_lead(3, 0) > 0, 'bad speed factor')
 end
 
 return T

@@ -1,6 +1,7 @@
 --- Effects library (1.1): visual primitives shared by boss moves, deaths and phase changes:
 --- fling, drain, crack, stamp, sweep, glare, chain, ring, spin, burst, plus curse (persistent card
---- marks, src/curse.lua) and fist (The Arm) (logic.EFFECTS).
+--- marks, src/curse.lua), fist (The Arm), recount (a counter's old -> new value), land (a flash on a
+--- card as it reaches its slot) and snake (The Serpent) (logic.EFFECTS).
 --- E.<name>(src, target, opts):
 ---   src    = performer {x, y, w, h, obj, colour, avatar} (moves.performer) or any rectangle
 ---   target = list of cards | CardArea | UIElement | nil (each primitive says which it reads)
@@ -12,11 +13,25 @@ local E = {}
 E.host = nil -- invisible attention_text UIBox: its children draw in vanilla's late pass (above cards)
 E.gen = 0    -- bumped by E.reset(): timers of a torn-down run do nothing
 E.reddened = nil -- {cfg, prev}: a HUD text the fist turned red, restored after a moment or by E.reset
+E.hidden = {}    -- UI element -> true: counters a recount overlay hides, shown again when it ends or by E.reset
 
 local function reduced() return G.SETTINGS.reduced_motion end
 local function now() return FinalBoss.util.now() end
 --- A colour list must never hold nil (vanilla Particles:draw does not guard it).
 local function col(c) return c or G.C.WHITE end
+
+--- The performing boss's voice pitch (registry entry.voice.pitch, through opts.blind); impact sounds
+--- are played times it, like recipe sounds (moves.lua).
+local function voice_pitch(opts)
+  local b = opts and opts.blind
+  local key = b and b.config and b.config.blind and b.config.blind.key
+  local e = key and FinalBoss.registry.get(key)
+  return (e and e.voice and tonumber(e.voice.pitch)) or 1
+end
+
+local function play(s, pitch)
+  if type(s) == 'table' and type(s[1]) == 'string' then play_sound(s[1], (s[2] or 1) * (pitch or 1), s[3] or 0.5) end
+end
 
 local function after(delay, fn)
   local gen = E.gen
@@ -68,11 +83,12 @@ end
 local Mark = Moveable:extend()
 E.Mark = Mark
 
---- args: shape ('ring', 'flash', 'coin', 'bar', 'fill', 'beam', 'glyph', 'heart', 'leaf', 'none'),
---- colour, alpha (bar), life (s), glyph (logic.GLYPHS key), width (line width, room units),
+--- args: shape ('ring', 'flash', 'coin', 'bar', 'fill', 'beam', 'glyph', 'heart', 'leaf', 'dot',
+--- 'none'), colour, alpha (bar), life (s), glyph (logic.GLYPHS key), width (line width, room units),
 --- x2/y2 (beam end, room units), path {x0, y0, x1, y1} (top-left travels over `travel` seconds,
---- default life), follower (an object whose top-left follows this mark: a particle trail),
---- spin (radians per second).
+--- default life; eased out, or steady with linear = true), wave {amplitude, waves} (the path snakes
+--- side to side, back on the line at both ends), follower (an object whose top-left follows this
+--- mark: a particle trail), spin (radians per second).
 function Mark:init(x, y, w, h, args)
   Moveable.init(self, x, y, w, h)
   self.states.collide.can, self.states.hover.can = false, false
@@ -85,6 +101,7 @@ function Mark:init(x, y, w, h, args)
   self.glyph, self.width = args.glyph, args.width or 0.06
   self.x2, self.y2 = args.x2, args.y2
   self.path, self.follower, self.spin = args.path, args.follower, args.spin
+  self.linear, self.wave = args.linear, args.wave
   self.t0 = now()
   self:hard_set_VT()
 end
@@ -92,11 +109,21 @@ end
 function Mark:progress() return math.min(1, (now() - self.t0) / self.life) end
 
 function Mark:move(dt)
-  if self.path then
+  local P = self.path
+  if P then
     local p = math.min(1, (now() - self.t0) / self.travel)
-    local e = 1 - (1 - p) * (1 - p) -- ease out
-    self.T.x = self.path[1] + (self.path[3] - self.path[1]) * e
-    self.T.y = self.path[2] + (self.path[4] - self.path[2]) * e
+    local e = self.linear and p or 1 - (1 - p) * (1 - p) -- steady or ease out
+    local x, y = P[1] + (P[3] - P[1]) * e, P[2] + (P[4] - P[2]) * e
+    local wv = self.wave
+    if wv then
+      local dx, dy = P[3] - P[1], P[4] - P[2]
+      local len = math.sqrt(dx * dx + dy * dy)
+      if len > 0 then
+        local o = wv[1] * math.sin(2 * math.pi * wv[2] * e)
+        x, y = x - dy / len * o, y + dx / len * o
+      end
+    end
+    self.T.x, self.T.y = x, y
   end
   if self.spin then self.T.r = self.spin * (now() - self.t0) end
   self.VT.x, self.VT.y, self.VT.r = self.T.x, self.T.y, self.T.r
@@ -126,13 +153,13 @@ function Mark:draw()
   local s = self.shape
   if s == 'ring' then
     paint(self.colour, a)
-    love.graphics.circle('line', w / 2, h / 2, (w / 2) * (0.3 + 0.9 * p))
+    love.graphics.circle('line', w / 2, h / 2, (w / 2) * (0.3 + 0.9 * p), 24)
   elseif s == 'flash' then
     paint(self.colour, 0.75 * a)
-    love.graphics.circle('fill', w / 2, h / 2, w * 0.45)
+    love.graphics.circle('fill', w / 2, h / 2, w * 0.45, 24)
   elseif s == 'coin' then
     paint(G.C.MONEY, math.min(1, 3 * a))
-    love.graphics.circle('fill', w / 2, h / 2, w / 2)
+    love.graphics.circle('fill', w / 2, h / 2, w / 2, 24)
   elseif s == 'bar' then
     paint(self.colour, self.alpha * math.min(1, 4 * a))
     love.graphics.rectangle('fill', 0, 0, w, h)
@@ -148,12 +175,15 @@ function Mark:draw()
     for _, stroke in ipairs(FinalBoss.logic.GLYPHS[self.glyph] or {}) do polyline(stroke, w, h) end
   elseif s == 'heart' then
     paint(self.colour, math.min(1, 3 * a))
-    love.graphics.circle('fill', w * 0.3, h * 0.35, w * 0.22)
-    love.graphics.circle('fill', w * 0.7, h * 0.35, w * 0.22)
+    love.graphics.circle('fill', w * 0.3, h * 0.35, w * 0.22, 24)
+    love.graphics.circle('fill', w * 0.7, h * 0.35, w * 0.22, 24)
     love.graphics.polygon('fill', w * 0.1, h * 0.45, w * 0.9, h * 0.45, w * 0.5, h * 0.95)
   elseif s == 'leaf' then
     paint(self.colour, math.min(1, 3 * a))
-    love.graphics.ellipse('fill', w / 2, h / 2, w / 2, h / 4)
+    love.graphics.ellipse('fill', w / 2, h / 2, w / 2, h / 4, 16)
+  elseif s == 'dot' then
+    paint(self.colour, math.min(1, 5 * a))
+    love.graphics.circle('fill', w / 2, h / 2, w / 2, 24)
   end
   love.graphics.pop()
   love.graphics.setLineWidth(lw)
@@ -271,12 +301,12 @@ function E.stamp(src, target, opts)
   end
 end
 
---- sweep(area): a band of particles washes across a card area or HUD element, left to right.
---- Reduced motion: the band covers the whole area at once.
+--- sweep(area): a band of particles washes across a card area or HUD element, left to right, over
+--- opts.time seconds (default 0.6). Reduced motion: the band covers the whole area at once.
 function E.sweep(src, area, opts)
   if not (area and area.T) then return end
   local T = area.T
-  local life = 0.6
+  local life = tonumber(opts.time) or 0.6
   local calm = reduced()
   local band = adopt(Particles(T.x, T.y, calm and T.w or 0.6, T.h, {timer = 0.01,
     scale = 0.3 * (opts.scale or 1), speed = 1.2, lifespan = 0.5, colours = {col(opts.colour), G.C.WHITE}, fill = true}))
@@ -462,8 +492,8 @@ end
 --- seconds later: logic.fist_timing), one right after the level-text event (the impact, in the same
 --- frame as the level change). opts.data.queue_from = the first queue index of the Arm's own events
 --- (hooks.lua); without it or the pattern, the fist falls and slams at once.
---- opts.impact = {sound, pitch, volume} played at the impact. Reduced motion: no fall; the fist appears
---- on the panel with the flash and dissolves.
+--- opts.impact = {sound, pitch, volume} played at the impact (times the boss voice pitch). Reduced
+--- motion: no fall; the fist appears on the panel with the flash and dissolves.
 function E.fist(src, uie, opts)
   if not (uie and uie.T) then return end
   local center = G.P_CENTERS and G.P_CENTERS.j_raised_fist
@@ -502,8 +532,7 @@ function E.fist(src, uie, opts)
     if uie.juice_up then uie:juice_up(0.8, 0.4) end
     local cx, by = x + w / 2, y + h
     expire(adopt(Mark(cx - 0.7, by - 0.7, 1.4, 1.4, {shape = 'ring', colour = G.C.RED, life = 0.4, width = 0.08})), 0.4)
-    local s = opts.impact
-    if type(s) == 'table' and type(s[1]) == 'string' then play_sound(s[1], s[2] or 1, s[3] or 0.5) end
+    play(opts.impact, voice_pitch(opts)) -- times the boss voice pitch, like recipe sounds
     f.t_fade = now() + LG.FIST_HOLD
     after(LG.FIST_HOLD + LG.FIST_FADE + 0.05, function() drop(f) end)
   end
@@ -533,6 +562,281 @@ function E.fist(src, uie, opts)
     if fall > 0 then after(wait, function() appear(fall) end) end
     after(lead + 1.5, function() hit(false) end) -- the queue was cleared or stalled: slam anyway
   end))
+end
+
+-- Recount: a counter shown going from its old value to its new one ------------------------------------
+
+--- The overlay hides the real counter (UIElement:draw_self draws nothing, not even its object, while
+--- states.visible is false: engine/ui.lua:663-666; vanilla itself hides HUD elements this way,
+--- blind.lua:124-125) and draws its own number in the counter's place, font, scale and colour. The real
+--- counter is shown again when the overlay ends (E.reset too).
+local function hide(uie)
+  if uie.states and uie.states.visible then
+    uie.states.visible = false
+    E.hidden[uie] = true
+  end
+end
+
+local function reveal(uie)
+  if uie and E.hidden[uie] then
+    E.hidden[uie] = nil
+    if not uie.REMOVED then uie.states.visible = true end
+  end
+end
+
+--- Vanilla's own popup over the counter (ease_discard / ease_hands_played: attention_text with
+--- cover = the counter's row, common_events.lua:128-135 and :167-174; its UIBox's config.major is the
+--- cover, functions/UI_definitions.lua:903-907 and engine/ui.lua:31). The count waits until it is gone.
+local function covered(uie)
+  for _, b in ipairs(G.I and G.I.UIBOX or {}) do
+    local m = b.attention_text and b ~= E.host and b.config and b.config.major
+    if m and (m == uie or m == uie.parent) then return true end
+  end
+  return false
+end
+
+--- Whether uie's UIBox was drawn in the last frame (UIBox:draw stamps FRAME.DRAW first thing,
+--- engine/ui.lua:283-285; Game:draw bumps G.FRAMES.DRAW, game.lua:2733). The hand's label is drawn only
+--- while the hand is (CardArea:draw, cardarea.lua:270-313).
+local function box_drawn(uie, slack)
+  local box = uie.UIBox
+  return (box and box.FRAME and box.FRAME.DRAW and box.FRAME.DRAW >= G.FRAMES.DRAW - (slack or 0)) and true or false
+end
+
+--- Font, scale and colour of the counter: a DynaText object (hands, discards: UI_definitions.lua:1290,
+--- :1300) or a text node (the target, UI_definitions.lua:1240; the hand label, cardarea.lua:283-287).
+local function text_style(uie)
+  local o = uie.config.object
+  if o and o.font and o.scale then return o.font, o.scale, (o.colours and o.colours[1]) or G.C.WHITE end
+  local c = uie.config
+  return (c.lang and c.lang.font) or G.LANG.font, c.scale or 0.4, c.colour or G.C.WHITE
+end
+
+local Recount = Moveable:extend()
+E.Recount = Recount
+
+--- args: from, to, hold, time, chips (format as a score: number_format), on_count (the cue), impact
+--- (sound at the landing), pitch, locate (finds the counter), blind. Timeline: it waits (old value
+--- shown) until the counter is drawn, on screen, still and not covered by vanilla's popup (at most
+--- logic.RECOUNT_WAIT_MAX); then holds `hold` seconds, counts over `time` (cue at the start, impact at
+--- the end) and keeps the new value logic.RECOUNT_LINGER seconds before the real counter shows again.
+function Recount:init(args)
+  Moveable.init(self, 0, 0, 0, 0)
+  self.states.collide.can, self.states.hover.can = false, false
+  self.states.click.can, self.states.drag.can = false, false
+  self.args = args
+  self.born = now()
+  self.value = args.from
+  self:set_text()
+  self:hard_set_VT()
+end
+
+function Recount:set_text()
+  local v = self.value or 0
+  if self.args.chips and type(number_format) == 'function' then self.text = number_format(math.floor(v))
+  else self.text = tostring(math.floor(v + 0.5)) end
+end
+
+--- Stop at the next event (never inside the MOVEABLE loop): show the counter, drop the overlay.
+function Recount:finish()
+  if self.finished then return end
+  self.finished = true
+  local uie = self.uie
+  after(0, function()
+    reveal(uie)
+    drop(self)
+  end)
+end
+
+--- An error in move/draw (run outside util.guard by the engine) goes through the guard in an event:
+--- FinalBoss stops for the run and E.reset shows the counter again.
+function Recount:fail(err)
+  if self.failed then return end
+  self.failed, self.finished = true, true
+  G.E_MANAGER:add_event(Event({blocking = false, blockable = false, func = function()
+    FinalBoss.util.guard('effect_recount', error, err, 0)
+    return true
+  end}))
+end
+
+function Recount:tick(dt)
+  local a, LG, t = self.args, FinalBoss.logic, now()
+  local cur = G.GAME and G.GAME.blind
+  if a.blind and (cur ~= a.blind or a.blind.disabled) then return self:finish() end
+  local uie = self.uie
+  if not uie or uie.REMOVED then
+    if uie then E.hidden[uie] = nil end
+    uie = a.locate and a.locate() or nil
+    self.uie = uie
+    if uie then hide(uie) end
+  end
+  local waited = t - self.born
+  if not uie then
+    if waited > LG.RECOUNT_WAIT_MAX then
+      -- the counter never showed up: the cue still plays, nothing is counted
+      if a.on_count and not self.cued then self.cued = true; after(0, a.on_count) end
+      self:finish()
+    end
+    return
+  end
+  local vt = uie.VT
+  local moving = self.last_y ~= nil and math.abs(vt.y - self.last_y) > 0.002
+  self.last_y = vt.y
+  self.T.x, self.T.y, self.T.w, self.T.h = vt.x, vt.y, vt.w, vt.h
+  self:move_juice(dt) -- Moveable:juice_up is a no-op under reduced motion
+  local j = self.juice
+  self.VT.x, self.VT.y, self.VT.w, self.VT.h = vt.x, vt.y, vt.w, vt.h
+  self.VT.scale = 1 + (j and j.scale or 0)
+  self.VT.r = j and j.r or 0
+  local room = G.ROOM and G.ROOM.T
+  local onscreen = vt.y + vt.h > 0 and (not room or vt.y < room.h)
+  local ready = box_drawn(uie, 1) and onscreen and not moving and not covered(uie)
+  local late = waited > LG.RECOUNT_WAIT_MAX
+  if not self.t0 then
+    if ready or late then self.t0 = t end
+  elseif not self.cued and not ready and not late then
+    self.t0 = nil -- covered or moving again while it holds: wait, then hold again
+  end
+  if not self.t0 then return end
+  local el = t - self.t0
+  local v = LG.recount_value(a.from, a.to, el, a.hold, a.time, reduced())
+  if v ~= self.value then
+    self.value = v
+    self:set_text()
+  end
+  if not self.cued and el >= a.hold then
+    self.cued = true
+    self:juice_up(0.4, 0.2)
+    if a.on_count then after(0, a.on_count) end
+  end
+  if not self.landed and el >= a.hold + a.time then
+    self.landed = true
+    self:juice_up(0.6, 0.3)
+    if a.impact then after(0, function() play(a.impact, a.pitch) end) end
+  end
+  if self.landed and el >= a.hold + a.time + LG.RECOUNT_LINGER then self:finish() end
+end
+
+function Recount:move(dt)
+  if self.finished then return end
+  local ok, err = pcall(self.tick, self, dt)
+  if not ok then self:fail(err) end
+end
+
+local function draw_number(self)
+  local font, scale, colour = text_style(self.uie)
+  if self.args.chips and type(scale_number) == 'function' then
+    scale = scale_number(self.value, 0.7, 100000) -- as G.FUNCS.blind_chip_UI_scale (smods overrides.lua:2916-2924)
+  end
+  local f = font.FONT
+  local k = scale * font.FONTSCALE / G.TILESIZE -- text node scale (engine/ui.lua UIElement:draw_self)
+  local sx, sy = k * (font.squish or 1), k
+  local w, h = f:getWidth(self.text) * sx, f:getHeight() * sy
+  local off = font.TEXT_OFFSET or {x = 0, y = 0}
+  local x = (self.VT.w - w) / 2 + off.x * k
+  local y = (self.VT.h - h) / 2 + off.y * k
+  if G.SETTINGS.GRAPHICS.shadows == 'On' then
+    love.graphics.setColor(0, 0, 0, 0.3 * (colour[4] or 1))
+    love.graphics.print(self.text, f, x - 0.015, y + 0.02, 0, sx, sy)
+  end
+  love.graphics.setColor(colour)
+  love.graphics.print(self.text, f, x, y, 0, sx, sy)
+end
+
+function Recount:draw()
+  local uie = self.uie
+  if self.finished or not uie or uie.REMOVED or not box_drawn(uie, 0) then return end
+  prep_draw(self, 1)
+  local ok, err = pcall(draw_number, self)
+  love.graphics.pop() -- always balance prep_draw's push
+  love.graphics.setColor(1, 1, 1, 1)
+  if not ok then self:fail(err) end
+end
+
+--- recount(uie): opts.value ('hands', 'discards', 'hand_size', 'target') read from opts.data.before
+--- (just before the blind applied) and opts.data.after (moves.on_set_blind). The real counter is
+--- hidden at once (vanilla has not shown the new value yet: its ease is a queued event) and an overlay
+--- counts from the old value to the new one (Recount above); opts.on_count (moves: the performer's
+--- react and the cue steps) runs as the count starts, opts.impact sounds as it lands. opts.locate finds
+--- a counter that does not exist yet (the hand label). Nothing to show (unknown or equal values): the
+--- cue plays at once. Reduced motion: no counting, the old value then the new one.
+function E.recount(src, uie, opts)
+  local d = opts.data or {}
+  local from = d.before and d.before[opts.value]
+  local to = d.after and d.after[opts.value]
+  if from == nil or to == nil or from == to then
+    if opts.on_count then opts.on_count() end
+    return
+  end
+  local r = adopt(Recount({from = from, to = to, hold = tonumber(opts.hold) or 0.2, time = tonumber(opts.time) or 0.8,
+    chips = opts.value == 'target', on_count = opts.on_count, impact = opts.impact, pitch = voice_pitch(opts),
+    locate = opts.locate or function() return uie end, blind = opts.blind}))
+  if uie and uie.states then
+    r.uie = uie
+    hide(uie)
+  end
+end
+
+-- Land and snake (draw-timed moves) -----------------------------------------------------------------
+
+local LAND_MAX = 0.8 -- seconds a card may take to reach its slot before it flashes anyway
+
+--- land(cards): each card flashes (in the step colour) and juices when it reaches its slot in the hand.
+--- Called as the card is dealt (moves.collect_flipped, before CardArea:emplace sets its slot,
+--- common_events.lua:402-408), so it waits until the card is in G.hand and its drawn position has
+--- caught up with its slot. Reduced motion: the flash only (juice_up is a no-op).
+function E.land(src, target, opts)
+  local gen = E.gen
+  for _, card in ipairs(cards_of(target)) do
+    local t0 = now()
+    G.E_MANAGER:add_event(Event({blocking = false, blockable = false, timer = 'REAL', func = function()
+      if E.gen ~= gen or card.REMOVED then return true end
+      local T, VT, age = card.T, card.VT, now() - t0
+      local there = age > 0.05 and card.area == G.hand and math.abs(VT.x - T.x) + math.abs(VT.y - T.y) < 0.15
+      if not there and age < LAND_MAX then return false end
+      FinalBoss.util.guard('effect_land', function()
+        flash_rect(card.T, opts.colour)
+        card:juice_up(0.25, 0.2)
+      end)
+      return true
+    end}))
+  end
+end
+
+--- snake(area): a snake (a head with a particle trail and a tapering body of dots) crawls from the deck
+--- to the area (The Serpent: the hand) over opts.data.time seconds (moves.on_draw_start: until the last
+--- card of the draw is in the hand), weaving side to side; a ring where it arrives. Reduced motion: a
+--- flash on the area as the cards arrive instead.
+function E.snake(src, area, opts)
+  if not (area and area.T) then return end
+  local time = math.max(0.3, tonumber(opts.data and opts.data.time) or 0.8)
+  local H, deck = area.T, G.deck and G.deck.T
+  if reduced() or not deck then
+    return after(math.max(0, time - 0.2), function() flash_rect(H, opts.colour) end)
+  end
+  local x0, y0 = deck.x + deck.w / 2, deck.y + deck.h / 2
+  local x1, y1 = H.x + H.w / 2, H.y + H.h / 2
+  local c, dark = col(opts.colour), darken(col(opts.colour), 0.35)
+  local segs, lag = 7, 0.045
+  for i = 0, segs - 1 do
+    after(i * lag, function()
+      local s = 0.34 - i * 0.03
+      local life = time + 0.15
+      local m = adopt(Mark(x0 - s / 2, y0 - s / 2, s, s, {shape = 'dot', colour = (i % 2 == 0) and c or dark,
+        life = life, travel = time, linear = true, wave = {0.35, 2},
+        path = {x0 - s / 2, y0 - s / 2, x1 - s / 2, y1 - s / 2}}))
+      if i == 0 then
+        local trail = adopt(Particles(x0, y0, 0.2, 0.2, {timer = 0.02, scale = 0.2, speed = 0.4,
+          lifespan = 0.4, colours = {c, G.C.WHITE}, fill = true}))
+        m.follower = trail
+        expire(trail, life + 0.3)
+      end
+      expire(m, life)
+    end)
+  end
+  after(time, function()
+    expire(adopt(Mark(x1 - 0.8, y1 - 0.8, 1.6, 1.6, {shape = 'ring', colour = c, life = 0.45, width = 0.08})), 0.45)
+  end)
 end
 
 -- Helpers for deaths, stances and the nemesis -------------------------------------------------------
@@ -577,6 +881,11 @@ function E.reset()
   local r = E.reddened
   E.reddened = nil
   if r and r.cfg.colour == G.C.RED then r.cfg.colour = r.prev end
+  local hidden = E.hidden
+  E.hidden = {}
+  for uie in pairs(hidden) do
+    if not uie.REMOVED and uie.states then uie.states.visible = true end
+  end
   local h = E.host
   E.host = nil
   if not h or h.REMOVED then return end
