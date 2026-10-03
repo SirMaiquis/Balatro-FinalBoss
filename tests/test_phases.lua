@@ -97,7 +97,12 @@ local function setup(opts)
     director = {fire = rec('fire', true), num = function(x) return x end},
     arena = {state = {stage = 1}, on_hit = rec('arena_hit')},
     util = {guard = function(_, fn, ...) return pcall(fn, ...) end, log = function() end},
+    -- records what the rule awards (achievements.lua runs it the same way)
+    achievements = {award_from = function(_, rule, ...)
+      for _, id in ipairs(rule(...)) do ctx.awarded[#ctx.awarded + 1] = id end
+    end},
   }
+  ctx.awarded = {}
   package.loaded['src.phases'] = nil
   return require('src.phases'), ctx
 end
@@ -140,6 +145,18 @@ T['phases.check: both thresholds at once go straight to phase III, never back'] 
   eq(ctx.args.fire[1], 'phase3')
   eq(P.check(ctx.enc, ctx.blind, hand(600)), false, 'a heal never undoes a phase')
   eq(P.check(ctx.enc, ctx.blind, hand(900)), false, 'phase III is the last')
+end
+
+T['phases: Phase Skipper only for phase I to III in one hand'] = function()
+  local P, ctx = setup()
+  P.check(ctx.enc, ctx.blind, hand(800))
+  eq(#ctx.awarded, 1); eq(ctx.awarded[1], 'fb_phase_skipper')
+  P, ctx = setup()
+  P.check(ctx.enc, ctx.blind, hand(600))
+  ctx.advance(3)
+  P.check(ctx.enc, ctx.blind, hand(800))
+  eq(ctx.enc.phase, 3)
+  eq(#ctx.awarded, 0, 'I to II, then II to III: no Phase Skipper')
 end
 
 T['phases.check: a weak hit waits for the laugh before transforming'] = function()

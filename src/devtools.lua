@@ -46,7 +46,10 @@ SMODS.Keybind{key_pressed = 'f6', action = function()
   if not DT.on() then return end
   DT.moment_idx = DT.moment_idx % #DT.MOMENTS + 1
   local moment = DT.MOMENTS[DT.moment_idx]
-  local ok, fired = FinalBoss.util.guard('dev_f6', FinalBoss.director.fire, moment, {force = true})
+  -- 'defeat' says the nemesis's own defeat line when this boss is the nemesis, like the real one.
+  local enc = G.GAME.FinalBoss and G.GAME.FinalBoss.encounter
+  local opts = {force = true, line = FinalBoss.memory.defeat_line(enc, moment)}
+  local ok, fired = FinalBoss.util.guard('dev_f6', FinalBoss.director.fire, moment, opts)
   FinalBoss.util.log('info', ('dev: fire %s -> %s'):format(moment, tostring(ok and fired)))
 end}
 
@@ -86,9 +89,10 @@ SMODS.Keybind{key_pressed = 'f8', action = function()
   FinalBoss.util.log('info', 'dev: next phase -> ' .. tostring(ok and phase))
 end}
 
---- F9: fake a nemesis for the current boss (saved in the profile like a real one).
+--- F9: fake a nemesis for the current boss (saved in the profile like a real one; this encounter
+--- never earns Nemesis Slayer). Nothing once FinalBoss is disabled for the run.
 SMODS.Keybind{key_pressed = 'f9', action = function()
-  if not DT.on() then return end
+  if not DT.on() or not FinalBoss.director.enabled() then return end
   local ok, key = FinalBoss.util.guard('dev_f9', FinalBoss.memory.fake_nemesis)
   FinalBoss.util.log('info', 'dev: fake nemesis -> ' .. tostring(ok and key))
 end}

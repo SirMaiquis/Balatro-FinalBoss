@@ -79,6 +79,7 @@ function P.transform(enc, blind, phase, from)
   P.token = P.token + 1
   local token = P.token
   enc.phase = phase
+  FinalBoss.achievements.award_from('phase', FinalBoss.logic.phase_achievements, from, phase) -- Phase Skipper
   local M = FinalBoss.moves
   local c = M.boss_colour(blind)
   local calm = reduced()

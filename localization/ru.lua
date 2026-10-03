@@ -37,6 +37,30 @@ return {
             fb_tip_me_message_2 = "небольшим донатом.",
             fb_tip_me_message_3 = "Я очень это ценю!",
         },
+        achievement_names = {
+            ach_FinalBoss_fb_showdown_survivor = "Выживший в поединке",
+            ach_FinalBoss_fb_clean_sweep = "Подчистую",
+            ach_FinalBoss_fb_rude = "Какая грубость!",
+            ach_FinalBoss_fb_no_manners = "Без манер",
+            ach_FinalBoss_fb_last_laugh = "Смеётся последним",
+            ach_FinalBoss_fb_overkill = "Сокрушительно",
+            ach_FinalBoss_fb_phase_skipper = "Через фазу",
+            ach_FinalBoss_fb_comeback = "Камбэк",
+            ach_FinalBoss_fb_nemesis_slayer = "Гроза немезиды",
+            ach_FinalBoss_fb_twisted = "Наизнанку",
+        },
+        achievement_descriptions = {
+            ach_FinalBoss_fb_showdown_survivor = "Победить финального босса",
+            ach_FinalBoss_fb_clean_sweep = "Победить всех 5 финальных боссов базовой игры",
+            ach_FinalBoss_fb_rude = "Перебить босса, пока он говорит",
+            ach_FinalBoss_fb_no_manners = "Перебить 10 разных боссов",
+            ach_FinalBoss_fb_last_laugh = "Победить босса рукой, сыгранной сразу после его смеха",
+            ach_FinalBoss_fb_overkill = "Победить финального босса с полным здоровьем за одну руку",
+            ach_FinalBoss_fb_phase_skipper = "Перевести финального босса из фазы I в фазу III за одну руку",
+            ach_FinalBoss_fb_comeback = "Победить финального босса последней рукой",
+            ach_FinalBoss_fb_nemesis_slayer = "Победить свою немезиду",
+            ach_FinalBoss_fb_twisted = "Победить всех 5 финальных боссов базовой игры со сменой правил в фазах",
+        },
         quips = {
             -- Config menu header card
             fb_cfg_header = {"Боссы отвечают, а поединки становятся битвами с боссом.", "Автор: {C:green,E:1}@SirMaiquis{}"},
@@ -92,7 +116,7 @@ return {
             fb_nemesis_intro_2 = {"Снова #1#.", "Твой заклятый враг."},
             fb_nemesis_intro_3 = {"От заклятого врага", "не сбежать."},
             fb_nemesis_defeat_1 = {"Как?! Я же твой", "заклятый враг!"},
-            fb_nemesis_defeat_2 = {"#1#... сломлен."},
+            fb_nemesis_defeat_2 = {"#1#... это конец."},
             fb_nemesis_defeat_3 = {"Это ещё не конец,", "соперник..."},
 
             -- The Hook: discards 2 random cards per hand played

@@ -155,4 +155,16 @@ T['every memory intro plan resolves a line for each step (light nemesis included
   assert(#missing == 0, 'no line for: ' .. table.concat(missing, ', '))
 end
 
+T['every achievement has a name and a description'] = function()
+  package.loaded['localization.default'] = nil
+  local misc = require('localization.default').misc
+  local ids = require('src.logic').ACHIEVEMENTS
+  assert(#ids == 10, 'ten achievements')
+  for _, id in ipairs(ids) do
+    local key = 'ach_FinalBoss_' .. id
+    assert(misc.achievement_names and type(misc.achievement_names[key]) == 'string', 'name ' .. key)
+    assert(misc.achievement_descriptions and type(misc.achievement_descriptions[key]) == 'string', 'description ' .. key)
+  end
+end
+
 return T

@@ -3,7 +3,8 @@
 Usage (repo root):
   uv run --with lupa tools/check_loc.py              # all files
   uv run --with lupa tools/check_loc.py es_419 es_ES # only these
-Checks: every misc.quips / misc.dictionary key of default.lua exists, no extra keys,
+Checks: every misc.quips / misc.dictionary / misc.achievement_names / misc.achievement_descriptions
+key of default.lua exists, no extra keys,
 colour tags {X:..}...{} balanced (scanned in order), no empty values, #n# placeholders
 identical to English, gloat lines (Jimbo says them on the game-over screen) are only the line:
 no "Name:" header line, not wrapped in quotation marks. A name ending in .lua is used as a file
@@ -22,7 +23,7 @@ ROOT = pathlib.Path(__file__).resolve().parent.parent
 LOC = ROOT / 'localization'
 TAG = re.compile(r'\{([^{}]*)\}')
 PLACEHOLDER = re.compile(r'#\d+#')
-SECTIONS = ('quips', 'dictionary')
+SECTIONS = ('quips', 'dictionary', 'achievement_names', 'achievement_descriptions')
 GLOAT_KEY = re.compile(r'^quips\.fb_(?:\w+_)?gloat(?:_\d+)?$')
 OPEN_QUOTES = '"“„«‹「『‘'   # " “ „ « ‹ 「 『 ‘
 CLOSE_QUOTES = '"”“»›」』’'  # " ” “ » › 」 』 ’

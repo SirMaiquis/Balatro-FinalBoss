@@ -37,6 +37,32 @@ return {
             fb_tip_me_message_2 = "歡迎小額打賞以示支持。",
             fb_tip_me_message_3 = "非常感謝！",
         },
+        -- Steamodded wraps achievement descriptions at spaces only (src/ui.lua:1094-1122), and a first
+        -- word over 30 bytes leaves an empty first line: the spaces below are line breaks, never shown.
+        achievement_names = {
+            ach_FinalBoss_fb_showdown_survivor = "決戰倖存者",
+            ach_FinalBoss_fb_clean_sweep = "一掃而空",
+            ach_FinalBoss_fb_rude = "真沒禮貌！",
+            ach_FinalBoss_fb_no_manners = "毫無教養",
+            ach_FinalBoss_fb_last_laugh = "笑到最後",
+            ach_FinalBoss_fb_overkill = "秒殺",
+            ach_FinalBoss_fb_phase_skipper = "階段跳躍",
+            ach_FinalBoss_fb_comeback = "逆轉勝",
+            ach_FinalBoss_fb_nemesis_slayer = "宿敵剋星",
+            ach_FinalBoss_fb_twisted = "扭曲",
+        },
+        achievement_descriptions = {
+            ach_FinalBoss_fb_showdown_survivor = "擊敗一個最終Boss",
+            ach_FinalBoss_fb_clean_sweep = "擊敗原版遊戲的 全部5個最終Boss",
+            ach_FinalBoss_fb_rude = "在Boss說話時打斷它",
+            ach_FinalBoss_fb_no_manners = "打斷10個不同的Boss",
+            ach_FinalBoss_fb_last_laugh = "在Boss嘲笑你之後， 用下一手牌擊敗它",
+            ach_FinalBoss_fb_overkill = "用一手牌擊敗 滿血的最終Boss",
+            ach_FinalBoss_fb_phase_skipper = "用一手牌讓最終Boss 從第I階段進入第III階段",
+            ach_FinalBoss_fb_comeback = "用最後一手牌 擊敗最終Boss",
+            ach_FinalBoss_fb_nemesis_slayer = "擊敗你的宿敵",
+            ach_FinalBoss_fb_twisted = "開啟階段規則變化時 擊敗原版全部5個最終Boss",
+        },
         quips = {
             -- Config menu header card
             fb_cfg_header = {"Boss會開口說話，決戰化身Boss戰。", "作者 {C:green,E:1}@SirMaiquis{}"},

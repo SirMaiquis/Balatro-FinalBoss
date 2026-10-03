@@ -151,15 +151,18 @@ end
 function Dir.on_round_end()
   Dir.flush_pending()
   FinalBoss.phases.reset() -- (the twist clean-up runs ungated in hooks.lua's end_round wrap)
-  FinalBoss.memory.unpresent()
   local st = FinalBoss.util.state()
   local enc = st.encounter
-  if not enc then return end
-  if G.STATE == G.STATES.GAME_OVER then
+  local over = G.STATE == G.STATES.GAME_OVER
+  if enc and over then
     enc.ended = true
     if enc.boss and not enc.recorded then
       if FinalBoss.memory.on_loss(enc.key) then enc.recorded = true end -- this boss ended the run
     end
+  end
+  FinalBoss.memory.unpresent() -- after the loss is recorded (memory's safe: a visual error is only logged)
+  if not enc then return end
+  if over then
     FinalBoss.fx.stop()
     FinalBoss.arena.stop(true)
     if enc.cinematic then
@@ -213,6 +216,9 @@ function Dir.on_hand_after()
   local hands_left = G.GAME.current_round.hands_left
   -- Set before the game-over screen picks its quip; cleared in on_round_end if the run continues.
   if hands_left == 0 and total < required then st.lost_to = enc.key end
+  if total >= required then -- the winning hand (achievements read these at blind_defeated)
+    enc.win_start, enc.win_hand, enc.win_hands_left = chips, hands_played, hands_left
+  end
   local moment = FinalBoss.logic.detect_moments{delta = delta, total = total, required = required,
     hands_left = hands_left, fired = enc.fired, tier = enc.tier, reactions = enc.reactions}
   -- The reaction waits until the game shows the score (Dir.tick -> logic.score_landed), or the
@@ -241,7 +247,7 @@ local function react(p)
   end
   local wait = 0 -- a laugh is coming: the line must not overlap it
   if enc.tier == 'full' and enc.showdown then
-    wait = Dir.stage_hit(enc, blind, p.delta, p.total, p.required, p.moment)
+    wait = Dir.stage_hit(enc, blind, p.delta, p.total, p.required, p.moment, p.hand)
     -- 1.1: crossing 50% / 25% transforms the boss. Its phase line replaces this hand's moment line
     -- (the moment stays unfired); the hit, damage number and laugh above still play, and a weak
     -- hit's transformation waits for the laugh (wait) so laugh, roar and line never overlap.
@@ -283,7 +289,7 @@ end
 
 --- Stage reactions to a scored hand in a showdown (arena always; avatar when cinematic).
 --- Returns the seconds before the hand's dialogue line may start (0 unless the avatar laughs).
-function Dir.stage_hit(enc, blind, delta, total, required, moment)
+function Dir.stage_hit(enc, blind, delta, total, required, moment, hand)
   local stage = stage_of(total, required)
   FinalBoss.arena.on_hit(stage)
   if not enc.cinematic then return 0 end
@@ -304,6 +310,7 @@ function Dir.stage_hit(enc, blind, delta, total, required, moment)
   local V = FinalBoss.avatar
   local o = V.anchor()
   if not o then return 0 end -- no avatar to laugh: the line must not wait for nothing
+  enc.laughed_hand = hand -- Last Laugh: winning with the very next hand earns it
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = Dir.WEAK_LAUGH_DELAY, timer = 'REAL',
     blocking = false, blockable = false, func = function()
       FinalBoss.util.guard('weak_laugh', function()
@@ -331,6 +338,12 @@ function Dir.on_blind_defeated()
     if m then raw.recorded = true end
     -- The nemesis fell (its own defeat line already played): burst, banner; it is now broken.
     if beaten and FinalBoss.config.memory then FinalBoss.memory.celebrate() end
+    if m then -- profile achievements (win_* and laughed_hand: Dir.on_hand_after, Dir.stage_hit)
+      FinalBoss.achievements.award_from('defeat', FinalBoss.logic.defeat_achievements, {showdown = raw.showdown,
+        start = raw.win_start, hands_left = raw.win_hands_left, hand = raw.win_hand,
+        laughed_hand = raw.laughed_hand, nemesis = beaten and not raw.fake_nemesis, -- F9 earns nothing
+        final_defeated = m.final_defeated, final_defeated_twisted = m.final_defeated_twisted})
+    end
   end
   FinalBoss.memory.unpresent()
   local enc, blind = current()
@@ -364,7 +377,10 @@ function Dir.check_interrupt()
   if not FinalBoss.logic.should_interrupt{hand_played = true, cinematic_intro = cine,
       dialogue_intro = talk, tier = enc.tier, ended = enc.ended, fired = enc.fired} then return end
   enc.fired.interrupted = true
-  FinalBoss.memory.on_interrupt(enc.key) -- recorded before any visual work can fail
+  local mem = FinalBoss.memory.on_interrupt(enc.key) -- recorded before any visual work can fail
+  if mem then
+    FinalBoss.achievements.award_from('interrupt', FinalBoss.logic.interrupt_achievements, mem.interrupted)
+  end
   enc.interrupt_hand = G.GAME.current_round.hands_played -- this hand's id at context.after
   if cine then C.interrupt() end
   D.end_intro() -- remaining lines dropped; its on_end (letterbox retract, start move) runs once

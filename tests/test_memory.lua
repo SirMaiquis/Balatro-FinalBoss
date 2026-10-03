@@ -239,12 +239,38 @@ T['nemesis: F9 makes the current boss the saved nemesis and presents it'] = func
   eq(ctx.mem.fake_nemesis(), 'bl_x')
   eq(ctx.profile.FinalBoss.nemesis, 'bl_x'); eq(ctx.profile.FinalBoss.broken.bl_x, nil)
   eq(ctx.enc.nemesis, true); eq(ctx.saves, saves + 1)
+  eq(ctx.enc.fake_nemesis, true, 'this encounter is marked (no Nemesis Slayer for it)')
   assert(find(ctx.calls, 'tag'), 'presented at once')
+  ctx.mem.fake_nemesis()
+  eq(ctx.enc.fake_nemesis, true, 'a second press keeps the mark')
   ctx.enc.ended = true
   eq(ctx.mem.fake_nemesis(), nil, 'not after the fight')
   ctx = stage(setup({}))
   ctx.enc.boss = false
   eq(ctx.mem.fake_nemesis(), nil, 'small and big blinds are never a nemesis')
+  ctx = stage(setup({}))
+  eq(ctx.mem.fake_nemesis(), 'bl_x')
+  eq(ctx.enc.fake_nemesis, nil, 'already the real nemesis: not marked')
+end
+
+T['nemesis: the HUD tag sits on the chip top edge, below the effect text rows'] = function()
+  local ctx = stage(setup({}))
+  ctx.mem.present(ctx.blind)
+  local cfg = find(ctx.calls, 'tag')[2].config
+  eq(cfg.align, 'tm')
+  assert(cfg.offset.y > 0, 'pushed down onto the chip (tm alone puts it above the chip)')
+end
+
+T['nemesis: a failing presentation is logged, never raised'] = function()
+  local ctx = stage(setup({}))
+  _G.UIBox = function() error('ui boom') end
+  local n = #ctx.logs
+  ctx.mem.present(ctx.blind)
+  _G.attention_text = function() error('banner boom') end
+  ctx.mem.celebrate()
+  FinalBoss.effects.remove_aura = function() error('aura boom') end
+  ctx.mem.unpresent()
+  eq(#ctx.logs, n + 3, 'three errors logged')
 end
 
 return T

@@ -37,6 +37,30 @@ return {
             fb_tip_me_message_2 = "uma pequena gorjeta para mostrar seu apoio.",
             fb_tip_me_message_3 = "Agradeço muito!",
         },
+        achievement_names = {
+            ach_FinalBoss_fb_showdown_survivor = "Sobrevivente do confronto",
+            ach_FinalBoss_fb_clean_sweep = "Limpeza geral",
+            ach_FinalBoss_fb_rude = "Que grosseria!",
+            ach_FinalBoss_fb_no_manners = "Sem modos",
+            ach_FinalBoss_fb_last_laugh = "Quem ri por último",
+            ach_FinalBoss_fb_overkill = "Exagero",
+            ach_FinalBoss_fb_phase_skipper = "Pula-fase",
+            ach_FinalBoss_fb_comeback = "Virada",
+            ach_FinalBoss_fb_nemesis_slayer = "Matador de nêmesis",
+            ach_FinalBoss_fb_twisted = "Distorcido",
+        },
+        achievement_descriptions = {
+            ach_FinalBoss_fb_showdown_survivor = "Derrote um chefe final",
+            ach_FinalBoss_fb_clean_sweep = "Derrote os 5 chefes finais do jogo base",
+            ach_FinalBoss_fb_rude = "Interrompa um chefe enquanto ele fala",
+            ach_FinalBoss_fb_no_manners = "Interrompa 10 chefes diferentes",
+            ach_FinalBoss_fb_last_laugh = "Derrote um chefe com a mão logo depois de ele rir de você",
+            ach_FinalBoss_fb_overkill = "Derrote um chefe final em uma só mão a partir da vida cheia",
+            ach_FinalBoss_fb_phase_skipper = "Leve um chefe final da fase I à fase III em uma só mão",
+            ach_FinalBoss_fb_comeback = "Derrote um chefe final na sua última mão",
+            ach_FinalBoss_fb_nemesis_slayer = "Derrote seu nêmesis",
+            ach_FinalBoss_fb_twisted = "Derrote os 5 chefes finais do jogo base com as regras de fase ativadas",
+        },
         quips = {
             -- Config menu header card
             fb_cfg_header = {"Os chefes respondem e os confrontos viram lutas contra chefes.", "Por {C:green,E:1}@SirMaiquis{}"},
@@ -92,7 +116,7 @@ return {
             fb_nemesis_intro_2 = {"#1# de novo.", "Seu nêmesis."},
             fb_nemesis_intro_3 = {"Você não escapa", "do seu nêmesis."},
             fb_nemesis_defeat_1 = {"Como?! Eu sou", "seu nêmesis!"},
-            fb_nemesis_defeat_2 = {"#1#... quebrado."},
+            fb_nemesis_defeat_2 = {"#1#... acabou."},
             fb_nemesis_defeat_3 = {"Isso não acabou,", "rival..."},
 
             -- The Hook: discards 2 random cards per hand played

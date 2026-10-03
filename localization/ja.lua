@@ -37,6 +37,32 @@ return {
             fb_tip_me_message_2 = "少額のチップで応援してもらえると嬉しいです。",
             fb_tip_me_message_3 = "本当にありがとうございます！",
         },
+        -- Steamodded wraps achievement descriptions at spaces only (src/ui.lua:1094-1122), and a first
+        -- word over 30 bytes leaves an empty first line: the spaces below are line breaks, never shown.
+        achievement_names = {
+            ach_FinalBoss_fb_showdown_survivor = "決戦の生還者",
+            ach_FinalBoss_fb_clean_sweep = "完全制覇",
+            ach_FinalBoss_fb_rude = "無礼者！",
+            ach_FinalBoss_fb_no_manners = "礼儀知らず",
+            ach_FinalBoss_fb_last_laugh = "最後に笑う者",
+            ach_FinalBoss_fb_overkill = "オーバーキル",
+            ach_FinalBoss_fb_phase_skipper = "フェーズ飛ばし",
+            ach_FinalBoss_fb_comeback = "大逆転",
+            ach_FinalBoss_fb_nemesis_slayer = "宿敵討ち",
+            ach_FinalBoss_fb_twisted = "ひねくれ者",
+        },
+        achievement_descriptions = {
+            ach_FinalBoss_fb_showdown_survivor = "ラスボスを倒す",
+            ach_FinalBoss_fb_clean_sweep = "基本ゲームの ラスボス5体をすべて倒す",
+            ach_FinalBoss_fb_rude = "話している最中の ボスを遮る",
+            ach_FinalBoss_fb_no_manners = "10体の異なるボスの 話を遮る",
+            ach_FinalBoss_fb_last_laugh = "ボスに笑われた直後の ハンドで倒す",
+            ach_FinalBoss_fb_overkill = "HP満タンの ラスボスを1ハンドで倒す",
+            ach_FinalBoss_fb_phase_skipper = "1ハンドでラスボスを フェーズIからIIIにする",
+            ach_FinalBoss_fb_comeback = "最後のハンドで ラスボスを倒す",
+            ach_FinalBoss_fb_nemesis_slayer = "宿敵を倒す",
+            ach_FinalBoss_fb_twisted = "ルール変化ありで 基本ゲームのラスボス5体を倒す",
+        },
         quips = {
             -- Config menu header card
             fb_cfg_header = {"ボスがしゃべり、決戦はボスバトルになる。", "作者 {C:green,E:1}@SirMaiquis{}"},
