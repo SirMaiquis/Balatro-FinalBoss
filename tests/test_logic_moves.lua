@@ -355,14 +355,13 @@ T['step_amount reads played cards, money or a number'] = function()
   eq(logic.step_amount({amount = 'money'}, {}), 0)
 end
 
-T['cursed_on_load: a debuffed hand card counts unless something else debuffs it'] = function()
-  eq(logic.cursed_on_load(true, nil, nil, nil), true, 'debuffed, flag not saved')
-  eq(logic.cursed_on_load(true, true, nil, {}), true, 'flag set')
-  eq(logic.cursed_on_load(false, nil, nil, nil), false, 'not debuffed')
-  eq(logic.cursed_on_load(true, false, nil, nil), false, 'smods says not by the blind')
-  eq(logic.cursed_on_load(true, nil, true, nil), false, 'perma debuff')
-  eq(logic.cursed_on_load(true, nil, nil, {other_mod = true}), false, 'another debuff source')
-  eq(logic.cursed_on_load(true, nil, nil, {other_mod = false}), true, 'a released source')
+T['blind_cursed: only a debuffed card the blind debuffs, once per blind'] = function()
+  eq(logic.blind_cursed(true, true, nil), true, 'debuffed by the blind')
+  eq(logic.blind_cursed(true, nil, nil), false, 'flag missing (not recomputed): no guess')
+  eq(logic.blind_cursed(true, false, nil), false, 'debuffed by something else')
+  eq(logic.blind_cursed(false, true, nil), false, 'not debuffed')
+  eq(logic.blind_cursed(nil, true, nil), false, 'debuff missing')
+  eq(logic.blind_cursed(true, true, true), false, 'already marked this blind')
 end
 
 T['hand_debuff_fired: real calls that returned true or triggered'] = function()

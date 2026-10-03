@@ -563,16 +563,11 @@ function logic.step_amount(step, data)
   return tonumber(a) or 0
 end
 
---- Continue: is this debuffed hand card cursed by the blind? debuffed_by_blind (by_blind) is not saved
---- with the card, so a debuffed card counts unless something else debuffs it: a perma debuff or a
---- debuff source (smods ability.debuff_sources: another mod, the Leaf's regrowth).
-function logic.cursed_on_load(debuff, by_blind, perma, sources)
-  if not debuff or by_blind == false or perma then return false end
-  if by_blind then return true end
-  for _, v in pairs(sources or {}) do
-    if v then return false end
-  end
-  return true
+--- Whether a hand card gets a curse mark: debuffed, with smods naming the blind as the cause
+--- (card.debuffed_by_blind, smods lovely/blind.toml:9-23), and not marked yet this blind (stamped).
+--- On Continue the flag is recomputed first (moves.restore_marks), since it is not saved.
+function logic.blind_cursed(debuff, by_blind, stamped)
+  return (debuff and by_blind == true and not stamped) and true or false
 end
 
 --- hooks.lua: Blind:debuff_hand applied its effect in a real play (not the highlight preview):
@@ -720,6 +715,20 @@ function logic.should_transform(a)
   if not a.cinematic or not a.target then return nil end
   if a.moment == 'defeat' or (a.hands_left or 1) <= 0 then return nil end
   return a.target
+end
+
+--- What a scored hand's HP drop does to a final boss: 'transform' (it reaches a new phase), 'mad'
+--- (a powerless boss crossed a threshold: anger and its disabled line, no transformation) or nil,
+--- plus the phase reached. Same gates as should_transform. a: {cinematic, moment, hands_left,
+--- stage (wound_stage), phase (enc.phase), powerless, mad_phase (thresholds a powerless boss
+--- already got mad at)}. A boss that transformed before losing its power is not mad at those again.
+function logic.phase_reaction(a)
+  local reached = a.phase or 1
+  if a.powerless then reached = math.max(reached, a.mad_phase or 1) end
+  local target = logic.should_transform{cinematic = a.cinematic, moment = a.moment,
+    target = logic.phase_cross(reached - 1, a.stage), hands_left = a.hands_left}
+  if not target then return nil end
+  return a.powerless and 'mad' or 'transform', target
 end
 
 --- Rule twists (setting "Boss phases change the rules"), always through the boss's own mechanic.

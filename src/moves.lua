@@ -372,7 +372,7 @@ end
 local function newly_cursed()
   local out = {}
   for _, c in ipairs(G.hand and G.hand.cards or {}) do
-    if c.debuff and c.debuffed_by_blind and not M.stamped[c] then
+    if L().blind_cursed(c.debuff, c.debuffed_by_blind, M.stamped[c]) then
       M.stamped[c] = true
       out[#out + 1] = c
     end
@@ -382,14 +382,20 @@ end
 
 --- Continue (Dir.on_blind_loaded): curse marks are visuals, never saved, so the cursed cards already in
 --- hand get theirs back (no move plays). They count as stamped: the next draw does not curse them anew.
+--- card.debuffed_by_blind is not saved (vanilla Card:load restores only debuff, card.lua:4704, and
+--- CardArea:load skips debuff_card), so each debuffed hand card is recomputed first: SMODS.recalc_debuff
+--- (smods src/utils.lua:479) runs Blind:debuff_card, which sets the flag when the blind is the cause.
 function M.restore_marks(blind)
   if not (blind and blind.config and blind.config.blind and blind.config.blind.key) then return end
   local cursed = {}
   for _, c in ipairs(G.hand and G.hand.cards or {}) do
-    local ab = c.ability or {}
-    if not M.stamped[c] and L().cursed_on_load(c.debuff, c.debuffed_by_blind, ab.perma_debuff, ab.debuff_sources) then
-      M.stamped[c] = true
-      cursed[#cursed + 1] = c
+    if c.debuff and not M.stamped[c] then
+      local ok, err = pcall(SMODS.recalc_debuff, c)
+      if not ok then FinalBoss.util.log('warn', 'curse restore recalc failed: ' .. tostring(err)) end
+      if ok and L().blind_cursed(c.debuff, c.debuffed_by_blind, M.stamped[c]) then
+        M.stamped[c] = true
+        cursed[#cursed + 1] = c
+      end
     end
   end
   if #cursed > 0 then M.mark_cursed(blind, cursed) end
