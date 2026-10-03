@@ -80,15 +80,20 @@ function M.perform(blind, recipe, data, opts)
   local src = M.performer(blind)
   E.react(src, src.colour, opts.big)
   for _, step in ipairs(recipe) do
-    local o = {}
-    for k, v in pairs(step) do o[k] = v end
-    o.colour = M.step_colour(step, blind, src)
-    o.amount = FinalBoss.director.num(L().step_amount(step, data)) -- Talisman big numbers
-    if opts.big then
-      o.scale = (step.scale or 1) * 1.8
-      o.count = (step.count or 2) + 1
+    if E[step.effect] then
+      local o = {}
+      for k, v in pairs(step) do o[k] = v end
+      o.colour = M.step_colour(step, blind, src)
+      o.amount = FinalBoss.director.num(L().step_amount(step, data)) -- Talisman big numbers
+      if opts.big then
+        o.scale = (step.scale or 1) * 1.8
+        o.count = (step.count or 2) + 1
+      end
+      FinalBoss.util.guard('effect_' .. tostring(step.effect), E[step.effect], src, M.resolve(step.target, data), o)
+    else
+      -- A recipe typo skips its own step; it must not abort the run through the guard.
+      FinalBoss.util.log('warn', 'moves: unknown effect ' .. tostring(step.effect) .. ', step skipped')
     end
-    FinalBoss.util.guard('effect_' .. tostring(step.effect), E[step.effect], src, M.resolve(step.target, data), o)
   end
   local s = recipe.sound
   if s then
@@ -198,7 +203,8 @@ function M.on_modify(blind) M.trigger('modify', blind, {}) end
 
 --- After a real debuff_hand that fired. money_before: dollars before the call (the Ox empties them).
 function M.on_debuff_hand(blind, cards, money_before)
-  local lost = math.max(0, (money_before or 0) - FinalBoss.director.num(G.GAME.dollars))
+  local num = FinalBoss.director.num -- Talisman big numbers
+  local lost = math.max(0, num(money_before or 0) - num(G.GAME.dollars))
   M.trigger('hand_debuff', blind, {cards = cards, played = cards, money = lost})
 end
 

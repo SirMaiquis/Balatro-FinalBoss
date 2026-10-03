@@ -1,6 +1,7 @@
 --- Developer keys, active only when config.dev_mode is on and a run is in progress.
 ---   F5: cycle the forced boss through the vanilla showdowns (6th press clears it). Press it during a
 ---       round or in the shop, before the blind-select screen appears (that screen reads its own ref_table).
+---   Shift+F5: cycle the forced boss through the 23 regular vanilla bosses (step after the last clears it).
 ---   F6: fire the next moment (big_hand, close, last_hand, disabled, defeat)
 ---   F7: dump FinalBoss state to the Lovely log
 local DT = {}
@@ -14,6 +15,8 @@ end
 SMODS.Keybind{key_pressed = 'f5', action = function()
   if not DT.on() then return end
   if G.CONTROLLER and G.CONTROLLER.held_keys and G.CONTROLLER.held_keys.lalt then return end -- smods Alt+F5 restart
+  local held = G.CONTROLLER and G.CONTROLLER.held_keys or {}
+  if held.lshift or held.rshift then return end -- Shift+F5 is the regular-boss cycle below
   DT.force_idx = DT.force_idx % (#DT.SHOWDOWNS + 1) + 1
   local key = DT.SHOWDOWNS[DT.force_idx] -- nil on the last step clears the force
   G.FORCE_BOSS = key
@@ -43,5 +46,34 @@ SMODS.Keybind{key_pressed = 'f6', action = function()
   local ok, fired = FinalBoss.util.guard('dev_f6', FinalBoss.director.fire, moment, {force = true})
   FinalBoss.util.log('info', ('dev: fire %s -> %s'):format(moment, tostring(ok and fired)))
 end}
+
+DT.regular_idx = 0
+
+local function regular_bosses()
+  local list = {}
+  for key, b in pairs(G.P_BLINDS) do
+    if b.boss and not b.boss.showdown and key:sub(1, 3) == 'bl_' and not b.mod then list[#list + 1] = b end
+  end
+  table.sort(list, function(a, b) return (a.order or 0) < (b.order or 0) end)
+  return list
+end
+
+--- Shift+F5: force the next regular vanilla boss (same timing rule as F5: press it in a round or the shop).
+local function force_regular()
+  if not DT.on() then return end
+  local list = regular_bosses()
+  DT.regular_idx = DT.regular_idx % (#list + 1) + 1
+  local b = list[DT.regular_idx] -- nil on the last step clears the force
+  local key = b and b.key
+  G.FORCE_BOSS = key
+  if key and G.GAME.round_resets and G.GAME.round_resets.blind_choices then
+    G.GAME.round_resets.blind_choices.Boss = key
+  end
+  FinalBoss.util.log('info', ('dev: forced regular boss %d/%d = %s'):format(DT.regular_idx, #list, tostring(key)))
+end
+
+-- smods requires every listed held key (lovely/keybind.toml:18-23), so each Shift gets its own keybind.
+SMODS.Keybind{key_pressed = 'f5', held_keys = {'lshift'}, action = force_regular}
+SMODS.Keybind{key_pressed = 'f5', held_keys = {'rshift'}, action = force_regular}
 
 return DT

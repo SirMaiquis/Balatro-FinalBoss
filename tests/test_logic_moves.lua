@@ -155,4 +155,20 @@ T['step_amount reads played cards, money or a number'] = function()
   eq(logic.step_amount({amount = 'money'}, {}), 0)
 end
 
+T['hand_debuff_fired: real calls that returned true or triggered'] = function()
+  eq(logic.hand_debuff_fired(true, true, nil, false), true, 'Psychic/Eye/Mouth')
+  eq(logic.hand_debuff_fired(nil, true, nil, false), true, 'Arm/Ox act and return nil')
+  eq(logic.hand_debuff_fired(nil, false, nil, false), false, 'nothing happened')
+  eq(logic.hand_debuff_fired(true, true, true, false), false, 'highlight preview (check)')
+  eq(logic.hand_debuff_fired(true, true, nil, true), false, 'disabled blind')
+end
+
+T['serpent_draw: only the Serpent after the first play or discard'] = function()
+  eq(logic.serpent_draw{key = 'bl_serpent', disabled = false, hands_played = 1, discards_used = 0}, true)
+  eq(logic.serpent_draw{key = 'bl_serpent', disabled = false, hands_played = 0, discards_used = 2}, true)
+  eq(logic.serpent_draw{key = 'bl_serpent', disabled = false, hands_played = 0, discards_used = 0}, false, 'opening draw')
+  eq(logic.serpent_draw{key = 'bl_serpent', disabled = true, hands_played = 1, discards_used = 0}, false)
+  eq(logic.serpent_draw{key = 'bl_hook', disabled = false, hands_played = 1, discards_used = 0}, false)
+end
+
 return T

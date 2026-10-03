@@ -403,4 +403,18 @@ function logic.step_amount(step, data)
   return tonumber(a) or 0
 end
 
+--- hooks.lua: Blind:debuff_hand applied its effect in a real play (not the highlight preview):
+--- it returned true (Psychic, Eye, Mouth) or set triggered (Arm, Ox act and return nil).
+function logic.hand_debuff_fired(ret, triggered, check, disabled)
+  if check or disabled then return false end
+  return (ret or triggered) and true or false
+end
+
+--- The Serpent's refill: after the first play or discard it draws only 3 cards
+--- (functions/state_events.lua draw_from_deck_to_hand). a: {key, disabled, hands_played, discards_used}
+function logic.serpent_draw(a)
+  return a.key == 'bl_serpent' and not a.disabled
+    and ((a.hands_played or 0) > 0 or (a.discards_used or 0) > 0) or false
+end
+
 return logic

@@ -114,4 +114,94 @@ function Game:update(dt, ...)
   return ret
 end
 
+-- Boss moves (1.1) ---------------------------------------------------------------------------------
+-- Observe where vanilla applies each boss effect (blind.lua) and tell moves.lua. Every wrap calls
+-- the original first with the same arguments and returns all of its results unchanged.
+local unpack = unpack or table.unpack
+local function pack(...) return {n = select('#', ...), ...} end
+local function moves() return FinalBoss.moves end
+local function live() return G.GAME and director().enabled() end
+
+-- Hook and Tooth act in press_play (blind.lua:464-505). The played cards are still
+-- G.hand.highlighted here: vanilla moves them with queued draw events (state_events.lua:479-486).
+local orig_press_play = Blind.press_play
+function Blind:press_play(...)
+  local played
+  if live() then
+    played = {}
+    for _, c in ipairs(G.hand and G.hand.highlighted or {}) do played[#played + 1] = c end
+  end
+  local r = pack(orig_press_play(self, ...))
+  if played and not self.disabled then U.guard('move_play', moves().on_press_play, self, played) end
+  return unpack(r, 1, r.n)
+end
+
+-- Flint halves chips and mult: modify_hand returns modded = true (blind.lua:510-517). smods also ORs
+-- joker modify_hand flags into it (overrides.lua:2641-2647); only Flint has a 'modify' recipe.
+local orig_modify_hand = Blind.modify_hand
+function Blind:modify_hand(...)
+  local r = pack(orig_modify_hand(self, ...))
+  if r[3] and not self.disabled and live() then U.guard('move_modify', moves().on_modify, self) end
+  return unpack(r, 1, r.n)
+end
+
+-- Psychic, Eye, Mouth return true; Arm and Ox act and set triggered (blind.lua:519-570). Only the real
+-- call counts (state_events.lua:614), not the highlight preview (cardarea.lua:168, check = true).
+-- Money is read first: the Ox empties it instantly.
+local orig_debuff_hand = Blind.debuff_hand
+function Blind:debuff_hand(cards, hand, handname, check, ...)
+  local money = (not check and live()) and director().num(G.GAME.dollars) or nil
+  local r = pack(orig_debuff_hand(self, cards, hand, handname, check, ...))
+  if money and FinalBoss.logic.hand_debuff_fired(r[1], self.triggered, check, self.disabled) then
+    U.guard('move_hand_debuff', moves().on_debuff_hand, self, cards, money)
+  end
+  return unpack(r, 1, r.n)
+end
+
+-- Wheel, House, Mark and Fish keep cards face down (blind.lua:605-622; called per card by draw_card,
+-- common_events.lua:402, and CardArea:emplace, cardarea.lua:600). Collected during the draw and
+-- flushed by drawn_to_hand as one batch.
+local orig_stay_flipped = Blind.stay_flipped
+function Blind:stay_flipped(area, card, ...)
+  local r = pack(orig_stay_flipped(self, area, card, ...))
+  if r[1] and area == G.hand and G.STATES and G.STATE == G.STATES.DRAW_TO_HAND and live() then
+    U.guard('move_flipped', moves().collect_flipped, self, card)
+  end
+  return unpack(r, 1, r.n)
+end
+
+-- Runs once each draw to hand is complete (game.lua:3238): Cerulean Bell forces a card and Crimson
+-- Heart disables a joker (blind.lua:572-603). moves.on_drawn also flushes the face-down batch,
+-- stamps newly cursed cards and detects the Serpent's refill.
+local orig_drawn_to_hand = Blind.drawn_to_hand
+function Blind:drawn_to_hand(...)
+  local snap
+  if live() then U.guard('move_snapshot', function() snap = moves().snapshot(self) end) end
+  local r = pack(orig_drawn_to_hand(self, ...))
+  if snap then
+    U.guard('move_drawn', moves().on_drawn, self, snap)
+  end
+  return unpack(r, 1, r.n)
+end
+
+-- A joker sale disables Verdant Leaf: Card:sell_card sets G.CONTROLLER.locks.selling_card
+-- (card.lua:1590) and calls G.GAME.blind:disable() inside the sale's event (card.lua:1616-1620).
+local orig_disable = Blind.disable
+function Blind:disable(...)
+  local selling = (G.CONTROLLER and G.CONTROLLER.locks and G.CONTROLLER.locks.selling_card) and true or false
+  local r = pack(orig_disable(self, ...))
+  if live() then
+    U.guard('move_disable', moves().on_disable, self, selling)
+  end
+  return unpack(r, 1, r.n)
+end
+
+-- Bosses without a recipe (modded) burst when they wiggle (blind.lua:417-422).
+local orig_wiggle = Blind.wiggle
+function Blind:wiggle(...)
+  local r = pack(orig_wiggle(self, ...))
+  if live() then U.guard('move_generic', moves().on_wiggle, self) end
+  return unpack(r, 1, r.n)
+end
+
 return H

@@ -41,6 +41,7 @@ end
 function Dir.on_blind_set(blind)
   local st = FinalBoss.util.state()
   FinalBoss.dialogue.reset(blind)
+  FinalBoss.moves.on_blind_set()
   local proto = blind.config.blind or {}
   if not proto.key then st.encounter = nil; return end
   local entry = FinalBoss.registry.get(proto.key)
@@ -56,7 +57,7 @@ function Dir.on_blind_set(blind)
     last_variant = {}, ended = false, last_hand_seen = nil, showdown = is_showdown,
     cinematic = (tier == 'full' and is_showdown and FinalBoss.config.cinematic) and true or false}
   st.lost_to = nil
-  if tier == 'none' then return end
+  if tier == 'none' then Dir.schedule_start(proto.key); return end
   if tier == 'full' then
     st.encounter.track = FinalBoss.music.pick_track(entry)
     FinalBoss.fx.play(entry.fx.intro, blind)
@@ -72,25 +73,35 @@ function Dir.on_blind_set(blind)
     func = function() FinalBoss.util.guard('intro', Dir.play_intro, proto.key); return true end}))
 end
 
+--- No intro will play: the boss's start move comes INTRO_DELAY after the blind is set (the chip
+--- has landed). With an intro, Dir.play_intro starts it when the intro ends.
+function Dir.schedule_start(blind_key)
+  G.E_MANAGER:add_event(Event({trigger = 'after', delay = Dir.INTRO_DELAY, timer = 'REAL',
+    blocking = false, blockable = false,
+    func = function() FinalBoss.util.guard('start_move', FinalBoss.moves.start, blind_key); return true end}))
+end
+
 function Dir.play_intro(blind_key)
   local enc, blind = current(blind_key)
-  -- In a cinematic showdown the letterbox retracts when the intro dialogue ends (or never starts).
-  -- retract_bars is a no-op without bars, so it is safe for every encounter.
-  local on_end = enc and enc.cinematic and FinalBoss.cinematic.retract_bars or nil
-  local function nothing_to_say() FinalBoss.cinematic.retract_bars() end
-  if not enc or not FinalBoss.config.dialogue or blind.disabled then return nothing_to_say() end
+  -- When the intro ends (or never starts): the letterbox retracts (a no-op without bars) and the
+  -- boss performs its start move (moves.start runs once per encounter).
+  local function finish()
+    FinalBoss.cinematic.retract_bars()
+    FinalBoss.moves.start(blind_key)
+  end
+  if not enc or not FinalBoss.config.dialogue or blind.disabled then return finish() end
   -- A hand is already being played (the delayed intro came late): skip the intro for this
   -- encounter rather than start it only to cut it at once.
-  if G.STATES and G.STATE == G.STATES.HAND_PLAYED then return nothing_to_say() end
+  if G.STATES and G.STATE == G.STATES.HAND_PLAYED then return finish() end
   local steps = {}
   for _, moment in ipairs(FinalBoss.logic.intro_sequence(enc.tier)) do
     local key = FinalBoss.registry.resolve(enc.key, moment, enc.last_variant)
     if key then steps[#steps + 1] = {key = key, vars = Dir.vars(blind)} end
   end
-  if #steps == 0 then return nothing_to_say() end
+  if #steps == 0 then return finish() end
   local entry = FinalBoss.registry.get(enc.key)
   FinalBoss.dialogue.play_sequence(blind, steps,
-    FinalBoss.logic.line_duration(FinalBoss.config.intro_speed), entry.voice.pitch, on_end)
+    FinalBoss.logic.line_duration(FinalBoss.config.intro_speed), entry.voice.pitch, finish)
 end
 
 --- Continuing a saved run: restore FX and stage for an unfinished full encounter, never replay the intro.
@@ -308,7 +319,10 @@ function Dir.check_interrupt()
   enc.fired.interrupted = true
   enc.interrupt_hand = G.GAME.current_round.hands_played -- this hand's id at context.after
   if cine then C.interrupt() end
-  D.end_intro() -- remaining lines dropped; its on_end (letterbox retract) runs once
+  D.end_intro() -- remaining lines dropped; its on_end (letterbox retract, start move) runs once
+  -- An interrupted cinematic drops its on_done, so Dir.play_intro never runs: the start move must
+  -- still play (moves.start runs once per encounter; a repeat call is a no-op).
+  FinalBoss.util.guard('start_move', FinalBoss.moves.start, enc.key)
   FinalBoss.avatar.anger(blind)
   Dir.fire('interrupted', {force = true})
 end
