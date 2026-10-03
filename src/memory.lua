@@ -38,61 +38,94 @@ function Mem.data()
   return p.FinalBoss
 end
 
-local function save()
-  if G and G.save_progress then G:save_progress() end
+--- Queue the profile write and force it. Game:save_progress only queues the request; Game:update
+--- writes it when G.FILE_HANDLER.force is set (or on a stage change / every 30 s), and quitting does
+--- not flush. Vanilla follows its own save_progress with force = true (state_events.lua:74-75).
+function Mem.save()
+  if not (G and G.save_progress) then return end
+  G:save_progress()
+  G.FILE_HANDLER = G.FILE_HANDLER or {}
+  G.FILE_HANDLER.force = true
+end
+
+--- Memory is bookkeeping: an error here is logged and must never break the intro, the finale or the
+--- game-over cleanup that called it (and never disables the mod for the run, unlike util.guard).
+--- Returns fn's results, or nothing after an error.
+local function safe(name, fn, ...)
+  local res = {pcall(fn, ...)}
+  if not res[1] then
+    FinalBoss.util.log('error', ('memory.%s failed: %s'):format(name, tostring(res[2])))
+    return
+  end
+  return res[2], res[3] -- (no function here returns more than two values)
 end
 
 --- Blind set (once per encounter; Continue does not call it).
 function Mem.on_fight(key)
-  local m = Mem.data()
-  if not m then return end
-  FinalBoss.logic.record_result(m, key, 'fight')
-  save()
+  return safe('on_fight', function()
+    local m = Mem.data()
+    if not m then return end
+    FinalBoss.logic.record_result(m, key, 'fight')
+    Mem.save()
+  end)
 end
 
 --- The player's last result against this boss: 'won', 'lost' or nil.
 function Mem.last(key)
-  local m = Mem.data()
-  local r = m and m.bosses[key]
-  return r and r.last or nil
+  return safe('last', function()
+    local m = Mem.data()
+    local r = m and m.bosses[key]
+    return r and r.last or nil
+  end)
 end
 
 function Mem.is_nemesis(key)
-  local m = Mem.data()
-  return (m and m.nemesis == key) and true or false
+  return safe('is_nemesis', function()
+    local m = Mem.data()
+    return (m and m.nemesis == key) and true or false
+  end) or false
 end
 
 --- The player beat the encounter's boss. Returns the memory and whether it was the nemesis (it is
 --- then broken until it beats the player again).
+--- (nil, false) when there is no profile or the record failed.
 function Mem.on_win(enc)
-  local m = Mem.data()
-  if not m then return nil, false end
-  FinalBoss.logic.record_result(m, enc.key, 'won')
-  if enc.showdown then
-    m.final_defeated[enc.key] = true
-    if enc.twists_on then m.final_defeated_twisted[enc.key] = true end
-  end
-  local beaten = m.nemesis == enc.key
-  if beaten then FinalBoss.logic.break_nemesis(m, enc.key) end
-  save()
-  return m, beaten
+  local m, beaten = safe('on_win', function()
+    local mem = Mem.data()
+    if not mem then return nil, false end
+    FinalBoss.logic.record_result(mem, enc.key, 'won')
+    if enc.showdown then
+      mem.final_defeated[enc.key] = true
+      if enc.twists_on then mem.final_defeated_twisted[enc.key] = true end
+    end
+    local broke = mem.nemesis == enc.key
+    if broke then FinalBoss.logic.break_nemesis(mem, enc.key) end
+    Mem.save()
+    return mem, broke
+  end)
+  return m, beaten or false
 end
 
---- The boss ended the run.
+--- The boss ended the run. Returns the memory (nil: no profile or it failed).
 function Mem.on_loss(key)
-  local m = Mem.data()
-  if not m then return end
-  FinalBoss.logic.record_result(m, key, 'lost')
-  save()
+  return safe('on_loss', function()
+    local m = Mem.data()
+    if not m then return nil end
+    FinalBoss.logic.record_result(m, key, 'lost')
+    Mem.save()
+    return m
+  end)
 end
 
 --- The player interrupted this boss's intro. Returns the memory.
 function Mem.on_interrupt(key)
-  local m = Mem.data()
-  if not m then return nil end
-  m.interrupted[key] = true
-  save()
-  return m
+  return safe('on_interrupt', function()
+    local m = Mem.data()
+    if not m then return nil end
+    m.interrupted[key] = true
+    Mem.save()
+    return m
+  end)
 end
 
 return Mem

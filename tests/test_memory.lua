@@ -13,6 +13,10 @@ local function setup(profile)
   local profiles = {p1 = profile}
   _G.G = {PROFILES = profiles, SETTINGS = {profile = 'p1'}}
   function _G.G:save_progress() ctx.saves = ctx.saves + 1 end
+  ctx.G = _G.G
+  ctx.logs = {}
+  local function log(msg) ctx.logs[#ctx.logs + 1] = msg end
+  _G.sendInfoMessage, _G.sendWarnMessage, _G.sendErrorMessage, _G.sendDebugMessage = log, log, log, log
   package.loaded['src.util'] = nil
   package.loaded['src.logic'] = nil
   _G.FinalBoss = {util = require('src.util'), logic = require('src.logic')}
@@ -41,6 +45,31 @@ T['memory: created in the profile, saved on each record'] = function()
   ctx.mem.on_interrupt('bl_x')
   eq(ctx.profile.FinalBoss.interrupted.bl_x, true)
   eq(ctx.saves, 3)
+  eq(ctx.G.FILE_HANDLER.force, true, 'the profile write must be forced')
+end
+
+T['memory: every record forces the write'] = function()
+  for _, record in ipairs({
+      function(mem) mem.on_fight('bl_x') end, function(mem) mem.on_loss('bl_x') end,
+      function(mem) mem.on_win({key = 'bl_x'}) end, function(mem) mem.on_interrupt('bl_x') end}) do
+    local ctx = setup({})
+    ctx.G.FILE_HANDLER = nil
+    record(ctx.mem)
+    eq(ctx.G.FILE_HANDLER and ctx.G.FILE_HANDLER.force, true)
+  end
+end
+
+T['memory: a failing save is logged, not raised, and the record stays'] = function()
+  local ctx = setup({})
+  function ctx.G:save_progress() error('disk') end
+  local m = ctx.mem.on_loss('bl_x')
+  eq(m, nil, 'a failed record reports nothing')
+  eq(ctx.profile.FinalBoss.bosses.bl_x.losses, 1)
+  local mem, beaten = ctx.mem.on_win({key = 'bl_x'})
+  eq(mem, nil); eq(beaten, false)
+  eq(ctx.mem.on_interrupt('bl_x'), nil)
+  ctx.mem.on_fight('bl_x')
+  assert(#ctx.logs >= 4, 'each failure is logged')
 end
 
 T['memory: a win on a showdown records final_defeated (twisted only with twists)'] = function()

@@ -146,8 +146,7 @@ function Dir.on_round_end()
   if G.STATE == G.STATES.GAME_OVER then
     enc.ended = true
     if enc.boss and not enc.recorded then
-      enc.recorded = true
-      FinalBoss.memory.on_loss(enc.key) -- this boss ended the run
+      if FinalBoss.memory.on_loss(enc.key) then enc.recorded = true end -- this boss ended the run
     end
     FinalBoss.fx.stop()
     FinalBoss.arena.stop(true)
@@ -314,8 +313,7 @@ function Dir.on_blind_defeated()
   local raw = FinalBoss.util.state().encounter
   local gb = G.GAME.blind
   if raw and raw.boss and not raw.recorded and gb and gb.config.blind and gb.config.blind.key == raw.key then
-    raw.recorded = true
-    FinalBoss.memory.on_win(raw)
+    if FinalBoss.memory.on_win(raw) then raw.recorded = true end
   end
   local enc, blind = current()
   if not enc then return end
@@ -348,6 +346,7 @@ function Dir.check_interrupt()
   if not FinalBoss.logic.should_interrupt{hand_played = true, cinematic_intro = cine,
       dialogue_intro = talk, tier = enc.tier, ended = enc.ended, fired = enc.fired} then return end
   enc.fired.interrupted = true
+  FinalBoss.memory.on_interrupt(enc.key) -- recorded before any visual work can fail
   enc.interrupt_hand = G.GAME.current_round.hands_played -- this hand's id at context.after
   if cine then C.interrupt() end
   D.end_intro() -- remaining lines dropped; its on_end (letterbox retract, start move) runs once
@@ -356,7 +355,6 @@ function Dir.check_interrupt()
   FinalBoss.util.guard('start_move', FinalBoss.moves.start, enc.key)
   FinalBoss.avatar.anger(blind)
   Dir.fire('interrupted', {force = true})
-  FinalBoss.memory.on_interrupt(enc.key)
 end
 
 --- Per-frame tick (hooks: Game:update wrap). Cheap when nothing is on stage or pending.
