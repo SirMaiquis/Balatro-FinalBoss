@@ -355,6 +355,16 @@ T['step_amount reads played cards, money or a number'] = function()
   eq(logic.step_amount({amount = 'money'}, {}), 0)
 end
 
+T['cursed_on_load: a debuffed hand card counts unless something else debuffs it'] = function()
+  eq(logic.cursed_on_load(true, nil, nil, nil), true, 'debuffed, flag not saved')
+  eq(logic.cursed_on_load(true, true, nil, {}), true, 'flag set')
+  eq(logic.cursed_on_load(false, nil, nil, nil), false, 'not debuffed')
+  eq(logic.cursed_on_load(true, false, nil, nil), false, 'smods says not by the blind')
+  eq(logic.cursed_on_load(true, nil, true, nil), false, 'perma debuff')
+  eq(logic.cursed_on_load(true, nil, nil, {other_mod = true}), false, 'another debuff source')
+  eq(logic.cursed_on_load(true, nil, nil, {other_mod = false}), true, 'a released source')
+end
+
 T['hand_debuff_fired: real calls that returned true or triggered'] = function()
   eq(logic.hand_debuff_fired(true, true, nil, false), true, 'Psychic/Eye/Mouth')
   eq(logic.hand_debuff_fired(nil, true, nil, false), true, 'Arm/Ox act and return nil')

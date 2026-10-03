@@ -130,6 +130,10 @@ function Dir.on_blind_loaded(blind)
   -- present() checks the encounter: this blind, nemesis, not over, Boss memory on.
   FinalBoss.memory.unpresent()
   FinalBoss.memory.present(blind)
+  -- Curse marks (any tier) come back on the cursed cards already in hand. Visual only: a failure is
+  -- logged and the rest of the restore still runs.
+  local ok, err = pcall(FinalBoss.moves.restore_marks, blind)
+  if not ok then FinalBoss.util.log('warn', 'curse mark restore failed: ' .. tostring(err)) end
   if not enc or enc.tier ~= 'full' or enc.ended then return end
   if not (blind.config.blind and blind.config.blind.key == enc.key) then return end
   FinalBoss.fx.resume(blind)

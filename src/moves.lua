@@ -380,6 +380,21 @@ local function newly_cursed()
   return out
 end
 
+--- Continue (Dir.on_blind_loaded): curse marks are visuals, never saved, so the cursed cards already in
+--- hand get theirs back (no move plays). They count as stamped: the next draw does not curse them anew.
+function M.restore_marks(blind)
+  if not (blind and blind.config and blind.config.blind and blind.config.blind.key) then return end
+  local cursed = {}
+  for _, c in ipairs(G.hand and G.hand.cards or {}) do
+    local ab = c.ability or {}
+    if not M.stamped[c] and L().cursed_on_load(c.debuff, c.debuffed_by_blind, ab.perma_debuff, ab.debuff_sources) then
+      M.stamped[c] = true
+      cursed[#cursed + 1] = c
+    end
+  end
+  if #cursed > 0 then M.mark_cursed(blind, cursed) end
+end
+
 --- After vanilla's drawn_to_hand (the draw is complete): the face-down batch, newly cursed cards,
 --- the Bell's newly forced card and the Heart's disabled jokers.
 function M.on_drawn(blind, snap)

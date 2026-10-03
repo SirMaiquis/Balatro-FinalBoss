@@ -563,6 +563,18 @@ function logic.step_amount(step, data)
   return tonumber(a) or 0
 end
 
+--- Continue: is this debuffed hand card cursed by the blind? debuffed_by_blind (by_blind) is not saved
+--- with the card, so a debuffed card counts unless something else debuffs it: a perma debuff or a
+--- debuff source (smods ability.debuff_sources: another mod, the Leaf's regrowth).
+function logic.cursed_on_load(debuff, by_blind, perma, sources)
+  if not debuff or by_blind == false or perma then return false end
+  if by_blind then return true end
+  for _, v in pairs(sources or {}) do
+    if v then return false end
+  end
+  return true
+end
+
 --- hooks.lua: Blind:debuff_hand applied its effect in a real play (not the highlight preview):
 --- it returned true (Psychic, Eye, Mouth) or set triggered (Arm, Ox act and return nil).
 function logic.hand_debuff_fired(ret, triggered, check, disabled)
