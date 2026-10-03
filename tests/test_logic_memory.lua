@@ -170,4 +170,59 @@ T['phase_achievements: phase I to III in one hand'] = function()
   eq(#logic.phase_achievements(2, 3), 0)
 end
 
+-- Regression tests for fix round 1
+
+T['defeat_achievements: plain showdown win has survivor but not comeback'] = function()
+  local ids = logic.defeat_achievements{showdown = true, start = 500, hands_left = 2, hand = 5,
+    final_defeated = {}, final_defeated_twisted = {}}
+  assert(has(ids, 'fb_showdown_survivor'), 'has showdown_survivor')
+  assert(not has(ids, 'fb_comeback'), 'no comeback (hands_left != 0)')
+end
+
+T['defeat_achievements: overkill requires start <= 0, not hand == 1'] = function()
+  local ids = logic.defeat_achievements{showdown = true, start = 1, hands_left = 0, hand = 1,
+    final_defeated = {}, final_defeated_twisted = {}}
+  assert(has(ids, 'fb_showdown_survivor'), 'survivor yes')
+  assert(not has(ids, 'fb_overkill'), 'overkill no (start = 1)')
+  assert(has(ids, 'fb_comeback'), 'comeback yes (hands_left == 0)')
+  -- Now test with start = 0
+  local ids2 = logic.defeat_achievements{showdown = true, start = 0, hands_left = 2, hand = 5,
+    final_defeated = {}, final_defeated_twisted = {}}
+  assert(has(ids2, 'fb_overkill'), 'overkill yes (start = 0)')
+  assert(not has(ids2, 'fb_comeback'), 'comeback no (hands_left = 2)')
+end
+
+T['defeat_achievements: nemesis_slayer awarded on showdown with nemesis'] = function()
+  local ids = logic.defeat_achievements{showdown = true, start = 1, hands_left = 1,
+    final_defeated = {}, final_defeated_twisted = {}, nemesis = true}
+  assert(has(ids, 'fb_nemesis_slayer'), 'nemesis_slayer awarded on showdown')
+end
+
+T['defeat_achievements: comeback only when hands_left == 0'] = function()
+  local ids1 = logic.defeat_achievements{showdown = true, start = 1, hands_left = 1,
+    final_defeated = {}, final_defeated_twisted = {}}
+  assert(not has(ids1, 'fb_comeback'), 'no comeback (hands_left = 1)')
+  local ids2 = logic.defeat_achievements{showdown = true, start = 1, hands_left = 0,
+    final_defeated = {}, final_defeated_twisted = {}}
+  assert(has(ids2, 'fb_comeback'), 'comeback yes (hands_left = 0)')
+end
+
+T['intro_plan: nil roll treated as 1 (above REMATCH_CHANCE)'] = function()
+  eq(table.concat(logic.intro_plan{tier = 'light', memory = true, last = 'won', roll = nil}, ','), 'intro')
+end
+
+T['intro_plan: nemesis line shown even without last'] = function()
+  local ids = logic.intro_plan{tier = 'full', memory = true, last = nil, nemesis = true, roll = 0}
+  eq(table.concat(ids, ','), 'nemesis_intro,name,intro,closer')
+end
+
+T['record_result: works on records with missing fields (or 0 guards)'] = function()
+  local m = logic.new_memory()
+  m.bosses['bl_test'] = {losses = 2}  -- missing fights, wins, last, last_loss
+  logic.record_result(m, 'bl_test', 'lost')
+  local r = m.bosses['bl_test']
+  eq(r.losses, 3, 'losses incremented from partial record')
+  eq(m.nemesis, 'bl_test', 'nemesis computed with or 0 guards on missing fields')
+end
+
 return T
