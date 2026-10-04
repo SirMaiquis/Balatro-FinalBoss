@@ -6,13 +6,18 @@ return {
             fb_cfg_music = "Музыка поединков",
             fb_cfg_fx = "Эффекты экрана",
             fb_cfg_cinematic = "Сцены поединков",
+            fb_cfg_moves = "Приёмы боссов",
+            fb_cfg_phase_twists = "Фазы боссов меняют правила",
             fb_showdown_title = "ПОЕДИНОК",
+            fb_nemesis_title = "НЕМЕЗИДА",
+            fb_nemesis_defeated = "НЕМЕЗИДА ПОВЕРЖЕНА",
             fb_cfg_intro_speed = "Скорость заставки",
             fb_speed_slow = "Медленно",
             fb_speed_normal = "Обычно",
             fb_speed_fast = "Быстро",
             fb_cfg_min_ante = "Диалоги боссов с анте",
-            fb_cfg_dev_mode = "Клавиши разработчика (F5-F7)",
+            fb_cfg_memory = "Память боссов",
+            fb_cfg_dev_mode = "Клавиши разработчика (F5-F9)",
             fb_cfg_showdown_enabled = "Свое расписание поединков",
             fb_cfg_start_ante = "Первый поединок на анте",
             fb_cfg_every = "Затем каждые N анте",
@@ -31,6 +36,30 @@ return {
             fb_tip_me_message_1 = "Если вам нравится FinalBoss, поддержите меня",
             fb_tip_me_message_2 = "небольшим донатом.",
             fb_tip_me_message_3 = "Я очень это ценю!",
+        },
+        achievement_names = {
+            ach_FinalBoss_fb_showdown_survivor = "Выживший в поединке",
+            ach_FinalBoss_fb_clean_sweep = "Подчистую",
+            ach_FinalBoss_fb_rude = "Какая грубость!",
+            ach_FinalBoss_fb_no_manners = "Без манер",
+            ach_FinalBoss_fb_last_laugh = "Смеётся последним",
+            ach_FinalBoss_fb_overkill = "Сокрушительно",
+            ach_FinalBoss_fb_phase_skipper = "Через фазу",
+            ach_FinalBoss_fb_comeback = "Камбэк",
+            ach_FinalBoss_fb_nemesis_slayer = "Гроза немезиды",
+            ach_FinalBoss_fb_twisted = "Наизнанку",
+        },
+        achievement_descriptions = {
+            ach_FinalBoss_fb_showdown_survivor = "Победить финального босса",
+            ach_FinalBoss_fb_clean_sweep = "Победить всех 5 финальных боссов базовой игры",
+            ach_FinalBoss_fb_rude = "Перебить босса, пока он говорит",
+            ach_FinalBoss_fb_no_manners = "Перебить 10 разных боссов",
+            ach_FinalBoss_fb_last_laugh = "Победить босса рукой, сыгранной сразу после его смеха",
+            ach_FinalBoss_fb_overkill = "Победить финального босса с полным здоровьем за одну руку",
+            ach_FinalBoss_fb_phase_skipper = "Перевести финального босса из фазы I в фазу III за одну руку",
+            ach_FinalBoss_fb_comeback = "Победить финального босса последней рукой",
+            ach_FinalBoss_fb_nemesis_slayer = "Победить свою немезиду",
+            ach_FinalBoss_fb_twisted = "Победить всех 5 финальных боссов базовой игры со сменой правил в фазах",
         },
         quips = {
             -- Config menu header card
@@ -73,6 +102,22 @@ return {
             fb_generic_interrupted_1 = {"Моя речь!"},
             fb_generic_interrupted_2 = {"Ну... вот, значит,", "как."},
             fb_generic_interrupted_3 = {"Даже не", "поздороваешься?"},
+            fb_generic_phase2_1 = {"Хватит игр!"},
+            fb_generic_phase3_1 = {"Вот теперь я", "по-настоящему зол!"},
+            fb_generic_rematch_won_1 = {"Опять ты?", "Я тебя помню."},
+            fb_generic_rematch_won_2 = {"В прошлый раз тебе", "повезло. Признай."},
+            fb_generic_rematch_won_3 = {"Время реванша.", "Я тренировался."},
+            fb_generic_rematch_lost_1 = {"Пришёл за новой", "взбучкой?"},
+            fb_generic_rematch_lost_2 = {"Ничему не научился", "в прошлый раз?"},
+            fb_generic_rematch_lost_3 = {"А, это ты.", "Неудачник."},
+
+            -- Nemesis (shared, #1# = boss name)
+            fb_nemesis_intro_1 = {"Помнишь меня?", "#1# не забывает."},
+            fb_nemesis_intro_2 = {"Снова #1#.", "Твой заклятый враг."},
+            fb_nemesis_intro_3 = {"От заклятого врага", "не сбежать."},
+            fb_nemesis_defeat_1 = {"Как?! Я же твой", "заклятый враг!"},
+            fb_nemesis_defeat_2 = {"#1#... это конец."},
+            fb_nemesis_defeat_3 = {"Это ещё не конец,", "соперник..."},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Но я", "Крюк"},
@@ -85,6 +130,8 @@ return {
             fb_bl_hook_defeat_1 = {"Ладно... сниму", "тебя с крючка."},
             fb_bl_hook_gloat_1 = {"Попался на крючок!"},
             fb_bl_hook_interrupted_1 = {"Грубиян! Я был", "на полуслове!"},
+            fb_bl_hook_rematch_won_1 = {"В прошлый раз ты", "сорвался с крючка."},
+            fb_bl_hook_rematch_lost_1 = {"Снова на крючок", "захотелось?"},
 
             -- The Ox: playing your most played hand sets money to $0
             fb_bl_ox_name_1 = {"Но я", "Буйвол"},
@@ -97,6 +144,8 @@ return {
             fb_bl_ox_defeat_1 = {"Ты взял быка", "за рога..."},
             fb_bl_ox_gloat_1 = {"Теперь ты банкрот!"},
             fb_bl_ox_interrupted_1 = {"Ах, вот ТАК, значит,", "всё будет."},
+            fb_bl_ox_rematch_won_1 = {"Однажды ты увернулся", "от моих рогов..."},
+            fb_bl_ox_rematch_lost_1 = {"Всё ещё банкрот", "с прошлого раза?"},
 
             -- The House: first hand is drawn face down
             fb_bl_house_name_1 = {"Но я", "Дом"},
@@ -109,6 +158,8 @@ return {
             fb_bl_house_defeat_1 = {"Дом...", "рухнул."},
             fb_bl_house_gloat_1 = {"Дом выигрывает!"},
             fb_bl_house_interrupted_1 = {"Правило дома:", "играть рано!"},
+            fb_bl_house_rematch_won_1 = {"Дом проиграл однажды.", "Больше никогда."},
+            fb_bl_house_rematch_lost_1 = {"С возвращением.", "Дом всё помнит."},
 
             -- The Wall: extra large blind
             fb_bl_wall_name_1 = {"Но я", "Стена"},
@@ -121,6 +172,8 @@ return {
             fb_bl_wall_defeat_1 = {"Стена...", "рушится."},
             fb_bl_wall_gloat_1 = {"Уперся в стену!"},
             fb_bl_wall_interrupted_1 = {"Как со стеной", "говорю... стоп."},
+            fb_bl_wall_rematch_won_1 = {"Однажды ты перелез", "через меня. Не дважды."},
+            fb_bl_wall_rematch_lost_1 = {"Снова упрёшься", "в ту же стену?"},
 
             -- The Wheel: 1 in 7 cards get drawn face down
             fb_bl_wheel_name_1 = {"Но я", "Колесо"},
@@ -133,6 +186,8 @@ return {
             fb_bl_wheel_defeat_1 = {"Колесо фортуны", "повернулось против меня."},
             fb_bl_wheel_gloat_1 = {"Колесо", "повернулось!"},
             fb_bl_wheel_interrupted_1 = {"Тпру! Не спеши,", "я ещё кручусь!"},
+            fb_bl_wheel_rematch_won_1 = {"В прошлый раз удача", "была на твоей стороне..."},
+            fb_bl_wheel_rematch_lost_1 = {"Ещё разок крутнём?", "Казино в плюсе, друг."},
 
             -- The Arm: decrease level of played poker hand
             fb_bl_arm_name_1 = {"Но я", "Рука"},
@@ -145,6 +200,8 @@ return {
             fb_bl_arm_defeat_1 = {"Ты победил мою", "сильную руку."},
             fb_bl_arm_gloat_1 = {"Руки опустились!"},
             fb_bl_arm_interrupted_1 = {"Руки прочь! Я ещё", "не накрасовался!"},
+            fb_bl_arm_rematch_won_1 = {"В прошлый раз ты", "меня переборол."},
+            fb_bl_arm_rematch_lost_1 = {"Пришёл на новый", "армрестлинг?"},
 
             -- The Club: all Club cards are debuffed
             fb_bl_club_name_1 = {"Но я", "Трефа"},
@@ -157,6 +214,8 @@ return {
             fb_bl_club_defeat_1 = {"Клуб закрыт.", "Пора уходить..."},
             fb_bl_club_gloat_1 = {"Получи дубинкой!"},
             fb_bl_club_interrupted_1 = {"Эй! В моём клубе", "я говорю первым."},
+            fb_bl_club_rematch_won_1 = {"В прошлый раз ты", "вломился в мой клуб."},
+            fb_bl_club_rematch_lost_1 = {"Членство продлил?", "С возвращением."},
 
             -- The Fish: cards drawn face down after each hand played
             fb_bl_fish_name_1 = {"Но я", "Рыба"},
@@ -169,6 +228,8 @@ return {
             fb_bl_fish_defeat_1 = {"Поймана...", "профессионалом."},
             fb_bl_fish_gloat_1 = {"Ты сел на мель!"},
             fb_bl_fish_interrupted_1 = {"Ты оборвал", "мне леску!"},
+            fb_bl_fish_rematch_won_1 = {"Тот, кто от меня", "ушёл..."},
+            fb_bl_fish_rematch_lost_1 = {"Снова на крючке,", "рыбка?"},
 
             -- The Psychic: must play 5 cards
             fb_bl_psychic_name_1 = {"Но я", "Экстрасенс"},
@@ -181,6 +242,8 @@ return {
             fb_bl_psychic_defeat_1 = {"Я это предвидел.", "...Или нет?"},
             fb_bl_psychic_gloat_1 = {"Я так и знал!"},
             fb_bl_psychic_interrupted_1 = {"Я знал, что ты", "так сделаешь. Грубо."},
+            fb_bl_psychic_rematch_won_1 = {"Твою прошлую победу", "я не предвидел."},
+            fb_bl_psychic_rematch_lost_1 = {"Я знал, что", "ты вернёшься."},
 
             -- The Goad: all Spade cards are debuffed
             fb_bl_goad_name_1 = {"Но я", "Побуждение"},
@@ -193,6 +256,8 @@ return {
             fb_bl_goad_defeat_1 = {"Черт возьми,", "ты победил."},
             fb_bl_goad_gloat_1 = {"Копай себе могилу!"},
             fb_bl_goad_interrupted_1 = {"Дразнишь МЕНЯ?", "Ну ладно!"},
+            fb_bl_goad_rematch_won_1 = {"В прошлый раз ты", "выбрался из могилы."},
+            fb_bl_goad_rematch_lost_1 = {"Пришёл копать", "могилу поглубже?"},
 
             -- The Water: start with 0 discards
             fb_bl_water_name_1 = {"Но я", "Вода"},
@@ -205,6 +270,8 @@ return {
             fb_bl_water_defeat_1 = {"Я совсем", "высохла..."},
             fb_bl_water_gloat_1 = {"Ты смыт!"},
             fb_bl_water_interrupted_1 = {"Перебивать? Теперь", "ты пойдёшь ко дну!"},
+            fb_bl_water_rematch_won_1 = {"В прошлый раз ты", "удержался на плаву."},
+            fb_bl_water_rematch_lost_1 = {"Снова пойдёшь", "ко дну?"},
 
             -- The Window: all Diamond cards are debuffed
             fb_bl_window_name_1 = {"Но я", "Окно"},
@@ -217,6 +284,8 @@ return {
             fb_bl_window_defeat_1 = {"Мое окно", "возможностей закрылось."},
             fb_bl_window_gloat_1 = {"Бубны? Ослаблены!"},
             fb_bl_window_interrupted_1 = {"Мои слова летят", "в окно?!"},
+            fb_bl_window_rematch_won_1 = {"Однажды ты выбил", "моё окно."},
+            fb_bl_window_rematch_lost_1 = {"Опять глазеешь", "на витрины?"},
 
             -- The Manacle: -1 hand size
             fb_bl_manacle_name_1 = {"Но я", "Кандалы"},
@@ -229,6 +298,8 @@ return {
             fb_bl_manacle_defeat_1 = {"Наконец свободен...", "от меня."},
             fb_bl_manacle_gloat_1 = {"Руки в наручниках!"},
             fb_bl_manacle_interrupted_1 = {"Стоять! За это я", "закую тебя в цепи!"},
+            fb_bl_manacle_rematch_won_1 = {"Однажды ты сбросил", "мои цепи."},
+            fb_bl_manacle_rematch_lost_1 = {"Снова в цепях,", "как я погляжу."},
 
             -- The Eye: no repeat hand types this round
             fb_bl_eye_name_1 = {"Но я", "Глаз"},
@@ -241,6 +312,8 @@ return {
             fb_bl_eye_defeat_1 = {"С глаз долой,", "из сердца вон..."},
             fb_bl_eye_gloat_1 = {"Я же говорил!"},
             fb_bl_eye_interrupted_1 = {"Я всё видел!", "Как грубо."},
+            fb_bl_eye_rematch_won_1 = {"Слежу за тобой с", "того поражения."},
+            fb_bl_eye_rematch_lost_1 = {"Вижу, ты", "вернулся."},
 
             -- The Mouth: play only 1 hand type this round
             fb_bl_mouth_name_1 = {"Но я", "Пасть"},
@@ -253,6 +326,8 @@ return {
             fb_bl_mouth_defeat_1 = {"У меня нет слов..."},
             fb_bl_mouth_gloat_1 = {"Заткнись,", "неудачник!"},
             fb_bl_mouth_interrupted_1 = {"Эй! Этот рот", "ещё говорил!"},
+            fb_bl_mouth_rematch_won_1 = {"В прошлый раз ты", "заткнул мне пасть."},
+            fb_bl_mouth_rematch_lost_1 = {"Та же рутина, что", "и в прошлый раз?"},
 
             -- The Plant: all face cards are debuffed
             fb_bl_plant_name_1 = {"Но я", "Цветок"},
@@ -265,6 +340,8 @@ return {
             fb_bl_plant_defeat_1 = {"Увял...", "Я отрасту снова."},
             fb_bl_plant_gloat_1 = {"Взгляни правде", "в лицо!"},
             fb_bl_plant_interrupted_1 = {"Дай сперва вырасти,", "нетерпеливый!"},
+            fb_bl_plant_rematch_won_1 = {"Ты вырвал меня с корнем.", "Я отрос."},
+            fb_bl_plant_rematch_lost_1 = {"Снова в моём", "саду, я погляжу."},
 
             -- The Serpent: after play or discard, always draw 3 cards
             fb_bl_serpent_name_1 = {"Но я", "Змей"},
@@ -277,6 +354,8 @@ return {
             fb_bl_serpent_defeat_1 = {"Сбросил кожу...", "и гордость."},
             fb_bl_serpent_gloat_1 = {"До ссс-видания!"},
             fb_bl_serpent_interrupted_1 = {"Ш-ш-ш! Не", "перебивай!"},
+            fb_bl_serpent_rematch_won_1 = {"Однажды ты ускользнул", "из моих колец."},
+            fb_bl_serpent_rematch_lost_1 = {"Ссстало быть,", "ты вернулся..."},
 
             -- The Pillar: cards played previously this ante are debuffed
             fb_bl_pillar_name_1 = {"Но я", "Столп"},
@@ -289,6 +368,8 @@ return {
             fb_bl_pillar_defeat_1 = {"Столп общества", "пал."},
             fb_bl_pillar_gloat_1 = {"Все еще стою!"},
             fb_bl_pillar_interrupted_1 = {"Никакого уважения", "к старшим?"},
+            fb_bl_pillar_rematch_won_1 = {"Я помню, как", "ты меня победил."},
+            fb_bl_pillar_rematch_lost_1 = {"Я помню, как", "ты проиграл."},
 
             -- The Needle: play only 1 hand
             fb_bl_needle_name_1 = {"Но я", "Игла"},
@@ -301,6 +382,8 @@ return {
             fb_bl_needle_defeat_1 = {"Острая игра.", "Ты меня достал."},
             fb_bl_needle_gloat_1 = {"Уколола тебя!"},
             fb_bl_needle_interrupted_1 = {"Как колко.", "Я не договорил!"},
+            fb_bl_needle_rematch_won_1 = {"Одна рука победила", "меня в прошлый раз."},
+            fb_bl_needle_rematch_lost_1 = {"Снова один шанс.", "Опять промажешь?"},
 
             -- The Head: all Heart cards are debuffed
             fb_bl_head_name_1 = {"Но я", "Голова"},
@@ -313,6 +396,8 @@ return {
             fb_bl_head_defeat_1 = {"Потеряла голову...", "из-за тебя."},
             fb_bl_head_gloat_1 = {"Бессердечный, да?"},
             fb_bl_head_interrupted_1 = {"Голову потерял?", "Я говорю!"},
+            fb_bl_head_rematch_won_1 = {"Ты покорил моё", "сердце... однажды."},
+            fb_bl_head_rematch_lost_1 = {"Пришёл за новым", "разбитым сердцем?"},
 
             -- The Tooth: lose $1 per card played
             fb_bl_tooth_name_1 = {"Но я", "Зуб"},
@@ -325,6 +410,8 @@ return {
             fb_bl_tooth_defeat_1 = {"Зубами и когтями,", "я проиграл."},
             fb_bl_tooth_gloat_1 = {"Плати, простофиля!"},
             fb_bl_tooth_interrupted_1 = {"Р-р-р! Ты за это", "заплатишь!"},
+            fb_bl_tooth_rematch_won_1 = {"Ты мне ещё должен", "за прошлый раз."},
+            fb_bl_tooth_rematch_lost_1 = {"Пришёл вернуть", "должок?"},
 
             -- The Flint: base Chips and Mult are halved
             fb_bl_flint_name_1 = {"Но я", "Кремень"},
@@ -337,6 +424,8 @@ return {
             fb_bl_flint_defeat_1 = {"Моя искра", "погасла."},
             fb_bl_flint_gloat_1 = {"Половина веселья!"},
             fb_bl_flint_interrupted_1 = {"Не искри!", "Я говорил!"},
+            fb_bl_flint_rematch_won_1 = {"В прошлый раз ты", "уклонился от налогов."},
+            fb_bl_flint_rematch_lost_1 = {"Снова сезон налогов.", "Плати."},
 
             -- The Mark: all face cards are drawn face down
             fb_bl_mark_name_1 = {"Но я", "Знак"},
@@ -349,6 +438,8 @@ return {
             fb_bl_mark_defeat_1 = {"Ты оставил на мне", "свой знак."},
             fb_bl_mark_gloat_1 = {"Отмечен", "проигрышем!"},
             fb_bl_mark_interrupted_1 = {"Запомнил. Теперь", "ты на заметке."},
+            fb_bl_mark_rematch_won_1 = {"В прошлый раз ты", "меня раскусил."},
+            fb_bl_mark_rematch_lost_1 = {"Всё ещё не видишь", "моих лиц?"},
 
             -- Amber Acorn: flips and shuffles all Joker cards
             fb_bl_final_acorn_name_1 = {"Но я", "Янтарный желудь"},
@@ -361,6 +452,10 @@ return {
             fb_bl_final_acorn_defeat_1 = {"Ты расколол", "мою скорлупу..."},
             fb_bl_final_acorn_gloat_1 = {"Вот это орех!"},
             fb_bl_final_acorn_interrupted_1 = {"Стой! Я даже", "не пророс!"},
+            fb_bl_final_acorn_phase2_1 = {"Теперь начнётся", "БЕЗУМИЕ!"},
+            fb_bl_final_acorn_phase3_1 = {"Полный хаос!", "Долой скорлупу!"},
+            fb_bl_final_acorn_rematch_won_1 = {"Однажды ты меня", "расколол. Не снова!"},
+            fb_bl_final_acorn_rematch_lost_1 = {"Пришёл за новым", "ХАОСОМ?"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"Но я", "Зеленый лист"},
@@ -373,6 +468,10 @@ return {
             fb_bl_final_leaf_defeat_1 = {"Я ухожу...", "как лист."},
             fb_bl_final_leaf_gloat_1 = {"Листай на выход!"},
             fb_bl_final_leaf_interrupted_1 = {"Ладно. Обойдёмся", "без любезностей."},
+            fb_bl_final_leaf_phase2_1 = {"Мои корни", "уходят глубже!"},
+            fb_bl_final_leaf_phase3_1 = {"Увядай со мной!"},
+            fb_bl_final_leaf_rematch_won_1 = {"Однажды ты отпустил.", "Попробуй снова."},
+            fb_bl_final_leaf_rematch_lost_1 = {"Всё ещё держишься", "за джокеров?"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"Но я", "Фиолетовый сосуд"},
@@ -385,6 +484,10 @@ return {
             fb_bl_final_vessel_defeat_1 = {"Сосуд...", "опустел."},
             fb_bl_final_vessel_gloat_1 = {"Полное поражение!"},
             fb_bl_final_vessel_interrupted_1 = {"Отплываешь до моей", "речи? Смело."},
+            fb_bl_final_vessel_phase2_1 = {"Наполнить трюм!"},
+            fb_bl_final_vessel_phase3_1 = {"Свистать всех", "на дно!"},
+            fb_bl_final_vessel_rematch_won_1 = {"Ты меня потопил.", "Меня починили."},
+            fb_bl_final_vessel_rematch_lost_1 = {"Пришёл утонуть", "в моём кильватере?"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"Но я", "Багровое сердце"},
@@ -397,6 +500,10 @@ return {
             fb_bl_final_heart_defeat_1 = {"Мое сердце...", "разбито."},
             fb_bl_final_heart_gloat_1 = {"Сердце разбито?"},
             fb_bl_final_heart_interrupted_1 = {"Перебиваешь меня?", "Какой бессердечный!"},
+            fb_bl_final_heart_phase2_1 = {"Моё сердце", "бьётся быстрее!"},
+            fb_bl_final_heart_phase3_1 = {"Почувствуй мой", "багровый гнев!"},
+            fb_bl_final_heart_rematch_won_1 = {"В прошлый раз ты", "разбил мне сердце."},
+            fb_bl_final_heart_rematch_lost_1 = {"Моё сердце всё", "ещё бьётся для тебя."},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"Но я", "Лазурный колокольчик"},
@@ -409,6 +516,10 @@ return {
             fb_bl_final_bell_defeat_1 = {"Колокол звонит", "по мне."},
             fb_bl_final_bell_gloat_1 = {"Динь-дон,", "проиграл!"},
             fb_bl_final_bell_interrupted_1 = {"Спасён гонгом?", "Не в этот раз!"},
+            fb_bl_final_bell_phase2_1 = {"Услышь, как я", "звоню громче!"},
+            fb_bl_final_bell_phase3_1 = {"Последний звон!"},
+            fb_bl_final_bell_rematch_won_1 = {"В прошлый раз ты", "задал мне трезвону."},
+            fb_bl_final_bell_rematch_lost_1 = {"Колокол снова", "звонит по тебе."},
         }
     }
 }

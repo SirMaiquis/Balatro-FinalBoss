@@ -6,13 +6,18 @@ return {
             fb_cfg_music = "Showdown-muziek",
             fb_cfg_fx = "Schermeffecten",
             fb_cfg_cinematic = "Showdown-filmpjes",
+            fb_cfg_moves = "Baasacties",
+            fb_cfg_phase_twists = "Baasfases veranderen de regels",
             fb_showdown_title = "SHOWDOWN",
+            fb_nemesis_title = "NEMESIS",
+            fb_nemesis_defeated = "NEMESIS VERSLAGEN",
             fb_cfg_intro_speed = "Introsnelheid",
             fb_speed_slow = "Langzaam",
             fb_speed_normal = "Normaal",
             fb_speed_fast = "Snel",
             fb_cfg_min_ante = "Baasdialogen vanaf Ante",
-            fb_cfg_dev_mode = "Ontwikkelaarstoetsen (F5-F7)",
+            fb_cfg_memory = "Baasgeheugen",
+            fb_cfg_dev_mode = "Ontwikkelaarstoetsen (F5-F9)",
             fb_cfg_showdown_enabled = "Eigen showdown-schema",
             fb_cfg_start_ante = "Eerste showdown bij Ante",
             fb_cfg_every = "Daarna elke N Ante's",
@@ -31,6 +36,30 @@ return {
             fb_tip_me_message_1 = "Vind je FinalBoss leuk? Overweeg dan",
             fb_tip_me_message_2 = "een kleine fooi om je steun te tonen.",
             fb_tip_me_message_3 = "Dat wordt enorm gewaardeerd!",
+        },
+        achievement_names = {
+            ach_FinalBoss_fb_showdown_survivor = "Showdown-overlever",
+            ach_FinalBoss_fb_clean_sweep = "Schoon schip",
+            ach_FinalBoss_fb_rude = "Onbeleefd!",
+            ach_FinalBoss_fb_no_manners = "Geen manieren",
+            ach_FinalBoss_fb_last_laugh = "Wie het laatst lacht",
+            ach_FinalBoss_fb_overkill = "Overkill",
+            ach_FinalBoss_fb_phase_skipper = "Fasespringer",
+            ach_FinalBoss_fb_comeback = "Comeback",
+            ach_FinalBoss_fb_nemesis_slayer = "Nemesisdoder",
+            ach_FinalBoss_fb_twisted = "Verdraaid",
+        },
+        achievement_descriptions = {
+            ach_FinalBoss_fb_showdown_survivor = "Versla een eindbaas",
+            ach_FinalBoss_fb_clean_sweep = "Versla alle 5 eindbazen uit het basisspel",
+            ach_FinalBoss_fb_rude = "Onderbreek een baas terwijl hij praat",
+            ach_FinalBoss_fb_no_manners = "Onderbreek 10 verschillende bazen",
+            ach_FinalBoss_fb_last_laugh = "Versla een baas met de hand direct nadat hij je uitlachte",
+            ach_FinalBoss_fb_overkill = "Versla een eindbaas in één hand vanaf volle HP",
+            ach_FinalBoss_fb_phase_skipper = "Breng een eindbaas in één hand van fase I naar fase III",
+            ach_FinalBoss_fb_comeback = "Versla een eindbaas met je laatste hand",
+            ach_FinalBoss_fb_nemesis_slayer = "Versla je nemesis",
+            ach_FinalBoss_fb_twisted = "Versla alle 5 eindbazen uit het basisspel met faseregels aan",
         },
         quips = {
             -- Config menu header card
@@ -73,6 +102,22 @@ return {
             fb_generic_interrupted_1 = {"Mijn toespraak!"},
             fb_generic_interrupted_2 = {"Oké... dus zo", "zit het."},
             fb_generic_interrupted_3 = {"Niet eens een hallo?"},
+            fb_generic_phase2_1 = {"Genoeg spelletjes!"},
+            fb_generic_phase3_1 = {"Nu ben ik", "echt boos!"},
+            fb_generic_rematch_won_1 = {"Jij weer?", "Ik herinner me jou."},
+            fb_generic_rematch_won_2 = {"Vorige keer was", "geluk. Geef toe."},
+            fb_generic_rematch_won_3 = {"Tijd voor revanche.", "Ik heb getraind."},
+            fb_generic_rematch_lost_1 = {"Kom je voor nog", "een pak slaag?"},
+            fb_generic_rematch_lost_2 = {"Niks geleerd", "van vorige keer?"},
+            fb_generic_rematch_lost_3 = {"O, jij bent het.", "De verliezer."},
+
+            -- Nemesis (shared, #1# = boss name)
+            fb_nemesis_intro_1 = {"Weet je nog?", "#1# vergeet nooit."},
+            fb_nemesis_intro_2 = {"#1# weer.", "Je aartsvijand."},
+            fb_nemesis_intro_3 = {"Je ontsnapt niet", "aan je aartsvijand."},
+            fb_nemesis_defeat_1 = {"Hoe?! Ik ben je", "aartsvijand!"},
+            fb_nemesis_defeat_2 = {"#1#... gebroken."},
+            fb_nemesis_defeat_3 = {"Dit is niet voorbij,", "rivaal..."},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Maar ik ben", "De haak"},
@@ -85,6 +130,8 @@ return {
             fb_bl_hook_defeat_1 = {"Goed... ik laat", "je van de haak."},
             fb_bl_hook_gloat_1 = {"Aan de haak", "geslagen!"},
             fb_bl_hook_interrupted_1 = {"Onbeleefd! Ik was", "midden in mijn zin!"},
+            fb_bl_hook_rematch_won_1 = {"Vorige keer glipte", "je van mijn haak."},
+            fb_bl_hook_rematch_lost_1 = {"Wil je weer", "aan de haak?"},
 
             -- The Ox: playing your most played hand sets money to $0
             fb_bl_ox_name_1 = {"Maar ik ben", "De os"},
@@ -97,6 +144,8 @@ return {
             fb_bl_ox_defeat_1 = {"Je greep de stier", "bij de hoorns..."},
             fb_bl_ox_gloat_1 = {"Nu ben je blut!"},
             fb_bl_ox_interrupted_1 = {"O, dus ZO", "gaan we het doen."},
+            fb_bl_ox_rematch_won_1 = {"Je ontweek mijn", "hoorns één keer..."},
+            fb_bl_ox_rematch_lost_1 = {"Nog steeds blut", "van vorige keer?"},
 
             -- The House: first hand is drawn face down
             fb_bl_house_name_1 = {"Maar ik ben", "Het huis"},
@@ -109,6 +158,8 @@ return {
             fb_bl_house_defeat_1 = {"Het huis...", "is gevallen."},
             fb_bl_house_gloat_1 = {"Het huis wint!"},
             fb_bl_house_interrupted_1 = {"Huisregel: nog", "niet spelen!"},
+            fb_bl_house_rematch_won_1 = {"Het huis verloor één", "keer. Nooit meer."},
+            fb_bl_house_rematch_lost_1 = {"Welkom terug.", "Het huis vergeet niets."},
 
             -- The Wall: extra large blind
             fb_bl_wall_name_1 = {"Maar ik ben", "De muur"},
@@ -121,6 +172,8 @@ return {
             fb_bl_wall_defeat_1 = {"De muur...", "stort in."},
             fb_bl_wall_gloat_1 = {"Tegen de muur!"},
             fb_bl_wall_interrupted_1 = {"Net praten tegen", "een muur... wacht."},
+            fb_bl_wall_rematch_won_1 = {"Je kwam één keer over", "me heen. Niet weer."},
+            fb_bl_wall_rematch_lost_1 = {"Wil je weer tegen", "dezelfde muur?"},
 
             -- The Wheel: 1 in 7 cards get drawn face down
             fb_bl_wheel_name_1 = {"Maar ik ben", "Het rad"},
@@ -133,6 +186,8 @@ return {
             fb_bl_wheel_defeat_1 = {"Het rad van fortuin", "draait tegen me..."},
             fb_bl_wheel_gloat_1 = {"Rad voor ogen!"},
             fb_bl_wheel_interrupted_1 = {"Ho! Niet zo snel,", "ik draai nog!"},
+            fb_bl_wheel_rematch_won_1 = {"Vorige draai zat", "het geluk mee..."},
+            fb_bl_wheel_rematch_lost_1 = {"Nog een draai?", "De bank wint, vriend."},
 
             -- The Arm: decrease level of played poker hand
             fb_bl_arm_name_1 = {"Maar ik ben", "Het wapen"},
@@ -145,6 +200,8 @@ return {
             fb_bl_arm_defeat_1 = {"Je hebt mijn sterke", "arm verslagen."},
             fb_bl_arm_gloat_1 = {"Een stapje terug!"},
             fb_bl_arm_interrupted_1 = {"Handen thuis! Ik", "was nog aan het pronken!"},
+            fb_bl_arm_rematch_won_1 = {"Vorige keer won je", "het armworstelen."},
+            fb_bl_arm_rematch_lost_1 = {"Zin in nog een", "potje armworstelen?"},
 
             -- The Club: all Club cards are debuffed
             fb_bl_club_name_1 = {"Maar ik ben", "De klaver"},
@@ -157,6 +214,8 @@ return {
             fb_bl_club_defeat_1 = {"Klaver dicht.", "Tijd om te gaan..."},
             fb_bl_club_gloat_1 = {"Klaverjassen!"},
             fb_bl_club_interrupted_1 = {"Hé! In mijn club", "praat ik eerst."},
+            fb_bl_club_rematch_won_1 = {"Vorige keer drong je", "mijn club binnen."},
+            fb_bl_club_rematch_lost_1 = {"Lidmaatschap verlengd?", "Welkom terug."},
 
             -- The Fish: cards drawn face down after each hand played
             fb_bl_fish_name_1 = {"Maar ik ben", "De vis"},
@@ -169,6 +228,8 @@ return {
             fb_bl_fish_defeat_1 = {"Binnengehaald...", "door een prof."},
             fb_bl_fish_gloat_1 = {"Je bent", "kopje-onder!"},
             fb_bl_fish_interrupted_1 = {"Je hebt mijn lijn", "doorgeknipt!"},
+            fb_bl_fish_rematch_won_1 = {"Die ene die", "ontsnapte..."},
+            fb_bl_fish_rematch_lost_1 = {"Weer aan mijn", "haak, visje?"},
 
             -- The Psychic: must play 5 cards
             fb_bl_psychic_name_1 = {"Maar ik ben", "De helderziende"},
@@ -181,6 +242,8 @@ return {
             fb_bl_psychic_defeat_1 = {"Ik zag het aankomen.", "...Of toch niet?"},
             fb_bl_psychic_gloat_1 = {"Ik zag het al!"},
             fb_bl_psychic_interrupted_1 = {"Wist ik het toch.", "...Nog steeds onbeleefd."},
+            fb_bl_psychic_rematch_won_1 = {"Je laatste winst zag", "ik niet aankomen."},
+            fb_bl_psychic_rematch_lost_1 = {"Ik wist dat je", "terug zou komen."},
 
             -- The Goad: all Spade cards are debuffed
             fb_bl_goad_name_1 = {"Maar ik ben", "De aansporing"},
@@ -193,6 +256,8 @@ return {
             fb_bl_goad_defeat_1 = {"Verdorie,", "je hebt gewonnen."},
             fb_bl_goad_gloat_1 = {"Graaf je", "eigen graf!"},
             fb_bl_goad_interrupted_1 = {"MIJ uitdagen?", "Prima!"},
+            fb_bl_goad_rematch_won_1 = {"Vorige keer groef", "je jezelf uit."},
+            fb_bl_goad_rematch_lost_1 = {"Kom je een dieper", "graf graven?"},
 
             -- The Water: start with 0 discards
             fb_bl_water_name_1 = {"Maar ik ben", "Het water"},
@@ -205,6 +270,8 @@ return {
             fb_bl_water_defeat_1 = {"Ik ben helemaal", "opgedroogd..."},
             fb_bl_water_gloat_1 = {"Je bent verzopen!"},
             fb_bl_water_interrupted_1 = {"Onderbreken? Het water", "staat je aan de lippen!"},
+            fb_bl_water_rematch_won_1 = {"Vorige keer bleef", "je boven water."},
+            fb_bl_water_rematch_lost_1 = {"Kom je weer", "kopje-onder?"},
 
             -- The Window: all Diamond cards are debuffed
             fb_bl_window_name_1 = {"Maar ik ben", "Het raam"},
@@ -217,6 +284,8 @@ return {
             fb_bl_window_defeat_1 = {"Mijn kans is", "verkeken."},
             fb_bl_window_gloat_1 = {"Ruiten? Gedebuft!"},
             fb_bl_window_interrupted_1 = {"Mijn woorden gaan", "het raam uit?!"},
+            fb_bl_window_rematch_won_1 = {"Je brak één keer", "door mijn raam."},
+            fb_bl_window_rematch_lost_1 = {"Weer aan het", "etalagekijken?"},
 
             -- The Manacle: -1 hand size
             fb_bl_manacle_name_1 = {"Maar ik ben", "Boeien"},
@@ -229,6 +298,8 @@ return {
             fb_bl_manacle_defeat_1 = {"Eindelijk vrij...", "van mij."},
             fb_bl_manacle_gloat_1 = {"Handen omhoog!"},
             fb_bl_manacle_interrupted_1 = {"Halt! Daarvoor leg", "ik je aan de ketting!"},
+            fb_bl_manacle_rematch_won_1 = {"Je glipte één keer", "uit mijn ketens."},
+            fb_bl_manacle_rematch_lost_1 = {"Weer aan de", "ketting, zie ik."},
 
             -- The Eye: no repeat hand types this round
             fb_bl_eye_name_1 = {"Maar ik ben", "Het oog"},
@@ -241,6 +312,8 @@ return {
             fb_bl_eye_defeat_1 = {"Uit het oog,", "uit het hart..."},
             fb_bl_eye_gloat_1 = {"Ik zei het toch!"},
             fb_bl_eye_interrupted_1 = {"Dat zag ik!", "Wat onbeleefd."},
+            fb_bl_eye_rematch_won_1 = {"Ik hou je in de gaten", "sinds die nederlaag."},
+            fb_bl_eye_rematch_lost_1 = {"Ik zie dat je", "terug bent."},
 
             -- The Mouth: play only 1 hand type this round
             fb_bl_mouth_name_1 = {"Maar ik ben", "De mond"},
@@ -253,6 +326,8 @@ return {
             fb_bl_mouth_defeat_1 = {"Ik ben sprakeloos..."},
             fb_bl_mouth_gloat_1 = {"Houd je mond,", "loser!"},
             fb_bl_mouth_interrupted_1 = {"Hé! Deze mond", "praatte nog!"},
+            fb_bl_mouth_rematch_won_1 = {"Vorige keer snoerde", "je me de mond."},
+            fb_bl_mouth_rematch_lost_1 = {"Zelfde routine als", "vorige keer?"},
 
             -- The Plant: all face cards are debuffed
             fb_bl_plant_name_1 = {"Maar ik ben", "De plant"},
@@ -265,6 +340,8 @@ return {
             fb_bl_plant_defeat_1 = {"Verwelkt...", "Ik groei wel terug."},
             fb_bl_plant_gloat_1 = {"Zie het", "onder ogen!"},
             fb_bl_plant_interrupted_1 = {"Laat me eerst groeien,", "ongeduldig ding!"},
+            fb_bl_plant_rematch_won_1 = {"Je rukte me uit.", "Ik groeide terug."},
+            fb_bl_plant_rematch_lost_1 = {"Weer in mijn", "tuin, zie ik."},
 
             -- The Serpent: after play or discard, always draw 3 cards
             fb_bl_serpent_name_1 = {"Maar ik ben", "Het serpent"},
@@ -277,6 +354,8 @@ return {
             fb_bl_serpent_defeat_1 = {"Vervelde mijn huid...", "en mijn trots."},
             fb_bl_serpent_gloat_1 = {"Tot sissens!"},
             fb_bl_serpent_interrupted_1 = {"Sss! Val me niet", "in de rede!"},
+            fb_bl_serpent_rematch_won_1 = {"Je ontsnapte één keer", "aan mijn kronkels."},
+            fb_bl_serpent_rematch_lost_1 = {"Sssoo, je bent", "terug..."},
 
             -- The Pillar: cards played previously this ante are debuffed
             fb_bl_pillar_name_1 = {"Maar ik ben", "De pilaar"},
@@ -289,6 +368,8 @@ return {
             fb_bl_pillar_defeat_1 = {"Een pilaar van de", "samenleving valt."},
             fb_bl_pillar_gloat_1 = {"Nog steeds", "overeind!"},
             fb_bl_pillar_interrupted_1 = {"Geen respect voor", "je ouderen?"},
+            fb_bl_pillar_rematch_won_1 = {"Ik weet nog hoe", "je me versloeg."},
+            fb_bl_pillar_rematch_lost_1 = {"Ik weet nog hoe", "je verloor."},
 
             -- The Needle: play only 1 hand
             fb_bl_needle_name_1 = {"Maar ik ben", "De naald"},
@@ -301,6 +382,8 @@ return {
             fb_bl_needle_defeat_1 = {"Scherp gespeeld.", "Je hebt me."},
             fb_bl_needle_gloat_1 = {"Punt is,", "je verloor!"},
             fb_bl_needle_interrupted_1 = {"Wat stekelig.", "Ik was niet klaar!"},
+            fb_bl_needle_rematch_won_1 = {"Eén hand versloeg", "me vorige keer."},
+            fb_bl_needle_rematch_lost_1 = {"Weer één kans.", "Mis je hem weer?"},
 
             -- The Head: all Heart cards are debuffed
             fb_bl_head_name_1 = {"Maar ik ben", "Het hoofd"},
@@ -313,6 +396,8 @@ return {
             fb_bl_head_defeat_1 = {"Mijn hoofd verloren...", "door jou."},
             fb_bl_head_gloat_1 = {"Hartloos, hè?"},
             fb_bl_head_interrupted_1 = {"Ben je je hoofd", "kwijt? Ik praat!"},
+            fb_bl_head_rematch_won_1 = {"Je won mijn hart...", "één keer."},
+            fb_bl_head_rematch_lost_1 = {"Kom je voor nog meer", "liefdesverdriet?"},
 
             -- The Tooth: lose $1 per card played
             fb_bl_tooth_name_1 = {"Maar ik ben", "De tand"},
@@ -325,6 +410,8 @@ return {
             fb_bl_tooth_defeat_1 = {"Met tand en nagel", "verloren."},
             fb_bl_tooth_gloat_1 = {"Betalen, sukkel!"},
             fb_bl_tooth_interrupted_1 = {"Grr! Dat ga je", "me betalen!"},
+            fb_bl_tooth_rematch_won_1 = {"Je bent me nog wat", "schuldig van toen."},
+            fb_bl_tooth_rematch_lost_1 = {"Kom je je schuld", "betalen?"},
 
             -- The Flint: base Chips and Mult are halved
             fb_bl_flint_name_1 = {"Maar ik ben", "De vuursteen"},
@@ -337,6 +424,8 @@ return {
             fb_bl_flint_defeat_1 = {"Mijn vonk", "is gedoofd."},
             fb_bl_flint_gloat_1 = {"Half plezier!"},
             fb_bl_flint_interrupted_1 = {"Geen vonken!", "Ik was aan het praten!"},
+            fb_bl_flint_rematch_won_1 = {"Vorige keer ontdook", "je mijn belasting."},
+            fb_bl_flint_rematch_lost_1 = {"Weer belastingtijd.", "Betalen."},
 
             -- The Mark: all face cards are drawn face down
             fb_bl_mark_name_1 = {"Maar ik ben", "Het teken"},
@@ -349,6 +438,8 @@ return {
             fb_bl_mark_defeat_1 = {"Je hebt je stempel", "op mij gedrukt."},
             fb_bl_mark_gloat_1 = {"Getekend als", "verliezer!"},
             fb_bl_mark_interrupted_1 = {"Genoteerd. Je bent", "nu getekend."},
+            fb_bl_mark_rematch_won_1 = {"Vorige keer zag je", "dwars door me heen."},
+            fb_bl_mark_rematch_lost_1 = {"Zie je mijn gezichten", "nog steeds niet?"},
 
             -- Amber Acorn: flips and shuffles all Joker cards
             fb_bl_final_acorn_name_1 = {"Maar ik ben", "Amberkleurige eikel"},
@@ -361,6 +452,10 @@ return {
             fb_bl_final_acorn_defeat_1 = {"Je hebt mijn", "schil gekraakt..."},
             fb_bl_final_acorn_gloat_1 = {"Eikelrijk", "verloren!"},
             fb_bl_final_acorn_interrupted_1 = {"Eikel! Ik was", "nog niet klaar!"},
+            fb_bl_final_acorn_phase2_1 = {"Nu wordt het", "een NOOTGEVAL!"},
+            fb_bl_final_acorn_phase3_1 = {"Totale chaos!", "De schil eraf!"},
+            fb_bl_final_acorn_rematch_won_1 = {"Je kraakte me één", "keer. Nooit meer!"},
+            fb_bl_final_acorn_rematch_lost_1 = {"Kom je voor meer", "CHAOS?"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"Maar ik ben", "Groen blaadje"},
@@ -373,6 +468,10 @@ return {
             fb_bl_final_leaf_defeat_1 = {"Ik ga heen...", "als een blad."},
             fb_bl_final_leaf_gloat_1 = {"Blad, blad,", "verloren!"},
             fb_bl_final_leaf_interrupted_1 = {"Prima. Sla de", "beleefdheden over."},
+            fb_bl_final_leaf_phase2_1 = {"Mijn wortels", "groeien dieper!"},
+            fb_bl_final_leaf_phase3_1 = {"Verwelk met mij!"},
+            fb_bl_final_leaf_rematch_won_1 = {"Je liet één keer los.", "Probeer het weer."},
+            fb_bl_final_leaf_rematch_lost_1 = {"Nog steeds gehecht", "aan je jokers?"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"Maar ik ben", "Violet vat"},
@@ -385,6 +484,10 @@ return {
             fb_bl_final_vessel_defeat_1 = {"Het vat...", "is leeggemaakt."},
             fb_bl_final_vessel_gloat_1 = {"Vat je 'm?", "Verloren!"},
             fb_bl_final_vessel_interrupted_1 = {"Uitvaren voor mijn", "toespraak? Gedurfd."},
+            fb_bl_final_vessel_phase2_1 = {"Vul het ruim!"},
+            fb_bl_final_vessel_phase3_1 = {"Alle hens", "naar de diepte!"},
+            fb_bl_final_vessel_rematch_won_1 = {"Je liet me zinken.", "Ik ben weer opgeknapt."},
+            fb_bl_final_vessel_rematch_lost_1 = {"Kom je verdrinken", "in mijn kielzog?"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"Maar ik ben", "Karmozijnrood hart"},
@@ -397,6 +500,10 @@ return {
             fb_bl_final_heart_defeat_1 = {"Mijn hart...", "is gebroken."},
             fb_bl_final_heart_gloat_1 = {"Al liefdesverdriet?"},
             fb_bl_final_heart_interrupted_1 = {"Je onderbreekt me?", "Wat harteloos!"},
+            fb_bl_final_heart_phase2_1 = {"Mijn hart", "klopt sneller!"},
+            fb_bl_final_heart_phase3_1 = {"Voel mijn", "karmijnrode woede!"},
+            fb_bl_final_heart_rematch_won_1 = {"Vorige keer brak", "je mijn hart."},
+            fb_bl_final_heart_rematch_lost_1 = {"Mijn hart klopt", "nog voor jou."},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"Maar ik ben", "Azuurblauwe bel"},
@@ -409,6 +516,10 @@ return {
             fb_bl_final_bell_defeat_1 = {"De bel luidt", "voor mij."},
             fb_bl_final_bell_gloat_1 = {"Ding dong,", "verloren!"},
             fb_bl_final_bell_interrupted_1 = {"Gered door de bel?", "Deze keer niet!"},
+            fb_bl_final_bell_phase2_1 = {"Hoor me", "harder luiden!"},
+            fb_bl_final_bell_phase3_1 = {"De laatste slag!"},
+            fb_bl_final_bell_rematch_won_1 = {"Vorige keer kreeg ik", "flink op mijn klep."},
+            fb_bl_final_bell_rematch_lost_1 = {"De bel luidt weer", "voor jou."},
         }
     }
 }

@@ -108,4 +108,30 @@ T['vanilla encounters list has 28 bosses'] = function()
   assert(bosses.bl_hook and bosses.bl_final_bell, 'missing expected keys')
 end
 
+T['register keeps cleaned moves and death'] = function()
+  local R = setup()
+  local e = R.register{blind = 'bl_mod', moves = {play = {{effect = 'burst'}}}, death = 'hearts'}
+  eq(e.moves.play[1].effect, 'burst'); eq(e.death, 'hearts')
+end
+
+T['register warns about bad moves and death and drops them'] = function()
+  local warnings = {}
+  local R = setup(nil, warnings)
+  local e = R.register{blind = 'bl_mod2', moves = {dance = {{effect = 'burst'}}}, death = 'fireworks'}
+  eq(e.moves, nil); eq(e.death, nil)
+  eq(#warnings, 2)
+end
+
+T['entries without moves have nil moves and death'] = function()
+  local R = setup()
+  local e = R.get('bl_unknown')
+  eq(e.moves, nil); eq(e.death, nil)
+end
+
+T['resolve: nemesis lines are shared, never per boss'] = function()
+  local R = setup{fb_nemesis_intro_1 = {'a'}, fb_bl_hook_nemesis_intro_1 = {'b'}, fb_nemesis_defeat_1 = {'c'}}
+  eq(R.resolve('bl_hook', 'nemesis_intro', {}), 'fb_nemesis_intro_1')
+  eq(R.resolve('bl_mod', 'nemesis_defeat', {}), 'fb_nemesis_defeat_1')
+end
+
 return T

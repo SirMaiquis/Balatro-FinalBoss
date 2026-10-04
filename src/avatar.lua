@@ -36,6 +36,9 @@ V.laugh_id = 0 -- bumped per laugh: a newer laugh silences the older one's remai
 V.laugh_start, V.laugh_until = 0, 0 -- REAL-time window the update reads for hops, tilt and shake
 V.anger_until = 0 -- REAL-time end of the interrupted shake
 V.gloating = nil  -- game over: {pitch, laughed, t0}; the chip sits beside the panel and laughs once
+V.stance = 1      -- 1.1 phase stance (logic.stance): roam speed and aura
+V.auras = {}      -- slot ('stance' | 'nemesis') -> Particles attached to the chip
+V.roar_start, V.roar_until = 0, 0 -- REAL-time window of the phase roar
 
 local function now() return FinalBoss.util.now() end
 local function reduced() return G.SETTINGS.reduced_motion end
@@ -87,7 +90,7 @@ function Avatar:move(dt)
   local calm = reduced()
   local speed = V.wound >= 1 and 1.5 or 1
   local gloat = V.gloating ~= nil
-  local shaking = (V.tremble or V.wound >= 2) and not calm and not gloat
+  local shaking = (V.tremble or V.wound >= 2 or V.stance >= 3) and not calm and not gloat
   local jx = shaking and (math.random() - 0.5) * 0.06 or 0
   local jy = shaking and (math.random() - 0.5) * 0.06 or 0
   -- Interrupted: a sharp, quickly decaying shake (sprite only, like the laugh).
@@ -115,6 +118,15 @@ function Avatar:move(dt)
     s.T.y = s.T.y - hop + (shake > 0 and (math.random() - 0.5) * 2 * shake or 0)
     s.T.r = s.T.r + tilt
     s.VT.x, s.VT.y, s.VT.r = s.T.x, s.T.y, s.T.r
+  end
+  -- Phase roar (1.1): the chip swells and shakes for a moment (never under reduced motion).
+  if not calm and now() < V.roar_until then
+    local R = FinalBoss.logic.ROAR
+    local k = FinalBoss.logic.roar_scale(now() - V.roar_start, V.roar_until - V.roar_start)
+    s.T.w, s.T.h = self.T.w * k, self.T.h * k
+    s.T.x = s.T.x - (s.T.w - self.T.w) / 2 + (math.random() - 0.5) * 2 * R.shake
+    s.T.y = s.T.y - (s.T.h - self.T.h) / 2 + (math.random() - 0.5) * 2 * R.shake
+    s.VT.x, s.VT.y, s.VT.w, s.VT.h = s.T.x, s.T.y, s.T.w, s.T.h
   end
 end
 
@@ -211,11 +223,16 @@ function V.spawn(blind, opts)
   blind.dissolve_colours = {G.C.BLACK, c}
   ease_field(blind, 'dissolve', 1, not reduced() and V.HUD_EASE or 0)
   go_to(V.RINGSIDE, not opts.fall)
-  V.next_roam = now() + math.random(V.ROAM_MIN, V.ROAM_MAX)
+  V.next_roam = now() + V.roam_delay()
 end
 
 function V.exists() return V.obj ~= nil end
 function V.anchor() return V.obj end
+
+--- Seconds until the next glide: 6-9 s, shorter in phase II and III (logic.stance).
+function V.roam_delay()
+  return math.random(V.ROAM_MIN, V.ROAM_MAX) * FinalBoss.logic.stance(V.stance).roam
+end
 
 function V.side()
   if not V.obj then return 'right' end
@@ -335,12 +352,12 @@ function V.tick(dt)
   end
   if V.scoring then
     V.scoring = false
-    V.next_roam = now() + V.ROAM_MIN
+    V.next_roam = now() + V.ROAM_MIN * FinalBoss.logic.stance(V.stance).roam
   end
   if V.talking or now() < V.laugh_until then return end
   if now() >= V.next_roam then
     go_to(FinalBoss.logic.pick_variant(V.PERCH_COUNT, V.perch, math.random), false)
-    V.next_roam = now() + math.random(V.ROAM_MIN, V.ROAM_MAX)
+    V.next_roam = now() + V.roam_delay()
   end
 end
 
@@ -402,8 +419,34 @@ end
 
 function V.set_tremble(on) V.tremble = on and true or false end
 
-function V.flash(duration)
-  if V.obj then flash(V.obj, duration or 0.15) end
+--- Phase transformation (1.1): the chip swells and shakes for `duration` seconds. No-op under
+--- reduced motion (no rise, no shake).
+function V.roar(duration)
+  if not V.obj or reduced() then return end
+  V.roar_start = now()
+  V.roar_until = V.roar_start + (duration or FinalBoss.logic.ROAR.duration)
+  V.next_roam = math.max(V.next_roam, V.roar_until + 1)
+end
+
+--- Aura particles around the chip (1.1): slot 'stance' (phase II faint / III strong, boss colour)
+--- or 'nemesis' (crimson). level 0 or nil removes the slot's aura.
+function V.set_aura(slot, level, colour)
+  local old = V.auras[slot]
+  V.auras[slot] = nil
+  if old then FinalBoss.effects.remove_aura(old) end
+  if not V.obj or not level or level <= 0 then return end
+  V.auras[slot] = FinalBoss.effects.aura(V.obj, colour, level)
+end
+
+--- Phase stance: roam interval and aura (logic.stance); phase III also trembles (Avatar:move).
+function V.set_stance(phase, colour)
+  V.stance = phase or 1
+  V.set_aura('stance', FinalBoss.logic.stance(V.stance).aura, colour)
+end
+
+--- Flash the chip (white, or `colour`: a boss move flashes in the boss colour).
+function V.flash(duration, colour)
+  if V.obj then flash(V.obj, duration or 0.15, colour) end
 end
 
 --- No avatar: the HUD blind chip snaps instead (juice + a brief red burst drawn over the chip).
@@ -475,6 +518,10 @@ function V.remove()
   V.obj = nil
   restore_hud_blind()
   V.talking, V.fading, V.tremble, V.wound, V.scoring = false, false, false, 0, false
+  -- Remove every aura explicitly: Avatar:remove walks the children with pairs while Particles:remove
+  -- table.removes itself from that list, which would skip the second aura.
+  for _, p in pairs(V.auras) do FinalBoss.effects.remove_aura(p) end
+  V.stance, V.auras, V.roar_start, V.roar_until = 1, {}, 0, 0
   V.laugh_start, V.laugh_until, V.anger_until = 0, 0, 0
   V.gloating = nil
   V.perch = V.RINGSIDE

@@ -3,12 +3,12 @@
 	"name": "Final Boss",
 	"display_name": "Final Boss",
 	"author": ["SirMaiquis"],
-	"description": "Bosses talk back, showdowns get cinematic, and you decide when final bosses appear.",
+	"description": "Bosses talk back and strike with signature moves, showdowns get cinematic with phase changes, bosses remember you, and you decide when final bosses appear.",
 	"prefix": "FinalBoss",
 	"main_file": "main.lua",
 	"priority": -10,
 	"badge_colour": "0ff5bf",
 	"badge_text_colour": "000000",
-	"version": "1.0.0",
+	"version": "1.1.0",
 	"dependencies": ["Steamodded (>=26.829.0)", "Lovely (>=0.9.0)"]
 }

@@ -6,13 +6,18 @@ return {
             fb_cfg_music = "결전 음악",
             fb_cfg_fx = "화면 효과",
             fb_cfg_cinematic = "결전 연출",
+            fb_cfg_moves = "보스 기술",
+            fb_cfg_phase_twists = "보스 페이즈가 규칙을 바꿈",
             fb_showdown_title = "결전",
+            fb_nemesis_title = "숙적",
+            fb_nemesis_defeated = "숙적 격파",
             fb_cfg_intro_speed = "인트로 속도",
             fb_speed_slow = "느림",
             fb_speed_normal = "보통",
             fb_speed_fast = "빠름",
             fb_cfg_min_ante = "대사 시작 앤티",
-            fb_cfg_dev_mode = "개발자 키 (F5-F7)",
+            fb_cfg_memory = "보스 기억",
+            fb_cfg_dev_mode = "개발자 키 (F5-F9)",
             fb_cfg_showdown_enabled = "결전 일정 직접 설정",
             fb_cfg_start_ante = "첫 결전 앤티",
             fb_cfg_every = "이후 N앤티마다",
@@ -31,6 +36,30 @@ return {
             fb_tip_me_message_1 = "FinalBoss가 마음에 드셨다면",
             fb_tip_me_message_2 = "작은 후원으로 응원해 주세요.",
             fb_tip_me_message_3 = "정말 감사합니다!",
+        },
+        achievement_names = {
+            ach_FinalBoss_fb_showdown_survivor = "결전의 생존자",
+            ach_FinalBoss_fb_clean_sweep = "싹쓸이",
+            ach_FinalBoss_fb_rude = "무례하군!",
+            ach_FinalBoss_fb_no_manners = "매너 없음",
+            ach_FinalBoss_fb_last_laugh = "최후에 웃는 자",
+            ach_FinalBoss_fb_overkill = "오버킬",
+            ach_FinalBoss_fb_phase_skipper = "페이즈 건너뛰기",
+            ach_FinalBoss_fb_comeback = "역전승",
+            ach_FinalBoss_fb_nemesis_slayer = "숙적 처단자",
+            ach_FinalBoss_fb_twisted = "뒤틀림",
+        },
+        achievement_descriptions = {
+            ach_FinalBoss_fb_showdown_survivor = "최종 보스 처치하기",
+            ach_FinalBoss_fb_clean_sweep = "기본 게임의 최종 보스 5명 모두 처치하기",
+            ach_FinalBoss_fb_rude = "보스가 말하는 도중에 끊기",
+            ach_FinalBoss_fb_no_manners = "서로 다른 보스 10명의 말 끊기",
+            ach_FinalBoss_fb_last_laugh = "보스가 비웃은 바로 다음 핸드로 보스 처치하기",
+            ach_FinalBoss_fb_overkill = "체력이 가득 찬 최종 보스를 한 핸드로 처치하기",
+            ach_FinalBoss_fb_phase_skipper = "한 핸드 만에 최종 보스를 페이즈 I에서 페이즈 III로 넘기기",
+            ach_FinalBoss_fb_comeback = "마지막 핸드로 최종 보스 처치하기",
+            ach_FinalBoss_fb_nemesis_slayer = "숙적 처치하기",
+            ach_FinalBoss_fb_twisted = "페이즈 규칙 변화를 켜고 기본 게임의 최종 보스 5명 모두 처치하기",
         },
         quips = {
             -- Config menu header card
@@ -73,6 +102,22 @@ return {
             fb_generic_interrupted_1 = {"내 연설이!"},
             fb_generic_interrupted_2 = {"그래... 그렇게", "나온다 이거지."},
             fb_generic_interrupted_3 = {"인사도 없이?"},
+            fb_generic_phase2_1 = {"장난은 끝이다!"},
+            fb_generic_phase3_1 = {"이제 진짜", "화났다!"},
+            fb_generic_rematch_won_1 = {"또 너냐?", "기억하고 있다."},
+            fb_generic_rematch_won_2 = {"지난번엔 운이었다.", "인정해라."},
+            fb_generic_rematch_won_3 = {"리벤지다.", "단련하고 왔다."},
+            fb_generic_rematch_lost_1 = {"또 얻어맞으러", "왔나?"},
+            fb_generic_rematch_lost_2 = {"지난번에", "배운 게 없나?"},
+            fb_generic_rematch_lost_3 = {"아, 너구나.", "패배자."},
+
+            -- Nemesis (shared, #1# = boss name)
+            fb_nemesis_intro_1 = {"날 기억하나?", "#1#, 절대 잊지 않지."},
+            fb_nemesis_intro_2 = {"또 만났군.", "네 숙적, #1#!"},
+            fb_nemesis_intro_3 = {"숙적에게서", "도망칠 순 없다."},
+            fb_nemesis_defeat_1 = {"어떻게?! 나는", "네 숙적인데!"},
+            fb_nemesis_defeat_2 = {"#1#... 무너졌다."},
+            fb_nemesis_defeat_3 = {"이걸로 끝이 아니다,", "라이벌..."},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"하지만 나는", "훅이다!"},
@@ -85,6 +130,8 @@ return {
             fb_bl_hook_defeat_1 = {"좋아... 놔주지."},
             fb_bl_hook_gloat_1 = {"낚였구나!"},
             fb_bl_hook_interrupted_1 = {"무례하군! 아직", "말하는 중이었다!"},
+            fb_bl_hook_rematch_won_1 = {"지난번엔 내 갈고리에서", "빠져나갔지."},
+            fb_bl_hook_rematch_lost_1 = {"또 낚이러", "왔나?"},
 
             -- The Ox: playing your most played hand sets money to $0
             fb_bl_ox_name_1 = {"하지만 나는", "황소다!"},
@@ -97,6 +144,8 @@ return {
             fb_bl_ox_defeat_1 = {"황소의 뿔을", "잡았군..."},
             fb_bl_ox_gloat_1 = {"이제 빈털터리!"},
             fb_bl_ox_interrupted_1 = {"오호, 이렇게", "나오시겠다?"},
+            fb_bl_ox_rematch_won_1 = {"한 번은 내 뿔을", "피했지..."},
+            fb_bl_ox_rematch_lost_1 = {"지난번 이후로", "아직 빈털터리인가?"},
 
             -- The House: first hand is drawn face down
             fb_bl_house_name_1 = {"하지만 나는", "집이다!"},
@@ -109,6 +158,8 @@ return {
             fb_bl_house_defeat_1 = {"집이...", "무너졌다."},
             fb_bl_house_gloat_1 = {"하우스 승!"},
             fb_bl_house_interrupted_1 = {"집의 규칙이다,", "아직 치지 마!"},
+            fb_bl_house_rematch_won_1 = {"하우스가 진 건 한 번.", "다시는 없다."},
+            fb_bl_house_rematch_lost_1 = {"돌아온 걸 환영한다.", "하우스는 기억한다."},
 
             -- The Wall: extra large blind
             fb_bl_wall_name_1 = {"하지만 나는", "벽이다!"},
@@ -121,6 +172,8 @@ return {
             fb_bl_wall_defeat_1 = {"벽이...", "무너진다."},
             fb_bl_wall_gloat_1 = {"벽에 부딪혔지?"},
             fb_bl_wall_interrupted_1 = {"벽에 말하는 기분...", "아, 내가 벽이지."},
+            fb_bl_wall_rematch_won_1 = {"한 번은 날 넘었지.", "두 번은 없다."},
+            fb_bl_wall_rematch_lost_1 = {"또 같은 벽에", "부딪히러 왔나?"},
 
             -- The Wheel: 1 in 7 cards get drawn face down
             fb_bl_wheel_name_1 = {"하지만 나는", "바퀴다!"},
@@ -133,6 +186,8 @@ return {
             fb_bl_wheel_defeat_1 = {"운명의 바퀴가", "나를 등졌다..."},
             fb_bl_wheel_gloat_1 = {"운이 다했군!"},
             fb_bl_wheel_interrupted_1 = {"워! 서두르지 마,", "아직 돌고 있다!"},
+            fb_bl_wheel_rematch_won_1 = {"지난 판엔 운이", "좋았지..."},
+            fb_bl_wheel_rematch_lost_1 = {"한 판 더?", "하우스가 유리하지."},
 
             -- The Arm: decrease level of played poker hand
             fb_bl_arm_name_1 = {"하지만 나는", "팔이다!"},
@@ -145,6 +200,8 @@ return {
             fb_bl_arm_defeat_1 = {"내 강한 팔을", "꺾었군."},
             fb_bl_arm_gloat_1 = {"레벨 다운!"},
             fb_bl_arm_interrupted_1 = {"손 떼! 아직 근육", "자랑 중이었다!"},
+            fb_bl_arm_rematch_won_1 = {"지난번 팔씨름은", "네가 이겼지."},
+            fb_bl_arm_rematch_lost_1 = {"또 팔씨름하러", "왔나?"},
 
             -- The Club: all Club cards are debuffed
             fb_bl_club_name_1 = {"하지만 나는", "클럽이다!"},
@@ -157,6 +214,8 @@ return {
             fb_bl_club_defeat_1 = {"클럽 폐업이다.", "갈 시간이군..."},
             fb_bl_club_gloat_1 = {"영업 종료!"},
             fb_bl_club_interrupted_1 = {"이봐! 내 클럽에선", "내가 먼저 말한다!"},
+            fb_bl_club_rematch_won_1 = {"지난번엔 내 클럽에", "쳐들어왔지."},
+            fb_bl_club_rematch_lost_1 = {"회원권 갱신했나?", "어서 와라."},
 
             -- The Fish: cards drawn face down after each hand played
             fb_bl_fish_name_1 = {"하지만 나는", "물고기다!"},
@@ -169,6 +228,8 @@ return {
             fb_bl_fish_defeat_1 = {"낚였다...", "프로에게."},
             fb_bl_fish_gloat_1 = {"물에 빠졌군!"},
             fb_bl_fish_interrupted_1 = {"내 낚싯줄을", "끊었겠다!"},
+            fb_bl_fish_rematch_won_1 = {"놓친 고기가", "커 보이는 법..."},
+            fb_bl_fish_rematch_lost_1 = {"또 내 낚싯바늘에", "걸렸나, 피라미?"},
 
             -- The Psychic: must play 5 cards
             fb_bl_psychic_name_1 = {"하지만 나는", "심령술사다!"},
@@ -181,6 +242,8 @@ return {
             fb_bl_psychic_defeat_1 = {"예견했다.", "...아닌가?"},
             fb_bl_psychic_gloat_1 = {"내 말이 맞았지!"},
             fb_bl_psychic_interrupted_1 = {"그럴 줄 알았다.", "...그래도 무례해."},
+            fb_bl_psychic_rematch_won_1 = {"네 지난 승리는", "예견하지 못했다."},
+            fb_bl_psychic_rematch_lost_1 = {"돌아올 줄", "알았다."},
 
             -- The Goad: all Spade cards are debuffed
             fb_bl_goad_name_1 = {"하지만 나는", "자극이다!"},
@@ -193,6 +256,8 @@ return {
             fb_bl_goad_defeat_1 = {"젠장,", "네가 이겼다."},
             fb_bl_goad_gloat_1 = {"제 무덤을 파라!"},
             fb_bl_goad_interrupted_1 = {"나를 도발해?", "좋다!"},
+            fb_bl_goad_rematch_won_1 = {"지난번엔 무덤에서", "기어 나왔지."},
+            fb_bl_goad_rematch_lost_1 = {"더 깊은 무덤을", "파러 왔나?"},
 
             -- The Water: start with 0 discards
             fb_bl_water_name_1 = {"하지만 나는", "물이다!"},
@@ -205,6 +270,8 @@ return {
             fb_bl_water_defeat_1 = {"바싹 말랐군..."},
             fb_bl_water_gloat_1 = {"물거품이 됐군!"},
             fb_bl_water_interrupted_1 = {"말을 끊어? 이제", "물 건너갔다!"},
+            fb_bl_water_rematch_won_1 = {"지난번엔 용케", "떠 있었지."},
+            fb_bl_water_rematch_lost_1 = {"또 물 먹으러", "왔나?"},
 
             -- The Window: all Diamond cards are debuffed
             fb_bl_window_name_1 = {"하지만 나는", "창문이다!"},
@@ -217,6 +284,8 @@ return {
             fb_bl_window_defeat_1 = {"내 기회의 창이", "닫혔다."},
             fb_bl_window_gloat_1 = {"다이아? 약화!"},
             fb_bl_window_interrupted_1 = {"내 말을 창밖으로", "던져버리겠다고?!"},
+            fb_bl_window_rematch_won_1 = {"한 번은 내 창문을", "깼지."},
+            fb_bl_window_rematch_lost_1 = {"또 아이쇼핑", "하러 왔나?"},
 
             -- The Manacle: -1 hand size
             fb_bl_manacle_name_1 = {"하지만 나는", "수갑이다!"},
@@ -229,6 +298,8 @@ return {
             fb_bl_manacle_defeat_1 = {"드디어 자유...", "나로부터."},
             fb_bl_manacle_gloat_1 = {"손도 못 쓰지?"},
             fb_bl_manacle_interrupted_1 = {"멈춰! 그 대가로", "족쇄를 채워주마!"},
+            fb_bl_manacle_rematch_won_1 = {"한 번은 내 사슬을", "풀었지."},
+            fb_bl_manacle_rematch_lost_1 = {"또 사슬에", "묶였군."},
 
             -- The Eye: no repeat hand types this round
             fb_bl_eye_name_1 = {"하지만 나는", "눈이다!"},
@@ -241,6 +312,8 @@ return {
             fb_bl_eye_defeat_1 = {"눈에서 멀어지면", "마음에서도..."},
             fb_bl_eye_gloat_1 = {"내 말이 맞지!"},
             fb_bl_eye_interrupted_1 = {"다 봤다!", "무례하군."},
+            fb_bl_eye_rematch_won_1 = {"그 패배 이후로", "널 지켜봤다."},
+            fb_bl_eye_rematch_lost_1 = {"돌아온 게", "보이는군."},
 
             -- The Mouth: play only 1 hand type this round
             fb_bl_mouth_name_1 = {"하지만 나는", "입이다!"},
@@ -253,6 +326,8 @@ return {
             fb_bl_mouth_defeat_1 = {"할 말을 잃었군..."},
             fb_bl_mouth_gloat_1 = {"입 닥쳐, 패배자!"},
             fb_bl_mouth_interrupted_1 = {"이봐! 이 입은", "아직 말하고 있었다!"},
+            fb_bl_mouth_rematch_won_1 = {"지난번엔 내 입을", "막았지."},
+            fb_bl_mouth_rematch_lost_1 = {"지난번과 같은", "루틴인가?"},
 
             -- The Plant: all face cards are debuffed
             fb_bl_plant_name_1 = {"하지만 나는", "행성이다!"},
@@ -265,6 +340,8 @@ return {
             fb_bl_plant_defeat_1 = {"시들었군...", "다시 자라겠다."},
             fb_bl_plant_gloat_1 = {"현실을 직시해!"},
             fb_bl_plant_interrupted_1 = {"좀 자라게 둬라,", "성질 급하긴!"},
+            fb_bl_plant_rematch_won_1 = {"뿌리째 뽑혔지만", "다시 자랐다."},
+            fb_bl_plant_rematch_lost_1 = {"또 내 정원에", "왔군."},
 
             -- The Serpent: after play or discard, always draw 3 cards
             fb_bl_serpent_name_1 = {"하지만 나는", "뱀이다!"},
@@ -277,6 +354,8 @@ return {
             fb_bl_serpent_defeat_1 = {"허물을 벗었군...", "자존심도."},
             fb_bl_serpent_gloat_1 = {"쉬익, 또 보자!"},
             fb_bl_serpent_interrupted_1 = {"쉬익! 말 끊지", "마라!"},
+            fb_bl_serpent_rematch_won_1 = {"한 번은 내 똬리에서", "빠져나갔지."},
+            fb_bl_serpent_rematch_lost_1 = {"쉬이익...", "돌아왔군..."},
 
             -- The Pillar: cards played previously this ante are debuffed
             fb_bl_pillar_name_1 = {"하지만 나는", "기둥이다!"},
@@ -289,6 +368,8 @@ return {
             fb_bl_pillar_defeat_1 = {"공동체의 기둥이", "쓰러졌다."},
             fb_bl_pillar_gloat_1 = {"아직 서 있다!"},
             fb_bl_pillar_interrupted_1 = {"어른을 공경할", "줄 모르나?"},
+            fb_bl_pillar_rematch_won_1 = {"네가 날 이긴 방법,", "기억하고 있다."},
+            fb_bl_pillar_rematch_lost_1 = {"네가 진 방법,", "기억하고 있다."},
 
             -- The Needle: play only 1 hand
             fb_bl_needle_name_1 = {"하지만 나는", "바늘이다!"},
@@ -301,6 +382,8 @@ return {
             fb_bl_needle_defeat_1 = {"날카로운 플레이.", "내가 졌다."},
             fb_bl_needle_gloat_1 = {"핵심은 네 패배!"},
             fb_bl_needle_interrupted_1 = {"따끔하군.", "아직 안 끝났다!"},
+            fb_bl_needle_rematch_won_1 = {"지난번엔 핸드 하나에", "당했지."},
+            fb_bl_needle_rematch_lost_1 = {"또 기회는 한 번.", "또 놓칠 건가?"},
 
             -- The Head: all Heart cards are debuffed
             fb_bl_head_name_1 = {"하지만 나는", "머리다!"},
@@ -313,6 +396,8 @@ return {
             fb_bl_head_defeat_1 = {"너 때문에", "머리를 잃었다..."},
             fb_bl_head_gloat_1 = {"무정하군!"},
             fb_bl_head_interrupted_1 = {"정신 나갔나?", "내가 말하는 중이다!"},
+            fb_bl_head_rematch_won_1 = {"한 번은 내 마음을", "얻었지..."},
+            fb_bl_head_rematch_lost_1 = {"또 상처받으러", "왔나?"},
 
             -- The Tooth: lose $1 per card played
             fb_bl_tooth_name_1 = {"하지만 나는", "이빨이다!"},
@@ -325,6 +410,8 @@ return {
             fb_bl_tooth_defeat_1 = {"이를 악물어도", "졌구나."},
             fb_bl_tooth_gloat_1 = {"돈 내, 호구야!"},
             fb_bl_tooth_interrupted_1 = {"으르렁! 그 대가를", "치르게 해주마!"},
+            fb_bl_tooth_rematch_won_1 = {"지난번 몫, 아직", "받을 게 남았다."},
+            fb_bl_tooth_rematch_lost_1 = {"빚 갚으러", "왔나?"},
 
             -- The Flint: base Chips and Mult are halved
             fb_bl_flint_name_1 = {"하지만 나는", "부싯돌이다!"},
@@ -337,6 +424,8 @@ return {
             fb_bl_flint_defeat_1 = {"내 불꽃이", "꺼졌다."},
             fb_bl_flint_gloat_1 = {"재미도 반토막!"},
             fb_bl_flint_interrupted_1 = {"불똥 튀기지 마!", "말하는 중이었다!"},
+            fb_bl_flint_rematch_won_1 = {"지난번엔 세금을", "떼먹었지."},
+            fb_bl_flint_rematch_lost_1 = {"또 세금 철이다.", "내라."},
 
             -- The Mark: all face cards are drawn face down
             fb_bl_mark_name_1 = {"하지만 나는", "가면이다!"},
@@ -349,6 +438,8 @@ return {
             fb_bl_mark_defeat_1 = {"내게 네 흔적을", "남겼군."},
             fb_bl_mark_gloat_1 = {"패배로 낙인!"},
             fb_bl_mark_interrupted_1 = {"기억해 두지.", "넌 찍혔다."},
+            fb_bl_mark_rematch_won_1 = {"지난번엔 내 가면을", "꿰뚫어 봤지."},
+            fb_bl_mark_rematch_lost_1 = {"아직도 내 얼굴이", "안 보이나?"},
 
             -- Amber Acorn: flips and shuffles all Joker cards
             fb_bl_final_acorn_name_1 = {"하지만 나는", "호박색 도토리다!"},
@@ -361,6 +452,10 @@ return {
             fb_bl_final_acorn_defeat_1 = {"내 껍질을", "깨버렸군..."},
             fb_bl_final_acorn_gloat_1 = {"도토리 키 재기!"},
             fb_bl_final_acorn_interrupted_1 = {"잠깐! 아직 싹도", "안 텄다고!"},
+            fb_bl_final_acorn_phase2_1 = {"이제부터", "더 딱딱해진다!"},
+            fb_bl_final_acorn_phase3_1 = {"완전한 혼돈!", "껍질을 벗는다!"},
+            fb_bl_final_acorn_rematch_won_1 = {"한 번은 날 깼지.", "다신 안 돼!"},
+            fb_bl_final_acorn_rematch_lost_1 = {"또 혼돈을", "원하나?"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"하지만 나는", "심록색 잎사귀다!"},
@@ -373,6 +468,10 @@ return {
             fb_bl_final_leaf_defeat_1 = {"떠나마...", "낙엽처럼."},
             fb_bl_final_leaf_gloat_1 = {"낙엽처럼 져라!"},
             fb_bl_final_leaf_interrupted_1 = {"좋다. 인사는", "생략하지."},
+            fb_bl_final_leaf_phase2_1 = {"내 뿌리가", "더 깊어진다!"},
+            fb_bl_final_leaf_phase3_1 = {"나와 함께", "시들어라!"},
+            fb_bl_final_leaf_rematch_won_1 = {"한 번은 놓아줬지.", "다시 해 봐라."},
+            fb_bl_final_leaf_rematch_lost_1 = {"아직도 조커에", "매달리나?"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"하지만 나는", "보라색 술잔이다!"},
@@ -385,6 +484,10 @@ return {
             fb_bl_final_vessel_defeat_1 = {"술잔이...", "비어버렸다."},
             fb_bl_final_vessel_gloat_1 = {"완패했군!"},
             fb_bl_final_vessel_interrupted_1 = {"내 연설 전에", "출항이라니. 대담하군."},
+            fb_bl_final_vessel_phase2_1 = {"화물칸을 채워라!"},
+            fb_bl_final_vessel_phase3_1 = {"전원,", "심해로!"},
+            fb_bl_final_vessel_rematch_won_1 = {"한 번은 날 침몰시켰지.", "수리는 끝났다."},
+            fb_bl_final_vessel_rematch_lost_1 = {"내 항적에", "빠져 죽으러 왔나?"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"하지만 나는", "진홍색 술잔이다!"},
@@ -397,6 +500,10 @@ return {
             fb_bl_final_heart_defeat_1 = {"내 마음이...", "부서졌다."},
             fb_bl_final_heart_gloat_1 = {"상심했나?"},
             fb_bl_final_heart_interrupted_1 = {"내 말을 끊어?", "무정하군!"},
+            fb_bl_final_heart_phase2_1 = {"내 심장이", "더 빨리 뛴다!"},
+            fb_bl_final_heart_phase3_1 = {"진홍빛 분노를", "느껴라!"},
+            fb_bl_final_heart_rematch_won_1 = {"지난번엔 내 마음을", "부쉈지."},
+            fb_bl_final_heart_rematch_lost_1 = {"내 심장은 아직", "너를 위해 뛴다."},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"하지만 나는", "하늘색 종이다!"},
@@ -409,6 +516,10 @@ return {
             fb_bl_final_bell_defeat_1 = {"종이 울린다", "나를 위해."},
             fb_bl_final_bell_gloat_1 = {"땡땡, 졌구나!"},
             fb_bl_final_bell_interrupted_1 = {"종소리에 살았다고?", "이번엔 아니다!"},
+            fb_bl_final_bell_phase2_1 = {"더 크게", "울려주마!"},
+            fb_bl_final_bell_phase3_1 = {"마지막 종소리다!"},
+            fb_bl_final_bell_rematch_won_1 = {"지난번엔 내 종을", "제대로 울렸지."},
+            fb_bl_final_bell_rematch_lost_1 = {"종은 다시", "너를 위해 울린다."},
         }
     }
 }

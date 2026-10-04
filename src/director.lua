@@ -41,6 +41,8 @@ end
 function Dir.on_blind_set(blind)
   local st = FinalBoss.util.state()
   FinalBoss.dialogue.reset(blind)
+  FinalBoss.moves.on_blind_set()
+  FinalBoss.memory.unpresent()
   local proto = blind.config.blind or {}
   if not proto.key then st.encounter = nil; return end
   local entry = FinalBoss.registry.get(proto.key)
@@ -52,11 +54,25 @@ function Dir.on_blind_set(blind)
     ante = G.GAME.round_resets.ante,
     min_ante = FinalBoss.config.min_ante,
   }
+  local cinematic = (tier == 'full' and is_showdown and FinalBoss.config.cinematic) and true or false
   st.encounter = {key = proto.key, tier = tier, fired = {}, reactions = 0, track = nil,
-    last_variant = {}, ended = false, last_hand_seen = nil, showdown = is_showdown,
-    cinematic = (tier == 'full' and is_showdown and FinalBoss.config.cinematic) and true or false}
+    last_variant = {}, ended = false, last_hand_seen = nil, showdown = is_showdown, cinematic = cinematic,
+    -- 1.1 phases: enc.phase (nil = phase I) and the twist state are plain saved data. Twists need
+    -- phases, so they follow cinematics.
+    twists_on = (cinematic and FinalBoss.config.phase_twists) and true or false,
+    twists = {applied = {}, leaf_sold = false}}
+  -- 1.1 memory: one fight per boss encounter, recorded at blind set (Continue never re-records).
+  local enc = st.encounter
+  enc.boss = blind.boss and true or false
+  if enc.boss then
+    FinalBoss.memory.on_fight(proto.key)
+    enc.last = FinalBoss.memory.last(proto.key)
+    enc.nemesis = FinalBoss.memory.is_nemesis(proto.key)
+    -- Cinematic showdowns present the nemesis when the avatar lands (cinematic.spawn_stage).
+    if not cinematic then FinalBoss.memory.present(blind) end
+  end
   st.lost_to = nil
-  if tier == 'none' then return end
+  if tier == 'none' then Dir.schedule_start(proto.key); return end
   if tier == 'full' then
     st.encounter.track = FinalBoss.music.pick_track(entry)
     FinalBoss.fx.play(entry.fx.intro, blind)
@@ -72,31 +88,52 @@ function Dir.on_blind_set(blind)
     func = function() FinalBoss.util.guard('intro', Dir.play_intro, proto.key); return true end}))
 end
 
+--- No intro will play: the boss's start move comes INTRO_DELAY after the blind is set (the chip
+--- has landed). With an intro, Dir.play_intro starts it when the intro ends.
+function Dir.schedule_start(blind_key)
+  G.E_MANAGER:add_event(Event({trigger = 'after', delay = Dir.INTRO_DELAY, timer = 'REAL',
+    blocking = false, blockable = false,
+    func = function() FinalBoss.util.guard('start_move', FinalBoss.moves.start, blind_key); return true end}))
+end
+
 function Dir.play_intro(blind_key)
   local enc, blind = current(blind_key)
-  -- In a cinematic showdown the letterbox retracts when the intro dialogue ends (or never starts).
-  -- retract_bars is a no-op without bars, so it is safe for every encounter.
-  local on_end = enc and enc.cinematic and FinalBoss.cinematic.retract_bars or nil
-  local function nothing_to_say() FinalBoss.cinematic.retract_bars() end
-  if not enc or not FinalBoss.config.dialogue or blind.disabled then return nothing_to_say() end
+  -- When the intro ends (or never starts): the letterbox retracts (a no-op without bars) and the
+  -- boss performs its start move (moves.start runs once per encounter).
+  local function finish()
+    FinalBoss.cinematic.retract_bars()
+    FinalBoss.moves.start(blind_key)
+  end
+  if not enc or not FinalBoss.config.dialogue or blind.disabled then return finish() end
   -- A hand is already being played (the delayed intro came late): skip the intro for this
   -- encounter rather than start it only to cut it at once.
-  if G.STATES and G.STATE == G.STATES.HAND_PLAYED then return nothing_to_say() end
+  if G.STATES and G.STATE == G.STATES.HAND_PLAYED then return finish() end
   local steps = {}
-  for _, moment in ipairs(FinalBoss.logic.intro_sequence(enc.tier)) do
+  -- 1.1 memory: a rematch or nemesis line may replace the opener (full) or the intro (light).
+  local plan = FinalBoss.logic.intro_plan{tier = enc.tier, memory = FinalBoss.config.memory,
+    last = enc.last, nemesis = enc.nemesis, roll = math.random()}
+  for _, moment in ipairs(plan) do
     local key = FinalBoss.registry.resolve(enc.key, moment, enc.last_variant)
     if key then steps[#steps + 1] = {key = key, vars = Dir.vars(blind)} end
   end
-  if #steps == 0 then return nothing_to_say() end
+  if #steps == 0 then return finish() end
   local entry = FinalBoss.registry.get(enc.key)
   FinalBoss.dialogue.play_sequence(blind, steps,
-    FinalBoss.logic.line_duration(FinalBoss.config.intro_speed), entry.voice.pitch, on_end)
+    FinalBoss.logic.line_duration(FinalBoss.config.intro_speed), entry.voice.pitch, finish)
 end
 
 --- Continuing a saved run: restore FX and stage for an unfinished full encounter, never replay the intro.
 function Dir.on_blind_loaded(blind)
   FinalBoss.dialogue.reset(blind) -- a loaded blind never has a live bubble
   local enc = (G.GAME.FinalBoss or {}).encounter
+  -- 1.1: the nemesis presentation is visual, so rebuild it (HUD now; the avatar's aura below).
+  -- present() checks the encounter: this blind, nemesis, not over, Boss memory on.
+  FinalBoss.memory.unpresent()
+  FinalBoss.memory.present(blind)
+  -- Curse marks (any tier) come back on the cursed cards already in hand. Visual only: a failure is
+  -- logged and the rest of the restore still runs.
+  local ok, err = pcall(FinalBoss.moves.restore_marks, blind)
+  if not ok then FinalBoss.util.log('warn', 'curse mark restore failed: ' .. tostring(err)) end
   if not enc or enc.tier ~= 'full' or enc.ended then return end
   if not (blind.config.blind and blind.config.blind.key == enc.key) then return end
   FinalBoss.fx.resume(blind)
@@ -109,17 +146,27 @@ function Dir.on_blind_loaded(blind)
     FinalBoss.avatar.spawn(blind, {fall = false})
     FinalBoss.avatar.set_wound(stage)
     FinalBoss.hpbar.create(FinalBoss.avatar.anchor(), blind, total, required)
+    FinalBoss.phases.restore(enc, blind) -- after spawn and create: stance aura and phase marker
+    FinalBoss.memory.present(blind) -- the avatar is back: its crimson aura replaces the HUD tag
   end
 end
 
 --- Runs after vanilla's end-of-round event, so Mr. Bones saves are resolved.
 function Dir.on_round_end()
   Dir.flush_pending()
+  FinalBoss.phases.reset() -- (the twist clean-up runs ungated in hooks.lua's end_round wrap)
   local st = FinalBoss.util.state()
   local enc = st.encounter
-  if not enc then return end
-  if G.STATE == G.STATES.GAME_OVER then
+  local over = G.STATE == G.STATES.GAME_OVER
+  if enc and over then
     enc.ended = true
+    if enc.boss and not enc.recorded then
+      if FinalBoss.memory.on_loss(enc.key) then enc.recorded = true end -- this boss ended the run
+    end
+  end
+  FinalBoss.memory.unpresent() -- after the loss is recorded (memory's safe: a visual error is only logged)
+  if not enc then return end
+  if over then
     FinalBoss.fx.stop()
     FinalBoss.arena.stop(true)
     if enc.cinematic then
@@ -148,7 +195,8 @@ function Dir.fire(moment, opts)
     FinalBoss.fx.play('flash', blind)
   end
   if not FinalBoss.config.dialogue then return true end
-  local key = FinalBoss.registry.resolve(enc.key, moment, enc.last_variant)
+  -- opts.line: say another moment's line for this moment (1.1: the nemesis's own defeat line).
+  local key = FinalBoss.registry.resolve(enc.key, opts.line or moment, enc.last_variant)
   if not key then return true end
   local entry = FinalBoss.registry.get(enc.key)
   FinalBoss.dialogue.say(blind, key, Dir.vars(blind), entry.voice.pitch,
@@ -172,12 +220,16 @@ function Dir.on_hand_after()
   local hands_left = G.GAME.current_round.hands_left
   -- Set before the game-over screen picks its quip; cleared in on_round_end if the run continues.
   if hands_left == 0 and total < required then st.lost_to = enc.key end
+  if total >= required then -- the winning hand (achievements read these at blind_defeated)
+    enc.win_start, enc.win_hand, enc.win_hands_left = chips, hands_played, hands_left
+  end
   local moment = FinalBoss.logic.detect_moments{delta = delta, total = total, required = required,
     hands_left = hands_left, fired = enc.fired, tier = enc.tier, reactions = enc.reactions}
   -- The reaction waits until the game shows the score (Dir.tick -> logic.score_landed), or the
   -- boss would spoil it. Everything above is decided now.
   local p = {start = chips, delta = delta, total = total, required = required, moment = moment,
-    enc = enc, blind = blind, t0 = FinalBoss.util.now(), queued_done = false, hand = hands_played}
+    enc = enc, blind = blind, t0 = FinalBoss.util.now(), queued_done = false, hand = hands_played,
+    hands_left = hands_left}
   Dir.pending = p
   -- Completion signal in queue order: context.after runs inside evaluate_play (state_events.lua)
   -- after it has queued the score display (delay, chips2, the G.GAME.chips ease, the blocking
@@ -199,19 +251,25 @@ local function react(p)
   end
   local wait = 0 -- a laugh is coming: the line must not overlap it
   if enc.tier == 'full' and enc.showdown then
-    wait = Dir.stage_hit(enc, blind, p.delta, p.total, p.required, p.moment)
+    wait = Dir.stage_hit(enc, blind, p.delta, p.total, p.required, p.moment, p.hand)
+    -- 1.1: crossing 50% / 25% transforms the boss. Its phase line replaces this hand's moment line
+    -- (the moment stays unfired); the hit, damage number and laugh above still play, and a weak
+    -- hit's transformation waits for the laugh (wait) so laugh, roar and line never overlap.
+    -- A powerless (disabled) boss gets mad there instead: anger and its disabled line, same rules.
+    if FinalBoss.phases.check(enc, blind, p, wait) then return end
   end
   if not p.moment then return end
   -- This hand interrupted the intro: its interrupted line replaces the moment line (the moment
   -- stays unfired, so a later hand can still trigger it), except the defeat line, which always
   -- plays (and may replace the interrupted bubble). The stage hit above still played.
   if FinalBoss.logic.moment_replaced(enc.interrupt_hand, p.hand, p.moment) then return end
-  if wait <= 0 then Dir.fire(p.moment); return end
+  local line = FinalBoss.memory.defeat_line(enc, p.moment) -- nil unless the nemesis falls
+  if wait <= 0 then Dir.fire(p.moment, {line = line}); return end
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = wait, timer = 'REAL', blocking = false,
     blockable = false, func = function()
       FinalBoss.util.guard('moment_after_laugh', function()
         local e = current()
-        if e and e == enc and not e.ended then Dir.fire(p.moment) end
+        if e and e == enc and not e.ended then Dir.fire(p.moment, {line = line}) end
       end)
       return true
     end}))
@@ -236,7 +294,7 @@ end
 
 --- Stage reactions to a scored hand in a showdown (arena always; avatar when cinematic).
 --- Returns the seconds before the hand's dialogue line may start (0 unless the avatar laughs).
-function Dir.stage_hit(enc, blind, delta, total, required, moment)
+function Dir.stage_hit(enc, blind, delta, total, required, moment, hand)
   local stage = stage_of(total, required)
   FinalBoss.arena.on_hit(stage)
   if not enc.cinematic then return 0 end
@@ -257,6 +315,7 @@ function Dir.stage_hit(enc, blind, delta, total, required, moment)
   local V = FinalBoss.avatar
   local o = V.anchor()
   if not o then return 0 end -- no avatar to laugh: the line must not wait for nothing
+  enc.laughed_hand = hand -- Last Laugh: winning with the very next hand earns it
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = Dir.WEAK_LAUGH_DELAY, timer = 'REAL',
     blocking = false, blockable = false, func = function()
       FinalBoss.util.guard('weak_laugh', function()
@@ -274,7 +333,27 @@ function Dir.on_blind_disabled()
 end
 
 function Dir.on_blind_defeated()
-  Dir.flush_pending()
+  FinalBoss.curse.clear() -- the curse marks go with the blind (any tier)
+  Dir.flush_pending() -- (the twist clean-up runs ungated in hooks.lua's mod.calculate)
+  -- 1.1 memory: the win, for any boss encounter (also below the dialogue ante, tier 'none').
+  local raw = FinalBoss.util.state().encounter
+  local gb = G.GAME.blind
+  if raw and raw.boss and not raw.recorded and gb and gb.config.blind and gb.config.blind.key == raw.key then
+    -- A disabled blind stays disabled until the next one is set (Blind:defeat keeps the flag), so a
+    -- boss disabled at any point of the fight (Chicot, Luchador) is still disabled here.
+    raw.powerless = FinalBoss.phases.powerless(raw, gb) or nil
+    local m, beaten = FinalBoss.memory.on_win(raw)
+    if m then raw.recorded = true end
+    -- The nemesis fell (its own defeat line already played): burst, banner; it is now broken.
+    if beaten and FinalBoss.config.memory then FinalBoss.memory.celebrate() end
+    if m then -- profile achievements (win_* and laughed_hand: Dir.on_hand_after, Dir.stage_hit)
+      FinalBoss.achievements.award_from('defeat', FinalBoss.logic.defeat_achievements, {showdown = raw.showdown,
+        start = raw.win_start, hands_left = raw.win_hands_left, hand = raw.win_hand,
+        laughed_hand = raw.laughed_hand, nemesis = beaten and not raw.fake_nemesis, -- F9 earns nothing
+        final_defeated = m.final_defeated, final_defeated_twisted = m.final_defeated_twisted})
+    end
+  end
+  FinalBoss.memory.unpresent()
   local enc, blind = current()
   if not enc then return end
   enc.ended = true
@@ -306,9 +385,16 @@ function Dir.check_interrupt()
   if not FinalBoss.logic.should_interrupt{hand_played = true, cinematic_intro = cine,
       dialogue_intro = talk, tier = enc.tier, ended = enc.ended, fired = enc.fired} then return end
   enc.fired.interrupted = true
+  local mem = FinalBoss.memory.on_interrupt(enc.key) -- recorded before any visual work can fail
+  if mem then
+    FinalBoss.achievements.award_from('interrupt', FinalBoss.logic.interrupt_achievements, mem.interrupted)
+  end
   enc.interrupt_hand = G.GAME.current_round.hands_played -- this hand's id at context.after
   if cine then C.interrupt() end
-  D.end_intro() -- remaining lines dropped; its on_end (letterbox retract) runs once
+  D.end_intro() -- remaining lines dropped; its on_end (letterbox retract, start move) runs once
+  -- An interrupted cinematic drops its on_done, so Dir.play_intro never runs: the start move must
+  -- still play (moves.start runs once per encounter; a repeat call is a no-op).
+  FinalBoss.util.guard('start_move', FinalBoss.moves.start, enc.key)
   FinalBoss.avatar.anger(blind)
   Dir.fire('interrupted', {force = true})
 end
@@ -334,7 +420,9 @@ function Dir.reset_stage()
   resetting = true
   local ok, err = pcall(function()
     for _, step in ipairs({FinalBoss.cinematic.reset, FinalBoss.hpbar.remove, FinalBoss.avatar.remove,
-        FinalBoss.arena.reset, FinalBoss.fx.reset}) do
+        FinalBoss.arena.reset, FinalBoss.fx.reset, FinalBoss.effects.reset, FinalBoss.moves.reset,
+        FinalBoss.phases.reset, FinalBoss.phases.clear_twists, FinalBoss.music.unduck,
+        FinalBoss.memory.unpresent}) do
       local sok, serr = pcall(step)
       if not sok then FinalBoss.util.log('error', 'reset_stage step failed: ' .. tostring(serr)) end
     end

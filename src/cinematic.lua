@@ -1,5 +1,6 @@
 --- Showdown cinematics: letterbox + title card + avatar fall-in before the
---- intro dialogue, and the slow-motion explosive finale. Owns FinalBoss.timescale.
+--- intro dialogue, and the slow-motion explosive finale. Owns FinalBoss.timescale (phases.lua
+--- borrows it for the transformation freeze).
 local C = {}
 C.BAR_H = 1.1
 C.token = 0        -- bumped to cancel pending intro beats
@@ -65,7 +66,10 @@ local function show_title(blind)
   local name = blind.loc_name or (blind.config.blind and blind.config.blind.name) or ''
   local band = mix_colours(c, G.C.BLACK, 0.25)
   band[4] = 0.85
-  local sub = DynaText({string = {localize('fb_showdown_title')},
+  -- 1.1: against the profile's nemesis the band reads NEMESIS (hidden with Boss memory off).
+  local enc = G.GAME and G.GAME.FinalBoss and G.GAME.FinalBoss.encounter
+  local title_key = (enc and enc.nemesis and FinalBoss.config.memory) and 'fb_nemesis_title' or 'fb_showdown_title'
+  local sub = DynaText({string = {localize(title_key)},
     colours = {G.C.WHITE}, scale = 0.6, shadow = true, pop_in = 0, pop_in_rate = 4, silent = true})
   local big = DynaText({string = {name}, colours = {c}, scale = 1.4,
     shadow = true, bump = true, pop_in = 0.2, pop_in_rate = 3, silent = true})
@@ -104,6 +108,7 @@ local function spawn_stage(fall)
   if not enc or enc.ended or total >= required then return end
   FinalBoss.avatar.spawn(C.blind, {fall = fall})
   FinalBoss.hpbar.create(FinalBoss.avatar.anchor(), C.blind, total, required)
+  FinalBoss.memory.present(C.blind) -- nemesis: crimson aura on the avatar
 end
 
 local function land()
@@ -196,6 +201,8 @@ local function explode(blind, calm)
   FinalBoss.hpbar.remove()
   FinalBoss.avatar.remove()
   if not x then return end
+  -- 1.1: the boss's own death (deaths.lua); bosses without one keep the shared explosion below.
+  if FinalBoss.deaths.play(blind, x, y, w, h, calm) then return end
   local c = (blind.config.blind and blind.config.blind.boss_colour) or G.C.RED
   local p = Particles(x, y, w, h, {timer = 0.005, scale = 0.6, speed = 8, lifespan = 2.0,
     colours = {c, G.C.WHITE, darken(c, 0.3)}, fill = true})

@@ -81,4 +81,90 @@ T['no v1 keys remain'] = function()
   for key in pairs(quips) do assert(key:sub(1, 3) ~= 'ml_', 'leftover v1 key ' .. key) end
 end
 
+T['final bosses and the generic set have phase lines'] = function()
+  local quips = load()
+  local missing = {}
+  for _, b in ipairs({'bl_final_acorn', 'bl_final_leaf', 'bl_final_vessel', 'bl_final_heart', 'bl_final_bell', 'generic'}) do
+    for _, m in ipairs({'phase2', 'phase3'}) do
+      local key = 'fb_' .. b .. '_' .. m .. '_1'
+      if not quips[key] then missing[#missing + 1] = key end
+    end
+  end
+  assert(#missing == 0, 'missing: ' .. table.concat(missing, ', '))
+end
+
+T['every vanilla boss and the generic set have rematch lines'] = function()
+  local quips, bosses = load()
+  local missing = {}
+  for blind in pairs(bosses) do
+    for _, m in ipairs({'rematch_won', 'rematch_lost'}) do
+      if not quips['fb_' .. blind .. '_' .. m .. '_1'] then missing[#missing + 1] = blind .. '.' .. m end
+    end
+  end
+  for _, m in ipairs({'rematch_won', 'rematch_lost'}) do
+    for i = 1, 3 do
+      if not quips['fb_generic_' .. m .. '_' .. i] then missing[#missing + 1] = 'generic.' .. m .. '_' .. i end
+    end
+  end
+  table.sort(missing)
+  assert(#missing == 0, 'missing: ' .. table.concat(missing, ', '))
+end
+
+T['nemesis lines: three intros and three defeats, shared, with the boss name'] = function()
+  local quips = load()
+  for _, m in ipairs({'nemesis_intro', 'nemesis_defeat'}) do
+    for i = 1, 3 do assert(quips['fb_' .. m .. '_' .. i], 'missing fb_' .. m .. '_' .. i) end
+  end
+  local named = 0
+  for _, m in ipairs({'nemesis_intro', 'nemesis_defeat'}) do
+    for i = 1, 3 do
+      if table.concat(quips['fb_' .. m .. '_' .. i], ' '):find('#1#', 1, true) then named = named + 1 end
+    end
+  end
+  assert(named >= 2, 'nemesis lines should use the boss name (#1#)')
+end
+
+T['nemesis title and banner strings exist'] = function()
+  package.loaded['localization.default'] = nil
+  local dict = require('localization.default').misc.dictionary
+  assert(dict.fb_nemesis_title and dict.fb_nemesis_defeated, 'fb_nemesis_title / fb_nemesis_defeated')
+  assert(dict.fb_cfg_dev_mode:find('F9', 1, true), 'dev label lists F9')
+end
+
+T['every memory intro plan resolves a line for each step (light nemesis included)'] = function()
+  local quips, bosses = load()
+  package.loaded['src.logic'] = nil
+  local logic = require('src.logic')
+  local function count_of(prefix)
+    local n = 0
+    while quips[prefix .. '_' .. (n + 1)] do n = n + 1 end
+    return n
+  end
+  local missing = {}
+  for blind in pairs(bosses) do
+    for _, tier in ipairs({'full', 'light'}) do
+      for _, a in ipairs({{nemesis = true}, {last = 'won', roll = 0}, {last = 'lost', roll = 0}}) do
+        a.tier, a.memory = tier, true
+        for _, m in ipairs(logic.intro_plan(a)) do
+          if not logic.resolve_prefix(blind, m, count_of) then missing[#missing + 1] = blind .. '.' .. tier .. '.' .. m end
+        end
+      end
+    end
+  end
+  table.sort(missing)
+  assert(#missing == 0, 'no line for: ' .. table.concat(missing, ', '))
+end
+
+T['every achievement has a name and a description'] = function()
+  package.loaded['localization.default'] = nil
+  local misc = require('localization.default').misc
+  local ids = require('src.logic').ACHIEVEMENTS
+  assert(#ids == 10, 'ten achievements')
+  for _, id in ipairs(ids) do
+    local key = 'ach_FinalBoss_' .. id
+    assert(misc.achievement_names and type(misc.achievement_names[key]) == 'string', 'name ' .. key)
+    assert(misc.achievement_descriptions and type(misc.achievement_descriptions[key]) == 'string', 'description ' .. key)
+  end
+end
+
 return T

@@ -6,13 +6,18 @@ return {
             fb_cfg_music = "Muzyka pojedynków",
             fb_cfg_fx = "Efekty ekranu",
             fb_cfg_cinematic = "Przerywniki pojedynków",
+            fb_cfg_moves = "Ruchy bossów",
+            fb_cfg_phase_twists = "Fazy bossów zmieniają zasady",
             fb_showdown_title = "POJEDYNEK",
+            fb_nemesis_title = "NEMEZIS",
+            fb_nemesis_defeated = "NEMEZIS POKONANA",
             fb_cfg_intro_speed = "Prędkość intra",
             fb_speed_slow = "Wolno",
             fb_speed_normal = "Normalnie",
             fb_speed_fast = "Szybko",
             fb_cfg_min_ante = "Dialogi bossów od Wejścia",
-            fb_cfg_dev_mode = "Klawisze deweloperskie (F5-F7)",
+            fb_cfg_memory = "Pamięć bossów",
+            fb_cfg_dev_mode = "Klawisze deweloperskie (F5-F9)",
             fb_cfg_showdown_enabled = "Własny harmonogram pojedynków",
             fb_cfg_start_ante = "Pierwszy pojedynek: Wejście",
             fb_cfg_every = "Potem co N Wejść",
@@ -31,6 +36,30 @@ return {
             fb_tip_me_message_1 = "Jeśli lubisz FinalBoss, rozważ",
             fb_tip_me_message_2 = "drobny napiwek jako wsparcie.",
             fb_tip_me_message_3 = "Bardzo to doceniam!",
+        },
+        achievement_names = {
+            ach_FinalBoss_fb_showdown_survivor = "Ocalały z pojedynku",
+            ach_FinalBoss_fb_clean_sweep = "Czysta robota",
+            ach_FinalBoss_fb_rude = "Niegrzecznie!",
+            ach_FinalBoss_fb_no_manners = "Zero manier",
+            ach_FinalBoss_fb_last_laugh = "Kto się śmieje ostatni",
+            ach_FinalBoss_fb_overkill = "Nokaut",
+            ach_FinalBoss_fb_phase_skipper = "Przeskok fazy",
+            ach_FinalBoss_fb_comeback = "Wielki powrót",
+            ach_FinalBoss_fb_nemesis_slayer = "Pogromca nemezis",
+            ach_FinalBoss_fb_twisted = "Pokręcone",
+        },
+        achievement_descriptions = {
+            ach_FinalBoss_fb_showdown_survivor = "Pokonaj finałowego bossa",
+            ach_FinalBoss_fb_clean_sweep = "Pokonaj wszystkich 5 finałowych bossów z podstawowej gry",
+            ach_FinalBoss_fb_rude = "Przerwij bossowi, gdy mówi",
+            ach_FinalBoss_fb_no_manners = "Przerwij 10 różnym bossom",
+            ach_FinalBoss_fb_last_laugh = "Pokonaj bossa ręką zagraną zaraz po tym, jak cię wyśmiał",
+            ach_FinalBoss_fb_overkill = "Pokonaj finałowego bossa jedną ręką, zaczynając od pełnego zdrowia",
+            ach_FinalBoss_fb_phase_skipper = "Przenieś finałowego bossa z fazy I do fazy III jedną ręką",
+            ach_FinalBoss_fb_comeback = "Pokonaj finałowego bossa ostatnią ręką",
+            ach_FinalBoss_fb_nemesis_slayer = "Pokonaj swoją nemezis",
+            ach_FinalBoss_fb_twisted = "Pokonaj wszystkich 5 finałowych bossów z podstawowej gry ze zmianą zasad w fazach",
         },
         quips = {
             -- Config menu header card
@@ -73,6 +102,22 @@ return {
             fb_generic_interrupted_1 = {"Moja przemowa!"},
             fb_generic_interrupted_2 = {"Dobra... więc", "tak to wygląda."},
             fb_generic_interrupted_3 = {"Nawet nie", "powiesz cześć?"},
+            fb_generic_phase2_1 = {"Dość zabawy!"},
+            fb_generic_phase3_1 = {"Teraz jestem", "naprawdę wściekły!"},
+            fb_generic_rematch_won_1 = {"Znowu ty?", "Pamiętam cię."},
+            fb_generic_rematch_won_2 = {"Ostatnio to był fart.", "Przyznaj się."},
+            fb_generic_rematch_won_3 = {"Czas na rewanż.", "Trenowałem."},
+            fb_generic_rematch_lost_1 = {"Wróciłeś po kolejne", "lanie?"},
+            fb_generic_rematch_lost_2 = {"Nic cię ostatnio", "nie nauczyło?"},
+            fb_generic_rematch_lost_3 = {"A, to ty.", "Ten przegryw."},
+
+            -- Nemesis (shared, #1# = boss name)
+            fb_nemesis_intro_1 = {"Pamiętasz mnie?", "#1# nie zapomina."},
+            fb_nemesis_intro_2 = {"Znowu #1#.", "Twoja nemezis."},
+            fb_nemesis_intro_3 = {"Nie uciekniesz", "przed swoją nemezis."},
+            fb_nemesis_defeat_1 = {"Jak?! Jestem", "twoją nemezis!"},
+            fb_nemesis_defeat_2 = {"#1#... to koniec."},
+            fb_nemesis_defeat_3 = {"To jeszcze nie", "koniec, rywalu..."},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"Ale ja jestem", "Hak"},
@@ -85,6 +130,8 @@ return {
             fb_bl_hook_defeat_1 = {"Dobra... zdejmę", "cię z haka."},
             fb_bl_hook_gloat_1 = {"Złapany na haczyk!"},
             fb_bl_hook_interrupted_1 = {"Niegrzecznie! Byłem", "w połowie zdania!"},
+            fb_bl_hook_rematch_won_1 = {"Ostatnio zerwałeś się", "z mojego haka."},
+            fb_bl_hook_rematch_lost_1 = {"Wróciłeś, żeby znów", "dać się złapać?"},
 
             -- The Ox: playing your most played hand sets money to $0
             fb_bl_ox_name_1 = {"Ale ja jestem", "Wół"},
@@ -97,6 +144,8 @@ return {
             fb_bl_ox_defeat_1 = {"Chwyciłeś byka", "za rogi..."},
             fb_bl_ox_gloat_1 = {"Teraz jesteś", "spłukany!"},
             fb_bl_ox_interrupted_1 = {"Aha, więc TAK", "to będzie wyglądać."},
+            fb_bl_ox_rematch_won_1 = {"Raz uniknąłeś", "moich rogów..."},
+            fb_bl_ox_rematch_lost_1 = {"Wciąż spłukany", "od ostatniego razu?"},
 
             -- The House: first hand is drawn face down
             fb_bl_house_name_1 = {"Ale ja jestem", "Dom"},
@@ -109,6 +158,8 @@ return {
             fb_bl_house_defeat_1 = {"Dom...", "upadł."},
             fb_bl_house_gloat_1 = {"Dom wygrywa!"},
             fb_bl_house_interrupted_1 = {"Zasada domu:", "jeszcze nie grasz!"},
+            fb_bl_house_rematch_won_1 = {"Dom raz przegrał.", "Nigdy więcej."},
+            fb_bl_house_rematch_lost_1 = {"Witaj z powrotem.", "Dom pamięta."},
 
             -- The Wall: extra large blind
             fb_bl_wall_name_1 = {"Ale ja jestem", "Mur"},
@@ -121,6 +172,8 @@ return {
             fb_bl_wall_defeat_1 = {"Mur...", "się wali."},
             fb_bl_wall_gloat_1 = {"Mur beton!"},
             fb_bl_wall_interrupted_1 = {"Jak gadać do ściany...", "chwila."},
+            fb_bl_wall_rematch_won_1 = {"Raz przeszedłeś przez", "mnie. Drugi raz nie."},
+            fb_bl_wall_rematch_lost_1 = {"Znowu walisz", "w ten sam mur?"},
 
             -- The Wheel: 1 in 7 cards get drawn face down
             fb_bl_wheel_name_1 = {"Ale ja jestem", "Koło"},
@@ -133,6 +186,8 @@ return {
             fb_bl_wheel_defeat_1 = {"Koło fortuny...", "obróciło się przeciw mnie."},
             fb_bl_wheel_gloat_1 = {"Koło się zamknęło!"},
             fb_bl_wheel_interrupted_1 = {"Hola! Nie tak szybko,", "jeszcze się kręcę!"},
+            fb_bl_wheel_rematch_won_1 = {"W ostatnim obrocie", "miałeś farta..."},
+            fb_bl_wheel_rematch_lost_1 = {"Jeszcze jeden obrót?", "Kasyno ma przewagę."},
 
             -- The Arm: decrease level of played poker hand
             fb_bl_arm_name_1 = {"Ale ja jestem", "Ramię"},
@@ -145,6 +200,8 @@ return {
             fb_bl_arm_defeat_1 = {"Pokonałeś moje", "silne ramię."},
             fb_bl_arm_gloat_1 = {"Ręce opadają!"},
             fb_bl_arm_interrupted_1 = {"Łapy przy sobie!", "Jeszcze się prężę!"},
+            fb_bl_arm_rematch_won_1 = {"Ostatnio wygrałeś", "siłowanie na rękę."},
+            fb_bl_arm_rematch_lost_1 = {"Wróciłeś na kolejne", "siłowanie na rękę?"},
 
             -- The Club: all Club cards are debuffed
             fb_bl_club_name_1 = {"Ale ja jestem", "Klub"},
@@ -157,6 +214,8 @@ return {
             fb_bl_club_defeat_1 = {"Klub zamknięty.", "Czas na mnie..."},
             fb_bl_club_gloat_1 = {"Klub zamknięty!"},
             fb_bl_club_interrupted_1 = {"Hej! W moim klubie", "ja mówię pierwszy."},
+            fb_bl_club_rematch_won_1 = {"Ostatnio wbiłeś się", "do mojego klubu."},
+            fb_bl_club_rematch_lost_1 = {"Karnet odnowiony?", "Witaj z powrotem."},
 
             -- The Fish: cards drawn face down after each hand played
             fb_bl_fish_name_1 = {"Ale ja jestem", "Ryba"},
@@ -169,6 +228,8 @@ return {
             fb_bl_fish_defeat_1 = {"Złowiony...", "przez zawodowca."},
             fb_bl_fish_gloat_1 = {"Wpadłeś w sieć!"},
             fb_bl_fish_interrupted_1 = {"Przeciąłeś mi", "żyłkę!"},
+            fb_bl_fish_rematch_won_1 = {"Ten, który mi", "uciekł..."},
+            fb_bl_fish_rematch_lost_1 = {"Znowu na haczyku,", "rybko?"},
 
             -- The Psychic: must play 5 cards
             fb_bl_psychic_name_1 = {"Ale ja jestem", "Medium"},
@@ -181,6 +242,8 @@ return {
             fb_bl_psychic_defeat_1 = {"Widziałem to.", "...Czy aby na pewno?"},
             fb_bl_psychic_gloat_1 = {"Przewidziałem to!"},
             fb_bl_psychic_interrupted_1 = {"Wiedziałem, że to", "zrobisz. Niegrzecznie."},
+            fb_bl_psychic_rematch_won_1 = {"Nie przewidziałem", "twojej wygranej."},
+            fb_bl_psychic_rematch_lost_1 = {"Wiedziałem,", "że wrócisz."},
 
             -- The Goad: all Spade cards are debuffed
             fb_bl_goad_name_1 = {"Ale ja jestem", "Oścień"},
@@ -193,6 +256,8 @@ return {
             fb_bl_goad_defeat_1 = {"Do licha,", "wygrałeś."},
             fb_bl_goad_gloat_1 = {"Kop swój grób!"},
             fb_bl_goad_interrupted_1 = {"Prowokujesz MNIE?", "Dobrze!"},
+            fb_bl_goad_rematch_won_1 = {"Ostatnio wykopałeś się", "z grobu."},
+            fb_bl_goad_rematch_lost_1 = {"Wróciłeś kopać", "głębszy grób?"},
 
             -- The Water: start with 0 discards
             fb_bl_water_name_1 = {"Ale ja jestem", "Woda"},
@@ -205,6 +270,8 @@ return {
             fb_bl_water_defeat_1 = {"Wyschłem do cna..."},
             fb_bl_water_gloat_1 = {"Poszło na dno!"},
             fb_bl_water_interrupted_1 = {"Przerywasz mi?", "Pójdziesz na dno!"},
+            fb_bl_water_rematch_won_1 = {"Ostatnio utrzymałeś", "się na powierzchni."},
+            fb_bl_water_rematch_lost_1 = {"Wróciłeś znów", "pójść na dno?"},
 
             -- The Window: all Diamond cards are debuffed
             fb_bl_window_name_1 = {"Ale ja jestem", "Okno"},
@@ -217,6 +284,8 @@ return {
             fb_bl_window_defeat_1 = {"Okno możliwości", "się zamknęło."},
             fb_bl_window_gloat_1 = {"Karo? Osłabione!"},
             fb_bl_window_interrupted_1 = {"Moje słowa idą", "przez okno?!"},
+            fb_bl_window_rematch_won_1 = {"Raz wybiłeś", "moje okno."},
+            fb_bl_window_rematch_lost_1 = {"Znowu oglądasz", "wystawy?"},
 
             -- The Manacle: -1 hand size
             fb_bl_manacle_name_1 = {"Ale ja jestem", "Kajdany"},
@@ -229,6 +298,8 @@ return {
             fb_bl_manacle_defeat_1 = {"W końcu wolny...", "ode mnie."},
             fb_bl_manacle_gloat_1 = {"Ręce do góry!"},
             fb_bl_manacle_interrupted_1 = {"Stój! Zakuję cię", "za to w kajdany!"},
+            fb_bl_manacle_rematch_won_1 = {"Raz zrzuciłeś", "moje kajdany."},
+            fb_bl_manacle_rematch_lost_1 = {"Znowu w kajdanach,", "jak widzę."},
 
             -- The Eye: no repeat hand types this round
             fb_bl_eye_name_1 = {"Ale ja jestem", "Oko"},
@@ -241,6 +312,8 @@ return {
             fb_bl_eye_defeat_1 = {"Z oczu, z serca", "precz..."},
             fb_bl_eye_gloat_1 = {"Mówiłem, że widzę!"},
             fb_bl_eye_interrupted_1 = {"Widziałem to!", "Niegrzecznie."},
+            fb_bl_eye_rematch_won_1 = {"Obserwuję cię od", "tamtej porażki."},
+            fb_bl_eye_rematch_lost_1 = {"Widzę, że", "wróciłeś."},
 
             -- The Mouth: play only 1 hand type this round
             fb_bl_mouth_name_1 = {"Ale ja jestem", "Usta"},
@@ -253,6 +326,8 @@ return {
             fb_bl_mouth_defeat_1 = {"Odebrało mi mowę..."},
             fb_bl_mouth_gloat_1 = {"Cicho, przegrywie!"},
             fb_bl_mouth_interrupted_1 = {"Hej! Te usta", "jeszcze mówiły!"},
+            fb_bl_mouth_rematch_won_1 = {"Ostatnio zamknąłeś", "mi usta."},
+            fb_bl_mouth_rematch_lost_1 = {"Ta sama rutyna", "co ostatnio?"},
 
             -- The Plant: all face cards are debuffed
             fb_bl_plant_name_1 = {"Ale ja jestem", "Roślina"},
@@ -265,6 +340,8 @@ return {
             fb_bl_plant_defeat_1 = {"Zwiędłem...", "Odrosnę."},
             fb_bl_plant_gloat_1 = {"Spójrz prawdzie", "w oczy!"},
             fb_bl_plant_interrupted_1 = {"Daj mi najpierw", "urosnąć, niecierpliwy!"},
+            fb_bl_plant_rematch_won_1 = {"Wyrwałeś mnie.", "Odrosłem."},
+            fb_bl_plant_rematch_lost_1 = {"Znowu w moim", "ogródku, jak widzę."},
 
             -- The Serpent: after play or discard, always draw 3 cards
             fb_bl_serpent_name_1 = {"Ale ja jestem", "Wąż"},
@@ -277,6 +354,8 @@ return {
             fb_bl_serpent_defeat_1 = {"Zrzuciłem skórę...", "i dumę."},
             fb_bl_serpent_gloat_1 = {"Do sss-zobaczenia!"},
             fb_bl_serpent_interrupted_1 = {"Sss! Nie wchodź", "mi w słowo!"},
+            fb_bl_serpent_rematch_won_1 = {"Raz wymknąłeś się", "z moich splotów."},
+            fb_bl_serpent_rematch_lost_1 = {"Więc jednak", "wróciłeśsss..."},
 
             -- The Pillar: cards played previously this ante are debuffed
             fb_bl_pillar_name_1 = {"Ale ja jestem", "Filar"},
@@ -289,6 +368,8 @@ return {
             fb_bl_pillar_defeat_1 = {"Filar społeczności", "upadł."},
             fb_bl_pillar_gloat_1 = {"Wciąż stoję!"},
             fb_bl_pillar_interrupted_1 = {"Żadnego szacunku", "dla starszych?"},
+            fb_bl_pillar_rematch_won_1 = {"Pamiętam, jak", "mnie pokonałeś."},
+            fb_bl_pillar_rematch_lost_1 = {"Pamiętam, jak", "przegrałeś."},
 
             -- The Needle: play only 1 hand
             fb_bl_needle_name_1 = {"Ale ja jestem", "Igła"},
@@ -301,6 +382,8 @@ return {
             fb_bl_needle_defeat_1 = {"Ostra gra.", "Masz mnie."},
             fb_bl_needle_gloat_1 = {"Wbiłem szpilę!"},
             fb_bl_needle_interrupted_1 = {"Ależ kłujące.", "Nie skończyłem!"},
+            fb_bl_needle_rematch_won_1 = {"Ostatnio pokonała mnie", "jedna ręka."},
+            fb_bl_needle_rematch_lost_1 = {"Znowu jedna szansa.", "Znowu spudłujesz?"},
 
             -- The Head: all Heart cards are debuffed
             fb_bl_head_name_1 = {"Ale ja jestem", "Głowa"},
@@ -313,6 +396,8 @@ return {
             fb_bl_head_defeat_1 = {"Straciłem głowę...", "przez ciebie."},
             fb_bl_head_gloat_1 = {"Bez serca, co?"},
             fb_bl_head_interrupted_1 = {"Straciłeś głowę?", "Ja mówię!"},
+            fb_bl_head_rematch_won_1 = {"Raz zdobyłeś", "moje serce..."},
+            fb_bl_head_rematch_lost_1 = {"Wróciłeś po kolejne", "złamane serce?"},
 
             -- The Tooth: lose $1 per card played
             fb_bl_tooth_name_1 = {"Ale ja jestem", "Ząb"},
@@ -325,6 +410,8 @@ return {
             fb_bl_tooth_defeat_1 = {"Zębami i pazurami,", "a jednak przegrałem."},
             fb_bl_tooth_gloat_1 = {"Płać, frajerze!"},
             fb_bl_tooth_interrupted_1 = {"Grr! Zapłacisz", "mi za to!"},
+            fb_bl_tooth_rematch_won_1 = {"Wciąż wisisz mi", "za ostatni raz."},
+            fb_bl_tooth_rematch_lost_1 = {"Wróciłeś spłacić", "dług?"},
 
             -- The Flint: base Chips and Mult are halved
             fb_bl_flint_name_1 = {"Ale ja jestem", "Krzemień"},
@@ -337,6 +424,8 @@ return {
             fb_bl_flint_defeat_1 = {"Moja iskra", "zgasła."},
             fb_bl_flint_gloat_1 = {"Pół zabawy!"},
             fb_bl_flint_interrupted_1 = {"Bez iskier!", "Ja tu mówię!"},
+            fb_bl_flint_rematch_won_1 = {"Ostatnio wykręciłeś", "się od podatków."},
+            fb_bl_flint_rematch_lost_1 = {"Znowu sezon", "podatkowy. Płać."},
 
             -- The Mark: all face cards are drawn face down
             fb_bl_mark_name_1 = {"Ale ja jestem", "Cel"},
@@ -349,6 +438,8 @@ return {
             fb_bl_mark_defeat_1 = {"Zostawiłeś na mnie", "swój ślad."},
             fb_bl_mark_gloat_1 = {"Cel trafiony!"},
             fb_bl_mark_interrupted_1 = {"Zapamiętane. Jesteś", "naznaczony."},
+            fb_bl_mark_rematch_won_1 = {"Ostatnio mnie", "przejrzałeś."},
+            fb_bl_mark_rematch_lost_1 = {"Wciąż nie widzisz", "moich twarzy?"},
 
             -- Amber Acorn: flips and shuffles all Joker cards
             fb_bl_final_acorn_name_1 = {"Ale ja jestem", "Bursztynowy żołądź"},
@@ -361,6 +452,10 @@ return {
             fb_bl_final_acorn_defeat_1 = {"Rozbiłeś", "moją skorupę..."},
             fb_bl_final_acorn_gloat_1 = {"Twardy orzech!"},
             fb_bl_final_acorn_interrupted_1 = {"Stój! Jeszcze nie", "wykiełkowałem!"},
+            fb_bl_final_acorn_phase2_1 = {"Teraz będzie", "SZALEŃSTWO!"},
+            fb_bl_final_acorn_phase3_1 = {"Totalny chaos!", "Skorupa precz!"},
+            fb_bl_final_acorn_rematch_won_1 = {"Raz mnie rozłupałeś.", "Nigdy więcej!"},
+            fb_bl_final_acorn_rematch_lost_1 = {"Wróciłeś po więcej", "CHAOSU?"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
             fb_bl_final_leaf_name_1 = {"Ale ja jestem", "Zielony liść"},
@@ -373,6 +468,10 @@ return {
             fb_bl_final_leaf_defeat_1 = {"Odchodzę...", "jak liść z drzewa."},
             fb_bl_final_leaf_gloat_1 = {"Spadasz jak liść!"},
             fb_bl_final_leaf_interrupted_1 = {"Dobrze. Pomińmy", "uprzejmości."},
+            fb_bl_final_leaf_phase2_1 = {"Moje korzenie", "sięgają głębiej!"},
+            fb_bl_final_leaf_phase3_1 = {"Zwiędnij ze mną!"},
+            fb_bl_final_leaf_rematch_won_1 = {"Raz odpuściłeś.", "Spróbuj znowu."},
+            fb_bl_final_leaf_rematch_lost_1 = {"Wciąż przywiązany", "do jokerów?"},
 
             -- Violet Vessel: very large blind
             fb_bl_final_vessel_name_1 = {"Ale ja jestem", "Fioletowe naczynie"},
@@ -385,6 +484,10 @@ return {
             fb_bl_final_vessel_defeat_1 = {"Naczynie...", "zostało opróżnione."},
             fb_bl_final_vessel_gloat_1 = {"Pusto! Przegrałeś!"},
             fb_bl_final_vessel_interrupted_1 = {"Odpływasz przed moją", "mową? Śmiało."},
+            fb_bl_final_vessel_phase2_1 = {"Napełnić ładownię!"},
+            fb_bl_final_vessel_phase3_1 = {"Wszyscy", "na dno!"},
+            fb_bl_final_vessel_rematch_won_1 = {"Raz mnie zatopiłeś.", "Już mnie naprawili."},
+            fb_bl_final_vessel_rematch_lost_1 = {"Wróciłeś utonąć", "w moim kilwaterze?"},
 
             -- Crimson Heart: one random Joker disabled every hand
             fb_bl_final_heart_name_1 = {"Ale ja jestem", "Szkarłatne serce"},
@@ -397,6 +500,10 @@ return {
             fb_bl_final_heart_defeat_1 = {"Moje serce...", "jest złamane."},
             fb_bl_final_heart_gloat_1 = {"Złamane serce?"},
             fb_bl_final_heart_interrupted_1 = {"Przerywasz mi?", "Bez serca!"},
+            fb_bl_final_heart_phase2_1 = {"Moje serce", "bije szybciej!"},
+            fb_bl_final_heart_phase3_1 = {"Poczuj mój", "karmazynowy gniew!"},
+            fb_bl_final_heart_rematch_won_1 = {"Ostatnio złamałeś", "mi serce."},
+            fb_bl_final_heart_rematch_lost_1 = {"Moje serce wciąż", "bije dla ciebie."},
 
             -- Cerulean Bell: forces 1 card to always be selected
             fb_bl_final_bell_name_1 = {"Ale ja jestem", "Modry dzwonek"},
@@ -409,6 +516,10 @@ return {
             fb_bl_final_bell_defeat_1 = {"Dzwon bije", "dla mnie."},
             fb_bl_final_bell_gloat_1 = {"Dzyń dzyń,", "przegrałeś!"},
             fb_bl_final_bell_interrupted_1 = {"Uratowany przez gong?", "Nie tym razem!"},
+            fb_bl_final_bell_phase2_1 = {"Słuchaj, jak", "dzwonię głośniej!"},
+            fb_bl_final_bell_phase3_1 = {"Bije ostatni dzwon!"},
+            fb_bl_final_bell_rematch_won_1 = {"Ostatnio nieźle mi", "przydzwoniłeś."},
+            fb_bl_final_bell_rematch_lost_1 = {"Dzwon znów bije", "dla ciebie."},
         }
     }
 }

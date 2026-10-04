@@ -7,7 +7,7 @@ local VALID_FX = {pulse = true, shake = true, flash = true, shatter = true, phas
 
 local function new_entry(blind_key)
   return {blind = blind_key, tier = 'auto', voice = {pitch = 1}, music = nil,
-    fx = {intro = 'pulse', defeat = 'shatter'}, phases = nil}
+    fx = {intro = 'pulse', defeat = 'shatter'}, phases = nil, moves = nil, death = nil}
 end
 
 function R.register(def)
@@ -28,6 +28,20 @@ function R.register(def)
     else FinalBoss.util.log('warn', ('register_encounter %s: unknown fx %s ignored'):format(def.blind, tostring(name))) end
   end
   e.phases = def.phases
+  if def.moves ~= nil then
+    local moves, warnings = FinalBoss.logic.clean_moves(def.moves)
+    for _, w in ipairs(warnings) do
+      FinalBoss.util.log('warn', ('register_encounter %s: moves %s'):format(def.blind, w))
+    end
+    e.moves = moves
+  end
+  if def.death ~= nil then
+    local death, warnings = FinalBoss.logic.clean_death(def.death)
+    for _, w in ipairs(warnings) do
+      FinalBoss.util.log('warn', ('register_encounter %s: death %s'):format(def.blind, w))
+    end
+    e.death = death
+  end
   if R.entries[def.blind] then FinalBoss.util.log('info', 'register_encounter: overriding ' .. def.blind) end
   R.entries[def.blind] = e
   return e

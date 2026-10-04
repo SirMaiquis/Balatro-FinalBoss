@@ -5,8 +5,10 @@ H.W, H.H = 3.0, 0.28
 H.GHOST_HOLD, H.GHOST_DRAIN = 0.4, 0.35
 H.DARKEN = {[0] = 0, [1] = 0.2, [2] = 0.4}
 H.ui = nil
-H.view = {text = '', frac = 1, ghost = 1} -- read by the progress_bar nodes every frame
+H.view = {text = '', frac = 1, ghost = 1, phase = ''} -- read by the bar nodes every frame
 H.ghost_from, H.ghost_until, H.flash_until, H.stage = 1, 0, 0, 0
+H.heal_until = 0 -- REAL time the heal refill ends (the trail waits for it)
+H.heal_gen, H.heal_ease = 0, nil -- heal refill: token bumped by update/remove, eased private value
 H.colour = {1, 0, 0, 1}
 H.fill_col = {1, 0, 0, 1}
 H.trail_col = {1, 1, 1, 0.85}
@@ -32,7 +34,8 @@ local function text_ui(avatar, name)
   return UIBox{
     definition = {n = G.UIT.ROOT, config = {align = 'cm', colour = G.C.CLEAR, padding = 0.02}, nodes = {
       {n = G.UIT.R, config = {align = 'cm'}, nodes = {
-        {n = G.UIT.T, config = {text = name, scale = 0.32, colour = G.C.WHITE, shadow = true}}}},
+        {n = G.UIT.T, config = {text = name, scale = 0.32, colour = G.C.WHITE, shadow = true}},
+        {n = G.UIT.T, config = {ref_table = H.view, ref_value = 'phase', scale = 0.32, colour = G.C.GOLD, shadow = true}}}},
       bar_row(),
       {n = G.UIT.R, config = {align = 'cm'}, nodes = {
         {n = G.UIT.T, config = {ref_table = H.view, ref_value = 'text', scale = 0.28, colour = G.C.WHITE, shadow = true}}}},
@@ -62,6 +65,7 @@ function H.create(avatar, blind, total, required)
 end
 
 function H.update(total, required, instant)
+  H.heal_gen, H.heal_until = H.heal_gen + 1, 0 -- any fresh value cancels a refill in progress
   local frac = FinalBoss.logic.hp_fraction(total, required)
   local stage = FinalBoss.logic.wound_stage(frac)
   local flash = stage ~= H.stage and not instant
@@ -97,13 +101,53 @@ function H.damage(delta, size)
   if size == 'big' and not G.SETTINGS.reduced_motion then G.ROOM.jiggle = G.ROOM.jiggle + 2 end
 end
 
+--- Phase marker after the boss name: '  II' / '  III' (1.1). Re-lays the box when it changes.
+function H.set_phase(phase)
+  local m = FinalBoss.logic.phase_marker(phase)
+  local text = (m ~= '') and ('  ' .. m) or ''
+  if text == H.view.phase then return end
+  H.view.phase = text
+  if H.ui then
+    H.ui:recalculate()
+    H.ui.alignment.prev_type = '' -- re-centre on the next move (as in H.update)
+  end
+end
+
+--- The requirement rose (Violet Vessel twist): the bar refills visibly over 0.6 s (at once under
+--- reduced motion) and flashes; the text shows the new numbers.
+function H.heal(total, required)
+  local from = H.view.frac
+  H.update(total, required, true)
+  local to = H.view.frac
+  H.flash_until = now() + 0.3
+  paint_fill(true)
+  if G.SETTINGS.reduced_motion or to <= from then return end
+  H.view.frac, H.view.ghost = from, from
+  H.heal_until = now() + 0.6
+  -- The ease writes a private value that H.tick copies into view.frac while the token still matches,
+  -- so an update/remove/create inside the window is never overwritten when the ease completes.
+  local e = {v = from, to = to, gen = H.heal_gen}
+  H.heal_ease = e
+  G.E_MANAGER:add_event(Event({trigger = 'ease', ref_table = e, ref_value = 'v', ease_to = to,
+    delay = 0.6, timer = 'REAL', blocking = false, blockable = false, func = function(t) return t end}))
+end
+
 function H.tick(dt)
   if not H.ui then return end
   local v = H.view
+  local e = H.heal_ease
+  if e then
+    if e.gen ~= H.heal_gen then H.heal_ease = nil
+    else
+      v.frac = e.v
+      if e.v >= e.to then H.heal_ease = nil end
+    end
+  end
   if H.flash_until > 0 and now() >= H.flash_until then
     H.flash_until = 0
     paint_fill(false)
   end
+  if v.ghost < v.frac and now() >= H.heal_until then v.ghost = v.frac end -- the trail catches up after a heal
   if v.ghost > v.frac and now() >= H.ghost_until then
     v.ghost = math.max(v.frac, v.ghost - (H.ghost_from - v.frac) * (dt or 0) / H.GHOST_DRAIN)
   end
@@ -113,7 +157,8 @@ function H.remove()
   -- UIElement:remove cascades through the nodes; the colour tables are rebuilt by the next create.
   if H.ui then H.ui:remove(); H.ui = nil end
   H.view.frac, H.view.ghost, H.ghost_from, H.stage = 1, 1, 1, 0
-  H.view.text, H.flash_until, H.ghost_until = '', 0, 0
+  H.view.text, H.view.phase, H.flash_until, H.ghost_until, H.heal_until = '', '', 0, 0, 0
+  H.heal_gen, H.heal_ease = H.heal_gen + 1, nil
 end
 
 return H
