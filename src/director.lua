@@ -70,6 +70,7 @@ function Dir.on_blind_set(blind)
     enc.nemesis = FinalBoss.memory.is_nemesis(proto.key)
     -- Cinematic showdowns present the nemesis when the avatar lands (cinematic.spawn_stage).
     if not cinematic then FinalBoss.memory.present(blind) end
+    FinalBoss.observe.on_blind_set(enc) -- 1.2: the intro jab, from the run as it is now
   end
   st.lost_to = nil
   if tier == 'none' then Dir.schedule_start(proto.key); return end
@@ -108,13 +109,26 @@ function Dir.play_intro(blind_key)
   -- A hand is already being played (the delayed intro came late): skip the intro for this
   -- encounter rather than start it only to cut it at once.
   if G.STATES and G.STATE == G.STATES.HAND_PLAYED then return finish() end
+  local O = FinalBoss.observe
   local steps = {}
   -- 1.1 memory: a rematch or nemesis line may replace the opener (full) or the intro (light).
-  local plan = FinalBoss.logic.intro_plan{tier = enc.tier, memory = FinalBoss.config.memory,
-    last = enc.last, nemesis = enc.nemesis, roll = math.random()}
-  for _, moment in ipairs(plan) do
-    local key = FinalBoss.registry.resolve(enc.key, moment, enc.last_variant)
-    if key then steps[#steps + 1] = {key = key, vars = Dir.vars(blind)} end
+  -- 1.2: the run jab replaces the threat, and the threat (or jab) step carries the boss's flex.
+  local jab_moment = (enc.jab and not enc.jab_said) and enc.jab.moment or nil
+  local plan, threat = FinalBoss.logic.apply_jab(FinalBoss.logic.intro_plan{tier = enc.tier,
+    memory = FinalBoss.config.memory, last = enc.last, nemesis = enc.nemesis, roll = math.random()}, jab_moment)
+  for i, moment in ipairs(plan) do
+    local jab = i == threat and moment ~= 'intro'
+    local key = FinalBoss.registry.resolve(enc.key, moment, enc.last_variant, jab and O.jab_opts(enc) or nil)
+    if not key and jab then -- no line for this jab: the threat after all
+      jab = false
+      key = FinalBoss.registry.resolve(enc.key, 'intro', enc.last_variant)
+    end
+    if key then
+      local step = {key = key, vars = jab and O.jab_vars(enc, blind) or Dir.vars(blind)}
+      if i == threat then step.on_show = function() FinalBoss.moves.flex(blind) end end
+      steps[#steps + 1] = step
+      if jab then enc.jab_said = true end
+    end
   end
   if #steps == 0 then return finish() end
   local entry = FinalBoss.registry.get(enc.key)
@@ -183,24 +197,34 @@ function Dir.on_round_end()
     func = function() FinalBoss.util.guard('hide_bubble', FinalBoss.dialogue.hide, blind); return true end}))
 end
 
+--- opts: force (no once-per-blind check, no cooldown), line (say another moment's line for this
+--- moment: 1.1 the nemesis's defeat line; 1.2 the overkill line, a Chicot counter jab; it falls back to
+--- the moment's own line when it has none), skip_boss (with line: logic.resolve_prefix skips the boss
+--- level), vars (the line's vars; default Dir.vars), hand (the hand a run comment is said on).
 function Dir.fire(moment, opts)
   opts = opts or {}
   local enc, blind = current()
   if not enc then return false end
-  if not opts.force and not FinalBoss.logic.can_fire(moment, enc.tier, enc.fired, enc.reactions) then return false end
-  enc.fired[moment] = true
-  if FinalBoss.logic.REACTIONS[moment] then enc.reactions = enc.reactions + 1 end
+  local L = FinalBoss.logic
+  if not opts.force and not L.can_fire(moment, enc.tier, enc.fired, enc.reactions) then return false end
+  if L.COMMENTS[moment] then
+    L.note_comment(enc, moment, opts.hand) -- 1.2 run comments: the light slot, the full-tier cap
+  else
+    enc.fired[moment] = true
+    if L.REACTIONS[moment] then enc.reactions = enc.reactions + 1 end
+  end
   if enc.tier == 'full' and (moment == 'big_hand' or moment == 'close') then
     FinalBoss.fx.play('shake', blind)
     FinalBoss.fx.play('flash', blind)
   end
   if not FinalBoss.config.dialogue then return true end
-  -- opts.line: say another moment's line for this moment (1.1: the nemesis's own defeat line).
-  local key = FinalBoss.registry.resolve(enc.key, opts.line or moment, enc.last_variant)
+  local key = FinalBoss.registry.resolve(enc.key, opts.line or moment, enc.last_variant,
+    opts.line and {skip_boss = opts.skip_boss} or nil)
+  if not key and opts.line then key = FinalBoss.registry.resolve(enc.key, moment, enc.last_variant) end
   if not key then return true end
   local entry = FinalBoss.registry.get(enc.key)
-  FinalBoss.dialogue.say(blind, key, Dir.vars(blind), entry.voice.pitch,
-    {force = opts.force or FinalBoss.logic.FORCED_MOMENTS[moment] or false})
+  FinalBoss.dialogue.say(blind, key, opts.vars or Dir.vars(blind), entry.voice.pitch,
+    {force = opts.force or L.FORCED_MOMENTS[moment] or false})
   return true
 end
 
@@ -329,7 +353,9 @@ function Dir.stage_hit(enc, blind, delta, total, required, moment, hand)
 end
 
 function Dir.on_blind_disabled()
-  Dir.fire('disabled')
+  local enc, blind = current()
+  -- 1.2: Chicot disables the boss before its intro, so a Chicot counter jab is its disabled line.
+  Dir.fire('disabled', enc and FinalBoss.observe.disabled_jab(enc, blind) or nil)
 end
 
 function Dir.on_blind_defeated()

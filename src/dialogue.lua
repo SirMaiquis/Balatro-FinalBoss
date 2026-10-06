@@ -71,7 +71,10 @@ function D.show(blind, key, vars, pitch)
   if on_avatar then FinalBoss.avatar.set_talking(true) end
   after(0.1, function()
     local current = on_avatar and D.avatar_bubble or host.children.fb_bubble
-    if current == bubble then bubble.states.visible = true end
+    if current == bubble then
+      bubble.states.visible = true
+      D.bleep(key) -- 1.2: a censored swear gets its bleep as the bubble appears
+    end
   end)
   D.last_line_at = FinalBoss.util.now()
   babble(host, 5, pitch)
@@ -84,6 +87,25 @@ function D.follow_avatar()
   if not b or not FinalBoss.avatar then return end
   local want = (FinalBoss.avatar.side() == 'right') and 'cl' or 'cr'
   if b.alignment.type ~= want then b:set_alignment({type = want}) end
+end
+
+--- The text of a quip key in the current language (the lines speech_bubble shows,
+--- functions/UI_definitions.lua:444-447), joined with spaces; '' when missing.
+function D.text_of(key)
+  local quips = G.localization and G.localization.misc and G.localization.misc.quips
+  local lines = quips and quips[key]
+  if type(lines) == 'table' then return table.concat(lines, ' ') end
+  if type(lines) == 'string' then return lines end
+  return ''
+end
+
+--- A line with a censored swear (logic.has_censored) gets a short high bleep over the babble.
+--- play_sound follows the game's sound volume (functions/misc_functions.lua:695-718).
+function D.bleep(key)
+  if not FinalBoss.config.dialogue then return end
+  if not FinalBoss.logic.has_censored(D.text_of(key)) then return end
+  local b = FinalBoss.logic.BLEEP
+  play_sound(b.sound, b.pitch, b.volume)
 end
 
 local function enable_chip_skip(blind)
@@ -115,6 +137,8 @@ local function advance(token)
   local step = it.steps[it.index]
   if not step then return D.end_intro() end
   D.show(it.blind, step.key, step.vars, it.pitch)
+  -- 1.2: a step may act as its bubble shows (the boss's flex on its threat line).
+  if step.on_show then FinalBoss.util.guard('intro_step', step.on_show) end
   after(it.duration, function() advance(token) end)
 end
 

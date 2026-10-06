@@ -231,6 +231,21 @@ function M.signature(blind)
   M.perform(blind, (moves and moves.signature) or L().GENERIC_RECIPE, {}, {big = true})
 end
 
+--- The intro flex (1.2): while the boss's threat (or jab) line shows, a preview of its move: visual
+--- only, never the real effect. logic.flex_recipe (flex, else signature, else the generic burst) at
+--- normal size from the performer. Needs Boss moves and Screen effects (M.enabled); reduced motion:
+--- the performer's flash only.
+function M.flex(blind)
+  if not (blind and blind.config and blind.config.blind and blind.config.blind.key) then return end
+  if not M.enabled(blind, 'flex') then return end
+  local src = M.performer(blind)
+  if G.SETTINGS.reduced_motion then
+    FinalBoss.effects.react(src, src.colour, false)
+    return
+  end
+  M.perform(blind, L().flex_recipe(FinalBoss.registry.get(blind.config.blind.key).moves), {}, {})
+end
+
 -- Trigger entry points (hooks.lua) -----------------------------------------------------------------
 
 --- Before vanilla's drawn_to_hand: what on_drawn compares against afterwards.
