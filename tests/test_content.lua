@@ -250,4 +250,101 @@ T['every run moment and weak line resolves for every vanilla boss and a modded o
   assert(#missing == 0, 'no line for: ' .. table.concat(missing, ', '))
 end
 
+-- 1.2 content rules ------------------------------------------------------------------------------------
+
+-- Spelled-out swears (prefix match; a trailing '$' means the whole word) and the only censored words
+-- the English lines may use (prefix match, so f***ing and a**hole pass).
+local EN_SWEARS = {'fuck', 'shit', 'ass$', 'asses$', 'asshole', 'bitch', 'bastard', 'cunt', 'dick$',
+  'cock$', 'piss', 'whore', 'slut', 'retard', 'fag'}
+local EN_CENSORED = {'f***', 'sh*t', 'a**'}
+
+local UTF8_PUNCT = {'¡', '¿', '«', '»', '…', '—', '–', '“', '”', '„', '‘', '’', '·'}
+
+--- Lower-cased words of a line: letters, digits, '*' and UTF-8 bytes (vanilla's ASCII lower only).
+local function words(line)
+  local s = line:lower()
+  for _, p in ipairs(UTF8_PUNCT) do s = s:gsub(p, ' ') end
+  local out = {}
+  for w in s:gmatch('[%w%*\128-\255]+') do out[#out + 1] = w end
+  return out
+end
+
+local function swear_hit(word, entry)
+  if entry:sub(-1) == '$' then return word == entry:sub(1, -2) end
+  return word:sub(1, #entry) == entry
+end
+
+local function lines_of(v)
+  if type(v) == 'table' then return v end
+  return {tostring(v)}
+end
+
+T['English lines: no swear spelled out, only f***, sh*t and a** censored'] = function()
+  local quips = load()
+  local bad = {}
+  for key, v in pairs(quips) do
+    for _, line in ipairs(lines_of(v)) do
+      for _, w in ipairs(words(line)) do
+        for _, s in ipairs(EN_SWEARS) do
+          if swear_hit(w, s) then bad[#bad + 1] = key .. ' (spelled out): ' .. line end
+        end
+        if w:find('*', 1, true) then
+          local ok = false
+          for _, c in ipairs(EN_CENSORED) do
+            if w:sub(1, #c) == c then ok = true end
+          end
+          if not ok then bad[#bad + 1] = key .. ' (censored word not allowed): ' .. line end
+        end
+      end
+    end
+  end
+  table.sort(bad)
+  assert(#bad == 0, table.concat(bad, '; '))
+end
+
+--- True when any line of a quip carries a censored word (a letter next to '*').
+local function censored(v)
+  for _, line in ipairs(lines_of(v)) do
+    for _, w in ipairs(words(line)) do
+      if w:find('*', 1, true) then return true end
+    end
+  end
+  return false
+end
+
+T['English gloat lines carry no censored swear (the game-over bubble has no bleep)'] = function()
+  local quips = load()
+  local bad = {}
+  for key, v in pairs(quips) do
+    if key:find('gloat', 1, true) and censored(v) then bad[#bad + 1] = key end
+  end
+  table.sort(bad)
+  assert(#bad == 0, 'censored gloat: ' .. table.concat(bad, ', '))
+end
+
+T['English swearing density per personality'] = function()
+  local quips = load()
+  package.loaded['src.personality'] = nil
+  local voice = require('src.personality').VANILLA
+  local group = {}
+  local bad = {}
+  for blind, p in pairs(voice) do
+    local prefix, n, total = 'fb_' .. blind .. '_', 0, 0
+    for key, v in pairs(quips) do
+      if key:sub(1, #prefix) == prefix then
+        total = total + 1
+        if censored(v) then n = n + 1 end
+      end
+    end
+    group[p] = (group[p] or 0) + n
+    if (p == 'bully' or p == 'chaos') and (n > 5 or n * 4 > total) then bad[#bad + 1] = blind .. ' ' .. n end
+    if (p == 'smug' or p == 'royal') and n > 1 then bad[#bad + 1] = blind .. ' ' .. n end
+  end
+  for _, p in ipairs({'killer', 'venom'}) do
+    if (group[p] or 0) > 1 then bad[#bad + 1] = p .. ' group ' .. group[p] end
+  end
+  table.sort(bad)
+  assert(#bad == 0, 'too many censored lines: ' .. table.concat(bad, ', '))
+end
+
 return T
