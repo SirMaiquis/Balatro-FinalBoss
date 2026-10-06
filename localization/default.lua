@@ -115,7 +115,7 @@ return {
             fb_generic_weak_3 = {"Ha! A tickle!", "Do it again, rookie."},
 
             -- Nemesis (shared, #1# = boss name)
-            fb_nemesis_intro_1 = {"Miss me, loser?", "#1# never left."},
+            fb_nemesis_intro_1 = {"Miss me, loser?", "#1# waited."},
             fb_nemesis_intro_2 = {"#1#. Again.", "Your worst habit."},
             fb_nemesis_intro_3 = {"Back for more?", "Same grave as last time."},
             fb_nemesis_defeat_1 = {"Beaten by you?", "This isn't over."},
@@ -144,7 +144,7 @@ return {
             fb_p_bully_read_discardspam_1 = {"Tossed every discard?", "Panic much, a**hole?"},
             fb_p_bully_read_discardspam_2 = {"All your discards", "and STILL garbage."},
             fb_p_bully_read_onecard_1 = {"One card? ONE?", "Punch with a pinky?"},
-            fb_p_bully_read_onecard_2 = {"Just one card?", "Chicken. BAWK."},
+            fb_p_bully_read_onecard_2 = {"Just one card?", "Coward. Pathetic."},
             fb_p_bully_idle_1 = {"Hey! Wake UP.", "I ain't got all day."},
             fb_p_bully_idle_2 = {"Move your a**.", "My fists are bored."},
             fb_p_bully_overkill_1 = {"OW! Okay, okay!", "Sh*t. I'll be back."},
@@ -154,7 +154,7 @@ return {
             fb_p_smug_jab_skipped_1 = {"Skipped a blind.", "Brilliant. Said no one."},
             fb_p_smug_jab_skipped_both_1 = {"Skipped both blinds?", "Math isn't your thing."},
             fb_p_smug_jab_rerolls_1 = {"Rerolling for a miracle?", "Statistically hopeless."},
-            fb_p_smug_jab_broke_1 = {"Broke. Of course.", "Interest is a concept."},
+            fb_p_smug_jab_broke_1 = {"Broke. Of course.", "Ever heard of interest?"},
             fb_p_smug_jab_loaded_1 = {"All that money,", "and still no plan."},
             fb_p_smug_jab_onesuit_1 = {"One suit. Obviously.", "Training wheels."},
             fb_p_smug_jab_tinydeck_1 = {"Thinned your deck?", "You read one guide."},
@@ -171,7 +171,7 @@ return {
             fb_p_smug_read_onecard_1 = {"One card. Minimalist.", "Or simply clueless?"},
             fb_p_smug_read_onecard_2 = {"A single card?", "Cute. Wrong, but cute."},
             fb_p_smug_idle_1 = {"Thinking? I can tell.", "The gears are loud."},
-            fb_p_smug_idle_2 = {"Need a tutorial?", "I charge by the hour."},
+            fb_p_smug_idle_2 = {"Need a tutorial?", "Lesson one: play."},
             fb_p_smug_overkill_1 = {"That's... impossible.", "I did the f***ing math."},
             fb_p_smug_overkill_2 = {"Overkill. How tacky.", "Peak amateur energy."},
             -- Killer: cold, quiet, clinical
@@ -198,7 +198,7 @@ return {
             fb_p_killer_idle_1 = {"Take your time.", "I don't blink."},
             fb_p_killer_idle_2 = {"Hesitation.", "I can work with that."},
             fb_p_killer_overkill_1 = {"Excessive.", "I'll remember that."},
-            fb_p_killer_overkill_2 = {"Twice the score.", "You're a f***ing threat."},
+            fb_p_killer_overkill_2 = {"Twice the score.", "That was a mistake."},
             -- Venom: sweet talk over poison
             fb_p_venom_jab_counter_1 = {"#2#? Sweet.", "I'll pay you back, love."},
             fb_p_venom_jab_skipped_1 = {"Skipped a blind, angel?", "Rushing to see me?"},
@@ -270,7 +270,7 @@ return {
             fb_p_royal_read_discardspam_2 = {"Such frantic discards.", "Compose yourself, churl."},
             fb_p_royal_read_onecard_1 = {"One card, commoner?", "Frugal. Pitifully so."},
             fb_p_royal_read_onecard_2 = {"Just one card?", "Is that all you own?"},
-            fb_p_royal_idle_1 = {"We are waiting.", "We do not wait."},
+            fb_p_royal_idle_1 = {"We are waiting.", "We dislike waiting."},
             fb_p_royal_idle_2 = {"Any century now,", "peasant."},
             fb_p_royal_overkill_1 = {"Such excess. Really.", "Utterly f***ing gauche."},
             fb_p_royal_overkill_2 = {"Twice over? Absurd.", "We'll have your head."},
