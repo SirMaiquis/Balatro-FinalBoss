@@ -70,7 +70,13 @@ function Dir.on_blind_set(blind)
     enc.nemesis = FinalBoss.memory.is_nemesis(proto.key)
     -- Cinematic showdowns present the nemesis when the avatar lands (cinematic.spawn_stage).
     if not cinematic then FinalBoss.memory.present(blind) end
-    FinalBoss.observe.on_blind_set(enc) -- 1.2: the intro jab, from the run as it is now
+    -- 1.2: the intro jab, from the run as it is now. Bookkeeping only: a failure loses the jab
+    -- (logged), never the encounter.
+    local ok, err = pcall(FinalBoss.observe.on_blind_set, enc)
+    if not ok then
+      enc.jab = nil
+      FinalBoss.util.log('warn', 'run observation failed: ' .. tostring(err))
+    end
   end
   st.lost_to = nil
   if tier == 'none' then Dir.schedule_start(proto.key); return end
@@ -206,7 +212,18 @@ function Dir.fire(moment, opts)
   local enc, blind = current()
   if not enc then return false end
   local L = FinalBoss.logic
-  if not opts.force and not L.can_fire(moment, enc.tier, enc.fired, enc.reactions) then return false end
+  if not opts.force then
+    -- 1.2 run comments have their own gate (the light slot, the full-tier cap, no consecutive hands);
+    -- every other moment: once per blind, the light tier's single reaction slot.
+    local ok
+    if L.COMMENTS[moment] then
+      ok = L.can_comment{moment = moment, tier = enc.tier, fired = enc.fired, reactions = enc.reactions,
+        comments = enc.comments, last_comment_hand = enc.last_comment_hand, hand = opts.hand}
+    else
+      ok = L.can_fire(moment, enc.tier, enc.fired, enc.reactions)
+    end
+    if not ok then return false end
+  end
   if L.COMMENTS[moment] then
     L.note_comment(enc, moment, opts.hand) -- 1.2 run comments: the light slot, the full-tier cap
   else
@@ -228,10 +245,14 @@ function Dir.fire(moment, opts)
   return true
 end
 
-function Dir.on_hand_after()
+--- context: smods' context.after (scoring_name, full_hand: smods lovely/better_calc.toml:810).
+function Dir.on_hand_after(context)
   local enc, blind, st = current()
   if not enc or enc.ended then return end
-  local hands_played = G.GAME.current_round.hands_played
+  local cr = G.GAME.current_round
+  -- This hand's id: vanilla counts hands_played up on every play and resets it only at new_round
+  -- (functions/state_events.lua:524, :298), so it is monotonic per blind.
+  local hands_played = cr.hands_played
   if enc.last_hand_seen == hands_played then return end -- defensive: one evaluation per hand
   Dir.flush_pending() -- a previous hand's reaction updates enc.fired / reactions, read below
   enc.last_hand_seen = hands_played
@@ -241,7 +262,7 @@ function Dir.on_hand_after()
   -- context.after runs before it.
   local total = chips + delta
   local required = num(blind.chips)
-  local hands_left = G.GAME.current_round.hands_left
+  local hands_left = cr.hands_left
   -- Set before the game-over screen picks its quip; cleared in on_round_end if the run continues.
   if hands_left == 0 and total < required then st.lost_to = enc.key end
   if total >= required then -- the winning hand (achievements read these at blind_defeated)
@@ -249,11 +270,19 @@ function Dir.on_hand_after()
   end
   local moment = FinalBoss.logic.detect_moments{delta = delta, total = total, required = required,
     hands_left = hands_left, fired = enc.fired, tier = enc.tier, reactions = enc.reactions}
+  -- 1.2 run comments: the hand type (vanilla also sets G.GAME.last_hand_played,
+  -- functions/state_events.lua:576), how many hands in a row used it, and the cards played.
+  local hand_type = (context and context.scoring_name) or G.GAME.last_hand_played
+  enc.type_streak = FinalBoss.logic.next_streak(enc.last_type, enc.type_streak, hand_type)
+  enc.last_type = hand_type
+  local played = context and context.full_hand
   -- The reaction waits until the game shows the score (Dir.tick -> logic.score_landed), or the
   -- boss would spoil it. Everything above is decided now.
   local p = {start = chips, delta = delta, total = total, required = required, moment = moment,
     enc = enc, blind = blind, t0 = FinalBoss.util.now(), queued_done = false, hand = hands_played,
-    hands_left = hands_left}
+    hands_left = hands_left, hand_type = hand_type, streak = enc.type_streak,
+    cards_played = played and #played or (G.play and #G.play.cards or 0),
+    discards_left = cr.discards_left, discards_used = cr.discards_used}
   Dir.pending = p
   -- Completion signal in queue order: context.after runs inside evaluate_play (state_events.lua)
   -- after it has queued the score display (delay, chips2, the G.GAME.chips ease, the blocking
@@ -263,6 +292,19 @@ function Dir.on_hand_after()
     FinalBoss.util.guard('score_queued', function() if Dir.pending == p then p.queued_done = true end end)
     return true
   end}))
+end
+
+--- Fire a hand's line now, or after the boss's laugh (wait seconds), if the encounter is still on.
+local function fire_after(enc, wait, moment, opts)
+  if wait <= 0 then Dir.fire(moment, opts); return end
+  G.E_MANAGER:add_event(Event({trigger = 'after', delay = wait, timer = 'REAL', blocking = false,
+    blockable = false, func = function()
+      FinalBoss.util.guard('moment_after_laugh', function()
+        local e = current()
+        if e and e == enc and not e.ended then Dir.fire(moment, opts) end
+      end)
+      return true
+    end}))
 end
 
 --- The deferred reaction to a scored hand; dropped if its encounter is gone or over.
@@ -282,21 +324,22 @@ local function react(p)
     -- A powerless (disabled) boss gets mad there instead: anger and its disabled line, same rules.
     if FinalBoss.phases.check(enc, blind, p, wait) then return end
   end
-  if not p.moment then return end
   -- This hand interrupted the intro: its interrupted line replaces the moment line (the moment
   -- stays unfired, so a later hand can still trigger it), except the defeat line, which always
   -- plays (and may replace the interrupted bubble). The stage hit above still played.
   if FinalBoss.logic.moment_replaced(enc.interrupt_hand, p.hand, p.moment) then return end
-  local line = FinalBoss.memory.defeat_line(enc, p.moment) -- nil unless the nemesis falls
-  if wait <= 0 then Dir.fire(p.moment, {line = line}); return end
-  G.E_MANAGER:add_event(Event({trigger = 'after', delay = wait, timer = 'REAL', blocking = false,
-    blockable = false, func = function()
-      FinalBoss.util.guard('moment_after_laugh', function()
-        local e = current()
-        if e and e == enc and not e.ended then Dir.fire(p.moment, {line = line}) end
-      end)
-      return true
-    end}))
+  if not p.moment then
+    -- 1.2: a hand that fired nothing else may get a run comment: the weak-hit line (after the
+    -- laugh, like a phase line) or a read of how you play. Dir.fire checks the comment gate again
+    -- when the line is said.
+    local comment = FinalBoss.observe.comment_for(enc, p)
+    if comment then fire_after(enc, wait, comment, {hand = p.hand}) end
+    return
+  end
+  -- The nemesis's own defeat line (1.1), else the overkill line (1.2: the winning hand only), may
+  -- replace the defeat line. Either is said as the defeat moment, so it is forced like the defeat line.
+  local line = FinalBoss.memory.defeat_line(enc, p.moment) or FinalBoss.observe.overkill_line(p)
+  fire_after(enc, wait, p.moment, {line = line})
 end
 
 --- Run a pending reaction now (blind defeated, round end: keeps the finale / game-over order).
@@ -429,6 +472,7 @@ end
 function Dir.tick(dt)
   local A, V, H = FinalBoss.arena, FinalBoss.avatar, FinalBoss.hpbar
   if FinalBoss.cinematic.active() or FinalBoss.dialogue.intro_active() then Dir.check_interrupt() end
+  FinalBoss.observe.idle_tick() -- 1.2 idle taunts (a few field reads per frame)
   if not (Dir.pending or A.active() or V.exists() or H.exists()) then return end
   if Dir.pending then check_pending() end
   V.tick(dt)

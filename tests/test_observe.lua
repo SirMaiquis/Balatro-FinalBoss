@@ -110,4 +110,146 @@ T['disabled_jab: a Chicot counter jab, once'] = function()
   eq(ctx.O.disabled_jab({key = 'bl_hook'}, G.GAME.blind), nil)
 end
 
+T['on_blind_set: a Chicot that will act is always the jab'] = function()
+  local ctx = setup{jokers = {'j_luchador', 'j_chicot'}}
+  local enc = {key = 'bl_hook'}
+  ctx.O.on_blind_set(enc)
+  eq(enc.jab.moment, 'jab_counter'); eq(enc.jab.joker, 'j_chicot', 'not the signature Luchador')
+  local ctx2 = setup{jokers = {'j_luchador', 'j_chicot'}}
+  G.jokers.cards[2].getting_sliced = true
+  local enc2 = {key = 'bl_hook'}
+  ctx2.O.on_blind_set(enc2)
+  eq(enc2.jab.joker, 'j_luchador', 'a sliced Chicot never acts')
+  local ctx3 = setup{jokers = {'j_luchador', 'j_chicot'}}
+  G.jokers.cards[2].debuff = true
+  local enc3 = {key = 'bl_hook'}
+  ctx3.O.on_blind_set(enc3)
+  eq(enc3.jab.joker, 'j_luchador', 'a debuffed Chicot never acts')
+end
+
+-- In-fight comments and overkill --------------------------------------------------------------------
+
+local function pending(o)
+  local p = {total = 5, required = 100, delta = 5, hand_type = 'Flush', streak = 1, discards_left = 1,
+    discards_used = 0, hands_left = 3, cards_played = 5, hand = 1, moment = nil}
+  for k, v in pairs(o or {}) do p[k] = v end
+  return p
+end
+
+T['comment_for: weak first, then a read; never on the winning hand'] = function()
+  local ctx = setup()
+  local enc = {tier = 'light', fired = {}, reactions = 0}
+  eq(ctx.O.comment_for(enc, pending()), 'weak')
+  eq(ctx.O.comment_for(enc, pending{delta = 20, total = 20}), nil, 'a normal Flush says nothing')
+  eq(ctx.O.comment_for(enc, pending{delta = 20, total = 20, hand_type = 'Pair'}), 'read_weakhand')
+  eq(ctx.O.comment_for(enc, pending{delta = 120, total = 120}), nil, 'the winning hand')
+  eq(ctx.O.comment_for({tier = 'light', fired = {}, reactions = 1}, pending()), nil, 'light slot used')
+end
+
+T['comment_for: full tier reads are capped and never on consecutive hands'] = function()
+  local ctx = setup()
+  local enc = {tier = 'full', fired = {}, reactions = 0, comments = 1, last_comment_hand = 2}
+  local pair = {delta = 20, total = 20, hand_type = 'Pair'}
+  pair.hand = 3
+  eq(ctx.O.comment_for(enc, pending(pair)), nil, 'the hand after a comment')
+  pair.hand = 4
+  eq(ctx.O.comment_for(enc, pending(pair)), 'read_weakhand')
+  enc.comments = 3
+  eq(ctx.O.comment_for(enc, pending(pair)), nil, 'cap reached')
+  eq(ctx.O.comment_for(enc, pending{hand = 3}), 'weak', 'weak is outside the cap and the rule')
+end
+
+T['overkill_line: a defeat with twice the requirement'] = function()
+  local ctx = setup()
+  eq(ctx.O.overkill_line({moment = 'defeat', total = 250, required = 100}), 'overkill')
+  eq(ctx.O.overkill_line({moment = 'defeat', total = 150, required = 100}), nil)
+  eq(ctx.O.overkill_line({moment = 'close', total = 250, required = 100}), nil)
+  eq(ctx.O.overkill_line({moment = 'defeat', total = 0, required = 0}), nil, 'no requirement')
+end
+
+-- Idle taunts ------------------------------------------------------------------------------------------
+
+local function idle_setup()
+  return setup{enc = {key = 'bl_hook', boss = true, tier = 'light', ended = false, fired = {}, reactions = 0}}
+end
+
+local function tick_at(ctx, t) ctx.now = t; ctx.O.idle_tick() end
+
+T['idle: 25 s, then 45 s more, at most two per blind'] = function()
+  local ctx = idle_setup()
+  tick_at(ctx, 0); tick_at(ctx, 24.9)
+  eq(#ctx.fired, 0)
+  tick_at(ctx, 25)
+  eq(#ctx.fired, 1); eq(ctx.fired[1], 'idle')
+  tick_at(ctx, 69.9)
+  eq(#ctx.fired, 1)
+  tick_at(ctx, 70)
+  eq(#ctx.fired, 2)
+  tick_at(ctx, 500)
+  eq(#ctx.fired, 2, 'max two'); eq(G.GAME.FinalBoss.encounter.idle_said, 2)
+end
+
+T['idle: input and a highlight change restart the clock'] = function()
+  local ctx = idle_setup()
+  tick_at(ctx, 0)
+  ctx.now = 20; ctx.O.on_input()
+  tick_at(ctx, 25)
+  eq(#ctx.fired, 0)
+  tick_at(ctx, 45)
+  eq(#ctx.fired, 1)
+  local ctx2 = idle_setup()
+  tick_at(ctx2, 0)
+  G.hand.highlighted = {{}}
+  tick_at(ctx2, 20); tick_at(ctx2, 25)
+  eq(#ctx2.fired, 0)
+  tick_at(ctx2, 45)
+  eq(#ctx2.fired, 1)
+end
+
+T['idle: never paused, in a menu, outside SELECTING_HAND, in the intro, or with dialogue off'] = function()
+  local blockers = {
+    function() G.SETTINGS.paused = true end,
+    function() G.OVERLAY_MENU = {} end,
+    function() G.STATE = G.STATES.HAND_PLAYED end,
+    function() FinalBoss.dialogue.intro_active = function() return true end end,
+    function() FinalBoss.cinematic.active = function() return true end end,
+    function() FinalBoss.config.dialogue = false end,
+    function() FinalBoss.director.pending = {} end,
+    function() G.GAME.FinalBoss.encounter.ended = true end,
+    function() G.GAME.blind = {config = {blind = {key = 'bl_other'}}} end,
+  }
+  for i, block in ipairs(blockers) do
+    local ctx = idle_setup()
+    tick_at(ctx, 0)
+    block()
+    tick_at(ctx, 30); tick_at(ctx, 100)
+    eq(#ctx.fired, 0, 'blocker ' .. i)
+  end
+end
+
+T['idle: a pause restarts the clock'] = function()
+  local ctx = idle_setup()
+  tick_at(ctx, 0)
+  G.SETTINGS.paused = true
+  tick_at(ctx, 20)
+  G.SETTINGS.paused = false
+  tick_at(ctx, 40)
+  eq(#ctx.fired, 0)
+  tick_at(ctx, 45)
+  eq(#ctx.fired, 1)
+end
+
+T['idle: a new blind starts a fresh count and clock'] = function()
+  local ctx = idle_setup()
+  tick_at(ctx, 0); tick_at(ctx, 25)
+  eq(#ctx.fired, 1)
+  local enc = G.GAME.FinalBoss.encounter
+  ctx.now = 30; ctx.O.on_blind_set(enc)
+  eq(enc.idle_said, 0)
+  tick_at(ctx, 31); tick_at(ctx, 55.9)
+  eq(#ctx.fired, 1)
+  tick_at(ctx, 56)
+  eq(#ctx.fired, 2)
+end
+
 return T

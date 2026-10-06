@@ -16,7 +16,7 @@ FinalBoss.mod.calculate = function(self, context)
   if context.setting_blind then
     U.guard('setting_blind', director().on_blind_set, G.GAME.blind)
   elseif context.after then
-    U.guard('hand_after', director().on_hand_after)
+    U.guard('hand_after', director().on_hand_after, context)
   elseif context.blind_disabled then
     U.guard('blind_disabled', director().on_blind_disabled)
   elseif context.blind_defeated then
@@ -57,6 +57,7 @@ end
 
 local orig_keypressed = love.keypressed
 function love.keypressed(key, ...)
+  U.guard('input', FinalBoss.observe.on_input) -- 1.2: any key restarts the boss's idle clock
   if FinalBoss.cinematic.active() then U.guard('cinematic_skip', FinalBoss.cinematic.skip)
   elseif FinalBoss.dialogue.intro_active() then U.guard('skip', FinalBoss.dialogue.skip) end
   return orig_keypressed(key, ...)
@@ -251,6 +252,27 @@ function Blind:wiggle(...)
   local r = pack(orig_wiggle(self, ...))
   if live() then U.guard('move_generic', moves().on_wiggle, self) end
   return unpack(r, 1, r.n)
+end
+
+-- Idle taunts (1.2) ---------------------------------------------------------------------------------
+-- A click or a controller button restarts the boss's idle clock (keys: the love.keypressed wrap above).
+-- Vanilla's handlers are main.lua:154-176; each wrap calls the original first and returns its results.
+local orig_mousepressed = love.mousepressed
+if orig_mousepressed then
+  function love.mousepressed(...)
+    local r = pack(orig_mousepressed(...))
+    U.guard('input', FinalBoss.observe.on_input)
+    return unpack(r, 1, r.n)
+  end
+end
+
+local orig_gamepadpressed = love.gamepadpressed
+if orig_gamepadpressed then
+  function love.gamepadpressed(...)
+    local r = pack(orig_gamepadpressed(...))
+    U.guard('input', FinalBoss.observe.on_input)
+    return unpack(r, 1, r.n)
+  end
 end
 
 return H

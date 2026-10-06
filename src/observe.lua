@@ -44,12 +44,25 @@ function O.run_state(blind_key)
     deck_size = #deck, suit_max = suit_max, signature = L().signature_counter(blind_key)}, rerolled
 end
 
+--- Whether an owned Chicot disables this boss blind: vanilla skips a debuffed joker and a Chicot
+--- getting sliced (card.lua:2491-2493; smods utils.lua:1017). Mods are calculated after the jokers
+--- (smods utils.lua:2201-2206), so Ceremonial Dagger has already marked its victim.
+local function chicot_acts()
+  for _, c in ipairs((G.jokers and G.jokers.cards) or {}) do
+    local key = c.config and c.config.center and c.config.center.key
+    if key == 'j_chicot' and not c.debuff and not c.getting_sliced then return true end
+  end
+  return false
+end
+
 --- Dir.on_blind_set, boss encounters (any tier): the intro jab as plain data on the encounter, the
---- reroll mark for the next boss, and a fresh idle count and clock.
+--- reroll mark for the next boss, and a fresh idle count and clock. A Chicot that will disable the
+--- boss is always the jab: no intro plays, so its disabled line (O.disabled_jab) is the only one said.
 function O.on_blind_set(enc)
   local s, rerolled = O.run_state(enc.key)
   FinalBoss.util.state().reroll_mark = rerolled
   enc.jab = L().intro_jab(s, math.random)
+  if chicot_acts() then enc.jab = {moment = 'jab_counter', joker = 'j_chicot'} end
   enc.jab_said = nil
   enc.idle_said = 0
   O.idle_since = nil
@@ -87,6 +100,68 @@ function O.disabled_jab(enc, blind)
   if not (j and j.moment == 'jab_counter' and j.joker == 'j_chicot') or enc.jab_said then return nil end
   enc.jab_said = true
   return {line = 'jab_counter', vars = O.jab_vars(enc, blind), skip_boss = O.jab_opts(enc).skip_boss}
+end
+
+-- In-fight run comments (1.2) ---------------------------------------------------------------------
+
+--- The run comment for a scored hand that fired nothing else (Dir react): the weak-hit line or a read
+--- (logic.pick_comment: the light tier's single slot, the full tier's cap, never on consecutive hands).
+--- p: the director's pending reaction (plain numbers, Dir.num). Never on the winning hand.
+function O.comment_for(enc, p)
+  if not p or p.total >= p.required then return nil end
+  local size = L().hit_size(p.delta, p.required)
+  return L().pick_comment{weak = size == 'weak', big = size == 'big', hand_type = p.hand_type,
+    streak = p.streak, discards_left = p.discards_left, discards_used = p.discards_used,
+    hands_left = p.hands_left, cards_played = p.cards_played, tier = enc.tier, fired = enc.fired,
+    reactions = enc.reactions, comments = enc.comments, last_comment_hand = enc.last_comment_hand,
+    hand = p.hand}
+end
+
+--- The winning hand scored at least twice the requirement: its overkill line replaces the defeat line.
+function O.overkill_line(p)
+  if not (p and p.moment == 'defeat' and p.total >= p.required) then return nil end
+  if L().is_overkill(p.total, p.required) then return 'overkill' end
+  return nil
+end
+
+-- Idle taunts (1.2) ------------------------------------------------------------------------------
+
+--- The encounter an idle taunt may come from right now, or nil: a live boss encounter on this blind,
+--- dialogue on, choosing cards (SELECTING_HAND), not paused, no menu or overlay, no intro or cinematic
+--- running, no reaction waiting for its score.
+local function idle_encounter()
+  local st = G.GAME and G.GAME.FinalBoss
+  local enc = st and st.encounter
+  if not (enc and enc.boss and not enc.ended and (enc.tier == 'light' or enc.tier == 'full')) then return nil end
+  local blind = G.GAME.blind
+  if not (blind and blind.config and blind.config.blind and blind.config.blind.key == enc.key) then return nil end
+  if not FinalBoss.config.dialogue then return nil end
+  if not (G.STATES and G.STATE == G.STATES.SELECTING_HAND) then return nil end
+  if (G.SETTINGS and G.SETTINGS.paused) or G.OVERLAY_MENU then return nil end
+  if FinalBoss.cinematic.active() or FinalBoss.dialogue.intro_active() then return nil end
+  if FinalBoss.director.pending then return nil end
+  return enc
+end
+
+--- Any key, click or controller button (hooks.lua): the idle clock starts over.
+function O.on_input()
+  O.idle_since = FinalBoss.util.now()
+end
+
+--- Per frame (Dir.tick). The clock also starts over when the hand's highlighted cards change, on
+--- every frame idling cannot count (idle_encounter) and when an idle line fires. After IDLE_FIRST,
+--- then IDLE_SECOND more seconds without input: an idle line (at most IDLE_MAX per blind:
+--- enc.idle_said, plain saved data).
+function O.idle_tick()
+  local now = FinalBoss.util.now()
+  local n = (G.hand and G.hand.highlighted) and #G.hand.highlighted or 0
+  if n ~= O.highlighted then O.highlighted, O.idle_since = n, now end
+  local enc = idle_encounter()
+  if not enc or not O.idle_since then O.idle_since = now; return end
+  if not L().idle_due(now - O.idle_since, enc.idle_said or 0) then return end
+  O.idle_since = now
+  enc.idle_said = (enc.idle_said or 0) + 1
+  FinalBoss.director.fire('idle')
 end
 
 return O
