@@ -167,4 +167,87 @@ T['every achievement has a name and a description'] = function()
   end
 end
 
+-- 1.2 key sets -----------------------------------------------------------------------------------
+
+local NEW_BOSS_SETS = {intro = 3, big_hand = 3, gloat = 3, weak = 3, jab_counter = 1}
+
+T['every vanilla boss has three intros, big hands, gloats and weak lines, and its counter line'] = function()
+  local quips, bosses = load()
+  local missing = {}
+  for blind in pairs(bosses) do
+    for m, n in pairs(NEW_BOSS_SETS) do
+      for i = 1, n do
+        local key = 'fb_' .. blind .. '_' .. m .. '_' .. i
+        if not quips[key] then missing[#missing + 1] = key end
+      end
+    end
+  end
+  table.sort(missing)
+  assert(#missing == 0, 'missing: ' .. table.concat(missing, ', '))
+end
+
+T['the generic set has three weak lines'] = function()
+  local quips = load()
+  for i = 1, 3 do assert(quips['fb_generic_weak_' .. i], 'missing fb_generic_weak_' .. i) end
+end
+
+T['every personality has every run moment'] = function()
+  local quips = load()
+  package.loaded['src.logic'] = nil
+  local logic = require('src.logic')
+  local missing = {}
+  for _, p in ipairs(logic.PERSONALITIES) do
+    for _, m in ipairs(logic.PERSONALITY_MOMENTS) do
+      for i = 1, logic.personality_variants(m) do
+        local key = 'fb_p_' .. p .. '_' .. m .. '_' .. i
+        if not quips[key] then missing[#missing + 1] = key end
+      end
+    end
+  end
+  table.sort(missing)
+  assert(#missing == 0, 'missing: ' .. table.concat(missing, ', '))
+end
+
+T['counter and famous lines name the joker (#2#); no other line does'] = function()
+  local quips = load()
+  local bad = {}
+  for key, lines in pairs(quips) do
+    local text = type(lines) == 'table' and table.concat(lines, ' ') or tostring(lines)
+    local wants = key:find('_jab_counter_', 1, true) or key:find('_jab_famous_', 1, true)
+    local has = text:find('#2#', 1, true)
+    if wants and not has then bad[#bad + 1] = key .. ' needs #2#' end
+    if has and not wants then bad[#bad + 1] = key .. ' must not use #2#' end
+  end
+  table.sort(bad)
+  assert(#bad == 0, table.concat(bad, '; '))
+end
+
+T['every run moment and weak line resolves for every vanilla boss and a modded one'] = function()
+  local quips, bosses = load()
+  package.loaded['src.logic'] = nil
+  local logic = require('src.logic')
+  package.loaded['src.personality'] = nil
+  local voice = require('src.personality').VANILLA
+  local function count_of(prefix)
+    local n = 0
+    while quips[prefix .. '_' .. (n + 1)] do n = n + 1 end
+    return n
+  end
+  local moments = {'weak'}
+  for _, m in ipairs(logic.PERSONALITY_MOMENTS) do moments[#moments + 1] = m end
+  local missing = {}
+  local list = {bl_mymod_boss = logic.DEFAULT_PERSONALITY}
+  for blind in pairs(bosses) do list[blind] = voice[blind] end
+  for blind, p in pairs(list) do
+    for _, m in ipairs(moments) do
+      if not logic.resolve_prefix(blind, m, count_of, p) then missing[#missing + 1] = blind .. '.' .. m end
+      if m == 'jab_counter' and not logic.resolve_prefix(blind, m, count_of, p, true) then
+        missing[#missing + 1] = blind .. '.jab_counter (skip_boss)'
+      end
+    end
+  end
+  table.sort(missing)
+  assert(#missing == 0, 'no line for: ' .. table.concat(missing, ', '))
+end
+
 return T
