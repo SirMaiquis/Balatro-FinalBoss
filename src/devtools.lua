@@ -4,7 +4,7 @@
 ---   Shift+F5: cycle the forced boss through the 23 regular vanilla bosses (step after the last clears it).
 ---   F6: fire the next moment (big_hand, close, last_hand, disabled, defeat)
 ---   Shift+F6: fake the next run state (skipped, rerolls, broke, loaded, one suit, counter, famous) and
----       say the jab it gives now, with the boss's flex
+---       say the jab it gives now
 ---   F7: dump FinalBoss state to the Lovely log
 ---   Shift+F7: an idle taunt now
 ---   F8: push the current final boss to its next phase (cinematic showdowns)

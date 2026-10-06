@@ -137,8 +137,6 @@ local function advance(token)
   local step = it.steps[it.index]
   if not step then return D.end_intro() end
   D.show(it.blind, step.key, step.vars, it.pitch)
-  -- 1.2: a step may act as its bubble shows (the boss's flex on its threat line).
-  if step.on_show then FinalBoss.util.guard('intro_step', step.on_show) end
   after(it.duration, function() advance(token) end)
 end
 

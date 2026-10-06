@@ -118,7 +118,7 @@ function Dir.play_intro(blind_key)
   local O = FinalBoss.observe
   local steps = {}
   -- 1.1 memory: a rematch or nemesis line may replace the opener (full) or the intro (light).
-  -- 1.2: the run jab replaces the threat, and the threat (or jab) step carries the boss's flex.
+  -- 1.2: the run jab replaces the threat.
   local jab_moment = (enc.jab and not enc.jab_said) and enc.jab.moment or nil
   local plan, threat = FinalBoss.logic.apply_jab(FinalBoss.logic.intro_plan{tier = enc.tier,
     memory = FinalBoss.config.memory, last = enc.last, nemesis = enc.nemesis, roll = math.random()}, jab_moment)
@@ -130,9 +130,7 @@ function Dir.play_intro(blind_key)
       key = FinalBoss.registry.resolve(enc.key, 'intro', enc.last_variant)
     end
     if key then
-      local step = {key = key, vars = jab and O.jab_vars(enc, blind) or Dir.vars(blind)}
-      if i == threat then step.on_show = function() FinalBoss.moves.flex(blind) end end
-      steps[#steps + 1] = step
+      steps[#steps + 1] = {key = key, vars = jab and O.jab_vars(enc, blind) or Dir.vars(blind)}
       if jab then enc.jab_said = true end
     end
   end

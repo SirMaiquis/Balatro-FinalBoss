@@ -129,14 +129,6 @@ T['has_censored: a letter followed by a star'] = function()
   eq(logic.has_censored(nil), false)
 end
 
-T['flex_recipe: flex, then signature, then the generic burst'] = function()
-  eq(logic.flex_recipe({flex = 'f', signature = 's'}), 'f')
-  eq(logic.flex_recipe({signature = 's'}), 's')
-  eq(logic.flex_recipe({play = {}}), logic.GENERIC_RECIPE)
-  eq(logic.flex_recipe(nil), logic.GENERIC_RECIPE)
-  assert(logic.MOVE_KINDS.flex, 'flex is a move kind')
-end
-
 T['bleep: a vanilla sound, pitched high'] = function()
   eq(type(logic.BLEEP.sound), 'string')
   assert(logic.BLEEP.pitch > 1.5, 'high pitch')

@@ -217,22 +217,4 @@ T['regular bosses keep no death (only final bosses explode)'] = function()
   end
 end
 
-T['every regular boss has a flex recipe that needs no trigger cards; final bosses flex their signature'] = function()
-  local b = bosses()
-  local NEEDS_DATA = {recount = true, curse = true, land = true}
-  for key in pairs(REGULAR) do
-    local flex = b[key].moves.flex
-    assert(flex, key .. ' needs a flex recipe')
-    assert(logic.flex_recipe(b[key].moves) == flex, key .. ': flex_recipe picks it')
-    for _, step in ipairs(flex) do
-      assert(step.target ~= 'cards' and step.target ~= 'played', key .. ': a flex has no trigger cards')
-      assert(not NEEDS_DATA[step.effect], key .. ': ' .. step.effect .. ' needs trigger data')
-    end
-  end
-  for key in pairs(FINAL) do
-    assert(b[key].moves.flex == nil, key .. ' flexes its signature')
-    assert(logic.flex_recipe(b[key].moves) == b[key].moves.signature, key .. ': signature as flex')
-  end
-end
-
 return T

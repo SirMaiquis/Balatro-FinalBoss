@@ -301,10 +301,8 @@ logic.CURSE_STYLES = {suit = true, vine = true, crack = true}
 
 --- Trigger kinds (hooks.lua -> moves.lua). 'signature' is no trigger: phases play it big. 'set' plays
 --- the moment the blind is set (with the counters from just before); 'start' when the intro ends.
---- 'flex' is no trigger either: the intro's preview of the boss's move (moves.flex, 1.2).
 logic.MOVE_KINDS = {play = true, modify = true, hand_debuff = true, card_debuff = true, flipped = true,
-  drawn = true, start = true, set = true, draw = true, joker_sold = true, generic = true, signature = true,
-  flex = true}
+  drawn = true, start = true, set = true, draw = true, joker_sold = true, generic = true, signature = true}
 
 --- Where a step lands (resolved by moves.lua): the performer, the trigger's cards, the played
 --- cards, a card area, a HUD element or the hand's card-count label (hand_limit: "0/8" under it).
@@ -944,7 +942,7 @@ function logic.clean_personality(value)
     ('unknown personality %s, using %s'):format(tostring(value), logic.DEFAULT_PERSONALITY)
 end
 
--- Reading the run: intro jabs, flex, censor (1.2) -------------------------------------------------
+-- Reading the run: intro jabs, censor (1.2) -------------------------------------------------------
 
 --- Jokers that beat a boss outright (the jab_counter jab names them as #2#).
 logic.COUNTER_JOKERS = {'j_chicot', 'j_luchador', 'j_matador', 'j_mr_bones'}
@@ -1024,7 +1022,7 @@ function logic.intro_jab(s, rand)
 end
 
 --- The intro plan (logic.intro_plan) with its threat replaced by the jab moment (nil: kept), and the
---- index of that threat-or-jab step (the boss flexes on it; nil when a memory line kept the slot).
+--- index of that threat-or-jab step (nil when a memory line kept the slot).
 --- Priority: nemesis line > jab > rematch line > threat. The light tier's one step is the threat
 --- ('intro'), a rematch line (the jab replaces it) or the nemesis line (kept); the full tier always
 --- keeps its threat step, so the jab replaces it whatever the opener became.
@@ -1057,13 +1055,6 @@ logic.BLEEP = {sound = 'generic1', pitch = 2.4, volume = 0.45}
 function logic.has_censored(text)
   if type(text) ~= 'string' then return false end
   return text:find('[%a\128-\255]%*') ~= nil
-end
-
---- The intro flex (visual only): the boss's flex recipe, else its signature, else the generic burst.
-function logic.flex_recipe(moves)
-  if moves and moves.flex then return moves.flex end
-  if moves and moves.signature then return moves.signature end
-  return logic.GENERIC_RECIPE
 end
 
 -- Reading the run: in-fight comments, overkill, idle (1.2) ----------------------------------------
