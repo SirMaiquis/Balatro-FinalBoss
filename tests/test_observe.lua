@@ -59,21 +59,52 @@ T['run_state: jokers, row, skips, rerolls since the mark, money, deck'] = functi
   eq(s.deck_size, 40); eq(s.suit_max, 40); eq(s.signature, 'j_luchador')
 end
 
+--- math.random with the jab's chance roll passing and the first candidate picked.
+local function lucky(n) if n == nil then return 0 end return 1 end
+--- math.random with the jab's chance roll failing.
+local function unlucky(n) if n == nil then return 0.99 end return 1 end
+
 T['on_blind_set: picks the jab and moves the reroll mark'] = function()
   local ctx = setup{rerolled = 8, st = {reroll_mark = 2}, jokers = {'j_joker'}}
   local enc = {key = 'bl_hook'}
-  ctx.O.on_blind_set(enc)
+  ctx.O.on_blind_set(enc, lucky)
   eq(enc.jab.moment, 'jab_rerolls'); eq(G.GAME.FinalBoss.reroll_mark, 8); eq(enc.idle_said, 0)
   local enc2 = {key = 'bl_hook'}
-  ctx.O.on_blind_set(enc2)
+  ctx.O.on_blind_set(enc2, lucky)
   eq(enc2.jab, nil, 'no rerolls since the mark')
 end
 
 T['on_blind_set: a first boss counts rerolls from the start of the run'] = function()
   local ctx = setup{rerolled = 5, jokers = {'j_joker'}}
   local enc = {key = 'bl_hook'}
-  ctx.O.on_blind_set(enc)
+  ctx.O.on_blind_set(enc, lucky)
   eq(enc.jab.moment, 'jab_rerolls')
+end
+
+T['on_blind_set: a failed chance roll keeps the threat; a counter jabs anyway'] = function()
+  local ctx = setup{rerolled = 5, jokers = {'j_joker'}}
+  local enc = {key = 'bl_hook'}
+  ctx.O.on_blind_set(enc, unlucky)
+  eq(enc.jab, nil)
+  local ctx2 = setup{jokers = {'j_luchador'}}
+  local enc2 = {key = 'bl_hook'}
+  ctx2.O.on_blind_set(enc2, unlucky)
+  eq(enc2.jab.moment, 'jab_counter')
+end
+
+T['on_blind_set: the last jab said this run is skipped'] = function()
+  local ctx = setup{rerolled = 5, dollars = 0, jokers = {'j_joker'}, st = {last_jab = 'jab_rerolls'}}
+  eq(ctx.O.run_state('bl_hook').last_jab, 'jab_rerolls')
+  local enc = {key = 'bl_hook'}
+  ctx.O.on_blind_set(enc, lucky)
+  eq(enc.jab.moment, 'jab_broke')
+end
+
+T['mark_said: the jab is said once and becomes the last jab'] = function()
+  local ctx = setup()
+  local enc = {key = 'bl_hook', jab = {moment = 'jab_broke'}}
+  ctx.O.mark_said(enc)
+  eq(enc.jab_said, true); eq(G.GAME.FinalBoss.last_jab, 'jab_broke')
 end
 
 T['jab_opts: the boss line only for its signature counter'] = function()
@@ -104,6 +135,7 @@ T['disabled_jab: a Chicot counter jab, once'] = function()
   local enc = {key = 'bl_final_bell', jab = {moment = 'jab_counter', joker = 'j_chicot'}}
   local opts = ctx.O.disabled_jab(enc, G.GAME.blind)
   eq(opts.line, 'jab_counter'); eq(opts.skip_boss, false); eq(opts.vars[2], 'Name of j_chicot')
+  eq(G.GAME.FinalBoss.last_jab, 'jab_counter')
   eq(ctx.O.disabled_jab(enc, G.GAME.blind), nil, 'only once')
   eq(ctx.O.disabled_jab({key = 'bl_hook', jab = {moment = 'jab_counter', joker = 'j_luchador'}}, G.GAME.blind), nil)
   eq(ctx.O.disabled_jab({key = 'bl_hook'}, G.GAME.blind), nil)
@@ -253,8 +285,15 @@ end
 
 T['dev_jab: fakes a run and says its jab now'] = function()
   local ctx = setup{enc = {key = 'bl_final_bell', boss = true, tier = 'full', ended = false, fired = {}, reactions = 0}}
-  eq(ctx.O.dev_jab({dollars = 0}), 'jab_broke')
+  local roll = math.random
+  math.random = unlucky -- the developer key ignores the chance roll
+  local ok, m = pcall(ctx.O.dev_jab, {dollars = 0})
+  math.random = roll
+  assert(ok, m)
+  eq(m, 'jab_broke')
   eq(ctx.fired[1], 'intro'); eq(ctx.opts[1].force, true); eq(ctx.opts[1].line, 'jab_broke')
+  eq(G.GAME.FinalBoss.last_jab, 'jab_broke')
+  G.GAME.FinalBoss.last_jab = nil
   eq(ctx.O.dev_jab({counter = true}), 'jab_counter')
   eq(ctx.opts[2].skip_boss, false); eq(ctx.opts[2].vars[2], 'Name of j_chicot')
   eq(G.GAME.FinalBoss.encounter.jab.joker, 'j_chicot')

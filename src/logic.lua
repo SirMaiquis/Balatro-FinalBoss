@@ -952,6 +952,8 @@ logic.FAMOUS_JOKERS = {'j_blueprint', 'j_brainstorm', 'j_baron', 'j_dna', 'j_mim
 --- Jab thresholds: shop rerolls since the previous boss, dollars (broke / loaded), share of the deck in
 --- one suit, deck size (tiny / huge).
 logic.JAB = {rerolls = 5, broke = 3, loaded = 50, onesuit = 0.75, tiny = 30, huge = 70}
+--- Chance that a non-counter jab replaces the boss's own threat (counter jokers always jab).
+logic.JAB_CHANCE = 1 / 3
 
 local FAMOUS_SET = {}
 for _, k in ipairs(logic.FAMOUS_JOKERS) do FAMOUS_SET[k] = true end
@@ -968,57 +970,53 @@ end
 --- The intro jab (at most one per intro; it replaces the threat line), from the run as the blind is set.
 --- s: {jokers (center keys owned), joker_count, joker_slots, skipped (blinds skipped this ante, 0-2),
 --- rerolls (shop rerolls since the previous boss blind), dollars, deck_size, suit_max (cards of the
---- most common suit), signature (logic.signature_counter of the boss)}. The highest priority wins;
---- ties go to rand (math.random signature). Returns {moment, joker} (joker: the center key said as
---- #2# for jab_counter and jab_famous) or nil.
+--- most common suit), signature (logic.signature_counter of the boss), last_jab (the moment of the
+--- last jab said this run), force (skip the chance roll: the developer key)}.
+--- A counter joker always jabs, with no chance roll: the boss's own signature counter first, else a
+--- random owned counter. Every other jab that applies is one candidate in a flat list (no tiers),
+--- minus the last jab said; with JAB_CHANCE (or force) one is picked uniformly. rand has the
+--- math.random signature: rand() the chance roll, rand(n) the pick. Returns {moment, joker} (joker:
+--- the center key said as #2# for jab_counter and jab_famous) or nil.
 function logic.intro_jab(s, rand)
   local J = logic.JAB
   local jokers = s.jokers or {}
   local owned = {}
   for _, k in ipairs(jokers) do owned[k] = true end
-  local function pick(list)
-    if #list == 0 then return nil end
-    return list[rand(#list)]
-  end
-  -- 1: a counter joker (the boss's own signature counter first)
+  -- A counter joker (the boss's own signature counter first)
   if s.signature and owned[s.signature] then return {moment = 'jab_counter', joker = s.signature} end
   local counters = {}
   for _, k in ipairs(logic.COUNTER_JOKERS) do
     if owned[k] then counters[#counters + 1] = k end
   end
-  local counter = pick(counters)
-  if counter then return {moment = 'jab_counter', joker = counter} end
-  -- 2: skips, rerolls, money
-  local p2 = {}
-  local skipped = s.skipped or 0
-  if skipped == 1 then p2[#p2 + 1] = {moment = 'jab_skipped'}
-  elseif skipped >= 2 then p2[#p2 + 1] = {moment = 'jab_skipped_both'} end
-  if (s.rerolls or 0) >= J.rerolls then p2[#p2 + 1] = {moment = 'jab_rerolls'} end
-  if s.dollars ~= nil then
-    if s.dollars <= J.broke then p2[#p2 + 1] = {moment = 'jab_broke'}
-    elseif s.dollars >= J.loaded then p2[#p2 + 1] = {moment = 'jab_loaded'} end
+  if #counters > 0 then return {moment = 'jab_counter', joker = counters[rand(#counters)]} end
+  -- Everything else: one flat list
+  local list = {}
+  local function add(moment, applies)
+    if applies and moment ~= s.last_jab then list[#list + 1] = moment end
   end
-  local hit = pick(p2)
-  if hit then return hit end
-  -- 3: deck and joker row
-  local p3 = {}
+  local skipped = s.skipped or 0
+  add('jab_skipped', skipped == 1)
+  add('jab_skipped_both', skipped >= 2)
+  add('jab_rerolls', (s.rerolls or 0) >= J.rerolls)
+  add('jab_broke', s.dollars ~= nil and s.dollars <= J.broke)
+  add('jab_loaded', s.dollars ~= nil and s.dollars >= J.loaded)
   local n = s.deck_size or 0
-  if n > 0 and (s.suit_max or 0) >= J.onesuit * n then p3[#p3 + 1] = {moment = 'jab_onesuit'} end
-  if n > 0 and n <= J.tiny then p3[#p3 + 1] = {moment = 'jab_tinydeck'}
-  elseif n >= J.huge then p3[#p3 + 1] = {moment = 'jab_hugedeck'} end
+  add('jab_onesuit', n > 0 and (s.suit_max or 0) >= J.onesuit * n)
+  add('jab_tinydeck', n > 0 and n <= J.tiny)
+  add('jab_hugedeck', n >= J.huge)
   local count = s.joker_count or #jokers
-  if count == 0 then p3[#p3 + 1] = {moment = 'jab_nojokers'}
-  elseif s.joker_slots and s.joker_slots > 0 and count >= s.joker_slots then p3[#p3 + 1] = {moment = 'jab_fulljokers'} end
-  hit = pick(p3)
-  if hit then return hit end
-  -- 4: a famous joker
+  add('jab_nojokers', count == 0)
+  add('jab_fulljokers', count > 0 and s.joker_slots and s.joker_slots > 0 and count >= s.joker_slots)
   local famous = {}
   for _, k in ipairs(jokers) do
     if FAMOUS_SET[k] then famous[#famous + 1] = k end
   end
-  local star = pick(famous)
-  if star then return {moment = 'jab_famous', joker = star} end
-  return nil
+  add('jab_famous', #famous > 0)
+  if #list == 0 then return nil end
+  if not (s.force or rand() < logic.JAB_CHANCE) then return nil end
+  local moment = list[rand(#list)]
+  if moment == 'jab_famous' then return {moment = moment, joker = famous[rand(#famous)]} end
+  return {moment = moment}
 end
 
 --- The intro plan (logic.intro_plan) with its threat replaced by the jab moment (nil: kept), and the

@@ -1,7 +1,7 @@
 --- Reading the run (1.2): the intro jab (from the run as the boss blind is set), the in-fight run
 --- comments and the idle taunts. Every decision is a logic.lua rule; this module only reads the game.
 --- Saved state is plain data on the encounter (jab, jab_said, comments, last_comment_hand, last_type,
---- type_streak, idle_said) and st.reroll_mark; the idle clock is never saved.
+--- type_streak, idle_said), st.reroll_mark and st.last_jab; the idle clock is never saved.
 local O = {}
 O.idle_since = nil  -- REAL time the idle clock started (last input, or the last frame idling could not count)
 O.highlighted = nil -- #G.hand.highlighted on the last frame (a change counts as input)
@@ -41,7 +41,8 @@ function O.run_state(blind_key)
   end
   return {jokers = jokers, joker_count = count, joker_slots = slots, skipped = skipped,
     rerolls = rerolled - (st.reroll_mark or 0), dollars = FinalBoss.director.num(G.GAME.dollars),
-    deck_size = #deck, suit_max = suit_max, signature = L().signature_counter(blind_key)}, rerolled
+    deck_size = #deck, suit_max = suit_max, signature = L().signature_counter(blind_key),
+    last_jab = st.last_jab}, rerolled
 end
 
 --- Whether an owned Chicot disables this boss blind: vanilla skips a debuffed joker and a Chicot
@@ -58,10 +59,11 @@ end
 --- Dir.on_blind_set, boss encounters (any tier): the intro jab as plain data on the encounter, the
 --- reroll mark for the next boss, and a fresh idle count and clock. A Chicot that will disable the
 --- boss is always the jab: no intro plays, so its disabled line (O.disabled_jab) is the only one said.
-function O.on_blind_set(enc)
+--- rand: math.random unless given (tests).
+function O.on_blind_set(enc, rand)
   local s, rerolled = O.run_state(enc.key)
   FinalBoss.util.state().reroll_mark = rerolled
-  enc.jab = L().intro_jab(s, math.random)
+  enc.jab = L().intro_jab(s, rand or math.random)
   if chicot_acts() then enc.jab = {moment = 'jab_counter', joker = 'j_chicot'} end
   enc.jab_said = nil
   enc.idle_said = 0
@@ -93,12 +95,19 @@ function O.jab_opts(enc)
   return nil
 end
 
+--- The encounter's jab is being said: once per encounter (enc.jab_said), and it is the run's last jab
+--- (st.last_jab, plain saved data), which the next boss's jab skips (logic.intro_jab).
+function O.mark_said(enc)
+  enc.jab_said = true
+  if enc.jab then FinalBoss.util.state().last_jab = enc.jab.moment end
+end
+
 --- Chicot disables the boss before any intro (card.lua:2491-2500; Dir.play_intro skips a disabled
 --- boss), so a Chicot counter jab is said as the disabled line. Returns Dir.fire options, or nil.
 function O.disabled_jab(enc, blind)
   local j = enc and enc.jab
   if not (j and j.moment == 'jab_counter' and j.joker == 'j_chicot') or enc.jab_said then return nil end
-  enc.jab_said = true
+  O.mark_said(enc)
   return {line = 'jab_counter', vars = O.jab_vars(enc, blind), skip_boss = O.jab_opts(enc).skip_boss}
 end
 
@@ -184,9 +193,11 @@ function O.dev_jab(state)
   for k, v in pairs(state or {}) do s[k] = v end
   s.signature = L().signature_counter(enc.key)
   if s.counter then s.jokers, s.counter = {s.signature}, nil end
+  s.force = true -- the faked jab always comes, whatever the chance roll
   enc.jab = L().intro_jab(s, math.random)
   enc.jab_said = true
   if not enc.jab then return nil end
+  O.mark_said(enc)
   local opts = O.jab_opts(enc) or {}
   FinalBoss.director.fire('intro', {force = true, line = enc.jab.moment, vars = O.jab_vars(enc, blind),
     skip_boss = opts.skip_boss})

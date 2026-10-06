@@ -131,7 +131,7 @@ function Dir.play_intro(blind_key)
     end
     if key then
       steps[#steps + 1] = {key = key, vars = jab and O.jab_vars(enc, blind) or Dir.vars(blind)}
-      if jab then enc.jab_said = true end
+      if jab then O.mark_said(enc) end
     end
   end
   if #steps == 0 then return finish() end
