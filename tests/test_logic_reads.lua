@@ -30,7 +30,7 @@ T['fight_read: each trigger'] = function()
   eq(read{hand_type = 'High Card'}, 'read_weakhand'); eq(read{hand_type = 'Pair'}, 'read_weakhand')
   eq(read{hand_type = 'Pair', big = true}, nil, 'a big Pair is no weak hand')
   eq(read{streak = 3}, 'read_repeat'); eq(read{streak = 2}, nil)
-  eq(read{discards_left = 0, hands_left = 3}, 'read_discardspam'); eq(read{discards_left = 0, hands_left = 2}, nil)
+  eq(read{discards_left = 0, hands_left = 2}, 'read_discardspam', 'burned them all with 3 hands to play'); eq(read{discards_left = 0, hands_left = 1}, nil)
   eq(read{discards_left = 0, discards_used = 0, hands_left = 3}, nil, 'The Water took them: no spam')
   eq(read{cards_played = 1}, 'read_onecard')
 end

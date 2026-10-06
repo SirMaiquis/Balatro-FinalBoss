@@ -1076,7 +1076,7 @@ logic.COMMENTS = {weak = true, read_weakhand = true, read_repeat = true, read_di
 logic.READ_ORDER = {'read_repeat', 'read_discardspam', 'read_onecard', 'read_weakhand'}
 logic.WEAK_HANDS = {['High Card'] = true, ['Pair'] = true} -- vanilla hand keys (game.lua:2012-2013)
 logic.REPEAT_STREAK = 3     -- the same hand type this many hands in a row
-logic.DISCARDSPAM_HANDS = 3 -- no discards left with at least this many hands still to play
+logic.DISCARDSPAM_HANDS = 3 -- no discards left with at least this many hands to play, this one included
 logic.OVERKILL_RATIO = 2    -- a winning total at least twice the requirement
 logic.COMMENT_CAP = 3       -- run comments per blind for final bosses (full tier)
 logic.IDLE_FIRST = 25       -- seconds without input before the first idle taunt
@@ -1098,7 +1098,7 @@ function logic.fight_read(s, fired)
   local hit = {
     read_repeat = (s.streak or 0) >= logic.REPEAT_STREAK,
     read_discardspam = s.discards_left == 0 and (s.discards_used or 0) > 0
-      and (s.hands_left or 0) >= logic.DISCARDSPAM_HANDS,
+      and (s.hands_left or 0) + 1 >= logic.DISCARDSPAM_HANDS,
     read_onecard = s.cards_played == 1,
     read_weakhand = (logic.WEAK_HANDS[s.hand_type or ''] and not s.big) and true or false,
   }
