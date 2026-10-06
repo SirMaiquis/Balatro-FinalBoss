@@ -41,7 +41,7 @@ T['fight_read: order, and nothing repeats in a blind'] = function()
   eq(read({cards_played = 1, hand_type = 'High Card'}, {read_onecard = true, read_weakhand = true}), nil)
 end
 
-local CAN = {moment = 'read_onecard', tier = 'full', fired = {}, reactions = 0, comments = 0, hand = 3}
+local CAN = {moment = 'read_onecard', tier = 'full', fired = {}, comments = 0, hand = 3}
 local function can(o) return logic.can_comment(with(CAN, o)) end
 
 T['can_comment: light tier, never right after a line'] = function()
@@ -49,7 +49,6 @@ T['can_comment: light tier, never right after a line'] = function()
   eq(can{tier = 'light', hand = 3, last_line_hand = 3}, false, 'same hand')
   eq(can{tier = 'light', hand = 3, last_line_hand = 2}, false, 'consecutive')
   eq(can{tier = 'light', hand = 3, last_line_hand = 1}, true)
-  eq(can{tier = 'light', reactions = 1}, true, 'no single reaction slot any more')
 end
 
 T['can_comment: light tier, one read per blind even when spaced'] = function()
@@ -80,7 +79,7 @@ end
 
 T['pick_comment: weak neither waits for nor feeds the comment caps'] = function()
   local a = {weak = true, hand_type = 'Flush', streak = 1, discards_left = 1, discards_used = 0,
-    hands_left = 3, cards_played = 5, tier = 'full', fired = {}, reactions = 0, comments = 3,
+    hands_left = 3, cards_played = 5, tier = 'full', fired = {}, comments = 3,
     last_comment_hand = 3, hand = 4}
   eq(logic.pick_comment(a), 'weak', 'cap reached and consecutive, still weak')
   a.fired = {weak = true}
@@ -89,14 +88,14 @@ end
 
 T['pick_comment: the weak line first, then a read, within the caps'] = function()
   local a = {weak = true, hand_type = 'High Card', streak = 1, discards_left = 1, discards_used = 0,
-    hands_left = 3, cards_played = 2, tier = 'full', fired = {}, reactions = 0, comments = 0, hand = 4}
+    hands_left = 3, cards_played = 2, tier = 'full', fired = {}, comments = 0, hand = 4}
   eq(logic.pick_comment(a), 'weak')
   a.fired = {weak = true}
   eq(logic.pick_comment(a), 'read_weakhand')
   a.last_comment_hand = 3
   eq(logic.pick_comment(a), nil, 'consecutive hand')
   local light = {weak = false, hand_type = 'Flush', streak = 1, discards_left = 1, discards_used = 0,
-    hands_left = 3, cards_played = 5, tier = 'light', fired = {}, reactions = 0, comments = 0, hand = 1}
+    hands_left = 3, cards_played = 5, tier = 'light', fired = {}, comments = 0, hand = 1}
   eq(logic.pick_comment(light), nil, 'nothing to say')
   light.weak = true; light.hand = 2; light.last_line_hand = 1
   eq(logic.pick_comment(light), nil, 'the boss spoke on the hand before')
@@ -104,19 +103,20 @@ T['pick_comment: the weak line first, then a read, within the caps'] = function(
   eq(logic.pick_comment(light), 'weak')
 end
 
-T['note_comment: books fired, the slot, the count and the hand'] = function()
-  local enc = {fired = {}, reactions = 0}
+T['note_comment: books fired, the count and the hand'] = function()
+  local enc = {fired = {}}
   logic.note_comment(enc, 'read_onecard', 2)
-  eq(enc.fired.read_onecard, true); eq(enc.reactions, 1); eq(enc.comments, 1); eq(enc.last_comment_hand, 2)
+  eq(enc.fired.read_onecard, true); eq(enc.comments, 1); eq(enc.last_comment_hand, 2)
+  eq(enc.reactions, nil, 'no reaction counter')
   eq(enc.last_line_hand, 2, 'the light tier spacing')
   logic.note_comment(enc, 'read_repeat', 4)
   eq(enc.comments, 2); eq(enc.last_comment_hand, 4); eq(enc.last_line_hand, 4)
 end
 
 T['note_comment: weak is a reaction, not a run comment'] = function()
-  local enc = {fired = {}, reactions = 0}
+  local enc = {fired = {}}
   logic.note_comment(enc, 'weak', 2)
-  eq(enc.fired.weak, true); eq(enc.reactions, 1)
+  eq(enc.fired.weak, true)
   eq(enc.comments or 0, 0, 'no run comment'); eq(enc.last_comment_hand, nil, 'no comment hand booked')
   eq(enc.last_line_hand, 2, 'weak follows the light tier spacing')
 end
@@ -132,10 +132,10 @@ T['idle_due: 25 s, then 45 s more, at most two'] = function()
   eq(logic.idle_due(999, 2), false)
 end
 
-T['can_fire: idle may repeat; comments are not reactions'] = function()
-  eq(logic.can_fire('idle', 'light', {idle = true}, 1), true)
-  eq(logic.can_fire('idle', 'none', {}, 0), false)
-  eq(logic.REACTIONS.weak, nil); eq(logic.COMMENTS.weak, true); eq(logic.COMMENTS.read_repeat, true)
+T['can_fire: idle may repeat and is not spaced; comments have their own gate'] = function()
+  eq(logic.can_fire('idle', 'light', {idle = true}, 2, 1), true)
+  eq(logic.can_fire('idle', 'none', {}), false)
+  eq(logic.SPACED.weak, nil); eq(logic.COMMENTS.weak, true); eq(logic.COMMENTS.read_repeat, true)
   eq(logic.COMMENTS.idle, nil)
 end
 

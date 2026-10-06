@@ -55,7 +55,7 @@ function Dir.on_blind_set(blind)
     min_ante = FinalBoss.config.min_ante,
   }
   local cinematic = (tier == 'full' and is_showdown and FinalBoss.config.cinematic) and true or false
-  st.encounter = {key = proto.key, tier = tier, fired = {}, reactions = 0, track = nil,
+  st.encounter = {key = proto.key, tier = tier, fired = {}, track = nil,
     last_variant = {}, ended = false, last_hand_seen = nil, showdown = is_showdown, cinematic = cinematic,
     -- 1.1 phases: enc.phase (nil = phase I) and the twist state are plain saved data. Twists need
     -- phases, so they follow cinematics.
@@ -225,7 +225,7 @@ function Dir.fire(moment, opts)
       ok = L.can_comment{moment = moment, tier = enc.tier, fired = enc.fired, comments = enc.comments,
         last_comment_hand = enc.last_comment_hand, last_line_hand = enc.last_line_hand, hand = hand}
     else
-      ok = L.can_fire(moment, enc.tier, enc.fired, enc.reactions, hand, enc.last_line_hand)
+      ok = L.can_fire(moment, enc.tier, enc.fired, hand, enc.last_line_hand)
     end
     if not ok then return false end
   end
@@ -258,7 +258,7 @@ function Dir.on_hand_after(context)
   -- (functions/state_events.lua:524, :298), so it is monotonic per blind.
   local hands_played = cr.hands_played
   if enc.last_hand_seen == hands_played then return end -- defensive: one evaluation per hand
-  Dir.flush_pending() -- a previous hand's reaction updates enc.fired / reactions, read below
+  Dir.flush_pending() -- a previous hand's reaction updates enc.fired / last_line_hand, read below
   enc.last_hand_seen = hands_played
   local delta = num(SMODS.last_hand_score)
   local chips = num(G.GAME.chips)
@@ -273,8 +273,8 @@ function Dir.on_hand_after(context)
     enc.win_start, enc.win_hand, enc.win_hands_left = chips, hands_played, hands_left
   end
   local moment = FinalBoss.logic.detect_moments{delta = delta, total = total, required = required,
-    hands_left = hands_left, fired = enc.fired, tier = enc.tier, reactions = enc.reactions,
-    hand = hands_played, last_line_hand = enc.last_line_hand}
+    hands_left = hands_left, fired = enc.fired, tier = enc.tier, hand = hands_played,
+    last_line_hand = enc.last_line_hand}
   -- 1.2 run comments: the hand type (vanilla also sets G.GAME.last_hand_played,
   -- functions/state_events.lua:576), how many hands in a row used it, and the cards played.
   local hand_type = (context and context.scoring_name) or G.GAME.last_hand_played

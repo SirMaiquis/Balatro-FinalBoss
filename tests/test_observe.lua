@@ -169,7 +169,7 @@ end
 
 T['comment_for: weak first, then a read; never on the winning hand'] = function()
   local ctx = setup()
-  local enc = {tier = 'light', fired = {}, reactions = 0}
+  local enc = {tier = 'light', fired = {}}
   eq(ctx.O.comment_for(enc, pending()), 'weak')
   eq(ctx.O.comment_for(enc, pending{delta = 20, total = 20}), nil, 'a normal Flush says nothing')
   eq(ctx.O.comment_for(enc, pending{delta = 20, total = 20, hand_type = 'Pair'}), 'read_weakhand')
@@ -183,7 +183,7 @@ end
 
 T['comment_for: full tier reads are capped and never on consecutive hands'] = function()
   local ctx = setup()
-  local enc = {tier = 'full', fired = {}, reactions = 0, comments = 1, last_comment_hand = 2}
+  local enc = {tier = 'full', fired = {}, comments = 1, last_comment_hand = 2}
   local pair = {delta = 20, total = 20, hand_type = 'Pair'}
   pair.hand = 3
   eq(ctx.O.comment_for(enc, pending(pair)), nil, 'the hand after a comment')
@@ -213,7 +213,7 @@ end
 -- Idle taunts ------------------------------------------------------------------------------------------
 
 local function idle_setup()
-  return setup{enc = {key = 'bl_hook', boss = true, tier = 'light', ended = false, fired = {}, reactions = 0}}
+  return setup{enc = {key = 'bl_hook', boss = true, tier = 'light', ended = false, fired = {}}}
 end
 
 local function tick_at(ctx, t) ctx.now = t; ctx.O.idle_tick() end
@@ -296,7 +296,7 @@ T['idle: a new blind starts a fresh count and clock'] = function()
 end
 
 T['dev_jab: fakes a run and says its jab now'] = function()
-  local ctx = setup{enc = {key = 'bl_final_bell', boss = true, tier = 'full', ended = false, fired = {}, reactions = 0}}
+  local ctx = setup{enc = {key = 'bl_final_bell', boss = true, tier = 'full', ended = false, fired = {}}}
   local roll = math.random
   math.random = unlucky -- the developer key ignores the chance roll
   local ok, m = pcall(ctx.O.dev_jab, {dollars = 0})
