@@ -72,6 +72,9 @@ local PRIORITY = {'last_hand', 'close', 'big_hand'}
 -- when the player plays a hand while the boss's intro is still running (once per encounter).
 logic.FORCED_MOMENTS = {defeat = true, interrupted = true}
 
+-- Moments that may fire more than once per blind (their own caps live elsewhere: idle, logic.IDLE_MAX).
+logic.REPEATABLE = {idle = true}
+
 --- Whether this frame interrupts the boss's intro. a: {hand_played (G.STATE is HAND_PLAYED),
 --- cinematic_intro, dialogue_intro (either part of the intro is running), tier, ended, fired}.
 function logic.should_interrupt(a)
@@ -115,7 +118,7 @@ end
 
 function logic.can_fire(moment, tier, fired, reactions)
   if tier ~= 'light' and tier ~= 'full' then return false end
-  if fired[moment] then return false end
+  if fired[moment] and not logic.REPEATABLE[moment] then return false end
   if logic.REACTIONS[moment] and tier == 'light' and reactions >= 1 then return false end
   return true
 end
@@ -1061,6 +1064,112 @@ function logic.flex_recipe(moves)
   if moves and moves.flex then return moves.flex end
   if moves and moves.signature then return moves.signature end
   return logic.GENERIC_RECIPE
+end
+
+-- Reading the run: in-fight comments, overkill, idle (1.2) ----------------------------------------
+
+--- Moments said on a hand that fired nothing else. The reads are run comments (booked by
+--- logic.note_comment, capped for final bosses). 'weak' is a reaction: it takes the light tier's single
+--- reaction slot and is outside the run-comment cap and the consecutive-hands rule.
+logic.COMMENTS = {weak = true, read_weakhand = true, read_repeat = true, read_discardspam = true,
+  read_onecard = true}
+logic.READ_ORDER = {'read_repeat', 'read_discardspam', 'read_onecard', 'read_weakhand'}
+logic.WEAK_HANDS = {['High Card'] = true, ['Pair'] = true} -- vanilla hand keys (game.lua:2012-2013)
+logic.REPEAT_STREAK = 3     -- the same hand type this many hands in a row
+logic.DISCARDSPAM_HANDS = 3 -- no discards left with at least this many hands still to play
+logic.OVERKILL_RATIO = 2    -- a winning total at least twice the requirement
+logic.COMMENT_CAP = 3       -- run comments per blind for final bosses (full tier)
+logic.IDLE_FIRST = 25       -- seconds without input before the first idle taunt
+logic.IDLE_SECOND = 45      -- seconds after the first before the second
+logic.IDLE_MAX = 2          -- idle taunts per blind
+
+--- How many hands in a row (this one included) used hand_type.
+function logic.next_streak(last_type, streak, hand_type)
+  if hand_type == nil then return 0 end
+  if hand_type == last_type then return (streak or 0) + 1 end
+  return 1
+end
+
+--- The read a scored hand gives (first in READ_ORDER that applies and has not fired this blind).
+--- s: {hand_type, big (hit_size 'big'), streak (logic.next_streak), discards_left, discards_used,
+--- hands_left (after this hand), cards_played}. fired: the encounter's fired set.
+function logic.fight_read(s, fired)
+  fired = fired or {}
+  local hit = {
+    read_repeat = (s.streak or 0) >= logic.REPEAT_STREAK,
+    read_discardspam = s.discards_left == 0 and (s.discards_used or 0) > 0
+      and (s.hands_left or 0) >= logic.DISCARDSPAM_HANDS,
+    read_onecard = s.cards_played == 1,
+    read_weakhand = (logic.WEAK_HANDS[s.hand_type or ''] and not s.big) and true or false,
+  }
+  for _, m in ipairs(logic.READ_ORDER) do
+    if hit[m] and not fired[m] then return m end
+  end
+  return nil
+end
+
+--- Whether a comment may be said. a: {moment, tier, fired, reactions, comments (run comments said
+--- this blind), last_comment_hand, hand (this hand's id)}. Never below the light tier, never twice
+--- per blind. Light tier: it takes the single reaction slot. Full tier: 'weak' is free; a read is
+--- capped at COMMENT_CAP per blind and never on consecutive hands.
+function logic.can_comment(a)
+  if a.tier ~= 'light' and a.tier ~= 'full' then return false end
+  if a.fired and a.fired[a.moment] then return false end
+  if a.tier == 'light' then return (a.reactions or 0) < 1 end
+  if a.moment == 'weak' then return true end
+  if (a.comments or 0) >= logic.COMMENT_CAP then return false end
+  if a.last_comment_hand and a.hand and a.hand - a.last_comment_hand <= 1 then return false end
+  return true
+end
+
+--- The comment for a hand that fired nothing else: the weak-hit line (a.weak) first, then a read.
+--- a: logic.fight_read's fields, logic.can_comment's fields (moment is filled in here) and weak.
+function logic.pick_comment(a)
+  local function allowed(moment)
+    local c = {}
+    for k, v in pairs(a) do c[k] = v end
+    c.moment = moment
+    return logic.can_comment(c)
+  end
+  if a.weak and allowed('weak') then return 'weak' end
+  local r = logic.fight_read(a, a.fired)
+  if r and allowed(r) then return r end
+  return nil
+end
+
+--- Book a comment on the encounter (plain saved data): fired and the light tier's reaction slot.
+--- A read also counts toward the run-comment cap and marks the hand it was said on; 'weak' does not.
+function logic.note_comment(enc, moment, hand)
+  enc.fired = enc.fired or {}
+  enc.fired[moment] = true
+  enc.reactions = (enc.reactions or 0) + 1
+  if moment == 'weak' then return end
+  enc.comments = (enc.comments or 0) + 1
+  enc.last_comment_hand = hand
+end
+
+--- The winning hand scored at least OVERKILL_RATIO times the requirement.
+function logic.is_overkill(total, required)
+  if not required or required <= 0 then return false end
+  return (total or 0) >= logic.OVERKILL_RATIO * required
+end
+
+--- Whether an idle taunt is due after idle_for seconds without input; said = taunts said this blind.
+function logic.idle_due(idle_for, said)
+  said = said or 0
+  if said >= logic.IDLE_MAX then return false end
+  return (idle_for or 0) >= (said == 0 and logic.IDLE_FIRST or logic.IDLE_SECOND)
+end
+
+--- Every personality has a line for each of these (fb_p_<personality>_<moment>_N; tools/check_loc.py).
+logic.PERSONALITY_MOMENTS = {'jab_counter', 'jab_skipped', 'jab_skipped_both', 'jab_rerolls', 'jab_broke',
+  'jab_loaded', 'jab_onesuit', 'jab_tinydeck', 'jab_hugedeck', 'jab_nojokers', 'jab_fulljokers', 'jab_famous',
+  'read_weakhand', 'read_repeat', 'read_discardspam', 'read_onecard', 'idle', 'overkill'}
+logic.PERSONALITY_VARIANTS = {read_weakhand = 2, read_repeat = 2, read_discardspam = 2, read_onecard = 2,
+  idle = 2, overkill = 2}
+
+function logic.personality_variants(moment)
+  return logic.PERSONALITY_VARIANTS[moment] or 1
 end
 
 return logic
