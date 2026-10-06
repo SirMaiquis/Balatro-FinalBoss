@@ -65,13 +65,6 @@ return {
             -- Config menu header card
             fb_cfg_header = {"Боссы отвечают, а поединки становятся битвами с боссом.", "Автор: {C:green,E:1}@SirMaiquis{}"},
 
-            -- Shared intro bookends (full tier only)
-            fb_opener_1 = {"Ты зашел слишком", "далеко..."},
-            fb_opener_2 = {"И, к сожалению,", "должен сказать..."},
-            fb_opener_3 = {"Что ж. Ты", "добрался."},
-            fb_closer_1 = {"Тебе не победить", "меня."},
-            fb_closer_2 = {"Здесь твой забег", "заканчивается."},
-            fb_closer_3 = {"Покажи, на что", "ты способен."},
             fb_gloat = {"Этот босс был", "слишком силен..."},
 
             -- Generic fallbacks for bosses without their own lines (#1# = boss name)

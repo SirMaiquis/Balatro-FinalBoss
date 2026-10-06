@@ -70,7 +70,8 @@ end
 
 T['resolve_prefix: shared moments ignore the personality'] = function()
   local logic = fresh()
-  eq(logic.resolve_prefix('bl_hook', 'opener', counts{fb_opener = 3, fb_p_killer_opener = 1}, 'killer'), 'fb_opener')
+  eq(logic.resolve_prefix('bl_hook', 'nemesis_intro', counts{fb_nemesis_intro = 3, fb_p_killer_nemesis_intro = 1},
+    'killer'), 'fb_nemesis_intro')
 end
 
 T['resolve_prefix: without a personality it keeps the 1.1 order'] = function()

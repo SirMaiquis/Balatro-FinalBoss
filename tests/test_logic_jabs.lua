@@ -119,14 +119,14 @@ T['signature_counter: Chicot for the final bosses, Luchador for the rest'] = fun
 end
 
 T['apply_jab: the jab replaces the threat; memory lines stay'] = function()
-  local plan, at = logic.apply_jab({'opener', 'name', 'intro', 'closer'}, 'jab_broke')
-  eq(table.concat(plan, ','), 'opener,name,jab_broke,closer'); eq(at, 3)
+  local plan, at = logic.apply_jab({'name', 'intro'}, 'jab_broke')
+  eq(table.concat(plan, ','), 'name,jab_broke'); eq(at, 2)
   plan, at = logic.apply_jab({'intro'}, nil)
   eq(table.concat(plan, ','), 'intro'); eq(at, 1)
   plan, at = logic.apply_jab({'nemesis_intro'}, 'jab_broke')
   eq(table.concat(plan, ','), 'nemesis_intro'); eq(at, nil)
-  plan, at = logic.apply_jab({'rematch_won', 'generic_name', 'intro', 'closer'}, 'jab_famous')
-  eq(plan[3], 'jab_famous'); eq(at, 3)
+  plan, at = logic.apply_jab({'rematch_won', 'intro'}, 'jab_famous')
+  eq(table.concat(plan, ','), 'rematch_won,jab_famous'); eq(at, 2)
 end
 
 T['apply_jab: a light-tier rematch line gives way to the jab, a nemesis line does not'] = function()
@@ -157,17 +157,19 @@ T['apply_jab: with the real intro plan, nemesis > jab > rematch > threat (light 
   eq(p[1], 'intro')
 end
 
-T['apply_jab: full tier, the jab replaces the threat whatever the opener became'] = function()
+T['apply_jab: full tier, two lines; the jab replaces the threat whatever the name line became'] = function()
   local function plan(a)
     a.tier, a.memory = 'full', true
     return logic.intro_plan(a)
   end
   local p, at = logic.apply_jab(plan{nemesis = true}, 'jab_broke')
-  eq(table.concat(p, ','), 'nemesis_intro,generic_name,jab_broke,closer'); eq(at, 3)
+  eq(table.concat(p, ','), 'nemesis_intro,jab_broke'); eq(at, 2)
   p, at = logic.apply_jab(plan{last = 'lost'}, 'jab_broke')
-  eq(table.concat(p, ','), 'rematch_lost,generic_name,jab_broke,closer'); eq(at, 3)
+  eq(table.concat(p, ','), 'rematch_lost,jab_broke'); eq(at, 2)
   p, at = logic.apply_jab(plan{}, 'jab_broke')
-  eq(table.concat(p, ','), 'opener,name,jab_broke,closer'); eq(at, 3)
+  eq(table.concat(p, ','), 'name,jab_broke'); eq(at, 2)
+  p, at = logic.apply_jab(plan{}, nil)
+  eq(table.concat(p, ','), 'name,intro'); eq(at, 2)
 end
 
 T['has_censored: a letter followed by a star'] = function()

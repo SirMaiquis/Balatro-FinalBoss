@@ -65,13 +65,6 @@ return {
             -- Config menu header card
             fb_cfg_header = {"Bazen praten terug en showdowns worden baasgevechten.", "Door {C:green,E:1}@SirMaiquis{}"},
 
-            -- Shared intro bookends (full tier only)
-            fb_opener_1 = {"Je bent te ver", "gekomen..."},
-            fb_opener_2 = {"En helaas moet ik", "zeggen..."},
-            fb_opener_3 = {"Dus. Je hebt het", "gehaald."},
-            fb_closer_1 = {"Je gaat me niet", "kunnen verslaan."},
-            fb_closer_2 = {"Hier eindigt", "jouw run."},
-            fb_closer_3 = {"Laat maar zien wat", "je in huis hebt."},
             fb_gloat = {"Die baas was", "te veel..."},
 
             -- Generic fallbacks for bosses without their own lines (#1# = boss name)

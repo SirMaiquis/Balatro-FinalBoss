@@ -87,17 +87,17 @@ end
 
 T['intro_plan: memory off or no history keeps the 1.0 intro'] = function()
   local full = logic.intro_plan{tier = 'full', memory = false, last = 'won', nemesis = true, roll = 0}
-  eq(table.concat(full, ','), 'opener,name,intro,closer')
+  eq(table.concat(full, ','), 'name,intro')
   local fresh = logic.intro_plan{tier = 'full', memory = true, last = nil, nemesis = false, roll = 0}
-  eq(table.concat(fresh, ','), 'opener,name,intro,closer')
+  eq(table.concat(fresh, ','), 'name,intro')
   eq(#logic.intro_plan{tier = 'none', memory = true, last = 'won', nemesis = true, roll = 0}, 0)
 end
 
-T['intro_plan: a final boss rematch replaces the opener'] = function()
+T['intro_plan: a final boss rematch replaces the name line'] = function()
   eq(table.concat(logic.intro_plan{tier = 'full', memory = true, last = 'won', roll = 0.99}, ','),
-    'rematch_won,generic_name,intro,closer')
+    'rematch_won,intro')
   eq(table.concat(logic.intro_plan{tier = 'full', memory = true, last = 'lost', roll = 0.99}, ','),
-    'rematch_lost,generic_name,intro,closer')
+    'rematch_lost,intro')
 end
 
 T['intro_plan: a regular boss rematch replaces the intro on a 50% roll'] = function()
@@ -108,7 +108,7 @@ end
 
 T['intro_plan: the nemesis line takes precedence'] = function()
   eq(table.concat(logic.intro_plan{tier = 'full', memory = true, last = 'lost', nemesis = true, roll = 0}, ','),
-    'nemesis_intro,generic_name,intro,closer')
+    'nemesis_intro,intro')
   eq(table.concat(logic.intro_plan{tier = 'light', memory = true, last = 'won', nemesis = true, roll = 0.99}, ','),
     'nemesis_intro')
 end
@@ -213,18 +213,17 @@ end
 
 T['intro_plan: nemesis line shown even without last'] = function()
   local ids = logic.intro_plan{tier = 'full', memory = true, last = nil, nemesis = true, roll = 0}
-  eq(table.concat(ids, ','), 'nemesis_intro,generic_name,intro,closer')
+  eq(table.concat(ids, ','), 'nemesis_intro,intro')
 end
 
-T['intro_plan: the name step goes generic only when the opener was replaced'] = function()
-  -- "But I'm The X" answers the shared opener; after a rematch or nemesis line it has nothing to contrast.
-  eq(table.concat(logic.intro_plan{tier = 'full', memory = true, last = nil, nemesis = false, roll = 0}, ','),
-    'opener,name,intro,closer')
-  eq(table.concat(logic.intro_plan{tier = 'full', memory = true, last = 'won', nemesis = true, roll = 0}, ','),
-    'nemesis_intro,generic_name,intro,closer')
-  local count = function(p) return (p == 'fb_generic_name' or p == 'fb_bl_hook_name') and 3 or 0 end
-  eq(logic.resolve_prefix('bl_hook', 'generic_name', count), 'fb_generic_name', 'skips the boss name line')
-  eq(logic.resolve_prefix('bl_hook', 'name', count), 'fb_bl_hook_name', 'the plain name step is unchanged')
+T['intro_plan: the name line falls back to the generic name line'] = function()
+  local both = function(p) return (p == 'fb_generic_name' or p == 'fb_bl_hook_name') and 3 or 0 end
+  eq(logic.resolve_prefix('bl_hook', 'name', both), 'fb_bl_hook_name', 'the boss name line first')
+  local generic = function(p) return p == 'fb_generic_name' and 3 or 0 end
+  local p, is_generic = logic.resolve_prefix('bl_mymod_boss', 'name', generic)
+  eq(p, 'fb_generic_name'); eq(is_generic, true)
+  eq(logic.SHARED_MOMENTS.generic_name, nil); eq(logic.SHARED_MOMENTS.opener, nil)
+  eq(logic.SHARED_MOMENTS.closer, nil); eq(logic.SHARED_MOMENTS.nemesis_intro, true)
 end
 
 T['record_result: works on records with missing fields (or 0 guards)'] = function()

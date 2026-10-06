@@ -28,12 +28,11 @@ T['every vanilla boss has every moment'] = function()
   assert(#missing == 0, 'missing: ' .. table.concat(missing, ', '))
 end
 
-T['shared and generic sets have 3 variants'] = function()
+T['the generic set has 3 variants'] = function()
   local quips = load()
   local missing = {}
-  local prefixes = {'fb_opener', 'fb_closer'}
-  for _, m in ipairs(GENERIC_MOMENTS) do prefixes[#prefixes + 1] = 'fb_generic_' .. m end
-  for _, p in ipairs(prefixes) do
+  for _, m in ipairs(GENERIC_MOMENTS) do
+    local p = 'fb_generic_' .. m
     for i = 1, 3 do if not quips[p .. '_' .. i] then missing[#missing + 1] = p .. '_' .. i end end
   end
   assert(#missing == 0, 'missing: ' .. table.concat(missing, ', '))

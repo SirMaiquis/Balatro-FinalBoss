@@ -54,8 +54,9 @@ function logic.line_duration(speed)
   return DURATIONS[speed] or DURATIONS[2]
 end
 
+--- The intro lines per tier. Full (showdowns): the name reveal, then the threat. Light: the threat.
 function logic.intro_sequence(tier)
-  if tier == 'full' then return {'opener', 'name', 'intro', 'closer'} end
+  if tier == 'full' then return {'name', 'intro'} end
   if tier == 'light' then return {'intro'} end
   return {}
 end
@@ -163,10 +164,8 @@ function logic.detect_moments(a)
   return nil
 end
 
--- generic_name: the generic set's name line (fb_generic_name_N) for a boss that has its own, said
--- after a rematch or nemesis opener (logic.intro_plan).
-logic.SHARED_MOMENTS = {opener = true, closer = true, nemesis_intro = true, nemesis_defeat = true,
-  generic_name = true}
+-- Moments with only a shared key (fb_<moment>_N): the nemesis lines (1.1).
+logic.SHARED_MOMENTS = {nemesis_intro = true, nemesis_defeat = true}
 
 --- Find the localization key prefix for a moment: boss-specific (skipped when skip_boss), then the
 --- boss's personality (fb_p_<personality>_<moment>, 1.2), then generic. Shared moments have only
@@ -883,13 +882,12 @@ end
 
 --- Intro moments with memory. a: {tier, memory (setting), last ('won'|'lost'|nil: the player's
 --- last result against this boss), nemesis (bool), roll (math.random() in [0, 1))}.
---- Full: nemesis_intro (nemesis) or rematch_<last> replaces the shared opener, and the name step
---- becomes generic_name: a boss's own name line ("But I'm The Hook") answers the shared opener.
+--- Full: nemesis_intro (nemesis) or rematch_<last> replaces the name line.
 --- Light: nemesis_intro, or on a REMATCH_CHANCE roll rematch_<last>, replaces the intro.
 function logic.intro_plan(a)
   local seq = logic.intro_sequence(a.tier)
   if not a.memory or #seq == 0 then return seq end
-  local slot = (a.tier == 'full') and 'opener' or 'intro'
+  local slot = (a.tier == 'full') and 'name' or 'intro'
   local swap
   if a.nemesis then
     swap = 'nemesis_intro'
@@ -899,7 +897,7 @@ function logic.intro_plan(a)
   if not swap then return seq end
   local out = {}
   for i, m in ipairs(seq) do
-    if m == slot then out[i] = swap elseif m == 'name' then out[i] = 'generic_name' else out[i] = m end
+    out[i] = (m == slot) and swap or m
   end
   return out
 end
@@ -1042,10 +1040,10 @@ function logic.intro_jab(s, rand)
 end
 
 --- The intro plan (logic.intro_plan) with its threat replaced by the jab moment (nil: kept), and the
---- index of that threat-or-jab step (nil when a memory line kept the slot).
---- Priority: nemesis line > jab > rematch line > threat. The light tier's one step is the threat
---- ('intro'), a rematch line (the jab replaces it) or the nemesis line (kept); the full tier always
---- keeps its threat step, so the jab replaces it whatever the opener became.
+--- index of the step the jab may take (the director says the jab's own line there; nil when a memory
+--- line kept the slot). Priority: nemesis line > jab > rematch line > threat. The light tier's one
+--- step is the threat ('intro'), a rematch line (the jab replaces it) or the nemesis line (kept); the
+--- full tier always keeps its threat step, so the jab replaces it whatever the name line became.
 function logic.apply_jab(plan, jab_moment)
   local out, at = {}, nil
   for i, m in ipairs(plan) do

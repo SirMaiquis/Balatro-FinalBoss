@@ -65,13 +65,6 @@ return {
             -- Config menu header card
             fb_cfg_header = {"Bosse reden zurück, Showdowns werden zu Bosskämpfen.", "Von {C:green,E:1}@SirMaiquis{}"},
 
-            -- Shared intro bookends (full tier only)
-            fb_opener_1 = {"Du bist weit gekommen..."},
-            fb_opener_2 = {"Und leider muss ich", "sagen..."},
-            fb_opener_3 = {"Na. Du hast es", "geschafft."},
-            fb_closer_1 = {"Du wirst mich nicht", "besiegen können."},
-            fb_closer_2 = {"Hier endet", "dein Run."},
-            fb_closer_3 = {"Zeig mir, was", "du drauf hast."},
             fb_gloat = {"Dieser Boss war", "zu viel..."},
 
             -- Generic fallbacks for bosses without their own lines (#1# = boss name)

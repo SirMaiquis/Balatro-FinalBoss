@@ -67,13 +67,6 @@ return {
             -- Config menu header card
             fb_cfg_header = {"Boss會開口說話，決戰化身Boss戰。", "作者 {C:green,E:1}@SirMaiquis{}"},
 
-            -- Shared intro bookends (full tier only)
-            fb_opener_1 = {"你走得太遠了..."},
-            fb_opener_2 = {"很遺憾，我得", "告訴你..."},
-            fb_opener_3 = {"那麼。你", "還是來了。"},
-            fb_closer_1 = {"你不可能", "打敗我。"},
-            fb_closer_2 = {"你的這局", "到此為止。"},
-            fb_closer_3 = {"讓我看看", "你的本事。"},
             fb_gloat = {"那個Boss", "太強了..."},
 
             -- Generic fallbacks for bosses without their own lines (#1# = boss name)

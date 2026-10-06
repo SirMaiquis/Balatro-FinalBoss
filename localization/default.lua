@@ -65,13 +65,6 @@ return {
             -- Config menu header card
             fb_cfg_header = {"Bosses talk back and showdowns become boss fights.", "By {C:green,E:1}@SirMaiquis{}"},
 
-            -- Shared intro bookends (full tier only)
-            fb_opener_1 = {"Look who crawled", "all the way here."},
-            fb_opener_2 = {"All that luck,", "and it led you here."},
-            fb_opener_3 = {"So. You made it.", "Pity."},
-            fb_closer_1 = {"This is where", "your run dies."},
-            fb_closer_2 = {"Come on, then.", "Entertain me."},
-            fb_closer_3 = {"Deal, loser.", "Let's make it quick."},
             fb_gloat = {"Crushed by a boss.", "Even I winced."},
 
             -- Generic fallbacks for bosses without their own lines (#1# = boss name)

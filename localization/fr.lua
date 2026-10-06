@@ -65,13 +65,6 @@ return {
             -- Config menu header card
             fb_cfg_header = {"Les boss répliquent et les duels finaux deviennent de vrais combats.", "Par {C:green,E:1}@SirMaiquis{}"},
 
-            -- Shared intro bookends (full tier only)
-            fb_opener_1 = {"Tu es allé trop loin..."},
-            fb_opener_2 = {"Et j'ai le regret", "de dire..."},
-            fb_opener_3 = {"Alors. Tu as réussi."},
-            fb_closer_1 = {"Tu ne pourras pas", "me battre."},
-            fb_closer_2 = {"C'est ici que ta", "partie s'arrête."},
-            fb_closer_3 = {"Montre-moi ce que", "tu as dans le ventre."},
             fb_gloat = {"Ce boss était", "trop fort..."},
 
             -- Generic fallbacks for bosses without their own lines (#1# = boss name)

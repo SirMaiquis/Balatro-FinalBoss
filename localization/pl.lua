@@ -65,13 +65,6 @@ return {
             -- Config menu header card
             fb_cfg_header = {"Bossowie odpowiadają, a pojedynki stają się walkami z bossem.", "Autor: {C:green,E:1}@SirMaiquis{}"},
 
-            -- Shared intro bookends (full tier only)
-            fb_opener_1 = {"Zaszedłeś za daleko..."},
-            fb_opener_2 = {"I z przykrością", "muszę powiedzieć..."},
-            fb_opener_3 = {"No proszę.", "Dotarłeś tu."},
-            fb_closer_1 = {"Nie zdołasz", "mnie pokonać."},
-            fb_closer_2 = {"Tu kończy się", "twój run."},
-            fb_closer_3 = {"Pokaż, na co", "cię stać."},
             fb_gloat = {"Ten boss był", "za silny..."},
 
             -- Generic fallbacks for bosses without their own lines (#1# = boss name)

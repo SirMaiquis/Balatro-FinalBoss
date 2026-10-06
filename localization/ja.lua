@@ -67,13 +67,6 @@ return {
             -- Config menu header card
             fb_cfg_header = {"ボスがしゃべり、決戦はボスバトルになる。", "作者 {C:green,E:1}@SirMaiquis{}"},
 
-            -- Shared intro bookends (full tier only)
-            fb_opener_1 = {"ここまで来たか…"},
-            fb_opener_2 = {"悪いが、", "言わせてもらう…"},
-            fb_opener_3 = {"よく来たな。"},
-            fb_closer_1 = {"貴様に俺は", "倒せん。"},
-            fb_closer_2 = {"ここで貴様の", "ランは終わる。"},
-            fb_closer_3 = {"実力を見せて", "みろ。"},
             fb_gloat = {"あのボスは", "強すぎた…"},
 
             -- Generic fallbacks for bosses without their own lines (#1# = boss name)

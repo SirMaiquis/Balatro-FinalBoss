@@ -117,7 +117,7 @@ function Dir.play_intro(blind_key)
   if G.STATES and G.STATE == G.STATES.HAND_PLAYED then return finish() end
   local O = FinalBoss.observe
   local steps = {}
-  -- 1.1 memory: a rematch or nemesis line may replace the opener (full) or the intro (light).
+  -- 1.1 memory: a rematch or nemesis line may replace the name line (full) or the intro (light).
   -- 1.2: the run jab replaces the threat.
   local jab_moment = (enc.jab and not enc.jab_said) and enc.jab.moment or nil
   local plan, threat = FinalBoss.logic.apply_jab(FinalBoss.logic.intro_plan{tier = enc.tier,

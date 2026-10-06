@@ -113,9 +113,10 @@ end
 T['resolve_prefix: nothing resolves to nil'] = function()
   eq(logic.resolve_prefix('bl_mod_x', 'close', counts{}), nil)
 end
-T['resolve_prefix: shared opener and closer'] = function()
-  eq(logic.resolve_prefix('bl_hook', 'opener', counts{fb_opener = 3}), 'fb_opener')
-  eq(logic.resolve_prefix('bl_hook', 'closer', counts{}), nil)
+T['resolve_prefix: shared nemesis lines'] = function()
+  eq(logic.resolve_prefix('bl_hook', 'nemesis_intro', counts{fb_nemesis_intro = 3}), 'fb_nemesis_intro')
+  eq(logic.resolve_prefix('bl_hook', 'nemesis_defeat', counts{fb_generic_nemesis_defeat = 3}), nil,
+    'no generic fallback')
 end
 
 T['resolve_prefix: interrupted is boss-specific, then generic'] = function()

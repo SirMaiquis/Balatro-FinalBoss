@@ -65,13 +65,6 @@ return {
             -- Config menu header card
             fb_cfg_header = {"Os chefes respondem e os confrontos viram lutas contra chefes.", "Por {C:green,E:1}@SirMaiquis{}"},
 
-            -- Shared intro bookends (full tier only)
-            fb_opener_1 = {"Você chegou longe", "demais..."},
-            fb_opener_2 = {"E lamento dizer..."},
-            fb_opener_3 = {"Então. Você", "conseguiu chegar."},
-            fb_closer_1 = {"Você não vai", "conseguir me vencer."},
-            fb_closer_2 = {"É aqui que a sua", "run termina."},
-            fb_closer_3 = {"Mostre do que", "você é capaz."},
             fb_gloat = {"Esse chefe foi", "demais..."},
 
             -- Generic fallbacks for bosses without their own lines (#1# = boss name)

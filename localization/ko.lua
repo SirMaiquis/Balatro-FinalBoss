@@ -65,13 +65,6 @@ return {
             -- Config menu header card
             fb_cfg_header = {"보스가 말을 걸고, 결전은 보스전이 됩니다.", "제작 {C:green,E:1}@SirMaiquis{}"},
 
-            -- Shared intro bookends (full tier only)
-            fb_opener_1 = {"너무 멀리 왔군..."},
-            fb_opener_2 = {"안타깝지만", "말해주지..."},
-            fb_opener_3 = {"그래. 여기까지", "왔군."},
-            fb_closer_1 = {"넌 나를", "이길 수 없다."},
-            fb_closer_2 = {"여기서 네 런은", "끝난다."},
-            fb_closer_3 = {"네 실력을", "보여봐라."},
             fb_gloat = {"그 보스는", "너무 셌어..."},
 
             -- Generic fallbacks for bosses without their own lines (#1# = boss name)

@@ -116,7 +116,7 @@ T['line_duration: slow normal fast, unknown is normal'] = function()
 end
 
 T['intro_sequence: per tier'] = function()
-  eq(table.concat(logic.intro_sequence('full'), ','), 'opener,name,intro,closer')
+  eq(table.concat(logic.intro_sequence('full'), ','), 'name,intro')
   eq(table.concat(logic.intro_sequence('light'), ','), 'intro')
   eq(#logic.intro_sequence('none'), 0)
 end

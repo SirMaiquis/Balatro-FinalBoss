@@ -65,13 +65,6 @@ return {
             -- Config menu header card
             fb_cfg_header = {"Boss membalas bicara dan duel final jadi pertarungan boss.", "Oleh {C:green,E:1}@SirMaiquis{}"},
 
-            -- Shared intro bookends (full tier only)
-            fb_opener_1 = {"Kamu sudah terlalu", "jauh..."},
-            fb_opener_2 = {"Dan sayangnya,", "harus kubilang..."},
-            fb_opener_3 = {"Jadi. Kamu sampai", "juga."},
-            fb_closer_1 = {"Kamu tidak akan", "bisa mengalahkanku."},
-            fb_closer_2 = {"Di sinilah run-mu", "berakhir."},
-            fb_closer_3 = {"Tunjukkan apa", "yang kamu punya."},
             fb_gloat = {"Boss itu terlalu", "berat..."},
 
             -- Generic fallbacks for bosses without their own lines (#1# = boss name)

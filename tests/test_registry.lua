@@ -66,12 +66,12 @@ T['count probes consecutive variants'] = function()
 end
 
 T['count cache resets on language change'] = function()
-  local R = setup{fb_opener_1 = {'a'}}
-  eq(R.count('fb_opener'), 1)
-  G.localization.misc.quips.fb_opener_2 = {'b'}
-  eq(R.count('fb_opener'), 1, 'cached')
+  local R = setup{fb_nemesis_intro_1 = {'a'}}
+  eq(R.count('fb_nemesis_intro'), 1)
+  G.localization.misc.quips.fb_nemesis_intro_2 = {'b'}
+  eq(R.count('fb_nemesis_intro'), 1, 'cached')
   G.SETTINGS.language = 'es_419'
-  eq(R.count('fb_opener'), 2, 'after language change')
+  eq(R.count('fb_nemesis_intro'), 2, 'after language change')
 end
 
 T['resolve picks boss-specific key and records variant'] = function()
@@ -92,11 +92,11 @@ T['resolve returns nil when nothing exists'] = function()
 end
 
 T['resolve does not repeat the last variant'] = function()
-  local R = setup{fb_opener_1 = {'a'}, fb_opener_2 = {'b'}}
+  local R = setup{fb_nemesis_intro_1 = {'a'}, fb_nemesis_intro_2 = {'b'}}
   local last = {}
-  local first = R.resolve('bl_hook', 'opener', last)
+  local first = R.resolve('bl_hook', 'nemesis_intro', last)
   for _ = 1, 20 do
-    local nxt = R.resolve('bl_hook', 'opener', last)
+    local nxt = R.resolve('bl_hook', 'nemesis_intro', last)
     assert(nxt ~= first, 'repeated ' .. nxt)
     first = nxt
   end
