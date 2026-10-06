@@ -105,9 +105,13 @@ end
 
 function Dir.play_intro(blind_key)
   local enc, blind = current(blind_key)
+  local O = FinalBoss.observe
+  local jab_step -- the intro step that says the run jab (nil: no jab in this intro)
   -- When the intro ends (or never starts): the letterbox retracts (a no-op without bars) and the
-  -- boss performs its start move (moves.start runs once per encounter).
-  local function finish()
+  -- boss performs its start move (moves.start runs once per encounter). shown: how many intro lines
+  -- the player saw (dialogue.end_intro); the jab becomes the run's last jab only if it was one of them.
+  local function finish(shown)
+    if jab_step and (shown or 0) >= jab_step then O.mark_said(enc) end
     FinalBoss.cinematic.retract_bars()
     FinalBoss.moves.start(blind_key)
   end
@@ -115,7 +119,6 @@ function Dir.play_intro(blind_key)
   -- A hand is already being played (the delayed intro came late): skip the intro for this
   -- encounter rather than start it only to cut it at once.
   if G.STATES and G.STATE == G.STATES.HAND_PLAYED then return finish() end
-  local O = FinalBoss.observe
   local steps = {}
   -- 1.1 memory: a rematch or nemesis line may replace the name line (full) or the intro (light).
   -- 1.2: the run jab replaces the threat.
@@ -131,7 +134,8 @@ function Dir.play_intro(blind_key)
     end
     if key then
       steps[#steps + 1] = {key = key, vars = jab and O.jab_vars(enc, blind) or Dir.vars(blind)}
-      if jab then O.mark_said(enc) end
+      -- Never replayed (a Continue never reruns the intro); booked as the last jab once shown (finish).
+      if jab then enc.jab_said, jab_step = true, #steps end
     end
   end
   if #steps == 0 then return finish() end

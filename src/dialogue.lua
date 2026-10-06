@@ -149,6 +149,8 @@ function D.play_sequence(blind, steps, duration, pitch, on_end)
   advance(D.token)
 end
 
+--- Ends the intro (all lines said, skipped, interrupted or cut by another line). on_end(shown) gets
+--- how many of its steps were shown, so a caller knows which lines the player actually saw.
 function D.end_intro()
   local it = D.intro
   if not it then return end
@@ -156,7 +158,7 @@ function D.end_intro()
   D.token = D.token + 1
   disable_chip_skip(it.blind)
   D.hide(it.blind)
-  if it.on_end then FinalBoss.util.guard('intro_end', it.on_end) end
+  if it.on_end then FinalBoss.util.guard('intro_end', it.on_end, math.min(it.index, #it.steps)) end
 end
 
 function D.intro_active()
