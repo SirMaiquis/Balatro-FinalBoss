@@ -346,4 +346,73 @@ T['English swearing density per personality'] = function()
   assert(#bad == 0, 'too many censored lines: ' .. table.concat(bad, ', '))
 end
 
+-- Per-language swear lists: words = prefixes matched against each lower-cased word ('$' = the whole
+-- word; Cyrillic is listed in both cases, string.lower is ASCII only); text = substrings matched in
+-- the whole line (scripts without spaces).
+local ES_SWEARS = {'mierda', 'carajo', 'joder', 'hostia', 'pendej', 'cabron', 'cabrón', 'puta', 'puto',
+  'chingad', 'verga', 'coño', 'gilipollas'}
+local SWEARS = {
+  default = {words = EN_SWEARS},
+  es_419 = {words = ES_SWEARS},
+  es_ES = {words = ES_SWEARS},
+  pt_BR = {words = {'merda', 'porra', 'caralho', 'puta', 'puto', 'foda', 'fodid', 'cacete', 'buceta', 'viado'}},
+  fr = {words = {'merde', 'putain', 'bordel', 'connard', 'connasse', 'salop', 'enculé', 'encule', 'chier'}},
+  it = {words = {'merda', 'cazz', 'stronz', 'vaffanculo', 'puttan', 'minchia', 'coglion'}},
+  de = {words = {'scheiße', 'scheisse', 'arsch', 'fick', 'wichser', 'hure$', 'fotze'}},
+  nl = {words = {'shit', 'kut', 'klote', 'godverdomme', 'kanker', 'lul$', 'tering', 'hoer$'}},
+  pl = {words = {'kurw', 'gówno', 'gowno', 'chuj', 'pierdol', 'jeban', 'jebać', 'dupa', 'suka$'}},
+  ru = {words = {'бля', 'Бля', 'говн', 'Говн', 'хуй', 'Хуй', 'пизд', 'Пизд', 'ебат', 'Ебат', 'сука', 'Сука',
+    'жоп', 'Жоп'}},
+  id = {words = {'tai$', 'bangsat', 'kontol', 'memek', 'ngentot', 'bajingan'}},
+  ja = {text = {'クソ', '糞'}}, -- hiragana くそっ is the mild exclamation (1.1 already uses it)
+  ko = {text = {'씨발', '시발', '개새끼', '병신', '좆'}},
+  zh_CN = {text = {'他妈的', '狗屎', '傻逼', '操你', '屎'}},
+  zh_TW = {text = {'他媽的', '狗屎', '傻逼', '操你', '屎'}},
+}
+
+local function lang_quips(lang)
+  package.loaded['localization.' .. lang] = nil
+  return require('localization.' .. lang).misc.quips
+end
+
+T['every language: no swear of its list spelled out'] = function()
+  local bad = {}
+  for lang, list in pairs(SWEARS) do
+    for key, v in pairs(lang_quips(lang)) do
+      for _, line in ipairs(lines_of(v)) do
+        for _, w in ipairs(list.words and words(line) or {}) do
+          for _, s in ipairs(list.words) do
+            if swear_hit(w, s) then bad[#bad + 1] = lang .. ' ' .. key .. ': ' .. line end
+          end
+        end
+        for _, s in ipairs(list.text or {}) do
+          if line:find(s, 1, true) then bad[#bad + 1] = lang .. ' ' .. key .. ': ' .. line end
+        end
+      end
+    end
+  end
+  table.sort(bad)
+  assert(#bad == 0, table.concat(bad, '; '))
+end
+
+T['every language: a * only ever sits inside a word'] = function()
+  local bad = {}
+  for lang in pairs(SWEARS) do
+    for key, v in pairs(lang_quips(lang)) do
+      for _, line in ipairs(lines_of(v)) do
+        for token in line:gmatch("[^%s%-']+") do -- sh*t's, a**-backwards: each part on its own
+          if token:find('*', 1, true) then
+            local core = token:match('^[^%w\128-\255%*]*(.-)[^%w\128-\255%*]*$')
+            if not core:match('^[%w\128-\255]+%*+[%w\128-\255%*]*$') then
+              bad[#bad + 1] = lang .. ' ' .. key .. ': ' .. line
+            end
+          end
+        end
+      end
+    end
+  end
+  table.sort(bad)
+  assert(#bad == 0, table.concat(bad, '; '))
+end
+
 return T
