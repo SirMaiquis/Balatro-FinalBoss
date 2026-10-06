@@ -18,9 +18,9 @@ local function load_file(path)
 end
 
 -- Order matters: util and logic first; hooks last (it wires everything together).
-local MODULES = {'util', 'logic', 'registry', 'music', 'fx', 'effects', 'curse', 'arena', 'avatar', 'hpbar',
-  'cinematic', 'moves', 'deaths', 'phases', 'memory', 'achievements', 'ui', 'dialogue', 'director', 'quips',
-  'devtools', 'hooks'}
+local MODULES = {'util', 'logic', 'personality', 'registry', 'music', 'fx', 'effects', 'curse', 'arena', 'avatar',
+  'hpbar', 'cinematic', 'moves', 'deaths', 'phases', 'memory', 'achievements', 'ui', 'dialogue', 'director',
+  'quips', 'devtools', 'hooks'}
 
 for _, name in ipairs(MODULES) do
   FinalBoss[name] = load_file('src/' .. name .. '.lua')

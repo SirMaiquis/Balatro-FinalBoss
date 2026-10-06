@@ -143,17 +143,24 @@ end
 logic.SHARED_MOMENTS = {opener = true, closer = true, nemesis_intro = true, nemesis_defeat = true,
   generic_name = true}
 
---- Find the localization key prefix for a moment: boss-specific, then generic.
---- count_of(prefix) returns how many variants (prefix_1, prefix_2, ...) exist.
+--- Find the localization key prefix for a moment: boss-specific (skipped when skip_boss), then the
+--- boss's personality (fb_p_<personality>_<moment>, 1.2), then generic. Shared moments have only
+--- their shared key. count_of(prefix) returns how many variants (prefix_1, prefix_2, ...) exist.
 --- Returns prefix, is_generic  -- or nil when nothing exists.
-function logic.resolve_prefix(blind_key, moment, count_of)
+function logic.resolve_prefix(blind_key, moment, count_of, personality, skip_boss)
   if logic.SHARED_MOMENTS[moment] then
     local shared = 'fb_' .. moment
     if count_of(shared) > 0 then return shared, false end
     return nil
   end
-  local specific = 'fb_' .. blind_key .. '_' .. moment
-  if count_of(specific) > 0 then return specific, false end
+  if not skip_boss then
+    local specific = 'fb_' .. blind_key .. '_' .. moment
+    if count_of(specific) > 0 then return specific, false end
+  end
+  if personality then
+    local voiced = 'fb_p_' .. personality .. '_' .. moment
+    if count_of(voiced) > 0 then return voiced, false end
+  end
   local generic = 'fb_generic_' .. moment
   if count_of(generic) > 0 then return generic, true end
   return nil
@@ -913,6 +920,23 @@ end
 function logic.phase_achievements(from, to)
   if from == 1 and to == 3 then return {'fb_phase_skipper'} end
   return {}
+end
+
+-- Personalities (1.2) ------------------------------------------------------------------------------
+
+logic.PERSONALITIES = {'bully', 'smug', 'killer', 'venom', 'chaos', 'royal'}
+logic.DEFAULT_PERSONALITY = 'bully'
+
+local PERSONALITY_SET = {}
+for _, k in ipairs(logic.PERSONALITIES) do PERSONALITY_SET[k] = true end
+
+--- A personality as given to register_encounter: the key when valid, otherwise the default and a
+--- warning (nil means "not given": the default, no warning).
+function logic.clean_personality(value)
+  if value == nil then return logic.DEFAULT_PERSONALITY, nil end
+  if PERSONALITY_SET[value] then return value, nil end
+  return logic.DEFAULT_PERSONALITY,
+    ('unknown personality %s, using %s'):format(tostring(value), logic.DEFAULT_PERSONALITY)
 end
 
 return logic
