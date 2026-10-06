@@ -298,8 +298,10 @@ logic.CURSE_STYLES = {suit = true, vine = true, crack = true}
 
 --- Trigger kinds (hooks.lua -> moves.lua). 'signature' is no trigger: phases play it big. 'set' plays
 --- the moment the blind is set (with the counters from just before); 'start' when the intro ends.
+--- 'flex' is no trigger either: the intro's preview of the boss's move (moves.flex, 1.2).
 logic.MOVE_KINDS = {play = true, modify = true, hand_debuff = true, card_debuff = true, flipped = true,
-  drawn = true, start = true, set = true, draw = true, joker_sold = true, generic = true, signature = true}
+  drawn = true, start = true, set = true, draw = true, joker_sold = true, generic = true, signature = true,
+  flex = true}
 
 --- Where a step lands (resolved by moves.lua): the performer, the trigger's cards, the played
 --- cards, a card area, a HUD element or the hand's card-count label (hand_limit: "0/8" under it).
@@ -937,6 +939,128 @@ function logic.clean_personality(value)
   if PERSONALITY_SET[value] then return value, nil end
   return logic.DEFAULT_PERSONALITY,
     ('unknown personality %s, using %s'):format(tostring(value), logic.DEFAULT_PERSONALITY)
+end
+
+-- Reading the run: intro jabs, flex, censor (1.2) -------------------------------------------------
+
+--- Jokers that beat a boss outright (the jab_counter jab names them as #2#).
+logic.COUNTER_JOKERS = {'j_chicot', 'j_luchador', 'j_matador', 'j_mr_bones'}
+--- Jokers every player knows (the jab_famous jab names them as #2#).
+logic.FAMOUS_JOKERS = {'j_blueprint', 'j_brainstorm', 'j_baron', 'j_dna', 'j_mime', 'j_cavendish',
+  'j_triboulet', 'j_perkeo', 'j_yorick', 'j_caino', 'j_sock_and_buskin', 'j_hologram'}
+--- Jab thresholds: shop rerolls since the previous boss, dollars (broke / loaded), share of the deck in
+--- one suit, deck size (tiny / huge).
+logic.JAB = {rerolls = 5, broke = 3, loaded = 50, onesuit = 0.75, tiny = 30, huge = 70}
+
+local FAMOUS_SET = {}
+for _, k in ipairs(logic.FAMOUS_JOKERS) do FAMOUS_SET[k] = true end
+
+--- A vanilla boss's main counter: Chicot for the five final bosses, Luchador for the rest. Its own
+--- counter line (fb_<blind>_jab_counter) is said only for this joker.
+function logic.signature_counter(blind_key)
+  for _, k in ipairs(logic.FINAL_BOSSES) do
+    if k == blind_key then return 'j_chicot' end
+  end
+  return 'j_luchador'
+end
+
+--- The intro jab (at most one per intro; it replaces the threat line), from the run as the blind is set.
+--- s: {jokers (center keys owned), joker_count, joker_slots, skipped (blinds skipped this ante, 0-2),
+--- rerolls (shop rerolls since the previous boss blind), dollars, deck_size, suit_max (cards of the
+--- most common suit), signature (logic.signature_counter of the boss)}. The highest priority wins;
+--- ties go to rand (math.random signature). Returns {moment, joker} (joker: the center key said as
+--- #2# for jab_counter and jab_famous) or nil.
+function logic.intro_jab(s, rand)
+  local J = logic.JAB
+  local jokers = s.jokers or {}
+  local owned = {}
+  for _, k in ipairs(jokers) do owned[k] = true end
+  local function pick(list)
+    if #list == 0 then return nil end
+    return list[rand(#list)]
+  end
+  -- 1: a counter joker (the boss's own signature counter first)
+  if s.signature and owned[s.signature] then return {moment = 'jab_counter', joker = s.signature} end
+  local counters = {}
+  for _, k in ipairs(logic.COUNTER_JOKERS) do
+    if owned[k] then counters[#counters + 1] = k end
+  end
+  local counter = pick(counters)
+  if counter then return {moment = 'jab_counter', joker = counter} end
+  -- 2: skips, rerolls, money
+  local p2 = {}
+  local skipped = s.skipped or 0
+  if skipped == 1 then p2[#p2 + 1] = {moment = 'jab_skipped'}
+  elseif skipped >= 2 then p2[#p2 + 1] = {moment = 'jab_skipped_both'} end
+  if (s.rerolls or 0) >= J.rerolls then p2[#p2 + 1] = {moment = 'jab_rerolls'} end
+  if s.dollars ~= nil then
+    if s.dollars <= J.broke then p2[#p2 + 1] = {moment = 'jab_broke'}
+    elseif s.dollars >= J.loaded then p2[#p2 + 1] = {moment = 'jab_loaded'} end
+  end
+  local hit = pick(p2)
+  if hit then return hit end
+  -- 3: deck and joker row
+  local p3 = {}
+  local n = s.deck_size or 0
+  if n > 0 and (s.suit_max or 0) >= J.onesuit * n then p3[#p3 + 1] = {moment = 'jab_onesuit'} end
+  if n > 0 and n <= J.tiny then p3[#p3 + 1] = {moment = 'jab_tinydeck'}
+  elseif n >= J.huge then p3[#p3 + 1] = {moment = 'jab_hugedeck'} end
+  local count = s.joker_count or #jokers
+  if count == 0 then p3[#p3 + 1] = {moment = 'jab_nojokers'}
+  elseif s.joker_slots and s.joker_slots > 0 and count >= s.joker_slots then p3[#p3 + 1] = {moment = 'jab_fulljokers'} end
+  hit = pick(p3)
+  if hit then return hit end
+  -- 4: a famous joker
+  local famous = {}
+  for _, k in ipairs(jokers) do
+    if FAMOUS_SET[k] then famous[#famous + 1] = k end
+  end
+  local star = pick(famous)
+  if star then return {moment = 'jab_famous', joker = star} end
+  return nil
+end
+
+--- The intro plan (logic.intro_plan) with its threat replaced by the jab moment (nil: kept), and the
+--- index of that threat-or-jab step (the boss flexes on it; nil when a memory line kept the slot).
+--- Priority: nemesis line > jab > rematch line > threat. The light tier's one step is the threat
+--- ('intro'), a rematch line (the jab replaces it) or the nemesis line (kept); the full tier always
+--- keeps its threat step, so the jab replaces it whatever the opener became.
+function logic.apply_jab(plan, jab_moment)
+  local out, at = {}, nil
+  for i, m in ipairs(plan) do
+    out[i] = m
+    if m == 'intro' then
+      out[i] = jab_moment or 'intro'
+      at = i
+    end
+  end
+  if at then return out, at end
+  if jab_moment then
+    for i, m in ipairs(out) do
+      if m == 'rematch_won' or m == 'rematch_lost' then
+        out[i] = jab_moment
+        return out, i
+      end
+    end
+  end
+  return out, nil
+end
+
+--- The bleep over a line with a censored swear: vanilla's short generic1 blip, high and quiet.
+logic.BLEEP = {sound = 'generic1', pitch = 2.4, volume = 0.45}
+
+--- Whether a line holds a censored swear: a letter followed by one or more '*' ("f***", "sh*t",
+--- "a**"). Any byte of a multi-byte UTF-8 character counts as a letter, so "ク*" and "г*вно" match.
+function logic.has_censored(text)
+  if type(text) ~= 'string' then return false end
+  return text:find('[%a\128-\255]%*') ~= nil
+end
+
+--- The intro flex (visual only): the boss's flex recipe, else its signature, else the generic burst.
+function logic.flex_recipe(moves)
+  if moves and moves.flex then return moves.flex end
+  if moves and moves.signature then return moves.signature end
+  return logic.GENERIC_RECIPE
 end
 
 return logic
