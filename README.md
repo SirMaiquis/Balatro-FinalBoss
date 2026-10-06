@@ -28,8 +28,8 @@ Every boss blind gets a tier. The tier decides how much of the show it gets.
 
 | | Light (regular bosses) | Full (showdowns) |
 |---|---|---|
-| Intro | 1 line (the boss's threat) | opener, boss name, threat, closer |
-| Reactions (big hand, close call, last hand, boss disabled) | at most 1 per blind | each once per blind |
+| Intro | 1 line (the boss's threat) | 2 lines: boss name, then threat |
+| Reactions (big hand, close call, last hand, boss disabled) | each once per blind; at most 1 line per hand and never on two hands in a row (boss disabled excepted) | each once per blind |
 | Defeat | a line | a line and the shatter effect (the explosive finale when `cinematic` is on) |
 | Music | vanilla | a FinalBoss showdown track |
 | Screen effects (vignette, shake, flash) | none | yes |
@@ -89,7 +89,7 @@ Continue mid-showdown restores the phase, stance, marker and twists without repl
 
 ### Memory, nemesis and achievements
 
-- **Memory.** Bosses remember your results across runs, per Balatro profile (fights, wins and losses per boss). Seeded and challenge runs count too. A final boss you have met before opens with a rematch line instead of the shared opener (sore if you won last time, smug if you lost); a regular boss says its rematch line instead of its threat about half the time. After a rematch or nemesis opener the next line is the generic "I am ...!" line.
+- **Memory.** Bosses remember your results across runs, per Balatro profile (fights, wins and losses per boss). Seeded and challenge runs count too. A final boss you have met before opens with a rematch line instead of its name line (sore if you won last time, smug if you lost); a regular boss says its rematch line instead of its threat about half the time.
 - **Nemesis.** The boss that has beaten you most, at least 3 times, becomes your nemesis (a tie goes to the more recent loss). A nemesis always greets you with a nemesis line. In a showdown the title card reads **NEMESIS** instead of SHOWDOWN and the avatar glows crimson; a regular nemesis gets a red NEMESIS tag over its chip and a faint crimson aura. When you beat it, it says its own defeat line while a gold "NEMESIS DEFEATED" banner, a gong and a gold burst play. A defeated nemesis loses the title until it beats you again.
 - **Achievements.** Ten Steamodded achievements (Mods menu, Final Boss, Achievements tab):
   - Showdown Survivor: defeat a final boss
@@ -249,10 +249,8 @@ All text lives in `misc.quips` in your mod's localization. Each moment can have 
 
 | Moment | Key pattern | Scope |
 |---|---|---|
-| opener | `fb_opener_<n>` | shared (full intro only) |
-| name | `fb_<blind>_name_<n>` | per boss |
+| name | `fb_<blind>_name_<n>` | per boss (full intro only) |
 | intro | `fb_<blind>_intro_<n>` | per boss (the threat line) |
-| closer | `fb_closer_<n>` | shared (full intro only) |
 | big hand | `fb_<blind>_big_hand_<n>` | per boss |
 | close | `fb_<blind>_close_<n>` | per boss |
 | last hand | `fb_<blind>_last_hand_<n>` | per boss |
@@ -264,7 +262,7 @@ All text lives in `misc.quips` in your mod's localization. Each moment can have 
 | rematch (you won last time / lost last time) | `fb_<blind>_rematch_won_<n>`, `fb_<blind>_rematch_lost_<n>` | per boss |
 | nemesis | `fb_nemesis_intro_<n>`, `fb_nemesis_defeat_<n>` | shared, no generic fallback (`#1#` is the boss name) |
 
-`<blind>` is the full blind key, for example `bl_hook`. For each moment FinalBoss tries the boss-specific key first, then `fb_generic_<moment>_<n>`, and otherwise skips the moment. The shared `opener`, `closer` and nemesis lines have no generic fallback: if none exist, they are skipped. A rematch or nemesis line replaces the opener of a showdown (in light tier it replaces the boss's threat line, and a rematch line does so only about half the time), and in a showdown the line after it is then the shared `fb_generic_name_<n>` line ("I am ...!") instead of the boss's own name line. A raw key is never shown to the player. Generic lines receive the boss name as `#1#`.
+`<blind>` is the full blind key, for example `bl_hook`. For each moment FinalBoss tries the boss-specific key first, then `fb_generic_<moment>_<n>`, and otherwise skips the moment. The shared nemesis lines have no generic fallback: if none exist, they are skipped. A rematch or nemesis line replaces the name line of a showdown (in light tier it replaces the boss's threat line, and a rematch line does so only about half the time). A raw key is never shown to the player. Generic lines receive the boss name as `#1#`.
 
 Writing tips: each quip is 1 or 2 lines, and each line should stay under about 24 visible characters so it fits the speech bubble. A gloat line is spoken by Jimbo on the game-over screen, mocking you with the boss's catchphrase: write only the line itself (no "Name:" header, no quotation marks) and no placeholders.
 
