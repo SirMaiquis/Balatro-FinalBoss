@@ -252,4 +252,16 @@ T['idle: a new blind starts a fresh count and clock'] = function()
   eq(#ctx.fired, 2)
 end
 
+T['dev_jab: fakes a run, says its jab now with the flex'] = function()
+  local ctx = setup{enc = {key = 'bl_final_bell', boss = true, tier = 'full', ended = false, fired = {}, reactions = 0}}
+  eq(ctx.O.dev_jab({dollars = 0}), 'jab_broke')
+  eq(ctx.fired[1], 'intro'); eq(ctx.opts[1].force, true); eq(ctx.opts[1].line, 'jab_broke'); eq(ctx.flexed, 1)
+  eq(ctx.O.dev_jab({counter = true}), 'jab_counter')
+  eq(ctx.opts[2].skip_boss, false); eq(ctx.opts[2].vars[2], 'Name of j_chicot')
+  eq(G.GAME.FinalBoss.encounter.jab.joker, 'j_chicot')
+  eq(ctx.O.dev_jab({}), nil, 'the neutral run has no jab')
+  local none = setup()
+  eq(none.O.dev_jab({dollars = 0}), nil, 'no encounter')
+end
+
 return T

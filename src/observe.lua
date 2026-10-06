@@ -164,4 +164,34 @@ function O.idle_tick()
   FinalBoss.director.fire('idle')
 end
 
+-- Developer key (1.2) -----------------------------------------------------------------------------
+
+--- A run no jab applies to; O.dev_jab layers one fake condition on it.
+O.NEUTRAL = {jokers = {}, joker_count = 1, joker_slots = 5, skipped = 0, rerolls = 0, dollars = 10,
+  deck_size = 52, suit_max = 13}
+
+--- Developer key Shift+F6: the jab a faked run gives on the current boss, said now (forced) with the
+--- flex; the encounter keeps that jab. state overrides O.NEUTRAL; state.counter = own the boss's
+--- signature counter. Returns the jab moment, or nil (no live boss encounter, or no jab).
+function O.dev_jab(state)
+  local st = G.GAME and G.GAME.FinalBoss
+  local enc = st and st.encounter
+  local blind = G.GAME and G.GAME.blind
+  if not (enc and enc.boss and not enc.ended and blind and blind.config and blind.config.blind
+      and blind.config.blind.key == enc.key) then return nil end
+  local s = {}
+  for k, v in pairs(O.NEUTRAL) do s[k] = v end
+  for k, v in pairs(state or {}) do s[k] = v end
+  s.signature = L().signature_counter(enc.key)
+  if s.counter then s.jokers, s.counter = {s.signature}, nil end
+  enc.jab = L().intro_jab(s, math.random)
+  enc.jab_said = true
+  if not enc.jab then return nil end
+  local opts = O.jab_opts(enc) or {}
+  FinalBoss.director.fire('intro', {force = true, line = enc.jab.moment, vars = O.jab_vars(enc, blind),
+    skip_boss = opts.skip_boss})
+  FinalBoss.moves.flex(blind)
+  return enc.jab.moment
+end
+
 return O
