@@ -194,12 +194,20 @@ T['comment_for: full tier reads are capped and never on consecutive hands'] = fu
   eq(ctx.O.comment_for(enc, pending{hand = 3}), 'weak', 'weak is outside the cap and the rule')
 end
 
-T['overkill_line: a defeat with twice the requirement'] = function()
+T['overkill_line: a defeat with twice the requirement, on a passing roll'] = function()
   local ctx = setup()
-  eq(ctx.O.overkill_line({moment = 'defeat', total = 250, required = 100}), 'overkill')
-  eq(ctx.O.overkill_line({moment = 'defeat', total = 150, required = 100}), nil)
-  eq(ctx.O.overkill_line({moment = 'close', total = 250, required = 100}), nil)
-  eq(ctx.O.overkill_line({moment = 'defeat', total = 0, required = 0}), nil, 'no requirement')
+  local pass = function() return 0 end
+  eq(ctx.O.overkill_line({moment = 'defeat', total = 250, required = 100}, pass), 'overkill')
+  eq(ctx.O.overkill_line({moment = 'defeat', total = 150, required = 100}, pass), nil)
+  eq(ctx.O.overkill_line({moment = 'close', total = 250, required = 100}, pass), nil)
+  eq(ctx.O.overkill_line({moment = 'defeat', total = 0, required = 0}, pass), nil, 'no requirement')
+end
+
+T['overkill_line: a failed roll keeps the boss its own defeat line'] = function()
+  local ctx = setup()
+  eq(FinalBoss.logic.OVERKILL_CHANCE, 0.5)
+  eq(ctx.O.overkill_line({moment = 'defeat', total = 250, required = 100}, function() return 0.5 end), nil)
+  eq(ctx.O.overkill_line({moment = 'defeat', total = 250, required = 100}, function() return 0.49 end), 'overkill')
 end
 
 -- Idle taunts ------------------------------------------------------------------------------------------

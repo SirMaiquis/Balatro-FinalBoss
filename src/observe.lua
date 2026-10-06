@@ -127,10 +127,14 @@ function O.comment_for(enc, p)
     last_line_hand = enc.last_line_hand, hand = p.hand}
 end
 
---- The winning hand scored at least twice the requirement: its overkill line replaces the defeat line.
-function O.overkill_line(p)
+--- The winning hand scored at least twice the requirement: with OVERKILL_CHANCE its overkill line
+--- replaces the defeat line; otherwise (nil) the boss says its own defeat line. rand: math.random
+--- unless given (tests).
+function O.overkill_line(p, rand)
   if not (p and p.moment == 'defeat' and p.total >= p.required) then return nil end
-  if L().is_overkill(p.total, p.required) then return 'overkill' end
+  if L().is_overkill(p.total, p.required) and (rand or math.random)() < L().OVERKILL_CHANCE then
+    return 'overkill'
+  end
   return nil
 end
 

@@ -1089,6 +1089,7 @@ logic.WEAK_HANDS = {['High Card'] = true, ['Pair'] = true} -- vanilla hand keys 
 logic.REPEAT_STREAK = 3     -- the same hand type this many hands in a row
 logic.DISCARDSPAM_HANDS = 3 -- no discards left with at least this many hands to play, this one included
 logic.OVERKILL_RATIO = 2    -- a winning total at least twice the requirement
+logic.OVERKILL_CHANCE = 0.5 -- chance the overkill line replaces the boss's own defeat line
 logic.COMMENT_CAP = 3       -- run comments per blind for final bosses (full tier)
 logic.IDLE_FIRST = 25       -- seconds without input before the first idle taunt
 logic.IDLE_SECOND = 45      -- seconds after the first before the second
