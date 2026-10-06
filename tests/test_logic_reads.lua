@@ -44,9 +44,18 @@ end
 local CAN = {moment = 'read_onecard', tier = 'full', fired = {}, reactions = 0, comments = 0, hand = 3}
 local function can(o) return logic.can_comment(with(CAN, o)) end
 
-T['can_comment: the light tier uses its single reaction slot'] = function()
+T['can_comment: light tier, never right after a line'] = function()
   eq(can{tier = 'light'}, true)
-  eq(can{tier = 'light', reactions = 1}, false)
+  eq(can{tier = 'light', hand = 3, last_line_hand = 3}, false, 'same hand')
+  eq(can{tier = 'light', hand = 3, last_line_hand = 2}, false, 'consecutive')
+  eq(can{tier = 'light', hand = 3, last_line_hand = 1}, true)
+  eq(can{tier = 'light', reactions = 1}, true, 'no single reaction slot any more')
+end
+
+T['can_comment: light tier, one read per blind even when spaced'] = function()
+  eq(can{tier = 'light', comments = 1, hand = 5, last_line_hand = 1}, false)
+  eq(can{tier = 'light', moment = 'read_repeat', comments = 1}, false)
+  eq(can{tier = 'light', moment = 'weak', comments = 1, hand = 5, last_line_hand = 1}, true, 'weak is the boss own line')
 end
 
 T['can_comment: the full tier caps at 3, never on consecutive hands'] = function()
@@ -64,7 +73,7 @@ end
 T['can_comment: weak ignores the run-comment cap and the consecutive rule'] = function()
   eq(can{moment = 'weak', comments = 3, last_comment_hand = 2}, true)
   eq(can{moment = 'weak', tier = 'light'}, true)
-  eq(can{moment = 'weak', tier = 'light', reactions = 1}, false)
+  eq(can{moment = 'weak', tier = 'light', hand = 3, last_line_hand = 2}, false, 'light: weak follows the spacing')
   eq(can{moment = 'weak', fired = {weak = true}}, false)
   eq(can{moment = 'weak', tier = 'none'}, false)
 end
@@ -89,23 +98,27 @@ T['pick_comment: the weak line first, then a read, within the caps'] = function(
   local light = {weak = false, hand_type = 'Flush', streak = 1, discards_left = 1, discards_used = 0,
     hands_left = 3, cards_played = 5, tier = 'light', fired = {}, reactions = 0, comments = 0, hand = 1}
   eq(logic.pick_comment(light), nil, 'nothing to say')
-  light.weak = true; light.reactions = 1
-  eq(logic.pick_comment(light), nil, 'the light slot is taken')
+  light.weak = true; light.hand = 2; light.last_line_hand = 1
+  eq(logic.pick_comment(light), nil, 'the boss spoke on the hand before')
+  light.hand = 3
+  eq(logic.pick_comment(light), 'weak')
 end
 
 T['note_comment: books fired, the slot, the count and the hand'] = function()
   local enc = {fired = {}, reactions = 0}
   logic.note_comment(enc, 'read_onecard', 2)
   eq(enc.fired.read_onecard, true); eq(enc.reactions, 1); eq(enc.comments, 1); eq(enc.last_comment_hand, 2)
+  eq(enc.last_line_hand, 2, 'the light tier spacing')
   logic.note_comment(enc, 'read_repeat', 4)
-  eq(enc.comments, 2); eq(enc.last_comment_hand, 4)
+  eq(enc.comments, 2); eq(enc.last_comment_hand, 4); eq(enc.last_line_hand, 4)
 end
 
 T['note_comment: weak is a reaction, not a run comment'] = function()
   local enc = {fired = {}, reactions = 0}
   logic.note_comment(enc, 'weak', 2)
   eq(enc.fired.weak, true); eq(enc.reactions, 1)
-  eq(enc.comments or 0, 0, 'no run comment'); eq(enc.last_comment_hand, nil, 'no hand booked')
+  eq(enc.comments or 0, 0, 'no run comment'); eq(enc.last_comment_hand, nil, 'no comment hand booked')
+  eq(enc.last_line_hand, 2, 'weak follows the light tier spacing')
 end
 
 T['is_overkill: at least twice the requirement'] = function()

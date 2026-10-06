@@ -114,16 +114,17 @@ end
 -- In-fight run comments (1.2) ---------------------------------------------------------------------
 
 --- The run comment for a scored hand that fired nothing else (Dir react): the weak-hit line or a read
---- (logic.pick_comment: the light tier's single slot, the full tier's cap, never on consecutive hands).
---- p: the director's pending reaction (plain numbers, Dir.num). Never on the winning hand.
+--- (logic.pick_comment: the light tier's spacing and single read, the full tier's cap, never on
+--- consecutive hands). p: the director's pending reaction (plain numbers, Dir.num). Never on the
+--- winning hand.
 function O.comment_for(enc, p)
   if not p or p.total >= p.required then return nil end
   local size = L().hit_size(p.delta, p.required)
   return L().pick_comment{weak = size == 'weak', big = size == 'big', hand_type = p.hand_type,
     streak = p.streak, discards_left = p.discards_left, discards_used = p.discards_used,
     hands_left = p.hands_left, cards_played = p.cards_played, tier = enc.tier, fired = enc.fired,
-    reactions = enc.reactions, comments = enc.comments, last_comment_hand = enc.last_comment_hand,
-    hand = p.hand}
+    comments = enc.comments, last_comment_hand = enc.last_comment_hand,
+    last_line_hand = enc.last_line_hand, hand = p.hand}
 end
 
 --- The winning hand scored at least twice the requirement: its overkill line replaces the defeat line.

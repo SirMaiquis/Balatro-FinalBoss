@@ -204,29 +204,31 @@ end
 --- opts: force (no once-per-blind check, no cooldown), line (say another moment's line for this
 --- moment: 1.1 the nemesis's defeat line; 1.2 the overkill line, a Chicot counter jab; it falls back to
 --- the moment's own line when it has none), skip_boss (with line: logic.resolve_prefix skips the boss
---- level), vars (the line's vars; default Dir.vars), hand (the hand a run comment is said on).
+--- level), vars (the line's vars; default Dir.vars), hand (the hand the line is said on; default the
+--- current hand id, G.GAME.current_round.hands_played).
 function Dir.fire(moment, opts)
   opts = opts or {}
   local enc, blind = current()
   if not enc then return false end
   local L = FinalBoss.logic
+  local cr = G.GAME.current_round
+  local hand = opts.hand or (cr and cr.hands_played)
   if not opts.force then
-    -- 1.2 run comments have their own gate (the light slot, the full-tier cap, no consecutive hands);
-    -- every other moment: once per blind, the light tier's single reaction slot.
+    -- 1.2 run comments have their own gate (the light tier's spacing and single read, the full-tier
+    -- cap, no consecutive hands); every other moment: once per blind, the light tier's spacing.
     local ok
     if L.COMMENTS[moment] then
-      ok = L.can_comment{moment = moment, tier = enc.tier, fired = enc.fired, reactions = enc.reactions,
-        comments = enc.comments, last_comment_hand = enc.last_comment_hand, hand = opts.hand}
+      ok = L.can_comment{moment = moment, tier = enc.tier, fired = enc.fired, comments = enc.comments,
+        last_comment_hand = enc.last_comment_hand, last_line_hand = enc.last_line_hand, hand = hand}
     else
-      ok = L.can_fire(moment, enc.tier, enc.fired, enc.reactions)
+      ok = L.can_fire(moment, enc.tier, enc.fired, enc.reactions, hand, enc.last_line_hand)
     end
     if not ok then return false end
   end
   if L.COMMENTS[moment] then
-    L.note_comment(enc, moment, opts.hand) -- 1.2 run comments: the light slot, the full-tier cap
+    L.note_comment(enc, moment, hand) -- 1.2 run comments: the light tier's spacing, the caps
   else
-    enc.fired[moment] = true
-    if L.REACTIONS[moment] then enc.reactions = enc.reactions + 1 end
+    L.note_line(enc, moment, hand)
   end
   if enc.tier == 'full' and (moment == 'big_hand' or moment == 'close') then
     FinalBoss.fx.play('shake', blind)
@@ -267,7 +269,8 @@ function Dir.on_hand_after(context)
     enc.win_start, enc.win_hand, enc.win_hands_left = chips, hands_played, hands_left
   end
   local moment = FinalBoss.logic.detect_moments{delta = delta, total = total, required = required,
-    hands_left = hands_left, fired = enc.fired, tier = enc.tier, reactions = enc.reactions}
+    hands_left = hands_left, fired = enc.fired, tier = enc.tier, reactions = enc.reactions,
+    hand = hands_played, last_line_hand = enc.last_line_hand}
   -- 1.2 run comments: the hand type (vanilla also sets G.GAME.last_hand_played,
   -- functions/state_events.lua:576), how many hands in a row used it, and the cards played.
   local hand_type = (context and context.scoring_name) or G.GAME.last_hand_played
@@ -337,7 +340,7 @@ local function react(p)
   -- The nemesis's own defeat line (1.1), else the overkill line (1.2: the winning hand only), may
   -- replace the defeat line. Either is said as the defeat moment, so it is forced like the defeat line.
   local line = FinalBoss.memory.defeat_line(enc, p.moment) or FinalBoss.observe.overkill_line(p)
-  fire_after(enc, wait, p.moment, {line = line})
+  fire_after(enc, wait, p.moment, {line = line, hand = p.hand})
 end
 
 --- Run a pending reaction now (blind defeated, round end: keeps the finale / game-over order).

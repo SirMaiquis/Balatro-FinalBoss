@@ -174,7 +174,11 @@ T['comment_for: weak first, then a read; never on the winning hand'] = function(
   eq(ctx.O.comment_for(enc, pending{delta = 20, total = 20}), nil, 'a normal Flush says nothing')
   eq(ctx.O.comment_for(enc, pending{delta = 20, total = 20, hand_type = 'Pair'}), 'read_weakhand')
   eq(ctx.O.comment_for(enc, pending{delta = 120, total = 120}), nil, 'the winning hand')
-  eq(ctx.O.comment_for({tier = 'light', fired = {}, reactions = 1}, pending()), nil, 'light slot used')
+  eq(ctx.O.comment_for({tier = 'light', fired = {}, last_line_hand = 1}, pending{hand = 2}), nil,
+    'the boss spoke on the hand before')
+  eq(ctx.O.comment_for({tier = 'light', fired = {}, last_line_hand = 1}, pending{hand = 3}), 'weak')
+  eq(ctx.O.comment_for({tier = 'light', fired = {}, comments = 1},
+    pending{delta = 20, total = 20, hand_type = 'Pair'}), nil, 'one read per blind on the light tier')
 end
 
 T['comment_for: full tier reads are capped and never on consecutive hands'] = function()

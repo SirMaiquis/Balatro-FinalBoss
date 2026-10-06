@@ -63,8 +63,11 @@ end
 logic.BIG_HAND_RATIO = 0.30 -- one hand scoring >= 30% of the requirement
 logic.CLOSE_RATIO = 0.75    -- running total >= 75% of the requirement (not yet won)
 
--- Mid-fight reactions: once each per blind, max one per blind in the light tier.
+-- Mid-fight reactions: once each per blind. Light tier: an in-fight line (the spaced reactions below,
+-- 'weak' and the reads) at most once per hand and never on two consecutive hands (logic.line_spaced);
+-- disabled and defeat are not spaced.
 logic.REACTIONS = {big_hand = true, close = true, last_hand = true, disabled = true}
+logic.SPACED = {big_hand = true, close = true, last_hand = true}
 
 local PRIORITY = {'last_hand', 'close', 'big_hand'}
 
@@ -116,19 +119,36 @@ function logic.decide_tier(a)
   return 'none'
 end
 
-function logic.can_fire(moment, tier, fired, reactions)
+--- Light tier: whether the boss may speak on hand (G.GAME.current_round.hands_played) after its last
+--- in-fight line on last_line_hand: never twice on one hand nor on the next one.
+function logic.line_spaced(hand, last_line_hand)
+  return last_line_hand == nil or hand == nil or hand - last_line_hand >= 2
+end
+
+--- reactions: kept for callers, no longer read. hand, last_line_hand: this hand's id and the hand of
+--- the light tier's last in-fight line (logic.line_spaced).
+function logic.can_fire(moment, tier, fired, reactions, hand, last_line_hand)
   if tier ~= 'light' and tier ~= 'full' then return false end
   if fired[moment] and not logic.REPEATABLE[moment] then return false end
-  if logic.REACTIONS[moment] and tier == 'light' and reactions >= 1 then return false end
+  if logic.SPACED[moment] and tier == 'light' and not logic.line_spaced(hand, last_line_hand) then return false end
   return true
 end
 
+--- Book a non-comment moment on the encounter (plain saved data): fired, the reaction count, and for
+--- a spaced line the hand it was said on (enc.last_line_hand, read by the light tier only).
+function logic.note_line(enc, moment, hand)
+  enc.fired = enc.fired or {}
+  enc.fired[moment] = true
+  if logic.REACTIONS[moment] then enc.reactions = (enc.reactions or 0) + 1 end
+  if logic.SPACED[moment] then enc.last_line_hand = hand end
+end
+
 --- Decide which moment (if any) a just-scored hand triggers.
---- a: {delta, total, required, hands_left, fired, tier, reactions}
+--- a: {delta, total, required, hands_left, fired, tier, reactions, hand, last_line_hand}
 function logic.detect_moments(a)
   if not a.required or a.required <= 0 then return nil end
   if a.total >= a.required then
-    return logic.can_fire('defeat', a.tier, a.fired, a.reactions) and 'defeat' or nil
+    return logic.can_fire('defeat', a.tier, a.fired, a.reactions, a.hand, a.last_line_hand) and 'defeat' or nil
   end
   local hit = {
     last_hand = a.hands_left == 0,
@@ -136,7 +156,9 @@ function logic.detect_moments(a)
     big_hand = a.delta >= logic.BIG_HAND_RATIO * a.required,
   }
   for _, moment in ipairs(PRIORITY) do
-    if hit[moment] and logic.can_fire(moment, a.tier, a.fired, a.reactions) then return moment end
+    if hit[moment] and logic.can_fire(moment, a.tier, a.fired, a.reactions, a.hand, a.last_line_hand) then
+      return moment
+    end
   end
   return nil
 end
@@ -1058,8 +1080,8 @@ end
 -- Reading the run: in-fight comments, overkill, idle (1.2) ----------------------------------------
 
 --- Moments said on a hand that fired nothing else. The reads are run comments (booked by
---- logic.note_comment, capped for final bosses). 'weak' is a reaction: it takes the light tier's single
---- reaction slot and is outside the run-comment cap and the consecutive-hands rule.
+--- logic.note_comment, capped per blind). 'weak' is the boss's own line: it follows the light tier's
+--- spacing and is outside the run-comment caps and the full tier's consecutive-hands rule.
 logic.COMMENTS = {weak = true, read_weakhand = true, read_repeat = true, read_discardspam = true,
   read_onecard = true}
 logic.READ_ORDER = {'read_repeat', 'read_discardspam', 'read_onecard', 'read_weakhand'}
@@ -1097,14 +1119,18 @@ function logic.fight_read(s, fired)
   return nil
 end
 
---- Whether a comment may be said. a: {moment, tier, fired, reactions, comments (run comments said
---- this blind), last_comment_hand, hand (this hand's id)}. Never below the light tier, never twice
---- per blind. Light tier: it takes the single reaction slot. Full tier: 'weak' is free; a read is
+--- Whether a comment may be said. a: {moment, tier, fired, comments (run comments said this blind),
+--- last_comment_hand, last_line_hand, hand (this hand's id)}. Never below the light tier, never twice
+--- per blind. Light tier: spaced like every in-fight line (logic.line_spaced), and at most one read
+--- per blind ('weak' is the boss's own line: not capped). Full tier: 'weak' is free; a read is
 --- capped at COMMENT_CAP per blind and never on consecutive hands.
 function logic.can_comment(a)
   if a.tier ~= 'light' and a.tier ~= 'full' then return false end
   if a.fired and a.fired[a.moment] then return false end
-  if a.tier == 'light' then return (a.reactions or 0) < 1 end
+  if a.tier == 'light' then
+    if not logic.line_spaced(a.hand, a.last_line_hand) then return false end
+    return a.moment == 'weak' or (a.comments or 0) < 1
+  end
   if a.moment == 'weak' then return true end
   if (a.comments or 0) >= logic.COMMENT_CAP then return false end
   if a.last_comment_hand and a.hand and a.hand - a.last_comment_hand <= 1 then return false end
@@ -1126,12 +1152,14 @@ function logic.pick_comment(a)
   return nil
 end
 
---- Book a comment on the encounter (plain saved data): fired and the light tier's reaction slot.
---- A read also counts toward the run-comment cap and marks the hand it was said on; 'weak' does not.
+--- Book a comment on the encounter (plain saved data): fired, the reaction count and the hand of the
+--- last in-fight line (enc.last_line_hand, the light tier's spacing). A read also counts toward the
+--- run-comment cap and marks the hand it was said on; 'weak' does not.
 function logic.note_comment(enc, moment, hand)
   enc.fired = enc.fired or {}
   enc.fired[moment] = true
   enc.reactions = (enc.reactions or 0) + 1
+  enc.last_line_hand = hand
   if moment == 'weak' then return end
   enc.comments = (enc.comments or 0) + 1
   enc.last_comment_hand = hand
