@@ -173,22 +173,26 @@ end
 --- avatar's T stays on its perch and its children (auras) are left alone. On release the offset
 --- clears and the sprite's spring brings it home.
 function Avatar:drag()
-  local c, off, box = G.CONTROLLER, self.click_offset, self.container and self.container.T
-  if not (self.states.drag.can and c and off and box) then return end
-  local scale = G.TILESCALE * G.TILESIZE
-  local p = {x = c.cursor_position.x / scale, y = c.cursor_position.y / scale}
-  point_translate(p, {x = -box.w / 2, y = -box.h / 2})
-  point_rotate(p, box.r)
-  point_translate(p, {x = box.w / 2 - box.x, y = box.h / 2 - box.y})
-  V.grab_dx, V.grab_dy = p.x - off.x - self.T.x, p.y - off.y - self.T.y
-  V.grabbed = true
+  FinalBoss.util.guard('avatar_drag', function()
+    local c, off, box = G.CONTROLLER, self.click_offset, self.container and self.container.T
+    if not (self.states.drag.can and c and off and box) then return end
+    local scale = G.TILESCALE * G.TILESIZE
+    local p = {x = c.cursor_position.x / scale, y = c.cursor_position.y / scale}
+    point_translate(p, {x = -box.w / 2, y = -box.h / 2})
+    point_rotate(p, box.r)
+    point_translate(p, {x = box.w / 2 - box.x, y = box.h / 2 - box.y})
+    V.grab_dx, V.grab_dy = p.x - off.x - self.T.x, p.y - off.y - self.T.y
+    V.grabbed = true
+  end)
 end
 
 --- The controller ends the drag on release (engine/controller.lua:333-336), poke.lua sooner.
 function Avatar:stop_drag()
-  Moveable.stop_drag(self)
-  V.grabbed = false
-  V.grab_dx, V.grab_dy = 0, 0
+  FinalBoss.util.guard('avatar_drag', function()
+    Moveable.stop_drag(self)
+    V.grabbed = false
+    V.grab_dx, V.grab_dy = 0, 0
+  end)
 end
 
 function Avatar:remove()
