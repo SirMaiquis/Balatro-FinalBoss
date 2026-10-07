@@ -415,4 +415,20 @@ T['every language: a * only ever sits inside a word'] = function()
   assert(#bad == 0, table.concat(bad, '; '))
 end
 
+T['no stand-in lines remain in any language'] = function()
+  local OWNERS = {generic = true, bully = true, smug = true, killer = true, venom = true, chaos = true, royal = true}
+  local bad = {}
+  for lang in pairs(SWEARS) do
+    for key, v in pairs(lang_quips(lang)) do
+      for _, line in ipairs(lines_of(v)) do
+        if line:match('^bl_[%w_]+$') or OWNERS[line] or line:match('^[%l_]+_%d') then
+          bad[#bad + 1] = lang .. ' ' .. key
+        end
+      end
+    end
+  end
+  table.sort(bad)
+  assert(#bad == 0, 'stand-ins left: ' .. table.concat(bad, ', '))
+end
+
 return T
