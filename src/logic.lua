@@ -66,8 +66,8 @@ logic.CLOSE_RATIO = 0.75    -- running total >= 75% of the requirement (not yet 
 
 -- Mid-fight reactions (big_hand, close, last_hand, disabled): once each per blind. Light tier: an
 -- in-fight line (the spaced reactions below, 'weak' and the reads) at most once per hand and never on
--- two consecutive hands (logic.line_spaced); disabled and defeat are not spaced.
-logic.SPACED = {big_hand = true, close = true, last_hand = true}
+-- two consecutive hands (logic.line_spaced); last_hand, disabled and defeat are not spaced.
+logic.SPACED = {big_hand = true, close = true}
 
 local PRIORITY = {'last_hand', 'close', 'big_hand'}
 
@@ -142,15 +142,16 @@ function logic.note_line(enc, moment, hand)
   if logic.SPACED[moment] then enc.last_line_hand = hand end
 end
 
---- Decide which moment (if any) a just-scored hand triggers.
---- a: {delta, total, required, hands_left, fired, tier, hand, last_line_hand}
+--- Decide which moment (if any) a just-scored hand triggers. last_hand: this hand leaves the player on
+--- their final hand (hands_left after it is 1), still short, so the boss taunts it before it is played.
+--- a: {delta, total, required, hands_left (after this hand), fired, tier, hand, last_line_hand}
 function logic.detect_moments(a)
   if not a.required or a.required <= 0 then return nil end
   if a.total >= a.required then
     return logic.can_fire('defeat', a.tier, a.fired, a.hand, a.last_line_hand) and 'defeat' or nil
   end
   local hit = {
-    last_hand = a.hands_left == 0,
+    last_hand = a.hands_left == 1,
     close = a.total >= logic.CLOSE_RATIO * a.required,
     big_hand = a.delta >= logic.BIG_HAND_RATIO * a.required,
   }

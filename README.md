@@ -2,7 +2,7 @@
 
 ![Final Boss](https://raw.githubusercontent.com/SirMaiquis/Balatro-FinalBoss/main/thumbnail.jpg)
 
-Bosses talk back. Every boss blind gets a short line of dialogue when it starts, reacts to your big hands, close calls and last hand, and gloats if you lose to it. Showdown bosses go further: a roaming boss avatar with an HP bar, a cinematic intro, their own music, screen effects and a slow-motion explosive finale. You also decide when showdowns appear, so you can have a final boss every 8 antes like vanilla or much sooner. Every boss also performs a visible move when its effect hits, final bosses transform at 50% and 25% HP and die their own way, and bosses remember you across runs: rematch lines, a nemesis and ten achievements.
+Bosses talk back. Every boss blind gets a short line of dialogue when it starts, reacts to your big hands, close calls and your last hand (before you play it), and gloats if you lose to it. Showdown bosses go further: a roaming boss avatar with an HP bar, a cinematic intro, their own music, screen effects and a slow-motion explosive finale. You also decide when showdowns appear, so you can have a final boss every 8 antes like vanilla or much sooner. Every boss also performs a visible move when its effect hits, final bosses transform at 50% and 25% HP and die their own way, and bosses remember you across runs: rematch lines, a nemesis and ten achievements.
 
 ## Requirements
 
@@ -29,7 +29,7 @@ Every boss blind gets a tier. The tier decides how much of the show it gets.
 | | Light (regular bosses) | Full (showdowns) |
 |---|---|---|
 | Intro | 1 line (the boss's threat) | 2 lines: boss name, then threat |
-| Reactions (big hand, close call, last hand, boss disabled) | each once per blind; at most 1 line per hand and never on two hands in a row (boss disabled excepted) | each once per blind |
+| Reactions (big hand, close call, last hand, boss disabled) | each once per blind; at most 1 line per hand and never on two hands in a row (last hand and boss disabled excepted) | each once per blind |
 | Defeat | a line | a line and the shatter effect (the explosive finale when `cinematic` is on) |
 | Music | vanilla | a FinalBoss showdown track |
 | Screen effects (vignette, shake, flash) | none | yes |

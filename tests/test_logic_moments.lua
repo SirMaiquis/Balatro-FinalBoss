@@ -28,7 +28,7 @@ T['can_fire: once per blind'] = function()
   eq(logic.can_fire('close', 'full', {close = true}), false)
 end
 T['can_fire: light tier, at most one line per hand and never on consecutive hands'] = function()
-  for _, m in ipairs({'big_hand', 'close', 'last_hand'}) do
+  for _, m in ipairs({'big_hand', 'close'}) do
     eq(logic.can_fire(m, 'light', {}, 1, nil), true, m .. ' first line')
     eq(logic.can_fire(m, 'light', {}, 1, 1), false, m .. ' same hand')
     eq(logic.can_fire(m, 'light', {}, 2, 1), false, m .. ' next hand')
@@ -36,8 +36,9 @@ T['can_fire: light tier, at most one line per hand and never on consecutive hand
   end
   eq(logic.can_fire('close', 'light', {close = true}, 5, 1), false, 'still once per blind')
 end
-T['can_fire: light tier, disabled and defeat are not spaced, once each'] = function()
-  for _, m in ipairs({'disabled', 'defeat'}) do
+T['can_fire: light tier, last_hand, disabled and defeat are not spaced, once each'] = function()
+  for _, m in ipairs({'last_hand', 'disabled', 'defeat'}) do
+    eq(logic.can_fire(m, 'light', {}, 1, 1), true, m .. ' on the same hand as a line')
     eq(logic.can_fire(m, 'light', {}, 2, 1), true, m .. ' right after a line')
     eq(logic.can_fire(m, 'light', {[m] = true}, 5, 1), false, m .. ' once')
   end
@@ -61,10 +62,30 @@ T['detect: big hand at 30 percent'] = function()
   eq(detect{delta = 29, total = 29}, nil)
 end
 T['detect: close at 75 percent'] = function() eq(detect{delta = 10, total = 75}, 'close') end
-T['detect: last hand when out of hands and not beaten'] = function() eq(detect{delta = 5, total = 10, hands_left = 0}, 'last_hand') end
+T['detect: last hand when one hand is left and not beaten'] = function()
+  eq(detect{delta = 5, total = 10, hands_left = 1}, 'last_hand')
+end
+T['detect: no last hand once the final hand is played'] = function()
+  eq(detect{delta = 5, total = 10, hands_left = 0}, nil)
+  eq(detect{delta = 5, total = 80, hands_left = 0}, 'close', 'the other moments still fire')
+end
+T['detect: no last hand on the winning hand'] = function()
+  eq(detect{delta = 50, total = 100, hands_left = 1}, 'defeat')
+end
 T['detect: priority last_hand > close > big_hand'] = function()
-  eq(detect{delta = 40, total = 80, hands_left = 0}, 'last_hand')
+  eq(detect{delta = 40, total = 80, hands_left = 1}, 'last_hand')
   eq(detect{delta = 40, total = 80}, 'close')
+end
+T['detect: last hand is not spaced on the light tier'] = function()
+  eq(detect{delta = 5, total = 10, hands_left = 1, tier = 'light', hand = 2, last_line_hand = 1}, 'last_hand',
+    'the hand after a line')
+  eq(detect{delta = 5, total = 10, hands_left = 1, tier = 'light', hand = 2, last_line_hand = 2}, 'last_hand',
+    'the same hand as a line')
+  eq(detect{delta = 5, total = 10, hands_left = 1, tier = 'light', fired = {last_hand = true}}, nil, 'once')
+end
+T['detect: full tier, last hand fires with one hand left'] = function()
+  eq(detect{delta = 5, total = 10, hands_left = 1, tier = 'full', hand = 2, last_line_hand = 1}, 'last_hand')
+  eq(detect{delta = 5, total = 10, hands_left = 2, tier = 'full'}, nil)
 end
 T['detect: falls through to next available moment'] = function()
   eq(detect{delta = 40, total = 80, fired = {close = true}}, 'big_hand')
@@ -93,9 +114,11 @@ T['note_line: books fired; only a spaced line marks its hand'] = function()
   local enc = {fired = {}}
   logic.note_line(enc, 'disabled', 2)
   eq(enc.fired.disabled, true); eq(enc.last_line_hand, nil, 'disabled is not spaced')
-  logic.note_line(enc, 'last_hand', 4)
-  eq(enc.fired.last_hand, true); eq(enc.last_line_hand, 4)
-  logic.note_line(enc, 'defeat', 5)
+  logic.note_line(enc, 'close', 4)
+  eq(enc.fired.close, true); eq(enc.last_line_hand, 4)
+  logic.note_line(enc, 'last_hand', 5)
+  eq(enc.fired.last_hand, true); eq(enc.last_line_hand, 4, 'last_hand is not spaced')
+  logic.note_line(enc, 'defeat', 6)
   eq(enc.last_line_hand, 4, 'defeat is not spaced')
 end
 T['detect: zero requirement is ignored'] = function() eq(detect{delta = 1, total = 1, required = 0}, nil) end

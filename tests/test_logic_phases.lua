@@ -25,7 +25,7 @@ T['should_transform: cinematic, crossed, not the defeat hand, not the last hand'
   eq(logic.should_transform{cinematic = true, moment = nil, target = 3, hands_left = 1}, 3)
   eq(logic.should_transform{cinematic = false, moment = nil, target = 2, hands_left = 3}, nil, 'no cinematic')
   eq(logic.should_transform{cinematic = true, moment = 'defeat', target = 3, hands_left = 3}, nil, 'defeat hand')
-  eq(logic.should_transform{cinematic = true, moment = 'last_hand', target = 2, hands_left = 0}, nil, 'last hand')
+  eq(logic.should_transform{cinematic = true, moment = 'close', target = 2, hands_left = 0}, nil, 'the final hand')
   eq(logic.should_transform{cinematic = true, moment = nil, target = nil, hands_left = 3}, nil, 'no crossing')
 end
 
