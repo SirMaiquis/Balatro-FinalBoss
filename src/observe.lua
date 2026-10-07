@@ -12,7 +12,8 @@ local function L() return FinalBoss.logic end
 --- Skips: this ante's blind states (functions/button_callbacks.lua:2760, reset at
 --- functions/common_events.lua:2327-2332). Rerolls: G.GAME.round_scores.times_rerolled.amt
 --- (functions/button_callbacks.lua:2869) minus the mark taken at the previous boss blind. Joker row:
---- smods card_limits.total_slots and card_count (smods src/utils.lua:3936-3945). Deck: G.playing_cards.
+--- smods card_limits.total_slots and card_count (smods src/utils.lua:3936-3945); jokers lists only
+--- the ones that can act (not card.debuff nor card.getting_sliced). Deck: G.playing_cards.
 function O.run_state(blind_key)
   local st = FinalBoss.util.state()
   local jokers, count, slots = {}, 0, nil
@@ -20,7 +21,8 @@ function O.run_state(blind_key)
   if J then
     for _, c in ipairs(J.cards or {}) do
       local key = c.config and c.config.center and c.config.center.key
-      if key then jokers[#jokers + 1] = key end
+      -- A joker that cannot act (debuffed, or being sliced by Ceremonial Dagger) is never jabbed at.
+      if key and not c.debuff and not c.getting_sliced then jokers[#jokers + 1] = key end
     end
     local cfg = J.config or {}
     count = cfg.card_count or #(J.cards or {})

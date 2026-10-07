@@ -59,6 +59,24 @@ T['run_state: jokers, row, skips, rerolls since the mark, money, deck'] = functi
   eq(s.deck_size, 40); eq(s.suit_max, 40); eq(s.signature, 'j_luchador')
 end
 
+T['run_state: a joker that cannot act is not listed, but still fills the row'] = function()
+  local ctx = setup{jokers = {'j_chicot', 'j_blueprint', 'j_joker'}}
+  G.jokers.cards[1].debuff = true
+  G.jokers.cards[2].getting_sliced = true
+  local s = ctx.O.run_state('bl_hook')
+  eq(#s.jokers, 1); eq(s.jokers[1], 'j_joker'); eq(s.joker_count, 3)
+end
+
+T['on_blind_set: a Chicot that cannot act never gets the counter jab'] = function()
+  for _, field in ipairs({'debuff', 'getting_sliced'}) do
+    local ctx = setup{jokers = {'j_chicot'}}
+    G.jokers.cards[1][field] = true
+    local enc = {key = 'bl_mymod_boss'}
+    ctx.O.on_blind_set(enc, function(n) if n == nil then return 0 end return 1 end) -- every roll passes
+    assert(not (enc.jab and enc.jab.joker == 'j_chicot'), field .. ': no jab at Chicot')
+  end
+end
+
 --- math.random with the jab's chance roll passing and the first candidate picked.
 local function lucky(n) if n == nil then return 0 end return 1 end
 --- math.random with the jab's chance roll failing.
