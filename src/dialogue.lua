@@ -58,7 +58,10 @@ function D.show(blind, key, vars, pitch)
   -- Avatar bubbles have no parent and are attention_text: vanilla's late draw pass draws them above
   -- cards, and they outlive the avatar's fade until their own hide timer.
   local bubble = UIBox{definition = G.UIDEF.speech_bubble(key, loc_vars),
-    config = {align = align, offset = {x = 0, y = 0}, parent = (not on_avatar) and host or nil}}
+    -- can_collide = false: clicks go through the bubble to the chip under it (a run of pokes, the
+    -- intro's chip skip); its UIElements only collide when their UIBox does (engine/ui.lua:957-962).
+    config = {align = align, offset = {x = 0, y = 0}, parent = (not on_avatar) and host or nil,
+      can_collide = false}}
   bubble:set_role{role_type = 'Minor', xy_bond = 'Weak', r_bond = 'Strong', major = host}
   bubble.states.visible = false -- shown once aligned (timer below)
   if on_avatar then
