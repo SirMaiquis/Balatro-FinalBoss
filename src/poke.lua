@@ -81,8 +81,9 @@ function K.release(chip)
 end
 
 --- Per frame (Dir.tick): the avatar may only be dragged while a poke is allowed; a drag of the chip
---- that leaves the click distance is a grab (reaction and line); GRAB_RETURN seconds later, or as soon
---- as pokes stop being allowed, the chip is let go and springs home, even while the button is held.
+--- that leaves the click distance is a grab; GRAB_RETURN seconds later, or as soon as pokes stop being
+--- allowed, the chip is let go and springs home, even while the button is held. The reaction and its
+--- line come as the chip goes home (forced back or let go), never on a release outside a fight.
 function K.tick()
   local enc, blind = K.encounter()
   local V = FinalBoss.avatar
@@ -96,7 +97,11 @@ function K.tick()
     if target == o and not o.states.drag.can then K.release(o); return end -- never dragged outside a fight
   end
   local g = K.grab
-  if g and target ~= g.chip then K.grab, g = nil, nil end -- released
+  if g and target ~= g.chip then -- released by the player: the chip springs home, the boss reacts
+    K.grab = nil
+    if enc then K.grabbed(enc, blind) end
+    g = nil
+  end
   if not target then return end
   if not enc then
     if g then K.release(g.chip) end
@@ -111,11 +116,18 @@ function K.tick()
     local cur = {x = pos.x / scale, y = pos.y / scale} -- the frame cursor_down.T uses (:1043)
     if Vector_Dist(down, cur) < (G.MIN_CLICK_DIST or 0.9) then return end
     K.grab = {chip = target, t0 = now()}
-    enc.poke = enc.poke or {}
-    react(enc, blind, 'grabbed', L().grab(enc.poke, now()))
     return
   end
-  if now() - g.t0 >= L().GRAB_RETURN then K.release(g.chip) end
+  if now() - g.t0 >= L().GRAB_RETURN then
+    K.release(g.chip)
+    K.grabbed(enc, blind)
+  end
+end
+
+--- The chip is on its way home after a grab: the grab reaction and, for a moment, its line.
+function K.grabbed(enc, blind)
+  enc.poke = enc.poke or {}
+  react(enc, blind, 'grabbed', L().grab(enc.poke, now()))
 end
 
 --- Run teardown: forget the watched grab.
