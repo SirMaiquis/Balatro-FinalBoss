@@ -1179,8 +1179,8 @@ end
 -- A click on the boss's chip pokes it; POKE_HARD_CLICKS clicks within POKE_HARD_WINDOW seconds poke it
 -- hard (then not again for POKE_HARD_COOLDOWN seconds); dragging it grabs it, and it springs back home
 -- after GRAB_RETURN seconds. At most one poke or grab line per POKE_LINE_GAP seconds, except a hard
--- poke, which ignores the gap; the chip's physical reaction always plays. These lines never touch the fight's bookkeeping (fired, the light
--- tier's spacing, the comment caps).
+-- poke, which ignores the gap; the chip's physical reaction always plays. These lines never touch
+-- the fight's bookkeeping (fired, the light tier's spacing, the comment caps).
 logic.POKE_HARD_CLICKS = 3
 logic.POKE_HARD_WINDOW = 2
 logic.POKE_HARD_COOLDOWN = 8
