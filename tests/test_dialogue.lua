@@ -72,6 +72,21 @@ T['end_intro: on_end gets how many lines were shown'] = function()
   eq(ctx.ended[3], 1, 'a one-line intro shows its line at once')
 end
 
+T['say: a poke line never swallows a reaction said right after it'] = function()
+  local ctx = intro_setup()
+  local t = 10
+  FinalBoss.util.now = function() return t end
+  eq(ctx.D.say(ctx.blind, 'fb_p_bully_poked_1', {}, 1, {free = true}), true)
+  t = 11 -- 1 s later, inside REACTION_GAP
+  eq(ctx.D.say(ctx.blind, 'fb_bl_ox_close_1', {}, 1, {}), true, 'the reaction still shows')
+  eq(ctx.shown[#ctx.shown], 'fb_bl_ox_close_1')
+  t = 12
+  eq(ctx.D.say(ctx.blind, 'fb_p_bully_poked_2', {}, 1, {free = true}), false, 'a poke never cuts a fresh reaction')
+  eq(ctx.D.say(ctx.blind, 'fb_bl_ox_big_hand_1', {}, 1, {}), false, 'real lines keep their gap')
+  t = 13.5
+  eq(ctx.D.say(ctx.blind, 'fb_p_bully_poked_2', {}, 1, {free = true}), true, 'after the gap')
+end
+
 T['text_of: joins a list, passes a string, empty when missing'] = function()
   local ctx = setup{fb_a = {'one', 'two'}, fb_s = 'solo'}
   eq(ctx.D.text_of('fb_a'), 'one two'); eq(ctx.D.text_of('fb_s'), 'solo'); eq(ctx.D.text_of('fb_x'), '')

@@ -5,7 +5,7 @@ D.REACTION_GAP = 2   -- seconds between non-intro lines
 D.DOUBLE_SKIP = 0.3  -- second key press within this window skips the whole intro
 D.token = 0          -- bumped to cancel pending timers
 D.intro = nil        -- {blind, steps, index, duration, pitch, token}
-D.last_line_at = -1e9
+D.last_line_at = -1e9 -- when the last real line showed (intro steps, reactions); free lines never stamp it
 D.last_skip_at = -1e9
 D.saved_click_can = nil
 D.avatar_bubble = nil -- avatar-hosted bubble (late-drawn attention_text UIBox, not a child)
@@ -76,7 +76,6 @@ function D.show(blind, key, vars, pitch)
       D.bleep(key) -- 1.2: a censored swear gets its bleep as the bubble appears
     end
   end)
-  D.last_line_at = FinalBoss.util.now()
   babble(host, 5, pitch)
 end
 
@@ -137,6 +136,7 @@ local function advance(token)
   local step = it.steps[it.index]
   if not step then return D.end_intro() end
   D.show(it.blind, step.key, step.vars, it.pitch)
+  D.last_line_at = FinalBoss.util.now()
   after(it.duration, function() advance(token) end)
 end
 
@@ -180,7 +180,9 @@ function D.skip()
   advance(it.token)
 end
 
---- A one-off line (reactions, defeat). Dropped during the cooldown unless opts.force.
+--- A one-off line (reactions, defeat). Dropped during the cooldown unless opts.force. opts.free (1.2
+--- poke and grab lines): it waits for the cooldown like any line, but never starts one, so a real
+--- reaction right after it still shows (and replaces its bubble).
 function D.say(blind, key, vars, pitch, opts)
   opts = opts or {}
   if not opts.force and FinalBoss.util.now() - D.last_line_at < D.REACTION_GAP then return false end
@@ -188,6 +190,7 @@ function D.say(blind, key, vars, pitch, opts)
   D.token = D.token + 1
   local token = D.token
   D.show(blind, key, vars, pitch)
+  if not opts.free then D.last_line_at = FinalBoss.util.now() end
   after(opts.duration or 4, function() if D.token == token then D.hide(blind) end end)
   return true
 end

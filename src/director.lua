@@ -211,7 +211,8 @@ end
 --- level), vars (the line's vars; default Dir.vars), hand (the hand the line is said on; default the
 --- current hand id, G.GAME.current_round.hands_played), free (1.2 poke and grab lines: no gate and no
 --- bookkeeping at all, so fired, the light tier's spacing and the comment caps stay untouched; the line
---- is not forced, so it never cuts a line said in the last REACTION_GAP seconds).
+--- is not forced, so it never cuts a line said in the last REACTION_GAP seconds, and it does not start
+--- that gap itself, so a reaction right after it still shows: dialogue.say).
 function Dir.fire(moment, opts)
   opts = opts or {}
   local enc, blind = current()
@@ -248,7 +249,7 @@ function Dir.fire(moment, opts)
   if not key then return true end
   local entry = FinalBoss.registry.get(enc.key)
   FinalBoss.dialogue.say(blind, key, opts.vars or Dir.vars(blind), entry.voice.pitch,
-    {force = opts.force or L.FORCED_MOMENTS[moment] or false})
+    {force = opts.force or L.FORCED_MOMENTS[moment] or false, free = opts.free})
   return true
 end
 
