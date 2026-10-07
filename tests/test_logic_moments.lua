@@ -24,19 +24,35 @@ end
 T['decide_tier: explicit tier still needs a boss'] = function() eq(tier{false, false, 'full', 8, 1}, 'none') end
 
 T['can_fire: once per blind'] = function()
-  eq(logic.can_fire('close', 'full', {}, 0), true)
-  eq(logic.can_fire('close', 'full', {close = true}, 1), false)
+  eq(logic.can_fire('close', 'full', {}), true)
+  eq(logic.can_fire('close', 'full', {close = true}), false)
 end
-T['can_fire: light tier allows one reaction only'] = function()
-  eq(logic.can_fire('big_hand', 'light', {}, 0), true)
-  eq(logic.can_fire('big_hand', 'light', {}, 1), false)
-  eq(logic.can_fire('defeat', 'light', {}, 1), true)
+T['can_fire: light tier, at most one line per hand and never on consecutive hands'] = function()
+  for _, m in ipairs({'big_hand', 'close'}) do
+    eq(logic.can_fire(m, 'light', {}, 1, nil), true, m .. ' first line')
+    eq(logic.can_fire(m, 'light', {}, 1, 1), false, m .. ' same hand')
+    eq(logic.can_fire(m, 'light', {}, 2, 1), false, m .. ' next hand')
+    eq(logic.can_fire(m, 'light', {}, 3, 1), true, m .. ' a hand later')
+  end
+  eq(logic.can_fire('close', 'light', {close = true}, 5, 1), false, 'still once per blind')
 end
-T['can_fire: none tier never fires'] = function() eq(logic.can_fire('defeat', 'none', {}, 0), false) end
+T['can_fire: light tier, last_hand, disabled and defeat are not spaced, once each'] = function()
+  for _, m in ipairs({'last_hand', 'disabled', 'defeat'}) do
+    eq(logic.can_fire(m, 'light', {}, 1, 1), true, m .. ' on the same hand as a line')
+    eq(logic.can_fire(m, 'light', {}, 2, 1), true, m .. ' right after a line')
+    eq(logic.can_fire(m, 'light', {[m] = true}, 5, 1), false, m .. ' once')
+  end
+end
+T['can_fire: full tier is not spaced'] = function()
+  eq(logic.can_fire('close', 'full', {}, 2, 1), true)
+  eq(logic.can_fire('big_hand', 'full', {}, 2, 1), true)
+end
+T['can_fire: none tier never fires'] = function() eq(logic.can_fire('defeat', 'none', {}), false) end
 
 local function detect(o)
   return logic.detect_moments{delta = o.delta, total = o.total, required = o.required or 100,
-    hands_left = o.hands_left or 3, fired = o.fired or {}, tier = o.tier or 'full', reactions = o.reactions or 0}
+    hands_left = o.hands_left or 3, fired = o.fired or {}, tier = o.tier or 'full',
+    hand = o.hand, last_line_hand = o.last_line_hand}
 end
 
 T['detect: winning hand is defeat'] = function() eq(detect{delta = 50, total = 100}, 'defeat') end
@@ -46,15 +62,65 @@ T['detect: big hand at 30 percent'] = function()
   eq(detect{delta = 29, total = 29}, nil)
 end
 T['detect: close at 75 percent'] = function() eq(detect{delta = 10, total = 75}, 'close') end
-T['detect: last hand when out of hands and not beaten'] = function() eq(detect{delta = 5, total = 10, hands_left = 0}, 'last_hand') end
+T['detect: last hand when one hand is left and not beaten'] = function()
+  eq(detect{delta = 5, total = 10, hands_left = 1}, 'last_hand')
+end
+T['detect: no last hand once the final hand is played'] = function()
+  eq(detect{delta = 5, total = 10, hands_left = 0}, nil)
+  eq(detect{delta = 5, total = 80, hands_left = 0}, 'close', 'the other moments still fire')
+end
+T['detect: no last hand on the winning hand'] = function()
+  eq(detect{delta = 50, total = 100, hands_left = 1}, 'defeat')
+end
 T['detect: priority last_hand > close > big_hand'] = function()
-  eq(detect{delta = 40, total = 80, hands_left = 0}, 'last_hand')
+  eq(detect{delta = 40, total = 80, hands_left = 1}, 'last_hand')
   eq(detect{delta = 40, total = 80}, 'close')
 end
-T['detect: falls through to next available moment'] = function()
-  eq(detect{delta = 40, total = 80, fired = {close = true}, reactions = 1}, 'big_hand')
+T['detect: last hand is not spaced on the light tier'] = function()
+  eq(detect{delta = 5, total = 10, hands_left = 1, tier = 'light', hand = 2, last_line_hand = 1}, 'last_hand',
+    'the hand after a line')
+  eq(detect{delta = 5, total = 10, hands_left = 1, tier = 'light', hand = 2, last_line_hand = 2}, 'last_hand',
+    'the same hand as a line')
+  eq(detect{delta = 5, total = 10, hands_left = 1, tier = 'light', fired = {last_hand = true}}, nil, 'once')
 end
-T['detect: light tier cap'] = function() eq(detect{delta = 40, total = 80, tier = 'light', reactions = 1}, nil) end
+T['detect: full tier, last hand fires with one hand left'] = function()
+  eq(detect{delta = 5, total = 10, hands_left = 1, tier = 'full', hand = 2, last_line_hand = 1}, 'last_hand')
+  eq(detect{delta = 5, total = 10, hands_left = 2, tier = 'full'}, nil)
+end
+T['detect: falls through to next available moment'] = function()
+  eq(detect{delta = 40, total = 80, fired = {close = true}}, 'big_hand')
+end
+T['detect: light tier spacing'] = function()
+  eq(detect{delta = 40, total = 80, tier = 'light', hand = 2, last_line_hand = 1}, nil, 'the hand after a line')
+  eq(detect{delta = 40, total = 80, tier = 'light', hand = 3, last_line_hand = 1}, 'close')
+  eq(detect{delta = 40, total = 100, tier = 'light', hand = 2, last_line_hand = 1}, 'defeat', 'defeat is not spaced')
+end
+T['detect: light tier, a line on hand 1, nothing on hand 2, a line on hand 3'] = function()
+  local enc = {tier = 'light', fired = {}}
+  local function play(hand, delta, total)
+    local m = detect{delta = delta, total = total, tier = enc.tier, fired = enc.fired,
+      hand = hand, last_line_hand = enc.last_line_hand}
+    if m then logic.note_line(enc, m, hand) end
+    return m
+  end
+  eq(play(1, 40, 40), 'big_hand')
+  eq(enc.last_line_hand, 1)
+  eq(play(2, 40, 80), nil, 'close, but the boss just spoke')
+  eq(enc.last_line_hand, 1)
+  eq(play(3, 5, 85), 'close')
+  eq(enc.last_line_hand, 3)
+end
+T['note_line: books fired; only a spaced line marks its hand'] = function()
+  local enc = {fired = {}}
+  logic.note_line(enc, 'disabled', 2)
+  eq(enc.fired.disabled, true); eq(enc.last_line_hand, nil, 'disabled is not spaced')
+  logic.note_line(enc, 'close', 4)
+  eq(enc.fired.close, true); eq(enc.last_line_hand, 4)
+  logic.note_line(enc, 'last_hand', 5)
+  eq(enc.fired.last_hand, true); eq(enc.last_line_hand, 4, 'last_hand is not spaced')
+  logic.note_line(enc, 'defeat', 6)
+  eq(enc.last_line_hand, 4, 'defeat is not spaced')
+end
 T['detect: zero requirement is ignored'] = function() eq(detect{delta = 1, total = 1, required = 0}, nil) end
 
 local function counts(map) return function(prefix) return map[prefix] or 0 end end
@@ -70,9 +136,10 @@ end
 T['resolve_prefix: nothing resolves to nil'] = function()
   eq(logic.resolve_prefix('bl_mod_x', 'close', counts{}), nil)
 end
-T['resolve_prefix: shared opener and closer'] = function()
-  eq(logic.resolve_prefix('bl_hook', 'opener', counts{fb_opener = 3}), 'fb_opener')
-  eq(logic.resolve_prefix('bl_hook', 'closer', counts{}), nil)
+T['resolve_prefix: shared nemesis lines'] = function()
+  eq(logic.resolve_prefix('bl_hook', 'nemesis_intro', counts{fb_nemesis_intro = 3}), 'fb_nemesis_intro')
+  eq(logic.resolve_prefix('bl_hook', 'nemesis_defeat', counts{fb_generic_nemesis_defeat = 3}), nil,
+    'no generic fallback')
 end
 
 T['resolve_prefix: interrupted is boss-specific, then generic'] = function()
@@ -147,9 +214,9 @@ end
 T['interrupted is forced, not a reaction'] = function()
   eq(logic.FORCED_MOMENTS.interrupted, true)
   eq(logic.FORCED_MOMENTS.defeat, true)
-  eq(logic.REACTIONS.interrupted, nil)
-  eq(logic.can_fire('interrupted', 'light', {}, 1), true) -- a spent light-tier reaction does not block it
-  eq(logic.can_fire('interrupted', 'light', {interrupted = true}, 0), false)
+  eq(logic.SPACED.interrupted, nil)
+  eq(logic.can_fire('interrupted', 'light', {}, 2, 1), true) -- the light tier's spacing does not block it
+  eq(logic.can_fire('interrupted', 'light', {interrupted = true}), false)
 end
 
 return T

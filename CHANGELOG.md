@@ -1,5 +1,38 @@
 # Changelog
 
+## 1.2.0
+
+Savage bosses that read your run.
+
+### A new voice
+- Every boss line is rewritten: bosses trash-talk now, each in its own personality (bully, smug genius, cold killer, sweet venom, chaos gremlin, royal snob), in all 15 languages.
+- Intros are threats, not rule explanations (the game already shows the rule).
+- Shorter showdown intros: two lines, the boss's name (or its rematch or nemesis line), then its threat.
+- More variety where lines repeat most: three intros, three big-hand reactions and three gloats per boss.
+- Swearing is censored ("sh*t") and gets a short TV-style bleep. No slurs, nothing about real people or groups.
+
+### Bosses read your run
+- Intro jabs: about one intro in three, the boss's threat is replaced by a jab at how you got here: skipped blinds, rerolling the shop, being broke or loaded, a one-suit deck, a tiny or huge deck, no jokers or a full row, a famous joker. Never the same jab twice in a row. Counter jokers are always called out: bosses know your Chicot, Luchador, Matador and Mr. Bones, and every vanilla boss has its own line for its main counter.
+- During the fight: comments on weak hands, the same hand three times in a row, burning every discard early and one-card plays. A weak hit now gets a line (final bosses laugh first). Winning with twice the score needed gets an overkill line instead of the defeat line half the time.
+- Idle taunts: sit on your hand for 25 seconds and the boss gets impatient (twice per blind at most).
+- Regular bosses talk more but never crowd you: at most one line every other hand, and at most one comment on your play per blind. Their last-hand taunt, disabled line and defeat line always come.
+- Final bosses make at most three comments on your play per blind, never on two hands in a row.
+- The last-hand taunt now comes when you are down to your final hand, before you play it.
+- Boss dialogue off silences all of it.
+
+### Poke the boss
+- Click the boss chip during a boss fight and it jiggles and says something. Click it three times within two seconds for a harsher line. Drag it and it springs back after about a second, even while you hold it, and the boss reacts as it returns.
+- Each personality takes it its own way: the bully is furious, the killer goes cold, the royal is offended, the smug genius talks down to you, sweet venom turns poisonous, the chaos gremlin laughs.
+- In a showdown, poke the roaming boss avatar. Not during intros, cinematics, menus or pauses, once the winning hand is in, nor before the ante where boss dialogue starts. With Boss dialogue off the boss still reacts, silently.
+
+### For mod authors
+- `register_encounter` accepts `personality` (`bully`, `smug`, `killer`, `venom`, `chaos`, `royal`; default `bully`): your boss gets that personality's run comments and poke reactions without writing any line.
+- Lines now resolve boss, then personality (`fb_p_<personality>_<moment>_<n>`), then generic. New moments: `weak`, `overkill`, `idle`, `jab_*`, `read_*`, `poked`, `poked_hard`, `grabbed`.
+- The shared showdown lines `fb_opener_<n>` and `fb_closer_<n>` are no longer used; a rematch or nemesis line now replaces the boss's name line.
+
+### Developer keys
+- Shift+F6 fakes a run state and says the jab it gives (cycles skipped, rerolls, broke, loaded, one suit, counter, famous); Shift+F7 forces an idle taunt.
+
 ## 1.1.0
 
 Boss personality, phases and memory.

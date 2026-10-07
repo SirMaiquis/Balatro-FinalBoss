@@ -28,12 +28,11 @@ T['every vanilla boss has every moment'] = function()
   assert(#missing == 0, 'missing: ' .. table.concat(missing, ', '))
 end
 
-T['shared and generic sets have 3 variants'] = function()
+T['the generic set has 3 variants'] = function()
   local quips = load()
   local missing = {}
-  local prefixes = {'fb_opener', 'fb_closer'}
-  for _, m in ipairs(GENERIC_MOMENTS) do prefixes[#prefixes + 1] = 'fb_generic_' .. m end
-  for _, p in ipairs(prefixes) do
+  for _, m in ipairs(GENERIC_MOMENTS) do
+    local p = 'fb_generic_' .. m
     for i = 1, 3 do if not quips[p .. '_' .. i] then missing[#missing + 1] = p .. '_' .. i end end
   end
   assert(#missing == 0, 'missing: ' .. table.concat(missing, ', '))
@@ -165,6 +164,313 @@ T['every achievement has a name and a description'] = function()
     assert(misc.achievement_names and type(misc.achievement_names[key]) == 'string', 'name ' .. key)
     assert(misc.achievement_descriptions and type(misc.achievement_descriptions[key]) == 'string', 'description ' .. key)
   end
+end
+
+-- 1.2 key sets -----------------------------------------------------------------------------------
+
+local NEW_BOSS_SETS = {intro = 3, big_hand = 3, gloat = 3, weak = 3, jab_counter = 1}
+
+T['every vanilla boss has three intros, big hands, gloats and weak lines, and its counter line'] = function()
+  local quips, bosses = load()
+  local missing = {}
+  for blind in pairs(bosses) do
+    for m, n in pairs(NEW_BOSS_SETS) do
+      for i = 1, n do
+        local key = 'fb_' .. blind .. '_' .. m .. '_' .. i
+        if not quips[key] then missing[#missing + 1] = key end
+      end
+    end
+  end
+  table.sort(missing)
+  assert(#missing == 0, 'missing: ' .. table.concat(missing, ', '))
+end
+
+T['the generic set has three weak lines'] = function()
+  local quips = load()
+  for i = 1, 3 do assert(quips['fb_generic_weak_' .. i], 'missing fb_generic_weak_' .. i) end
+end
+
+T['every personality has every run moment'] = function()
+  local quips = load()
+  package.loaded['src.logic'] = nil
+  local logic = require('src.logic')
+  local missing = {}
+  for _, p in ipairs(logic.PERSONALITIES) do
+    for _, m in ipairs(logic.PERSONALITY_MOMENTS) do
+      for i = 1, logic.personality_variants(m) do
+        local key = 'fb_p_' .. p .. '_' .. m .. '_' .. i
+        if not quips[key] then missing[#missing + 1] = key end
+      end
+    end
+  end
+  table.sort(missing)
+  assert(#missing == 0, 'missing: ' .. table.concat(missing, ', '))
+end
+
+T['counter and famous lines name the joker (#2#); no other line does'] = function()
+  local quips = load()
+  local bad = {}
+  for key, lines in pairs(quips) do
+    local text = type(lines) == 'table' and table.concat(lines, ' ') or tostring(lines)
+    local wants = key:find('_jab_counter_', 1, true) or key:find('_jab_famous_', 1, true)
+    local has = text:find('#2#', 1, true)
+    if wants and not has then bad[#bad + 1] = key .. ' needs #2#' end
+    if has and not wants then bad[#bad + 1] = key .. ' must not use #2#' end
+  end
+  table.sort(bad)
+  assert(#bad == 0, table.concat(bad, '; '))
+end
+
+T['every run moment and weak line resolves for every vanilla boss and a modded one'] = function()
+  local quips, bosses = load()
+  package.loaded['src.logic'] = nil
+  local logic = require('src.logic')
+  package.loaded['src.personality'] = nil
+  local voice = require('src.personality').VANILLA
+  local function count_of(prefix)
+    local n = 0
+    while quips[prefix .. '_' .. (n + 1)] do n = n + 1 end
+    return n
+  end
+  local moments = {'weak'}
+  for _, m in ipairs(logic.PERSONALITY_MOMENTS) do moments[#moments + 1] = m end
+  local missing = {}
+  local list = {bl_mymod_boss = logic.DEFAULT_PERSONALITY}
+  for blind in pairs(bosses) do list[blind] = voice[blind] end
+  for blind, p in pairs(list) do
+    for _, m in ipairs(moments) do
+      if not logic.resolve_prefix(blind, m, count_of, p) then missing[#missing + 1] = blind .. '.' .. m end
+      if m == 'jab_counter' and not logic.resolve_prefix(blind, m, count_of, p, true) then
+        missing[#missing + 1] = blind .. '.jab_counter (skip_boss)'
+      end
+    end
+  end
+  table.sort(missing)
+  assert(#missing == 0, 'no line for: ' .. table.concat(missing, ', '))
+end
+
+-- 1.2 content rules ------------------------------------------------------------------------------------
+
+-- Spelled-out swears (prefix match; a trailing '$' means the whole word) and the only censored words
+-- the English lines may use (prefix match, so f***ing and a**hole pass).
+local EN_SWEARS = {'fuck', 'shit', 'ass$', 'asses$', 'asshole', 'bitch', 'bastard', 'cunt', 'dick$',
+  'cock$', 'piss', 'whore', 'slut', 'retard', 'fag'}
+local EN_CENSORED = {'f***', 'sh*t', 'a**'}
+
+local UTF8_PUNCT = {'¡', '¿', '«', '»', '…', '—', '–', '“', '”', '„', '‘', '’', '·'}
+
+--- Lower-cased words of a line: letters, digits, '*' and UTF-8 bytes (vanilla's ASCII lower only).
+local function words(line)
+  local s = line:lower()
+  for _, p in ipairs(UTF8_PUNCT) do s = s:gsub(p, ' ') end
+  local out = {}
+  for w in s:gmatch('[%w%*\128-\255]+') do out[#out + 1] = w end
+  return out
+end
+
+local function swear_hit(word, entry)
+  if entry:sub(-1) == '$' then return word == entry:sub(1, -2) end
+  return word:sub(1, #entry) == entry
+end
+
+local function lines_of(v)
+  if type(v) == 'table' then return v end
+  return {tostring(v)}
+end
+
+T['English lines: no swear spelled out, only f***, sh*t and a** censored'] = function()
+  local quips = load()
+  local bad = {}
+  for key, v in pairs(quips) do
+    for _, line in ipairs(lines_of(v)) do
+      for _, w in ipairs(words(line)) do
+        for _, s in ipairs(EN_SWEARS) do
+          if swear_hit(w, s) then bad[#bad + 1] = key .. ' (spelled out): ' .. line end
+        end
+        if w:find('*', 1, true) then
+          local ok = false
+          for _, c in ipairs(EN_CENSORED) do
+            if w:sub(1, #c) == c then ok = true end
+          end
+          if not ok then bad[#bad + 1] = key .. ' (censored word not allowed): ' .. line end
+        end
+      end
+    end
+  end
+  table.sort(bad)
+  assert(#bad == 0, table.concat(bad, '; '))
+end
+
+--- True when any line of a quip carries a censored word (a letter next to '*').
+local function censored(v)
+  for _, line in ipairs(lines_of(v)) do
+    for _, w in ipairs(words(line)) do
+      if w:find('*', 1, true) then return true end
+    end
+  end
+  return false
+end
+
+T['the generic set has three poke, hard poke and grab lines'] = function()
+  local quips = load()
+  local missing = {}
+  for _, m in ipairs({'poked', 'poked_hard', 'grabbed'}) do
+    for i = 1, 3 do
+      local key = 'fb_generic_' .. m .. '_' .. i
+      if not quips[key] then missing[#missing + 1] = key end
+    end
+  end
+  assert(#missing == 0, 'missing: ' .. table.concat(missing, ', '))
+end
+
+T['English poke lines: censored swears only on a bully or chaos hard poke, at most one each'] = function()
+  local quips = load()
+  local bad, hard = {}, {}
+  for key, v in pairs(quips) do
+    local owner, m = key:match('^fb_p_(%a+)_(%a[%a_]-)_%d$')
+    if not owner then owner, m = key:match('^fb_(generic)_(%a[%a_]-)_%d$') end
+    if (m == 'poked' or m == 'poked_hard' or m == 'grabbed') and censored(v) then
+      if m ~= 'poked_hard' or (owner ~= 'bully' and owner ~= 'chaos') then
+        bad[#bad + 1] = key
+      else
+        hard[owner] = (hard[owner] or 0) + 1
+      end
+    end
+  end
+  for owner, n in pairs(hard) do
+    if n > 1 then bad[#bad + 1] = owner .. ' poked_hard x' .. n end
+  end
+  table.sort(bad)
+  assert(#bad == 0, 'censored poke lines not allowed: ' .. table.concat(bad, ', '))
+end
+
+T['English killer poke lines never shout'] = function()
+  local quips = load()
+  for key, v in pairs(quips) do
+    if key:match('^fb_p_killer_poked') or key:match('^fb_p_killer_grabbed') then
+      for _, line in ipairs(lines_of(v)) do assert(not line:find('!', 1, true), key .. ': ' .. line) end
+    end
+  end
+end
+
+T['English gloat lines carry no censored swear (the game-over bubble has no bleep)'] = function()
+  local quips = load()
+  local bad = {}
+  for key, v in pairs(quips) do
+    if key:find('gloat', 1, true) and censored(v) then bad[#bad + 1] = key end
+  end
+  table.sort(bad)
+  assert(#bad == 0, 'censored gloat: ' .. table.concat(bad, ', '))
+end
+
+T['English swearing density per personality'] = function()
+  local quips = load()
+  package.loaded['src.personality'] = nil
+  local voice = require('src.personality').VANILLA
+  local group = {}
+  local bad = {}
+  for blind, p in pairs(voice) do
+    local prefix, n, total = 'fb_' .. blind .. '_', 0, 0
+    for key, v in pairs(quips) do
+      if key:sub(1, #prefix) == prefix then
+        total = total + 1
+        if censored(v) then n = n + 1 end
+      end
+    end
+    group[p] = (group[p] or 0) + n
+    if (p == 'bully' or p == 'chaos') and (n > 5 or n * 4 > total) then bad[#bad + 1] = blind .. ' ' .. n end
+    if (p == 'smug' or p == 'royal') and n > 1 then bad[#bad + 1] = blind .. ' ' .. n end
+  end
+  for _, p in ipairs({'killer', 'venom'}) do
+    if (group[p] or 0) > 1 then bad[#bad + 1] = p .. ' group ' .. group[p] end
+  end
+  table.sort(bad)
+  assert(#bad == 0, 'too many censored lines: ' .. table.concat(bad, ', '))
+end
+
+-- Per-language swear lists: words = prefixes matched against each lower-cased word ('$' = the whole
+-- word; Cyrillic is listed in both cases, string.lower is ASCII only); text = substrings matched in
+-- the whole line (scripts without spaces).
+local ES_SWEARS = {'mierda', 'carajo', 'joder', 'hostia', 'pendej', 'cabron', 'cabrón', 'puta', 'puto',
+  'chingad', 'verga', 'coño', 'gilipollas'}
+local SWEARS = {
+  default = {words = EN_SWEARS},
+  es_419 = {words = ES_SWEARS},
+  es_ES = {words = ES_SWEARS},
+  pt_BR = {words = {'merda', 'porra', 'caralho', 'puta', 'puto', 'foda', 'fodid', 'cacete', 'buceta', 'viado'}},
+  fr = {words = {'merde', 'putain', 'bordel', 'connard', 'connasse', 'salop', 'enculé', 'encule', 'chier'}},
+  it = {words = {'merda', 'cazz', 'stronz', 'vaffanculo', 'puttan', 'minchia', 'coglion'}},
+  de = {words = {'scheiße', 'scheisse', 'arsch', 'fick', 'wichser', 'hure$', 'fotze'}},
+  nl = {words = {'shit', 'kut', 'klote', 'godverdomme', 'kanker', 'lul$', 'tering', 'hoer$'}},
+  pl = {words = {'kurw', 'gówno', 'gowno', 'chuj', 'pierdol', 'jeban', 'jebać', 'dupa', 'suka$'}},
+  ru = {words = {'бля', 'Бля', 'говн', 'Говн', 'хуй', 'Хуй', 'пизд', 'Пизд', 'ебат', 'Ебат', 'сука', 'Сука',
+    'жоп', 'Жоп'}},
+  id = {words = {'tai$', 'bangsat', 'kontol', 'memek', 'ngentot', 'bajingan'}},
+  ja = {text = {'クソ', '糞'}}, -- hiragana くそっ is the mild exclamation (1.1 already uses it)
+  ko = {text = {'씨발', '시발', '개새끼', '병신', '좆'}},
+  zh_CN = {text = {'他妈的', '狗屎', '傻逼', '操你', '屎'}},
+  zh_TW = {text = {'他媽的', '狗屎', '傻逼', '操你', '屎'}},
+}
+
+local function lang_quips(lang)
+  package.loaded['localization.' .. lang] = nil
+  return require('localization.' .. lang).misc.quips
+end
+
+T['every language: no swear of its list spelled out'] = function()
+  local bad = {}
+  for lang, list in pairs(SWEARS) do
+    for key, v in pairs(lang_quips(lang)) do
+      for _, line in ipairs(lines_of(v)) do
+        for _, w in ipairs(list.words and words(line) or {}) do
+          for _, s in ipairs(list.words) do
+            if swear_hit(w, s) then bad[#bad + 1] = lang .. ' ' .. key .. ': ' .. line end
+          end
+        end
+        for _, s in ipairs(list.text or {}) do
+          if line:find(s, 1, true) then bad[#bad + 1] = lang .. ' ' .. key .. ': ' .. line end
+        end
+      end
+    end
+  end
+  table.sort(bad)
+  assert(#bad == 0, table.concat(bad, '; '))
+end
+
+T['every language: a * only ever sits inside a word'] = function()
+  local bad = {}
+  for lang in pairs(SWEARS) do
+    for key, v in pairs(lang_quips(lang)) do
+      for _, line in ipairs(lines_of(v)) do
+        for token in line:gmatch("[^%s%-']+") do -- sh*t's, a**-backwards: each part on its own
+          if token:find('*', 1, true) then
+            local core = token:match('^[^%w\128-\255%*]*(.-)[^%w\128-\255%*]*$')
+            if not core:match('^[%w\128-\255]+%*+[%w\128-\255%*]*$') then
+              bad[#bad + 1] = lang .. ' ' .. key .. ': ' .. line
+            end
+          end
+        end
+      end
+    end
+  end
+  table.sort(bad)
+  assert(#bad == 0, table.concat(bad, '; '))
+end
+
+T['no stand-in lines remain in any language'] = function()
+  local OWNERS = {generic = true, bully = true, smug = true, killer = true, venom = true, chaos = true, royal = true}
+  local bad = {}
+  for lang in pairs(SWEARS) do
+    for key, v in pairs(lang_quips(lang)) do
+      for _, line in ipairs(lines_of(v)) do
+        if line:match('^bl_[%w_]+$') or OWNERS[line] or line:match('^[%l_]+_%d') then
+          bad[#bad + 1] = lang .. ' ' .. key
+        end
+      end
+    end
+  end
+  table.sort(bad)
+  assert(#bad == 0, 'stand-ins left: ' .. table.concat(bad, ', '))
 end
 
 return T

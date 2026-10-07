@@ -34,7 +34,11 @@ V.tremble = false
 V.wound = 0
 V.laugh_id = 0 -- bumped per laugh: a newer laugh silences the older one's remaining beats
 V.laugh_start, V.laugh_until = 0, 0 -- REAL-time window the update reads for hops, tilt and shake
-V.anger_until = 0 -- REAL-time end of the interrupted shake
+V.anger_until = 0 -- REAL-time end of the interrupted shake (also a poke's shake: V.poke)
+V.anger_amp, V.anger_time = V.ANGER_SHAKE, V.ANGER_TIME -- that shake's starting amplitude and length
+V.grabbed = false -- 1.2: the player is dragging the chip (poke.lua); only the sprite follows the cursor
+V.grab_dx, V.grab_dy = 0, 0 -- the sprite's offset from the perch while grabbed
+V.giggle_at = -1e9 -- REAL time of the last poke giggle (chaos), so spam clicks do not stack laughs
 V.gloating = nil  -- game over: {pitch, laughed, t0}; the chip sits beside the panel and laughs once
 V.stance = 1      -- 1.1 phase stance (logic.stance): roam speed and aura
 V.auras = {}      -- slot ('stance' | 'nemesis') -> Particles attached to the chip
@@ -94,17 +98,17 @@ function Avatar:move(dt)
   local jx = shaking and (math.random() - 0.5) * 0.06 or 0
   local jy = shaking and (math.random() - 0.5) * 0.06 or 0
   -- Interrupted: a sharp, quickly decaying shake (sprite only, like the laugh).
-  local anger = (not calm and now() < V.anger_until) and V.ANGER_SHAKE * (V.anger_until - now()) / V.ANGER_TIME or 0
+  local anger = (not calm and now() < V.anger_until) and V.anger_amp * (V.anger_until - now()) / V.anger_time or 0
   if anger > 0 then
     jx = jx + (math.random() - 0.5) * 2 * anger
     jy = jy + (math.random() - 0.5) * 2 * anger
   end
-  s.T.x = self.T.x + jx
+  s.T.x = self.T.x + jx + V.grab_dx
   if gloat then -- game over: a slow, smug bob with a slight lean
     s.T.y = self.T.y + (calm and 0 or 0.06 * math.sin(t * 2 * math.pi / 3.4))
     s.T.r = calm and 0 or (0.07 + 0.035 * math.sin(t * 2 * math.pi / 4.6))
   else
-    s.T.y = self.T.y + (calm and 0 or 0.08 * math.sin(t * speed * 2 * math.pi / 2.2)) + jy
+    s.T.y = self.T.y + (calm and 0 or 0.08 * math.sin(t * speed * 2 * math.pi / 2.2)) + jy + V.grab_dy
     s.T.r = calm and 0 or 0.05 * math.sin(t * speed * 1.3)
   end
   s.T.w, s.T.h = self.T.w, self.T.h
@@ -158,7 +162,36 @@ end
 function Avatar:click()
   FinalBoss.util.guard('avatar_click', function()
     if FinalBoss.cinematic.active() then FinalBoss.cinematic.skip()
-    elseif FinalBoss.dialogue.intro_active() then FinalBoss.dialogue.skip() end
+    elseif FinalBoss.dialogue.intro_active() then FinalBoss.dialogue.skip()
+    else FinalBoss.poke.on_click(self) end -- 1.2: poke the boss
+  end)
+end
+
+--- 1.2 grab (poke.lua sets states.drag.can only while a poke is allowed). G.CONTROLLER calls this every
+--- frame of the drag (engine/controller.lua:381-383). The cursor maths is Moveable.drag's
+--- (engine/moveable.lua:217-240), but only the sprite goes there (V.grab_dx/dy, Avatar:move): the
+--- avatar's T stays on its perch and its children (auras) are left alone. On release the offset
+--- clears and the sprite's spring brings it home.
+function Avatar:drag()
+  FinalBoss.util.guard('avatar_drag', function()
+    local c, off, box = G.CONTROLLER, self.click_offset, self.container and self.container.T
+    if not (self.states.drag.can and c and off and box) then return end
+    local scale = G.TILESCALE * G.TILESIZE
+    local p = {x = c.cursor_position.x / scale, y = c.cursor_position.y / scale}
+    point_translate(p, {x = -box.w / 2, y = -box.h / 2})
+    point_rotate(p, box.r)
+    point_translate(p, {x = box.w / 2 - box.x, y = box.h / 2 - box.y})
+    V.grab_dx, V.grab_dy = p.x - off.x - self.T.x, p.y - off.y - self.T.y
+    V.grabbed = true
+  end)
+end
+
+--- The controller ends the drag on release (engine/controller.lua:333-336), poke.lua sooner.
+function Avatar:stop_drag()
+  FinalBoss.util.guard('avatar_drag', function()
+    Moveable.stop_drag(self)
+    V.grabbed = false
+    V.grab_dx, V.grab_dy = 0, 0
   end)
 end
 
@@ -354,7 +387,7 @@ function V.tick(dt)
     V.scoring = false
     V.next_roam = now() + V.ROAM_MIN * FinalBoss.logic.stance(V.stance).roam
   end
-  if V.talking or now() < V.laugh_until then return end
+  if V.talking or V.grabbed or now() < V.laugh_until then return end
   if now() >= V.next_roam then
     go_to(FinalBoss.logic.pick_variant(V.PERCH_COUNT, V.perch, math.random), false)
     V.next_roam = now() + V.roam_delay()
@@ -466,10 +499,99 @@ function V.anger(blind)
   if not o then return anger_chip(blind) end
   flash(o, 0.25, V.RED)
   if not reduced() then
-    V.anger_until = now() + V.ANGER_TIME
+    V.anger_until, V.anger_amp, V.anger_time = now() + V.ANGER_TIME, V.ANGER_SHAKE, V.ANGER_TIME
     o:juice_up(0.5, 0.3)
   end
   V.next_roam = math.max(V.next_roam, now() + 2) -- stay put while snapping
+end
+
+-- Poke and grab (1.2) ------------------------------------------------------------------------------
+V.POKE_COLOURS = {red = V.RED, white = {1, 1, 1, 0.75}, poison = {0.45, 0.85, 0.3, 0.75}}
+V.POKE_BOUNCE = 0.12 -- seconds between a bouncy chip's extra juices
+V.GIGGLE_GAP = 1.0   -- spam clicks: a new giggle at most this often
+V.GIGGLE_BEATS = 3   -- a short giggle (a full one is the boss laugh)
+V.hud_shake = nil    -- {until_t, amp, time}: the HUD chip's poke shake (V.hud_tick)
+
+local function hud_sprite(blind)
+  return blind and blind.children and blind.children.animatedSprite
+end
+
+--- A short coloured burst over the HUD chip (anger_chip's particles, any colour).
+local function chip_flash(blind, colour, duration)
+  local p = Particles(0, 0, 0, 0, {attach = blind, fill = true, timer = 0.008, scale = 0.35, speed = 1.2,
+    lifespan = duration + 0.25, colours = {colour, colour}})
+  after(duration, function() p:fade(0.2) end)
+  after(duration + 0.3, function() p:remove() end)
+end
+
+--- A few quick, high "ha"s (the laugh's syllable and pitch steps), the host bobbing on each.
+local function giggle(host, pitch, beats)
+  local syllable = 'voice' .. math.random(1, 11)
+  for i = 0, beats - 1 do
+    after(i * FinalBoss.logic.LAUGH.step, function()
+      if host.REMOVED then return end
+      play_sound(syllable, (pitch or 1) * 1.3 * FinalBoss.logic.laugh_pitch(i), V.LAUGH_VOLUME * 0.8)
+      host:juice_up(0.08, 0.05) -- a no-op under reduced motion
+    end)
+  end
+end
+
+--- The chip's physical reaction to a poke or a grab: r is a logic.poke_reaction recipe (reduced motion
+--- already stripped there). On the avatar when it is out, else on the HUD blind chip.
+function V.poke(blind, r, pitch)
+  local o = V.obj
+  local host = o or blind
+  if not (host and host.T) then return end
+  local colour = r.flash and V.POKE_COLOURS[r.flash]
+  if o then
+    if colour then flash(o, r.flash_time or 0.15, colour) end
+    if r.shake then
+      V.anger_until, V.anger_amp, V.anger_time = now() + r.shake, r.shake_amp or V.ANGER_SHAKE, r.shake
+    end
+    if r.recoil and not V.grabbed then -- knocked back like a hit, then home
+      local perch = V.perch
+      o.T.x = o.T.x + (V.side() == 'right' and 1 or -1) * r.recoil
+      after(0.3, function() if V.obj == o and V.perch == perch then go_to(perch, false) end end)
+    end
+    V.next_roam = math.max(V.next_roam, now() + 1) -- no glide away mid-reaction
+  else
+    local s = hud_sprite(blind)
+    if not s then return end
+    if colour then chip_flash(blind, colour, r.flash_time or 0.15) end
+    if r.shake then V.hud_shake = {until_t = now() + r.shake, amp = r.shake_amp or 0.05, time = r.shake} end
+    if r.recoil then s.VT.y = s.VT.y - r.recoil * 0.5 end -- knocked up; Blind:align pulls it home
+  end
+  if r.juice then host:juice_up(r.juice, r.rot) end
+  for i = 1, r.bounces or 0 do
+    after(i * V.POKE_BOUNCE, function()
+      if not host.REMOVED then host:juice_up(r.juice * 0.6, ((i % 2 == 0) and 1 or -1) * (r.rot or 0)) end
+    end)
+  end
+  if r.jiggle and FinalBoss.config.fx and not reduced() then G.ROOM.jiggle = G.ROOM.jiggle + r.jiggle end
+  if r.giggle and now() - V.giggle_at >= V.GIGGLE_GAP then
+    V.giggle_at = now()
+    if r.giggle == 'full' and o then V.laugh(pitch)
+    else giggle(host, pitch, r.giggle == 'full' and FinalBoss.logic.LAUGH.beats or V.GIGGLE_BEATS) end
+  end
+end
+
+--- Per frame (poke.lua): the HUD chip's poke shake. Blind:align rewrites the sprite's target every
+--- frame, so the jitter goes on its drawn position (VT) after the frame's move; the sprite's own
+--- spring settles it once the shake is over.
+function V.hud_tick(blind)
+  local h = V.hud_shake
+  if not h then return end
+  local s = hud_sprite(blind)
+  local left = h.until_t - now()
+  if left <= 0 or not s or reduced() or (s.states and s.states.drag.is) then V.hud_shake = nil; return end
+  local a = h.amp * left / h.time
+  s.VT.x = s.T.x + (math.random() - 0.5) * 2 * a
+  s.VT.y = s.T.y + (math.random() - 0.5) * 2 * a
+end
+
+--- Whether the avatar can be poked or grabbed (not gloating at the game over, not fading out).
+function V.pokeable()
+  return V.obj ~= nil and not V.gloating and not V.fading
 end
 
 function V.set_dissolve(amount, duration)
@@ -523,6 +645,7 @@ function V.remove()
   for _, p in pairs(V.auras) do FinalBoss.effects.remove_aura(p) end
   V.stance, V.auras, V.roar_start, V.roar_until = 1, {}, 0, 0
   V.laugh_start, V.laugh_until, V.anger_until = 0, 0, 0
+  V.grabbed, V.grab_dx, V.grab_dy = false, 0, 0
   V.gloating = nil
   V.perch = V.RINGSIDE
   if o then o:remove() end

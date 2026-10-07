@@ -5,7 +5,7 @@ D.REACTION_GAP = 2   -- seconds between non-intro lines
 D.DOUBLE_SKIP = 0.3  -- second key press within this window skips the whole intro
 D.token = 0          -- bumped to cancel pending timers
 D.intro = nil        -- {blind, steps, index, duration, pitch, token}
-D.last_line_at = -1e9
+D.last_line_at = -1e9 -- when the last real line showed (intro steps, reactions); free lines never stamp it
 D.last_skip_at = -1e9
 D.saved_click_can = nil
 D.avatar_bubble = nil -- avatar-hosted bubble (late-drawn attention_text UIBox, not a child)
@@ -58,7 +58,10 @@ function D.show(blind, key, vars, pitch)
   -- Avatar bubbles have no parent and are attention_text: vanilla's late draw pass draws them above
   -- cards, and they outlive the avatar's fade until their own hide timer.
   local bubble = UIBox{definition = G.UIDEF.speech_bubble(key, loc_vars),
-    config = {align = align, offset = {x = 0, y = 0}, parent = (not on_avatar) and host or nil}}
+    -- can_collide = false: clicks go through the bubble to the chip under it (a run of pokes, the
+    -- intro's chip skip); its UIElements only collide when their UIBox does (engine/ui.lua:957-962).
+    config = {align = align, offset = {x = 0, y = 0}, parent = (not on_avatar) and host or nil,
+      can_collide = false}}
   bubble:set_role{role_type = 'Minor', xy_bond = 'Weak', r_bond = 'Strong', major = host}
   bubble.states.visible = false -- shown once aligned (timer below)
   if on_avatar then
@@ -71,9 +74,11 @@ function D.show(blind, key, vars, pitch)
   if on_avatar then FinalBoss.avatar.set_talking(true) end
   after(0.1, function()
     local current = on_avatar and D.avatar_bubble or host.children.fb_bubble
-    if current == bubble then bubble.states.visible = true end
+    if current == bubble then
+      bubble.states.visible = true
+      D.bleep(key) -- 1.2: a censored swear gets its bleep as the bubble appears
+    end
   end)
-  D.last_line_at = FinalBoss.util.now()
   babble(host, 5, pitch)
 end
 
@@ -84,6 +89,25 @@ function D.follow_avatar()
   if not b or not FinalBoss.avatar then return end
   local want = (FinalBoss.avatar.side() == 'right') and 'cl' or 'cr'
   if b.alignment.type ~= want then b:set_alignment({type = want}) end
+end
+
+--- The text of a quip key in the current language (the lines speech_bubble shows,
+--- functions/UI_definitions.lua:444-447), joined with spaces; '' when missing.
+function D.text_of(key)
+  local quips = G.localization and G.localization.misc and G.localization.misc.quips
+  local lines = quips and quips[key]
+  if type(lines) == 'table' then return table.concat(lines, ' ') end
+  if type(lines) == 'string' then return lines end
+  return ''
+end
+
+--- A line with a censored swear (logic.has_censored) gets a short high bleep over the babble.
+--- play_sound follows the game's sound volume (functions/misc_functions.lua:695-718).
+function D.bleep(key)
+  if not FinalBoss.config.dialogue then return end
+  if not FinalBoss.logic.has_censored(D.text_of(key)) then return end
+  local b = FinalBoss.logic.BLEEP
+  play_sound(b.sound, b.pitch, b.volume)
 end
 
 local function enable_chip_skip(blind)
@@ -115,6 +139,7 @@ local function advance(token)
   local step = it.steps[it.index]
   if not step then return D.end_intro() end
   D.show(it.blind, step.key, step.vars, it.pitch)
+  D.last_line_at = FinalBoss.util.now()
   after(it.duration, function() advance(token) end)
 end
 
@@ -127,6 +152,8 @@ function D.play_sequence(blind, steps, duration, pitch, on_end)
   advance(D.token)
 end
 
+--- Ends the intro (all lines said, skipped, interrupted or cut by another line). on_end(shown) gets
+--- how many of its steps were shown, so a caller knows which lines the player actually saw.
 function D.end_intro()
   local it = D.intro
   if not it then return end
@@ -134,7 +161,7 @@ function D.end_intro()
   D.token = D.token + 1
   disable_chip_skip(it.blind)
   D.hide(it.blind)
-  if it.on_end then FinalBoss.util.guard('intro_end', it.on_end) end
+  if it.on_end then FinalBoss.util.guard('intro_end', it.on_end, math.min(it.index, #it.steps)) end
 end
 
 function D.intro_active()
@@ -156,7 +183,9 @@ function D.skip()
   advance(it.token)
 end
 
---- A one-off line (reactions, defeat). Dropped during the cooldown unless opts.force.
+--- A one-off line (reactions, defeat). Dropped during the cooldown unless opts.force. opts.free (1.2
+--- poke and grab lines): it waits for the cooldown like any line, but never starts one, so a real
+--- reaction right after it still shows (and replaces its bubble).
 function D.say(blind, key, vars, pitch, opts)
   opts = opts or {}
   if not opts.force and FinalBoss.util.now() - D.last_line_at < D.REACTION_GAP then return false end
@@ -164,6 +193,7 @@ function D.say(blind, key, vars, pitch, opts)
   D.token = D.token + 1
   local token = D.token
   D.show(blind, key, vars, pitch)
+  if not opts.free then D.last_line_at = FinalBoss.util.now() end
   after(opts.duration or 4, function() if D.token == token then D.hide(blind) end end)
   return true
 end

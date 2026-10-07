@@ -6,8 +6,10 @@ local VALID_TIERS = {auto = true, light = true, full = true}
 local VALID_FX = {pulse = true, shake = true, flash = true, shatter = true, phase_shift = true}
 
 local function new_entry(blind_key)
+  local vanilla = FinalBoss.personality and FinalBoss.personality.VANILLA[blind_key]
   return {blind = blind_key, tier = 'auto', voice = {pitch = 1}, music = nil,
-    fx = {intro = 'pulse', defeat = 'shatter'}, phases = nil, moves = nil, death = nil}
+    fx = {intro = 'pulse', defeat = 'shatter'}, phases = nil, moves = nil, death = nil,
+    personality = vanilla or FinalBoss.logic.DEFAULT_PERSONALITY}
 end
 
 function R.register(def)
@@ -21,6 +23,11 @@ function R.register(def)
     local pitch = tonumber(def.voice.pitch)
     if pitch then e.voice.pitch = pitch
     else FinalBoss.util.log('warn', ('register_encounter %s: bad voice pitch %s, using 1'):format(def.blind, tostring(def.voice.pitch))) end
+  end
+  if def.personality ~= nil then
+    local p, warning = FinalBoss.logic.clean_personality(def.personality)
+    if warning then FinalBoss.util.log('warn', ('register_encounter %s: %s'):format(def.blind, warning)) end
+    e.personality = p
   end
   e.music = def.music
   for slot, name in pairs(def.fx or {}) do
@@ -66,8 +73,10 @@ function R.count(prefix)
 end
 
 --- Resolve a moment to a concrete quip key, avoiding the last variant used for that prefix.
-function R.resolve(blind_key, moment, last_variant)
-  local prefix = FinalBoss.logic.resolve_prefix(blind_key, moment, R.count)
+--- Order: boss-specific (unless opts.skip_boss), the boss's personality, generic (logic.resolve_prefix).
+function R.resolve(blind_key, moment, last_variant, opts)
+  local prefix = FinalBoss.logic.resolve_prefix(blind_key, moment, R.count, FinalBoss.personality.of(blind_key),
+    opts and opts.skip_boss)
   if not prefix then return nil end
   local idx = FinalBoss.logic.pick_variant(R.count(prefix), last_variant and last_variant[prefix], math.random)
   if last_variant then last_variant[prefix] = idx end

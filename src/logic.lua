@@ -54,8 +54,9 @@ function logic.line_duration(speed)
   return DURATIONS[speed] or DURATIONS[2]
 end
 
+--- The intro lines per tier. Full (showdowns): the name reveal, then the threat. Light: the threat.
 function logic.intro_sequence(tier)
-  if tier == 'full' then return {'opener', 'name', 'intro', 'closer'} end
+  if tier == 'full' then return {'name', 'intro'} end
   if tier == 'light' then return {'intro'} end
   return {}
 end
@@ -63,14 +64,19 @@ end
 logic.BIG_HAND_RATIO = 0.30 -- one hand scoring >= 30% of the requirement
 logic.CLOSE_RATIO = 0.75    -- running total >= 75% of the requirement (not yet won)
 
--- Mid-fight reactions: once each per blind, max one per blind in the light tier.
-logic.REACTIONS = {big_hand = true, close = true, last_hand = true, disabled = true}
+-- Mid-fight reactions (big_hand, close, last_hand, disabled): once each per blind. Light tier: an
+-- in-fight line (the spaced reactions below, 'weak' and the reads) at most once per hand and never on
+-- two consecutive hands (logic.line_spaced); last_hand, disabled and defeat are not spaced.
+logic.SPACED = {big_hand = true, close = true}
 
 local PRIORITY = {'last_hand', 'close', 'big_hand'}
 
 -- Moments whose line always shows (no cooldown, cuts the current line). 'interrupted' is said
 -- when the player plays a hand while the boss's intro is still running (once per encounter).
 logic.FORCED_MOMENTS = {defeat = true, interrupted = true}
+
+-- Moments that may fire more than once per blind (their own caps live elsewhere: idle, logic.IDLE_MAX).
+logic.REPEATABLE = {idle = true}
 
 --- Whether this frame interrupts the boss's intro. a: {hand_played (G.STATE is HAND_PLAYED),
 --- cinematic_intro, dialogue_intro (either part of the intro is running), tier, ended, fired}.
@@ -113,47 +119,71 @@ function logic.decide_tier(a)
   return 'none'
 end
 
-function logic.can_fire(moment, tier, fired, reactions)
+--- Light tier: whether the boss may speak on hand (G.GAME.current_round.hands_played) after its last
+--- in-fight line on last_line_hand: never twice on one hand nor on the next one.
+function logic.line_spaced(hand, last_line_hand)
+  return last_line_hand == nil or hand == nil or hand - last_line_hand >= 2
+end
+
+--- hand, last_line_hand: this hand's id and the hand of the light tier's last in-fight line
+--- (logic.line_spaced).
+function logic.can_fire(moment, tier, fired, hand, last_line_hand)
   if tier ~= 'light' and tier ~= 'full' then return false end
-  if fired[moment] then return false end
-  if logic.REACTIONS[moment] and tier == 'light' and reactions >= 1 then return false end
+  if fired[moment] and not logic.REPEATABLE[moment] then return false end
+  if logic.SPACED[moment] and tier == 'light' and not logic.line_spaced(hand, last_line_hand) then return false end
   return true
 end
 
---- Decide which moment (if any) a just-scored hand triggers.
---- a: {delta, total, required, hands_left, fired, tier, reactions}
+--- Book a non-comment moment on the encounter (plain saved data): fired, and for a spaced line the
+--- hand it was said on (enc.last_line_hand, read by the light tier only).
+function logic.note_line(enc, moment, hand)
+  enc.fired = enc.fired or {}
+  enc.fired[moment] = true
+  if logic.SPACED[moment] then enc.last_line_hand = hand end
+end
+
+--- Decide which moment (if any) a just-scored hand triggers. last_hand: this hand leaves the player on
+--- their final hand (hands_left after it is 1), still short, so the boss taunts it before it is played.
+--- a: {delta, total, required, hands_left (after this hand), fired, tier, hand, last_line_hand}
 function logic.detect_moments(a)
   if not a.required or a.required <= 0 then return nil end
   if a.total >= a.required then
-    return logic.can_fire('defeat', a.tier, a.fired, a.reactions) and 'defeat' or nil
+    return logic.can_fire('defeat', a.tier, a.fired, a.hand, a.last_line_hand) and 'defeat' or nil
   end
   local hit = {
-    last_hand = a.hands_left == 0,
+    last_hand = a.hands_left == 1,
     close = a.total >= logic.CLOSE_RATIO * a.required,
     big_hand = a.delta >= logic.BIG_HAND_RATIO * a.required,
   }
   for _, moment in ipairs(PRIORITY) do
-    if hit[moment] and logic.can_fire(moment, a.tier, a.fired, a.reactions) then return moment end
+    if hit[moment] and logic.can_fire(moment, a.tier, a.fired, a.hand, a.last_line_hand) then
+      return moment
+    end
   end
   return nil
 end
 
--- generic_name: the generic set's name line (fb_generic_name_N) for a boss that has its own, said
--- after a rematch or nemesis opener (logic.intro_plan).
-logic.SHARED_MOMENTS = {opener = true, closer = true, nemesis_intro = true, nemesis_defeat = true,
-  generic_name = true}
+-- Moments with only a shared key (fb_<moment>_N): the nemesis lines (1.1).
+logic.SHARED_MOMENTS = {nemesis_intro = true, nemesis_defeat = true}
 
---- Find the localization key prefix for a moment: boss-specific, then generic.
---- count_of(prefix) returns how many variants (prefix_1, prefix_2, ...) exist.
+--- Find the localization key prefix for a moment: boss-specific (skipped when skip_boss), then the
+--- boss's personality (fb_p_<personality>_<moment>, 1.2), then generic. Shared moments have only
+--- their shared key. count_of(prefix) returns how many variants (prefix_1, prefix_2, ...) exist.
 --- Returns prefix, is_generic  -- or nil when nothing exists.
-function logic.resolve_prefix(blind_key, moment, count_of)
+function logic.resolve_prefix(blind_key, moment, count_of, personality, skip_boss)
   if logic.SHARED_MOMENTS[moment] then
     local shared = 'fb_' .. moment
     if count_of(shared) > 0 then return shared, false end
     return nil
   end
-  local specific = 'fb_' .. blind_key .. '_' .. moment
-  if count_of(specific) > 0 then return specific, false end
+  if not skip_boss then
+    local specific = 'fb_' .. blind_key .. '_' .. moment
+    if count_of(specific) > 0 then return specific, false end
+  end
+  if personality then
+    local voiced = 'fb_p_' .. personality .. '_' .. moment
+    if count_of(voiced) > 0 then return voiced, false end
+  end
   local generic = 'fb_generic_' .. moment
   if count_of(generic) > 0 then return generic, true end
   return nil
@@ -851,13 +881,12 @@ end
 
 --- Intro moments with memory. a: {tier, memory (setting), last ('won'|'lost'|nil: the player's
 --- last result against this boss), nemesis (bool), roll (math.random() in [0, 1))}.
---- Full: nemesis_intro (nemesis) or rematch_<last> replaces the shared opener, and the name step
---- becomes generic_name: a boss's own name line ("But I'm The Hook") answers the shared opener.
+--- Full: nemesis_intro (nemesis) or rematch_<last> replaces the name line.
 --- Light: nemesis_intro, or on a REMATCH_CHANCE roll rematch_<last>, replaces the intro.
 function logic.intro_plan(a)
   local seq = logic.intro_sequence(a.tier)
   if not a.memory or #seq == 0 then return seq end
-  local slot = (a.tier == 'full') and 'opener' or 'intro'
+  local slot = (a.tier == 'full') and 'name' or 'intro'
   local swap
   if a.nemesis then
     swap = 'nemesis_intro'
@@ -867,7 +896,7 @@ function logic.intro_plan(a)
   if not swap then return seq end
   local out = {}
   for i, m in ipairs(seq) do
-    if m == slot then out[i] = swap elseif m == 'name' then out[i] = 'generic_name' else out[i] = m end
+    out[i] = (m == slot) and swap or m
   end
   return out
 end
@@ -913,6 +942,371 @@ end
 function logic.phase_achievements(from, to)
   if from == 1 and to == 3 then return {'fb_phase_skipper'} end
   return {}
+end
+
+-- Personalities (1.2) ------------------------------------------------------------------------------
+
+logic.PERSONALITIES = {'bully', 'smug', 'killer', 'venom', 'chaos', 'royal'}
+logic.DEFAULT_PERSONALITY = 'bully'
+
+local PERSONALITY_SET = {}
+for _, k in ipairs(logic.PERSONALITIES) do PERSONALITY_SET[k] = true end
+
+--- A personality as given to register_encounter: the key when valid, otherwise the default and a
+--- warning (nil means "not given": the default, no warning).
+function logic.clean_personality(value)
+  if value == nil then return logic.DEFAULT_PERSONALITY, nil end
+  if PERSONALITY_SET[value] then return value, nil end
+  return logic.DEFAULT_PERSONALITY,
+    ('unknown personality %s, using %s'):format(tostring(value), logic.DEFAULT_PERSONALITY)
+end
+
+-- Reading the run: intro jabs, censor (1.2) -------------------------------------------------------
+
+--- Jokers that beat a boss outright (the jab_counter jab names them as #2#).
+logic.COUNTER_JOKERS = {'j_chicot', 'j_luchador', 'j_matador', 'j_mr_bones'}
+--- Jokers every player knows (the jab_famous jab names them as #2#).
+logic.FAMOUS_JOKERS = {'j_blueprint', 'j_brainstorm', 'j_baron', 'j_dna', 'j_mime', 'j_cavendish',
+  'j_triboulet', 'j_perkeo', 'j_yorick', 'j_caino', 'j_sock_and_buskin', 'j_hologram'}
+--- Jab thresholds: shop rerolls since the previous boss, dollars (broke / loaded), share of the deck in
+--- one suit, deck size (tiny / huge).
+logic.JAB = {rerolls = 5, broke = 3, loaded = 50, onesuit = 0.75, tiny = 30, huge = 70}
+--- Chance that a non-counter jab replaces the boss's own threat (counter jokers always jab).
+logic.JAB_CHANCE = 1 / 3
+
+local FAMOUS_SET = {}
+for _, k in ipairs(logic.FAMOUS_JOKERS) do FAMOUS_SET[k] = true end
+
+--- A vanilla boss's main counter: Chicot for the five final bosses, Luchador for the rest. Its own
+--- counter line (fb_<blind>_jab_counter) is said only for this joker.
+function logic.signature_counter(blind_key)
+  for _, k in ipairs(logic.FINAL_BOSSES) do
+    if k == blind_key then return 'j_chicot' end
+  end
+  return 'j_luchador'
+end
+
+--- The intro jab (at most one per intro; it replaces the threat line), from the run as the blind is set.
+--- s: {jokers (center keys owned), joker_count, joker_slots, skipped (blinds skipped this ante, 0-2),
+--- rerolls (shop rerolls since the previous boss blind), dollars, deck_size, suit_max (cards of the
+--- most common suit), signature (logic.signature_counter of the boss), last_jab (the moment of the
+--- last jab said this run), force (skip the chance roll: the developer key)}.
+--- A counter joker always jabs, with no chance roll: the boss's own signature counter first, else a
+--- random owned counter. Every other jab that applies is one candidate in a flat list (no tiers),
+--- minus the last jab said; with JAB_CHANCE (or force) one is picked uniformly. rand has the
+--- math.random signature: rand() the chance roll, rand(n) the pick. Returns {moment, joker} (joker:
+--- the center key said as #2# for jab_counter and jab_famous) or nil.
+function logic.intro_jab(s, rand)
+  local J = logic.JAB
+  local jokers = s.jokers or {}
+  local owned = {}
+  for _, k in ipairs(jokers) do owned[k] = true end
+  -- A counter joker (the boss's own signature counter first)
+  if s.signature and owned[s.signature] then return {moment = 'jab_counter', joker = s.signature} end
+  local counters = {}
+  for _, k in ipairs(logic.COUNTER_JOKERS) do
+    if owned[k] then counters[#counters + 1] = k end
+  end
+  if #counters > 0 then return {moment = 'jab_counter', joker = counters[rand(#counters)]} end
+  -- Everything else: one flat list
+  local list = {}
+  local function add(moment, applies)
+    if applies and moment ~= s.last_jab then list[#list + 1] = moment end
+  end
+  local skipped = s.skipped or 0
+  add('jab_skipped', skipped == 1)
+  add('jab_skipped_both', skipped >= 2)
+  add('jab_rerolls', (s.rerolls or 0) >= J.rerolls)
+  add('jab_broke', s.dollars ~= nil and s.dollars <= J.broke)
+  add('jab_loaded', s.dollars ~= nil and s.dollars >= J.loaded)
+  local n = s.deck_size or 0
+  add('jab_onesuit', n > 0 and (s.suit_max or 0) >= J.onesuit * n)
+  add('jab_tinydeck', n > 0 and n <= J.tiny)
+  add('jab_hugedeck', n >= J.huge)
+  local count = s.joker_count or #jokers
+  add('jab_nojokers', count == 0)
+  add('jab_fulljokers', count > 0 and s.joker_slots and s.joker_slots > 0 and count >= s.joker_slots)
+  local famous = {}
+  for _, k in ipairs(jokers) do
+    if FAMOUS_SET[k] then famous[#famous + 1] = k end
+  end
+  add('jab_famous', #famous > 0)
+  if #list == 0 then return nil end
+  if not (s.force or rand() < logic.JAB_CHANCE) then return nil end
+  local moment = list[rand(#list)]
+  if moment == 'jab_famous' then return {moment = moment, joker = famous[rand(#famous)]} end
+  return {moment = moment}
+end
+
+--- The intro plan (logic.intro_plan) with its threat replaced by the jab moment (nil: kept), and the
+--- index of the step the jab may take (the director says the jab's own line there; nil when a memory
+--- line kept the slot). Priority: nemesis line > jab > rematch line > threat. The light tier's one
+--- step is the threat ('intro'), a rematch line (the jab replaces it) or the nemesis line (kept); the
+--- full tier always keeps its threat step, so the jab replaces it whatever the name line became.
+function logic.apply_jab(plan, jab_moment)
+  local out, at = {}, nil
+  for i, m in ipairs(plan) do
+    out[i] = m
+    if m == 'intro' then
+      out[i] = jab_moment or 'intro'
+      at = i
+    end
+  end
+  if at then return out, at end
+  if jab_moment then
+    for i, m in ipairs(out) do
+      if m == 'rematch_won' or m == 'rematch_lost' then
+        out[i] = jab_moment
+        return out, i
+      end
+    end
+  end
+  return out, nil
+end
+
+--- The bleep over a line with a censored swear: vanilla's short generic1 blip, high and quiet.
+logic.BLEEP = {sound = 'generic1', pitch = 2.4, volume = 0.45}
+
+--- Whether a line holds a censored swear: a letter followed by one or more '*' ("f***", "sh*t",
+--- "a**"). Any byte of a multi-byte UTF-8 character counts as a letter, so "ク*" and "г*вно" match.
+function logic.has_censored(text)
+  if type(text) ~= 'string' then return false end
+  return text:find('[%a\128-\255]%*') ~= nil
+end
+
+-- Reading the run: in-fight comments, overkill, idle (1.2) ----------------------------------------
+
+--- Moments said on a hand that fired nothing else. The reads are run comments (booked by
+--- logic.note_comment, capped per blind). 'weak' is the boss's own line: it follows the light tier's
+--- spacing and is outside the run-comment caps and the full tier's consecutive-hands rule.
+logic.COMMENTS = {weak = true, read_weakhand = true, read_repeat = true, read_discardspam = true,
+  read_onecard = true}
+logic.READ_ORDER = {'read_repeat', 'read_discardspam', 'read_onecard', 'read_weakhand'}
+logic.WEAK_HANDS = {['High Card'] = true, ['Pair'] = true} -- vanilla hand keys (game.lua:2012-2013)
+logic.REPEAT_STREAK = 3     -- the same hand type this many hands in a row
+logic.DISCARDSPAM_HANDS = 3 -- no discards left with at least this many hands to play, this one included
+logic.OVERKILL_RATIO = 2    -- a winning total at least twice the requirement
+logic.OVERKILL_CHANCE = 0.5 -- chance the overkill line replaces the boss's own defeat line
+logic.COMMENT_CAP = 3       -- run comments per blind for final bosses (full tier)
+logic.IDLE_FIRST = 25       -- seconds without input before the first idle taunt
+logic.IDLE_SECOND = 45      -- seconds after the first before the second
+logic.IDLE_MAX = 2          -- idle taunts per blind
+
+--- How many hands in a row (this one included) used hand_type.
+function logic.next_streak(last_type, streak, hand_type)
+  if hand_type == nil then return 0 end
+  if hand_type == last_type then return (streak or 0) + 1 end
+  return 1
+end
+
+--- The read a scored hand gives (first in READ_ORDER that applies and has not fired this blind).
+--- s: {hand_type, big (hit_size 'big'), streak (logic.next_streak), discards_left, discards_used,
+--- hands_left (after this hand), cards_played}. fired: the encounter's fired set.
+function logic.fight_read(s, fired)
+  fired = fired or {}
+  local hit = {
+    read_repeat = (s.streak or 0) >= logic.REPEAT_STREAK,
+    read_discardspam = s.discards_left == 0 and (s.discards_used or 0) > 0
+      and (s.hands_left or 0) + 1 >= logic.DISCARDSPAM_HANDS,
+    read_onecard = s.cards_played == 1,
+    read_weakhand = (logic.WEAK_HANDS[s.hand_type or ''] and not s.big) and true or false,
+  }
+  for _, m in ipairs(logic.READ_ORDER) do
+    if hit[m] and not fired[m] then return m end
+  end
+  return nil
+end
+
+--- Whether a comment may be said. a: {moment, tier, fired, comments (run comments said this blind),
+--- last_comment_hand, last_line_hand, hand (this hand's id)}. Never below the light tier, never twice
+--- per blind. Light tier: spaced like every in-fight line (logic.line_spaced), and at most one read
+--- per blind ('weak' is the boss's own line: not capped). Full tier: 'weak' is free; a read is
+--- capped at COMMENT_CAP per blind and never on consecutive hands.
+function logic.can_comment(a)
+  if a.tier ~= 'light' and a.tier ~= 'full' then return false end
+  if a.fired and a.fired[a.moment] then return false end
+  if a.tier == 'light' then
+    if not logic.line_spaced(a.hand, a.last_line_hand) then return false end
+    return a.moment == 'weak' or (a.comments or 0) < 1
+  end
+  if a.moment == 'weak' then return true end
+  if (a.comments or 0) >= logic.COMMENT_CAP then return false end
+  if a.last_comment_hand and a.hand and a.hand - a.last_comment_hand <= 1 then return false end
+  return true
+end
+
+--- The comment for a hand that fired nothing else: the weak-hit line (a.weak) first, then a read.
+--- a: logic.fight_read's fields, logic.can_comment's fields (moment is filled in here) and weak.
+function logic.pick_comment(a)
+  local function allowed(moment)
+    local c = {}
+    for k, v in pairs(a) do c[k] = v end
+    c.moment = moment
+    return logic.can_comment(c)
+  end
+  if a.weak and allowed('weak') then return 'weak' end
+  local r = logic.fight_read(a, a.fired)
+  if r and allowed(r) then return r end
+  return nil
+end
+
+--- Book a comment on the encounter (plain saved data): fired and the hand of the last in-fight line
+--- (enc.last_line_hand, the light tier's spacing). A read also counts toward the run-comment cap and
+--- marks the hand it was said on; 'weak' does not.
+function logic.note_comment(enc, moment, hand)
+  enc.fired = enc.fired or {}
+  enc.fired[moment] = true
+  enc.last_line_hand = hand
+  if moment == 'weak' then return end
+  enc.comments = (enc.comments or 0) + 1
+  enc.last_comment_hand = hand
+end
+
+--- The winning hand scored at least OVERKILL_RATIO times the requirement.
+function logic.is_overkill(total, required)
+  if not required or required <= 0 then return false end
+  return (total or 0) >= logic.OVERKILL_RATIO * required
+end
+
+--- Whether an idle taunt is due after idle_for seconds without input; said = taunts said this blind.
+function logic.idle_due(idle_for, said)
+  said = said or 0
+  if said >= logic.IDLE_MAX then return false end
+  return (idle_for or 0) >= (said == 0 and logic.IDLE_FIRST or logic.IDLE_SECOND)
+end
+
+-- Poke and grab the boss chip (1.2) ----------------------------------------------------------------
+-- A click on the boss's chip pokes it; POKE_HARD_CLICKS clicks within POKE_HARD_WINDOW seconds poke it
+-- hard (then not again for POKE_HARD_COOLDOWN seconds); dragging it grabs it, and it springs back home
+-- after GRAB_RETURN seconds. At most one poke or grab line per POKE_LINE_GAP seconds, except a hard
+-- poke, which ignores the gap; the chip's physical reaction always plays. These lines never touch
+-- the fight's bookkeeping (fired, the light tier's spacing, the comment caps).
+logic.POKE_HARD_CLICKS = 3
+logic.POKE_HARD_WINDOW = 2
+logic.POKE_HARD_COOLDOWN = 8
+logic.POKE_LINE_GAP = 4
+logic.GRAB_RETURN = 1.0
+logic.POKE_MOMENTS = {poked = true, poked_hard = true, grabbed = true}
+
+--- Seconds since t. Never booked, or a clock that went back (a Continue in a new session: the times
+--- are saved, the clock is not), counts as long ago.
+local function since(now, t)
+  if t == nil or now < t then return math.huge end
+  return now - t
+end
+
+--- A click on the boss chip at time now (seconds). state: plain data on the encounter (enc.poke =
+--- {clicks = {times}, last_line, last_hard}), updated here. Returns 'poked_hard' (enough clicks in the
+--- window and the hard cooldown over; the window starts over), 'poked' (the line gap is over) or nil
+--- (no line; the caller still plays the jiggle). A hard poke ignores the line gap.
+function logic.poke(state, now)
+  local kept = {}
+  for _, t in ipairs(state.clicks or {}) do
+    if since(now, t) < logic.POKE_HARD_WINDOW then kept[#kept + 1] = t end
+  end
+  kept[#kept + 1] = now
+  state.clicks = kept
+  if #kept >= logic.POKE_HARD_CLICKS and since(now, state.last_hard) >= logic.POKE_HARD_COOLDOWN then
+    state.clicks = {}
+    state.last_hard, state.last_line = now, now
+    return 'poked_hard'
+  end
+  if since(now, state.last_line) >= logic.POKE_LINE_GAP then
+    state.last_line = now
+    return 'poked'
+  end
+  return nil
+end
+
+--- The boss chip was grabbed (a drag started) at time now: 'grabbed' when the line gap is over, else nil.
+function logic.grab(state, now)
+  if since(now, state.last_line) < logic.POKE_LINE_GAP then return nil end
+  state.last_line = now
+  return 'grabbed'
+end
+
+--- The line bookkeeping of a poke state before a poke or grab books it: {last_hard, last_line}.
+function logic.poke_marks(state)
+  return {last_hard = state.last_hard, last_line = state.last_line}
+end
+
+--- A poke or grab line was not shown after all (the dialogue dropped it): put the line bookkeeping
+--- back to marks (logic.poke_marks), so the line gap and the hard cooldown are not spent on silence.
+--- The click window is not restored (the physical reaction did play).
+function logic.poke_unsaid(state, marks)
+  state.last_hard, state.last_line = marks.last_hard, marks.last_line
+end
+
+--- Whether the boss chip reacts to a poke or a grab right now. a: {boss (a boss encounter), ended,
+--- same_blind (the encounter is this blind's), tier, playing (G.STATE is SELECTING_HAND or HAND_PLAYED),
+--- intro (intro lines running), cinematic, overlay (a menu or overlay is open), paused, won (the
+--- winning hand is in or the finale plays: the boss is beaten, Blind:defeat has not run yet)}.
+function logic.poke_allowed(a)
+  if not (a.boss and not a.ended and a.same_blind) or a.won then return false end
+  if a.tier ~= 'light' and a.tier ~= 'full' then return false end
+  if not a.playing then return false end
+  if a.intro or a.cinematic or a.overlay or a.paused then return false end
+  return true
+end
+
+-- The chip's physical reaction per personality: juice (juice_up amount) and rot (its rotation), shake
+-- (seconds of jitter) and shake_amp, flash (colour name) and flash_time, recoil (how far it is knocked
+-- back), bounces (extra juices after the first), giggle ('short' | 'full': the boss's laugh), jiggle
+-- (screen jiggle, a screen effect). A hard poke is stronger.
+logic.POKE_REACTIONS = {
+  bully = {
+    poked = {juice = 0.35, rot = 0.3, shake = 0.25, shake_amp = 0.08, flash = 'red', flash_time = 0.15},
+    poked_hard = {juice = 0.6, rot = 0.45, shake = 0.5, shake_amp = 0.14, flash = 'red', flash_time = 0.3, jiggle = 1},
+  },
+  killer = {
+    poked = {juice = 0.06, rot = 0.02},
+    poked_hard = {juice = 0.12, rot = 0.04, shake = 0.1, shake_amp = 0.02},
+  },
+  royal = {
+    poked = {juice = 0.25, rot = 0.15, recoil = 0.25},
+    poked_hard = {juice = 0.45, rot = 0.25, recoil = 0.5, flash = 'white', flash_time = 0.1},
+  },
+  smug = {
+    poked = {juice = 0.12, rot = 0.3},
+    poked_hard = {juice = 0.25, rot = 0.45},
+  },
+  venom = {
+    poked = {juice = 0.15, rot = 0.06},
+    poked_hard = {juice = 0.3, rot = 0.1, flash = 'poison', flash_time = 0.2},
+  },
+  chaos = {
+    poked = {juice = 0.3, rot = 0.2, bounces = 1, giggle = 'short'},
+    poked_hard = {juice = 0.45, rot = 0.3, bounces = 3, giggle = 'full'},
+  },
+}
+logic.POKE_FLASH = 0.08 -- reduced motion: a recipe without a flash gets a short white one instead
+local MOTION = {'juice', 'rot', 'shake', 'shake_amp', 'recoil', 'bounces', 'jiggle'}
+
+--- The physical reaction (a copy of a POKE_REACTIONS recipe) of a personality's chip to kind ('poked',
+--- 'poked_hard' or 'grabbed': the poked recipe without the recoil, since the chip is in the hand).
+--- Unknown personalities react as DEFAULT_PERSONALITY. reduced (reduced motion): flashes and sounds only.
+function logic.poke_reaction(personality, kind, reduced)
+  local set = logic.POKE_REACTIONS[personality] or logic.POKE_REACTIONS[logic.DEFAULT_PERSONALITY]
+  local r = {}
+  for k, v in pairs(set[kind == 'poked_hard' and 'poked_hard' or 'poked']) do r[k] = v end
+  if kind == 'grabbed' then r.recoil = nil end
+  if reduced then
+    for _, k in ipairs(MOTION) do r[k] = nil end
+    if not r.flash then r.flash, r.flash_time = 'white', logic.POKE_FLASH end
+  end
+  return r
+end
+
+--- Every personality has a line for each of these (fb_p_<personality>_<moment>_N; tools/check_loc.py).
+logic.PERSONALITY_MOMENTS = {'jab_counter', 'jab_skipped', 'jab_skipped_both', 'jab_rerolls', 'jab_broke',
+  'jab_loaded', 'jab_onesuit', 'jab_tinydeck', 'jab_hugedeck', 'jab_nojokers', 'jab_fulljokers', 'jab_famous',
+  'read_weakhand', 'read_repeat', 'read_discardspam', 'read_onecard', 'idle', 'overkill',
+  'poked', 'poked_hard', 'grabbed'}
+logic.PERSONALITY_VARIANTS = {read_weakhand = 2, read_repeat = 2, read_discardspam = 2, read_onecard = 2,
+  idle = 2, overkill = 2, poked = 3, poked_hard = 3, grabbed = 3}
+
+function logic.personality_variants(moment)
+  return logic.PERSONALITY_VARIANTS[moment] or 1
 end
 
 return logic

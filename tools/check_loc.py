@@ -9,6 +9,7 @@ colour tags {X:..}...{} balanced (scanned in order), no empty values, #n# placeh
 identical to English, gloat lines (Jimbo says them on the game-over screen) are only the line:
 no "Name:" header line, not wrapped in quotation marks. A name ending in .lua is used as a file
 path (default.lua stays the base).
+Every personality (src/logic.lua PERSONALITIES) has a line for every run moment (PERSONALITY_MOMENTS, with personality_variants of each).
 """
 import pathlib
 import re
@@ -91,6 +92,19 @@ def gloat_problem(lines):
     return None
 
 
+def personality_problems(lua, data):
+    """Every personality has every run moment, with its variants (src/logic.lua is the source)."""
+    logic = lua.execute((ROOT / 'src' / 'logic.lua').read_text(encoding='utf-8'))
+    out = []
+    for p in logic['PERSONALITIES'].values():
+        for m in logic['PERSONALITY_MOMENTS'].values():
+            for i in range(1, int(logic.personality_variants(m)) + 1):
+                key = f'quips.fb_p_{p}_{m}_{i}'
+                if key not in data:
+                    out.append(f'missing personality line {key}')
+    return out
+
+
 def main(names):
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8')
@@ -110,6 +124,7 @@ def main(names):
             errors.append(f'{path.name}: load error: {e}')
             continue
         errors.extend(f'{path.name}: {p}' for p in problems)
+        errors.extend(f'{path.name}: {p}' for p in personality_problems(lua, data))
         for key, lines in data.items():
             for line in lines:
                 why = tag_problem(line)

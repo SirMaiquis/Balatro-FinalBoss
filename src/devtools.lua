@@ -3,7 +3,10 @@
 ---       round or in the shop, before the blind-select screen appears (that screen reads its own ref_table).
 ---   Shift+F5: cycle the forced boss through the 23 regular vanilla bosses (step after the last clears it).
 ---   F6: fire the next moment (big_hand, close, last_hand, disabled, defeat)
+---   Shift+F6: fake the next run state (skipped, rerolls, broke, loaded, one suit, counter, famous) and
+---       say the jab it gives now
 ---   F7: dump FinalBoss state to the Lovely log
+---   Shift+F7: an idle taunt now
 ---   F8: push the current final boss to its next phase (cinematic showdowns)
 ---   F9: make the current boss your nemesis (profile memory) and show it
 local DT = {}
@@ -30,6 +33,8 @@ end}
 
 SMODS.Keybind{key_pressed = 'f7', action = function()
   if not DT.on() then return end
+  local held = G.CONTROLLER and G.CONTROLLER.held_keys or {}
+  if held.lshift or held.rshift then return end -- the Shift variant below
   local blind = G.GAME.blind
   FinalBoss.util.log('info', 'dev: state = ' .. FinalBoss.util.dump(G.GAME.FinalBoss))
   FinalBoss.util.log('info', 'dev: memory = ' .. FinalBoss.util.dump(FinalBoss.memory.data()))
@@ -44,6 +49,8 @@ DT.moment_idx = 0
 --- F6: fire the next moment (forced, ignores once-per-blind and cooldown).
 SMODS.Keybind{key_pressed = 'f6', action = function()
   if not DT.on() then return end
+  local held = G.CONTROLLER and G.CONTROLLER.held_keys or {}
+  if held.lshift or held.rshift then return end -- the Shift variant below
   DT.moment_idx = DT.moment_idx % #DT.MOMENTS + 1
   local moment = DT.MOMENTS[DT.moment_idx]
   -- 'defeat' says the nemesis's own defeat line when this boss is the nemesis, like the real one.
@@ -96,5 +103,38 @@ SMODS.Keybind{key_pressed = 'f9', action = function()
   local ok, key = FinalBoss.util.guard('dev_f9', FinalBoss.memory.fake_nemesis)
   FinalBoss.util.log('info', 'dev: fake nemesis -> ' .. tostring(ok and key))
 end}
+
+--- Shift+F6: the next fake run state, said as a jab now (observe.dev_jab).
+DT.JABS = {
+  {name = 'skipped', state = {skipped = 1}},
+  {name = 'rerolls', state = {rerolls = 7}},
+  {name = 'broke', state = {dollars = 0}},
+  {name = 'loaded', state = {dollars = 99}},
+  {name = 'onesuit', state = {suit_max = 45}},
+  {name = 'counter', state = {counter = true}},
+  {name = 'famous', state = {jokers = {'j_blueprint'}}},
+}
+DT.jab_idx = 0
+
+local function fake_jab()
+  if not DT.on() or not FinalBoss.director.enabled() then return end
+  DT.jab_idx = DT.jab_idx % #DT.JABS + 1
+  local fake = DT.JABS[DT.jab_idx]
+  local ok, said = FinalBoss.util.guard('dev_jab', FinalBoss.observe.dev_jab, fake.state)
+  FinalBoss.util.log('info', ('dev: jab %s -> %s'):format(fake.name, tostring(ok and said)))
+end
+
+SMODS.Keybind{key_pressed = 'f6', held_keys = {'lshift'}, action = fake_jab}
+SMODS.Keybind{key_pressed = 'f6', held_keys = {'rshift'}, action = fake_jab}
+
+--- Shift+F7: an idle taunt now (forced: no cooldown, no idle count).
+local function force_idle()
+  if not DT.on() or not FinalBoss.director.enabled() then return end
+  local ok, fired = FinalBoss.util.guard('dev_idle', FinalBoss.director.fire, 'idle', {force = true})
+  FinalBoss.util.log('info', 'dev: idle -> ' .. tostring(ok and fired))
+end
+
+SMODS.Keybind{key_pressed = 'f7', held_keys = {'lshift'}, action = force_idle}
+SMODS.Keybind{key_pressed = 'f7', held_keys = {'rshift'}, action = force_idle}
 
 return DT

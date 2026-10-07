@@ -2,7 +2,7 @@
 
 ![Final Boss](https://raw.githubusercontent.com/SirMaiquis/Balatro-FinalBoss/main/thumbnail.jpg)
 
-Bosses talk back. Every boss blind gets a short line of dialogue when it starts, reacts to your big hands, close calls and last hand, and gloats if you lose to it. Showdown bosses go further: a roaming boss avatar with an HP bar, a cinematic intro, their own music, screen effects and a slow-motion explosive finale. You also decide when showdowns appear, so you can have a final boss every 8 antes like vanilla or much sooner. Every boss also performs a visible move when its effect hits, final bosses transform at 50% and 25% HP and die their own way, and bosses remember you across runs: rematch lines, a nemesis and ten achievements.
+Bosses talk back, and they are savage about it: every boss trash-talks in its own personality and reads your run. Every boss blind gets a short line of dialogue when it starts, reacts to your big hands, close calls and your last hand (before you play it), and gloats if you lose to it. Showdown bosses go further: a roaming boss avatar with an HP bar, a cinematic intro, their own music, screen effects and a slow-motion explosive finale. You also decide when showdowns appear, so you can have a final boss every 8 antes like vanilla or much sooner. Every boss also performs a visible move when its effect hits, final bosses transform at 50% and 25% HP and die their own way, and bosses remember you across runs: rematch lines, a nemesis and ten achievements.
 
 ## Requirements
 
@@ -16,7 +16,7 @@ Bosses talk back. Every boss blind gets a short line of dialogue when it starts,
 
 **By hand:**
 
-1. Download `FinalBoss-v1.1.0.zip` from the [releases page](https://github.com/SirMaiquis/Balatro-FinalBoss/releases).
+1. Download `FinalBoss-v1.2.0.zip` from the [releases page](https://github.com/SirMaiquis/Balatro-FinalBoss/releases).
 2. Extract it into `%AppData%\Balatro\Mods\` so the files end up in `%AppData%\Balatro\Mods\FinalBoss\`.
 3. Start Balatro. The mod appears in the Mods menu as "Final Boss" with its own config tabs.
 
@@ -28,8 +28,9 @@ Every boss blind gets a tier. The tier decides how much of the show it gets.
 
 | | Light (regular bosses) | Full (showdowns) |
 |---|---|---|
-| Intro | 1 line (the boss's threat) | opener, boss name, threat, closer |
-| Reactions (big hand, close call, last hand, boss disabled) | at most 1 per blind | each once per blind |
+| Intro | 1 line (the boss's threat, or a jab at your run) | 2 lines: boss name (or the rematch or nemesis line), then threat or jab |
+| Reactions (big hand, close call, last hand, boss disabled) | each once per blind; at most 1 line per hand and never on two hands in a row (last hand and boss disabled excepted) | each once per blind |
+| Run comments (weak hit, reads) | each once per blind, spaced like the reactions; at most 1 read per blind | each once per blind; at most 3 reads per blind, never on two hands in a row |
 | Defeat | a line | a line and the shatter effect (the explosive finale when `cinematic` is on) |
 | Music | vanilla | a FinalBoss showdown track |
 | Screen effects (vignette, shake, flash) | none | yes |
@@ -40,7 +41,7 @@ Reaction triggers:
 
 - Big hand: a single hand scores at least 30% of the blind requirement.
 - Close: your running total is at least 75% of the requirement but you have not won yet.
-- Last hand: you have no hands left and have not reached the requirement.
+- Last hand: a hand leaves you on your final hand, still short of the requirement. The boss taunts you before you play it.
 - Disabled: the boss was disabled (for example by Chicot). A disabled final boss says it again when it gets angry at 50% and 25% health (see "Final bosses: deaths and phases").
 - Defeat: the hand that reaches the requirement.
 
@@ -52,11 +53,42 @@ If several reactions would fire on the same hand, only one plays (last hand, the
 
 Regular bosses are light tier from the ante set in `min_ante` onward. Showdown bosses are always full tier. Mods can override the tier per boss (see below). An explicit `'light'` or `'full'` tier ignores `min_ante` and whether the boss is a showdown.
 
+### Savage bosses that read your run
+
+Bosses trash-talk. Each one has a personality that sets its voice:
+
+| Personality | Voice | Bosses |
+|---|---|---|
+| Bully | blunt, loud, physical threats | The Ox, The Wall, The Tooth, The Club, The Goad |
+| Smug genius | condescending | The Psychic, The Eye, The Mark, The Window |
+| Cold killer | quiet, clinical | The Needle, The Manacle, The Pillar, The Serpent, The Hook |
+| Sweet venom | sweet-talking, poisonous | Crimson Heart, Verdant Leaf, The Plant, The Head |
+| Chaos gremlin | manic, giggling | The Wheel, The Flint, The Fish, Amber Acorn |
+| Royal snob | aristocratic disdain | The House, The Arm, The Mouth, The Water, Violet Vessel, Cerulean Bell |
+
+Every boss speaks in its own lines: its threat, its reactions, its defeat line. The personality adds the rest: run jabs, comments on your play, idle taunts, the overkill line and poke reactions. They roast your play, your build and your luck. Swearing is censored with asterisks and a short bleep; there are no slurs and nothing about real people or groups. Turning Boss dialogue off silences everything below.
+
+- **Intro threat.** The intro line is a threat that hints at the boss's effect (the game already explains it).
+- **Intro jabs.** About one intro in three, when your run gives the boss something to say, a jab replaces the threat: you skipped blinds this ante, rerolled the shop 5+ times since the last boss, have $3 or less or $50 or more, a deck with 75% of one suit, 30 cards or fewer or 70 or more, no jokers or a full joker row, or a famous joker (Blueprint, Brainstorm, Baron, DNA, Mime, Cavendish, Triboulet, Perkeo, Yorick, Canio, Sock and Buskin, Hologram). Any jab that applies may be picked, but never the one you got last. Counter jokers are always called out: Chicot, Luchador, Matador, Mr. Bones. Each vanilla boss has its own line for its main counter (Chicot for final bosses, Luchador for the rest), and since Chicot disables the boss before its intro, that line comes as the boss is disabled. A nemesis line is never replaced by a jab.
+- **Reading your play.** When a hand triggers no other reaction, the boss may comment: a weak hit (under 10% of the requirement; final bosses laugh first), High Card or a Pair, the same hand type three times in a row, no discards left with 3 or more hands to play (this one included), a single card played. Each comment once per blind, never on the winning hand. A regular boss says at most one of these per blind besides the weak hit, and only when its spacing allows (at most one line every other hand); a final boss makes at most three, never on two hands in a row.
+- **Overkill.** Win with a hand that brings your total to twice the requirement and, half the time, the boss's last words are its overkill line instead of its defeat line.
+- **Idle taunts.** Choosing cards and touching nothing for 25 seconds makes the boss impatient; a second taunt comes 45 seconds later, never a third. Any key, click, controller button or card selection restarts the clock; menus, pauses and intros stop it.
+
+### Poke the boss
+
+During a boss fight, the boss chip in the HUD is yours to bother (in a showdown, the roaming boss avatar while it is on the table).
+
+- **Poke.** Click it: it jiggles and says something.
+- **Poke hard.** Click it 3 times within 2 seconds: a bigger reaction and a harsher line (then not again for 8 seconds).
+- **Grab.** Drag it: it springs back after about a second, even while you hold it, and the boss reacts as it returns.
+
+Each personality takes it its own way: the bully is furious (a red flash and an angry shake), the cold killer barely moves and threatens you, the royal snob recoils, offended, the smug genius talks down to you, sweet venom is sweet until you poke hard, then poisonous, and the chaos gremlin laughs. The chip always reacts; a line comes at most every 4 seconds, though three quick pokes get their answer right away (once per 8 seconds). Pokes never use up the boss's reactions or comments. They do nothing during intros, cinematics, menus or pauses, once the winning hand is in, nor before the ante where boss dialogue starts (`min_ante`). With Boss dialogue off the chip still reacts, silently. Reduced motion keeps the flashes and sounds but drops the movement.
+
 ### Showdown stage
 
 Showdowns (full tier) get a stage of their own. None of it appears for regular bosses.
 
-- **Roaming boss avatar.** A large chip with the boss's own art sits on the table. It bobs and lives right of the play area, above the deck; while you choose cards it glides between a few open spots where its HP bar stays clear of your cards, and it stops while it talks. When you play a hand it returns to the right of the play area until the hand resolves. Its speech bubbles are drawn above your cards. The boss reacts when your score lands: each hand makes it flash and flinch, a hand under 10% of the boss's health makes it shrug off the hit and laugh (a distinct "ha-ha-ha": it hops and tilts, and its line waits until the laugh ends), and it gets wounded: below 50% it cracks and bobs faster, below 25% it cracks more and trembles. While the boss is on the table, its HUD chip steps out of the HUD and returns when it leaves. Click it to skip an intro line.
+- **Roaming boss avatar.** A large chip with the boss's own art sits on the table. It bobs and lives right of the play area, above the deck; while you choose cards it glides between a few open spots where its HP bar stays clear of your cards, and it stops while it talks. When you play a hand it returns to the right of the play area until the hand resolves. Its speech bubbles are drawn above your cards. The boss reacts when your score lands: each hand makes it flash and flinch, a hand under 10% of the boss's health makes it shrug off the hit and laugh (a distinct "ha-ha-ha": it hops and tilts, and its line waits until the laugh ends), and it gets wounded: below 50% it cracks and bobs faster, below 25% it cracks more and trembles. While the boss is on the table, its HUD chip steps out of the HUD and returns when it leaves. Click it to skip an intro line; during the fight, click or drag it to poke the boss (see "Poke the boss").
 - **HP bar and damage numbers.** Under the avatar: the boss name, a vanilla-style pixel bar (the same rounded, stepped bars as the game's own progress bars) in the boss's colour and `remaining / max`. The bar is drawn under your cards, so a card that overlaps it stays on top; damage numbers and speech bubbles still draw above. Each hand drops the bar at once and leaves a white trail that drains, and a damage number pops up above the avatar (big hands bigger, tiny hands small and grey). The bar flashes at 50% and 25%.
 - **Cinematic intro.** Black bars slide in, a dark band with the "SHOWDOWN" title and the boss name slams in across the screen (above the boss-effect text) and holds for a moment, and the avatar falls onto the table before it speaks. Press any key to jump straight to the avatar and its dialogue (a click works once the avatar has landed). Press again to advance a line; press twice quickly to skip the rest. The title card draws above your cards. Continue never replays the intro.
 - **Slow-motion explosive finale.** When the winning score lands, the game slows for under a second while the avatar cracks and shows its defeat line, then it explodes into shards with a flash in the boss's colour (the flash needs `fx`); the five vanilla final bosses die their own way instead (see "Final bosses: deaths and phases"). Playing a hand during the title card cuts the intro: the avatar lands at once, snaps at you and says its interrupted line (no intro dialogue).
@@ -89,7 +121,7 @@ Continue mid-showdown restores the phase, stance, marker and twists without repl
 
 ### Memory, nemesis and achievements
 
-- **Memory.** Bosses remember your results across runs, per Balatro profile (fights, wins and losses per boss). Seeded and challenge runs count too. A final boss you have met before opens with a rematch line instead of the shared opener (sore if you won last time, smug if you lost); a regular boss says its rematch line instead of its threat about half the time. After a rematch or nemesis opener the next line is the generic "I am ...!" line.
+- **Memory.** Bosses remember your results across runs, per Balatro profile (fights, wins and losses per boss). Seeded and challenge runs count too. A final boss you have met before opens with a rematch line instead of its name line (sore if you won last time, smug if you lost); a regular boss says its rematch line instead of its threat about half the time.
 - **Nemesis.** The boss that has beaten you most, at least 3 times, becomes your nemesis (a tie goes to the more recent loss). A nemesis always greets you with a nemesis line. In a showdown the title card reads **NEMESIS** instead of SHOWDOWN and the avatar glows crimson; a regular nemesis gets a red NEMESIS tag over its chip and a faint crimson aura. When you beat it, it says its own defeat line while a gold "NEMESIS DEFEATED" banner, a gong and a gold burst play. A defeated nemesis loses the title until it beats you again.
 - **Achievements.** Ten Steamodded achievements (Mods menu, Final Boss, Achievements tab):
   - Showdown Survivor: defeat a final boss
@@ -117,7 +149,7 @@ Set in the Mods menu (Final Boss). The Config tab groups the boss dialogue setti
 
 | Key | What it does | Default |
 |---|---|---|
-| `dialogue` | Boss and Jimbo lines (intros, reactions, defeat, gloat) | `true` |
+| `dialogue` | Boss and Jimbo lines (intros, jabs, reactions, comments on your play, idle taunts, poke lines, defeat, gloat) and the bleep. Off, a poked boss still reacts, silently | `true` |
 | `music` | The FinalBoss showdown track (Adam Isiah's orchestral cover) during full-tier encounters | `true` |
 | `cinematic` | Showdown cinematics: avatar, HP bar, damage numbers, intro and finale. The arena follows `fx`; the music pitch-up in the final stretch needs both `fx` and `music` | `true` |
 | `fx` | Screen effects: vignette, shake, flash, shatter. They only run in full-tier encounters. Also controls the boss-coloured arena of showdowns. Respects Balatro's reduced motion and screenshake settings. Under reduced motion the shake and the vignette animation are off (the vignette stays at a fixed strength), while the background flash and the defeat burst still run | `true` |
@@ -129,13 +161,13 @@ Set in the Mods menu (Final Boss). The Config tab groups the boss dialogue setti
 | `showdown.enabled` | Use the extra showdown schedule | `false` |
 | `showdown.start_ante` | First scheduled showdown ante (1 to 8) | `8` |
 | `showdown.every` | Interval between scheduled showdowns (1 to 8) | `8` |
-| `dev_mode` | Developer keys while in a run: F5 cycle the forced boss through the 5 vanilla showdowns (the 6th press clears it; press it during a round or in the shop, before the blind-select screen appears), Shift+F5 does the same through the 23 regular vanilla bosses, F6 fire the next moment (cycles big hand, close, last hand, disabled, defeat), F7 dump state and boss memory to the Lovely log, F8 push the current final boss to its next phase (needs the avatar on the table), F9 make the current boss your nemesis (saved in the profile; a fight against a boss faked this way does not count for Nemesis Slayer) | `false` |
+| `dev_mode` | Developer keys while in a run: F5 cycle the forced boss through the 5 vanilla showdowns (the 6th press clears it; press it during a round or in the shop, before the blind-select screen appears), Shift+F5 does the same through the 23 regular vanilla bosses, F6 fire the next moment (cycles big hand, close, last hand, disabled, defeat), Shift+F6 fake a run state and say the jab it gives (cycles skipped, rerolls, broke, loaded, one suit, counter, famous), F7 dump state and boss memory to the Lovely log, Shift+F7 force an idle taunt, F8 push the current final boss to its next phase (needs the avatar on the table), F9 make the current boss your nemesis (saved in the profile; a fight against a boss faked this way does not count for Nemesis Slayer) | `false` |
 
 The dialogue, music, FX and cinematic toggles are independent. Any combination works, for example music and effects with no dialogue.
 
 ## For mod authors
 
-Bosses added by other mods work with zero effort: a boss with no entry and no lines gets the generic lines automatically, with the boss name filled in. To give your boss its own voice, register an encounter and add localization lines.
+Bosses added by other mods work with zero effort: a boss with no entry and no lines gets the generic lines automatically, with the boss name filled in. To give your boss its own voice, register an encounter and add localization lines. Every boss also gets the run comments and poke reactions of its personality (default bully).
 
 ```lua
 if FinalBoss and FinalBoss.register_encounter then
@@ -155,6 +187,7 @@ Always check that `FinalBoss` exists first so your mod still works without it. R
 | `blind` | Required. Full blind key, for example `'bl_hook'` or your prefixed key | |
 | `tier` | `'auto'`, `'light'` or `'full'`. Auto means showdown bosses are full and the rest are light. An unknown value falls back to `'auto'` with a warning. A forced `'full'` on a boss that is not a showdown gets full dialogue but not the showdown stage (avatar, HP bar, cinematics and arena are showdown-only) | `'auto'` |
 | `voice` | `{pitch = n}`: pitch of the vanilla voice blips for the boss's lines | `{pitch = 1.0}` |
+| `personality` | `'bully'`, `'smug'`, `'killer'`, `'venom'`, `'chaos'` or `'royal'`: whose lines (jabs, reads, idle taunts, overkill, poke and grab) your boss uses when it has no line of its own, and how its chip reacts to a poke. An unknown value falls back to `'bully'` with a warning | `'bully'` |
 | `music` | `nil` uses FinalBoss's showdown track. A full prefixed sound key string, or a list of them, picks from your own tracks (full tier only). See "Custom music" below | `nil` |
 | `fx` | `{intro = name, defeat = name}` with names from `pulse`, `shake`, `flash`, `shatter`, `phase_shift`. An unknown name is ignored with a warning. They only run in full-tier encounters | `{intro = 'pulse', defeat = 'shatter'}` |
 | `moves` | Boss moves: a table of trigger kind to recipe (see "Boss moves for your boss"). Unknown kinds, effects or targets are dropped with a warning. A boss without `moves` bursts on the `generic` trigger | `nil` |
@@ -249,10 +282,8 @@ All text lives in `misc.quips` in your mod's localization. Each moment can have 
 
 | Moment | Key pattern | Scope |
 |---|---|---|
-| opener | `fb_opener_<n>` | shared (full intro only) |
-| name | `fb_<blind>_name_<n>` | per boss |
+| name | `fb_<blind>_name_<n>` | per boss (full intro only) |
 | intro | `fb_<blind>_intro_<n>` | per boss (the threat line) |
-| closer | `fb_closer_<n>` | shared (full intro only) |
 | big hand | `fb_<blind>_big_hand_<n>` | per boss |
 | close | `fb_<blind>_close_<n>` | per boss |
 | last hand | `fb_<blind>_last_hand_<n>` | per boss |
@@ -263,10 +294,17 @@ All text lives in `misc.quips` in your mod's localization. Each moment can have 
 | phase 2 / phase 3 | `fb_<blind>_phase2_<n>`, `fb_<blind>_phase3_<n>` | per boss (said when a showdown boss transforms) |
 | rematch (you won last time / lost last time) | `fb_<blind>_rematch_won_<n>`, `fb_<blind>_rematch_lost_<n>` | per boss |
 | nemesis | `fb_nemesis_intro_<n>`, `fb_nemesis_defeat_<n>` | shared, no generic fallback (`#1#` is the boss name) |
+| weak | `fb_<blind>_weak_<n>` | per boss (a hand under 10% of the requirement) |
+| overkill | `fb_<blind>_overkill_<n>` | per boss, usually left to the personality (replaces the defeat line half the time) |
+| idle | `fb_<blind>_idle_<n>` | per boss, usually left to the personality |
+| intro jabs | `fb_<blind>_jab_<trigger>_<n>`, triggers `counter`, `skipped`, `skipped_both`, `rerolls`, `broke`, `loaded`, `onesuit`, `tinydeck`, `hugedeck`, `nojokers`, `fulljokers`, `famous` | per boss, usually left to the personality (`#2#` is the joker in `counter` and `famous`; a boss's own `counter` line is only used for its main counter: Chicot for the five vanilla final bosses, Luchador for every other boss) |
+| reads | `fb_<blind>_read_<trigger>_<n>`, triggers `weakhand`, `repeat`, `discardspam`, `onecard` | per boss, usually left to the personality |
+| poke, hard poke, grab | `fb_<blind>_poked_<n>`, `fb_<blind>_poked_hard_<n>`, `fb_<blind>_grabbed_<n>` | per boss, usually left to the personality |
+| personality | `fb_p_<personality>_<moment>_<n>` | shared by every boss of that personality |
 
-`<blind>` is the full blind key, for example `bl_hook`. For each moment FinalBoss tries the boss-specific key first, then `fb_generic_<moment>_<n>`, and otherwise skips the moment. The shared `opener`, `closer` and nemesis lines have no generic fallback: if none exist, they are skipped. A rematch or nemesis line replaces the opener of a showdown (in light tier it replaces the boss's threat line, and a rematch line does so only about half the time), and in a showdown the line after it is then the shared `fb_generic_name_<n>` line ("I am ...!") instead of the boss's own name line. A raw key is never shown to the player. Generic lines receive the boss name as `#1#`.
+`<blind>` is the full blind key, for example `bl_hook`. For each moment FinalBoss tries the boss-specific key first, then the boss's personality (`fb_p_<personality>_<moment>_<n>`), then `fb_generic_<moment>_<n>`, and otherwise skips the moment. The shared nemesis lines have no generic fallback: if none exist, they are skipped. A rematch or nemesis line replaces the name line of a showdown (in light tier it replaces the boss's threat line, and a rematch line does so only about half the time). A raw key is never shown to the player. Generic lines receive the boss name as `#1#`.
 
-Writing tips: each quip is 1 or 2 lines, and each line should stay under about 24 visible characters so it fits the speech bubble. A gloat line is spoken by Jimbo on the game-over screen, mocking you with the boss's catchphrase: write only the line itself (no "Name:" header, no quotation marks) and no placeholders.
+Writing tips: each quip is 1 or 2 lines, and each line should stay under about 24 visible characters so it fits the speech bubble. A gloat line is spoken by Jimbo on the game-over screen, mocking you with the boss's catchphrase: write only the line itself (no "Name:" header, no quotation marks) and no placeholders. A line with a censored word (a letter followed by `*`, for example `sh*t`) plays a short bleep, so do not use asterisks for actions.
 
 ## Compatibility
 
