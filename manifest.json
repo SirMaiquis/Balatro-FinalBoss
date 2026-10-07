@@ -1,8 +1,8 @@
 {
     "name": "FinalBoss",
-    "version_number": "1.1.0",
+    "version_number": "1.2.0",
     "website_url": "https://github.com/SirMaiquis/Balatro-FinalBoss",
-    "description": "Bosses talk back in 15 languages and strike with signature moves. Showdowns become cinematic fights with HP bars, phase changes and an explosive finale. Bosses remember you, and you decide when final bosses appear.",
+    "description": "Bosses trash-talk you in 15 languages, read your run and strike with signature moves. Showdowns become cinematic fights with HP bars, phase changes and an explosive finale. Bosses remember you, and you decide when final bosses appear.",
     "dependencies": [
         "Steamodded-Steamodded-26.829.0",
         "Thunderstore-lovely-0.9.0"
