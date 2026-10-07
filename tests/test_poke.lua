@@ -142,17 +142,19 @@ T['a drag inside the click distance is not a grab'] = function()
   eq(#ctx.reactions, 0); eq(ctx.K.grab, nil)
 end
 
-T['a drag past the click distance grabs: reaction, line, then the chip is let go'] = function()
+T['a drag past the click distance grabs; the chip is let go, then the boss reacts'] = function()
   local ctx = setup()
   drag_to(ctx, 3, 1)
   ctx.K.tick()
-  eq(#ctx.reactions, 1); eq(ctx.fired[1], 'grabbed'); eq(ctx.opts[1].free, true)
+  eq(#ctx.reactions, 0, 'nothing while it is held')
   ctx.now = 100.5; ctx.K.tick()
   eq(G.CONTROLLER.dragging.target, ctx.blind, 'still held')
+  eq(#ctx.reactions, 0)
   ctx.now = 101; ctx.K.tick()
   eq(G.CONTROLLER.dragging.target, nil, 'let go after GRAB_RETURN')
   eq(ctx.blind.states.drag.is, false); eq(ctx.blind.stopped, 1)
   eq(ctx.K.grab, nil)
+  eq(#ctx.reactions, 1); eq(ctx.fired[1], 'grabbed'); eq(ctx.opts[1].free, true)
   ctx.now = 101.1; ctx.K.tick()
   eq(#ctx.reactions, 1, 'one grab, one reaction')
 end
@@ -162,7 +164,10 @@ T['the release of a grab is not a poke'] = function()
   drag_to(ctx, 3, 1)
   ctx.K.tick()
   ctx.K.on_click(ctx.blind) -- the controller clicks before the tick sees the drag end
-  eq(#ctx.reactions, 1)
+  eq(#ctx.reactions, 0, 'no poke')
+  G.CONTROLLER.dragging.target = nil -- the player let go early
+  ctx.K.tick()
+  eq(#ctx.reactions, 1, 'the grab reacts as the chip goes home'); eq(ctx.fired[1], 'grabbed')
 end
 
 T['a chip let go while the button is held is never clicked by that release'] = function()
@@ -189,6 +194,7 @@ T['a grab after a poke: reaction, no line inside the gap'] = function()
   ctx.now = 101
   drag_to(ctx, 3, 1)
   ctx.K.tick()
+  ctx.now = 102; ctx.K.tick()
   eq(#ctx.reactions, 2); eq(#ctx.fired, 1)
 end
 
@@ -198,7 +204,7 @@ T['a grab is let go at once when pokes stop being allowed'] = function()
   ctx.K.tick()
   G.OVERLAY_MENU = {}
   ctx.K.tick()
-  eq(G.CONTROLLER.dragging.target, nil); eq(ctx.K.grab, nil)
+  eq(G.CONTROLLER.dragging.target, nil); eq(ctx.K.grab, nil) ; eq(#ctx.reactions, 0, 'no reaction when a menu cuts it short')
 end
 
 T['outside a fight a vanilla drag of the HUD chip is left alone'] = function()
