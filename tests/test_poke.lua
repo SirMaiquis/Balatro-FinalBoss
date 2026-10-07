@@ -165,6 +165,24 @@ T['the release of a grab is not a poke'] = function()
   eq(#ctx.reactions, 1)
 end
 
+T['a chip let go while the button is held is never clicked by that release'] = function()
+  local ctx = setup()
+  G.CONTROLLER.is_cursor_down = true
+  drag_to(ctx, 3, 1)
+  ctx.K.tick()
+  ctx.now = 101; ctx.K.tick() -- forced release, button still down
+  eq(G.CONTROLLER.dragging.target, nil)
+  ctx.now = 101.5; ctx.K.tick()
+  -- the player drags back near the press point and lets go: vanilla clicks cursor_down.target
+  G.CONTROLLER.is_cursor_down = false
+  ctx.K.on_click(ctx.blind) -- the controller's click pass runs before the tick
+  eq(#ctx.reactions, 1, 'only the grab reacted')
+  ctx.K.tick()
+  eq(ctx.K.held, nil, 'cleared once the button is up')
+  ctx.now = 106; ctx.K.on_click(ctx.blind)
+  eq(#ctx.reactions, 2, 'the next real click pokes')
+end
+
 T['a grab after a poke: reaction, no line inside the gap'] = function()
   local ctx = setup()
   ctx.K.on_click(ctx.blind)

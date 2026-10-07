@@ -13,6 +13,7 @@
 --- (blind.lua:20-22): dragging moves its sprite, which Blind:align pulls home once drag.is is off.
 local K = {}
 K.grab = nil -- {chip, t0}: the grab being watched (REAL time it started)
+K.held = nil -- a chip let go by K.release while the button may still be down: never clicked until it is up
 
 local function L() return FinalBoss.logic end
 local function now() return FinalBoss.util.now() end
@@ -57,6 +58,7 @@ function K.on_click(node)
   local enc, blind = K.encounter()
   if not enc or not K.is_chip(node, blind) then return end
   if K.grab and K.grab.chip == node then return end
+  if K.held == node then return end
   enc.poke = enc.poke or {}
   local moment = L().poke(enc.poke, now())
   react(enc, blind, moment == 'poked_hard' and 'poked_hard' or 'poked', moment)
@@ -64,7 +66,9 @@ end
 
 --- End the drag now, the way the controller does on release (engine/controller.lua:333-336). The
 --- mouse may still be held: dragging only starts on a new press, and with no dragging target the
---- release is neither a click (it moved too far) nor a drop (:347-351). The chip goes home by itself.
+--- release is no drop (:347-351). cursor_down.target is still the chip, though, so a release back near
+--- the press point would click it (:340-346): K.held ignores its clicks until the button is up
+--- (G.CONTROLLER.is_cursor_down, :1047, :1070). The chip goes home by itself.
 function K.release(chip)
   local c = G.CONTROLLER
   if c and c.dragging and c.dragging.target == chip then
@@ -73,6 +77,7 @@ function K.release(chip)
     c.dragging.target = nil
   end
   K.grab = nil
+  K.held = chip
 end
 
 --- Per frame (Dir.tick): the avatar may only be dragged while a poke is allowed; a drag of the chip
@@ -83,6 +88,7 @@ function K.tick()
   local V = FinalBoss.avatar
   V.hud_tick(G.GAME and G.GAME.blind)
   local c = G.CONTROLLER
+  if K.held and not (c and c.is_cursor_down) then K.held = nil end -- after the click pass of this frame
   local target = c and c.dragging and c.dragging.target
   local o = V.anchor()
   if o then
@@ -113,6 +119,6 @@ function K.tick()
 end
 
 --- Run teardown: forget the watched grab.
-function K.reset() K.grab = nil end
+function K.reset() K.grab, K.held = nil, nil end
 
 return K
