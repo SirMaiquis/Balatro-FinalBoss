@@ -82,7 +82,7 @@ During a boss fight, the boss chip in the HUD is yours to bother (in a showdown,
 - **Poke hard.** Click it 3 times within 2 seconds: a bigger reaction and a harsher line (then not again for 8 seconds).
 - **Grab.** Drag it: it springs back after about a second, even while you hold it, and the boss reacts as it returns.
 
-Each personality takes it its own way: the bully is furious (a red flash and an angry shake), the cold killer barely moves and threatens you, the royal snob recoils, offended, the smug genius talks down to you, sweet venom is sweet until you poke hard, then poisonous, and the chaos gremlin laughs. The chip always reacts; a line comes at most every 4 seconds. Pokes never use up the boss's reactions or comments. They do nothing during intros, cinematics, menus or pauses, nor before the ante where boss dialogue starts (`min_ante`). With Boss dialogue off the chip still reacts, silently. Reduced motion keeps the flashes and sounds but drops the movement.
+Each personality takes it its own way: the bully is furious (a red flash and an angry shake), the cold killer barely moves and threatens you, the royal snob recoils, offended, the smug genius talks down to you, sweet venom is sweet until you poke hard, then poisonous, and the chaos gremlin laughs. The chip always reacts; a line comes at most every 4 seconds, though three quick pokes get their answer right away (once per 8 seconds). Pokes never use up the boss's reactions or comments. They do nothing during intros, cinematics, menus or pauses, once the winning hand is in, nor before the ante where boss dialogue starts (`min_ante`). With Boss dialogue off the chip still reacts, silently. Reduced motion keeps the flashes and sounds but drops the movement.
 
 ### Showdown stage
 

@@ -23,7 +23,7 @@ Savage bosses that read your run.
 ### Poke the boss
 - Click the boss chip during a boss fight and it jiggles and says something. Click it three times within two seconds for a harsher line. Drag it and it springs back after about a second, even while you hold it, and the boss reacts as it returns.
 - Each personality takes it its own way: the bully is furious, the killer goes cold, the royal is offended, the smug genius talks down to you, sweet venom turns poisonous, the chaos gremlin laughs.
-- In a showdown, poke the roaming boss avatar. Not during intros, cinematics, menus or pauses, nor before the ante where boss dialogue starts. With Boss dialogue off the boss still reacts, silently.
+- In a showdown, poke the roaming boss avatar. Not during intros, cinematics, menus or pauses, once the winning hand is in, nor before the ante where boss dialogue starts. With Boss dialogue off the boss still reacts, silently.
 
 ### For mod authors
 - `register_encounter` accepts `personality` (`bully`, `smug`, `killer`, `venom`, `chaos`, `royal`; default `bully`): your boss gets that personality's run comments and poke reactions without writing any line.
