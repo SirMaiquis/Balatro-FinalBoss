@@ -26,6 +26,7 @@ function K.encounter()
   if not (enc and blind) then return nil end
   local S, state = G.STATES, G.STATE
   local ok = L().poke_allowed{boss = enc.boss, ended = enc.ended,
+    won = enc.win_hand ~= nil or enc.finale == true, -- Dir.on_hand_after, Dir.stage_hit
     same_blind = blind.config and blind.config.blind and blind.config.blind.key == enc.key,
     tier = enc.tier,
     playing = S and (state == S.SELECTING_HAND or state == S.HAND_PLAYED),
@@ -45,11 +46,17 @@ end
 local function personality(enc) return FinalBoss.personality.of(enc.key) end
 
 --- The chip's reaction (kind: 'poked', 'poked_hard' or 'grabbed') and, for a moment, its line.
---- Dialogue off: the reaction only (Dir.fire says nothing then, so there is no bleep either).
-local function react(enc, blind, kind, moment)
+--- Dialogue off: the reaction only (Dir.fire says nothing then, so there is no bleep either), and the
+--- line gap and hard cooldown stay booked so the reactions keep their pace. Dialogue on but the line
+--- not shown (dropped inside dialogue's REACTION_GAP): the bookkeeping goes back to marks
+--- (logic.poke_unsaid), so the gap and the cooldown are not spent on silence.
+local function react(enc, blind, kind, moment, marks)
   local r = L().poke_reaction(personality(enc), kind, G.SETTINGS.reduced_motion)
   FinalBoss.avatar.poke(blind, r, FinalBoss.registry.get(enc.key).voice.pitch)
-  if moment and FinalBoss.config.dialogue then FinalBoss.director.fire(moment, {free = true}) end
+  -- only a poke moment is ever said free (logic.POKE_MOMENTS)
+  if not (moment and L().POKE_MOMENTS[moment] and FinalBoss.config.dialogue) then return end
+  local _, shown = FinalBoss.director.fire(moment, {free = true})
+  if not shown and marks then L().poke_unsaid(enc.poke, marks) end
 end
 
 --- A click on a boss chip (hooks.lua's Blind:click wrap, Avatar:click). The release of a grab is never
@@ -60,8 +67,9 @@ function K.on_click(node)
   if K.grab and K.grab.chip == node then return end
   if K.held == node then return end
   enc.poke = enc.poke or {}
+  local marks = L().poke_marks(enc.poke)
   local moment = L().poke(enc.poke, now())
-  react(enc, blind, moment == 'poked_hard' and 'poked_hard' or 'poked', moment)
+  react(enc, blind, moment == 'poked_hard' and 'poked_hard' or 'poked', moment, marks)
 end
 
 --- End the drag now, the way the controller does on release (engine/controller.lua:333-336). The
@@ -127,7 +135,8 @@ end
 --- The chip is on its way home after a grab: the grab reaction and, for a moment, its line.
 function K.grabbed(enc, blind)
   enc.poke = enc.poke or {}
-  react(enc, blind, 'grabbed', L().grab(enc.poke, now()))
+  local marks = L().poke_marks(enc.poke)
+  react(enc, blind, 'grabbed', L().grab(enc.poke, now()), marks)
 end
 
 --- Run teardown: forget the watched grab.

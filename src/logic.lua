@@ -1178,8 +1178,8 @@ end
 -- Poke and grab the boss chip (1.2) ----------------------------------------------------------------
 -- A click on the boss's chip pokes it; POKE_HARD_CLICKS clicks within POKE_HARD_WINDOW seconds poke it
 -- hard (then not again for POKE_HARD_COOLDOWN seconds); dragging it grabs it, and it springs back home
--- after GRAB_RETURN seconds. At most one poke or grab line per POKE_LINE_GAP seconds; the chip's
--- physical reaction always plays. These lines never touch the fight's bookkeeping (fired, the light
+-- after GRAB_RETURN seconds. At most one poke or grab line per POKE_LINE_GAP seconds, except a hard
+-- poke, which ignores the gap; the chip's physical reaction always plays. These lines never touch the fight's bookkeeping (fired, the light
 -- tier's spacing, the comment caps).
 logic.POKE_HARD_CLICKS = 3
 logic.POKE_HARD_WINDOW = 2
@@ -1225,11 +1225,24 @@ function logic.grab(state, now)
   return 'grabbed'
 end
 
+--- The line bookkeeping of a poke state before a poke or grab books it: {last_hard, last_line}.
+function logic.poke_marks(state)
+  return {last_hard = state.last_hard, last_line = state.last_line}
+end
+
+--- A poke or grab line was not shown after all (the dialogue dropped it): put the line bookkeeping
+--- back to marks (logic.poke_marks), so the line gap and the hard cooldown are not spent on silence.
+--- The click window is not restored (the physical reaction did play).
+function logic.poke_unsaid(state, marks)
+  state.last_hard, state.last_line = marks.last_hard, marks.last_line
+end
+
 --- Whether the boss chip reacts to a poke or a grab right now. a: {boss (a boss encounter), ended,
 --- same_blind (the encounter is this blind's), tier, playing (G.STATE is SELECTING_HAND or HAND_PLAYED),
---- intro (intro lines running), cinematic, overlay (a menu or overlay is open), paused}.
+--- intro (intro lines running), cinematic, overlay (a menu or overlay is open), paused, won (the
+--- winning hand is in or the finale plays: the boss is beaten, Blind:defeat has not run yet)}.
 function logic.poke_allowed(a)
-  if not (a.boss and not a.ended and a.same_blind) then return false end
+  if not (a.boss and not a.ended and a.same_blind) or a.won then return false end
   if a.tier ~= 'light' and a.tier ~= 'full' then return false end
   if not a.playing then return false end
   if a.intro or a.cinematic or a.overlay or a.paused then return false end

@@ -213,6 +213,8 @@ end
 --- bookkeeping at all, so fired, the light tier's spacing and the comment caps stay untouched; the line
 --- is not forced, so it never cuts a line said in the last REACTION_GAP seconds, and it does not start
 --- that gap itself, so a reaction right after it still shows: dialogue.say).
+--- Returns whether the moment fired, and whether a line was shown (false with dialogue off, with no
+--- line for it, or when dialogue.say dropped it inside its REACTION_GAP).
 function Dir.fire(moment, opts)
   opts = opts or {}
   local enc, blind = current()
@@ -248,9 +250,9 @@ function Dir.fire(moment, opts)
   if not key and opts.line then key = FinalBoss.registry.resolve(enc.key, moment, enc.last_variant) end
   if not key then return true end
   local entry = FinalBoss.registry.get(enc.key)
-  FinalBoss.dialogue.say(blind, key, opts.vars or Dir.vars(blind), entry.voice.pitch,
+  local shown = FinalBoss.dialogue.say(blind, key, opts.vars or Dir.vars(blind), entry.voice.pitch,
     {force = opts.force or L.FORCED_MOMENTS[moment] or false, free = opts.free})
-  return true
+  return true, shown == true
 end
 
 --- context: smods' context.after (scoring_name, full_hand: smods lovely/better_calc.toml:810).

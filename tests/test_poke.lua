@@ -48,7 +48,10 @@ local function setup(o)
     avatar = A,
     personality = {of = function() return 'bully' end},
     registry = {get = function() return {voice = {pitch = 1}} end},
-    director = {fire = function(m, opts) ctx.fired[#ctx.fired + 1] = m; ctx.opts[#ctx.opts + 1] = opts; return true end},
+    director = {fire = function(m, opts)
+      ctx.fired[#ctx.fired + 1] = m; ctx.opts[#ctx.opts + 1] = opts
+      return true, not ctx.drop -- ctx.drop: dialogue drops the line (its REACTION_GAP)
+    end},
     cinematic = {active = function() return false end},
     dialogue = {intro_active = function() return o.intro or false end},
   }
@@ -205,6 +208,59 @@ T['a grab is let go at once when pokes stop being allowed'] = function()
   G.OVERLAY_MENU = {}
   ctx.K.tick()
   eq(G.CONTROLLER.dragging.target, nil); eq(ctx.K.grab, nil) ; eq(#ctx.reactions, 0, 'no reaction when a menu cuts it short')
+end
+
+T['no poke once the boss is beaten: the winning hand, the finale'] = function()
+  for _, e in ipairs({{win_hand = 2}, {finale = true}}) do
+    local ctx = setup{enc = e}
+    ctx.K.on_click(ctx.blind)
+    eq(#ctx.reactions, 0); eq(#ctx.fired, 0)
+  end
+end
+
+T['a grab of the avatar is let go with no reaction when the winning hand lands'] = function()
+  local ctx = setup{avatar = true, enc = {tier = 'full'}}
+  drag_to(ctx, 3, 1)
+  ctx.K.tick()
+  assert(ctx.K.grab, 'grabbed')
+  ctx.enc.win_hand = 3
+  ctx.K.tick()
+  eq(G.CONTROLLER.dragging.target, nil); eq(ctx.K.grab, nil); eq(ctx.avatar.states.drag.can, false)
+  ctx.now = 105; ctx.K.tick()
+  eq(#ctx.reactions, 0); eq(#ctx.fired, 0)
+end
+
+T['a dropped poke line spends neither the line gap nor the hard cooldown'] = function()
+  local ctx = setup()
+  ctx.drop = true
+  ctx.K.on_click(ctx.blind)
+  eq(#ctx.reactions, 1, 'the jiggle still plays'); eq(ctx.enc.poke.last_line, nil, 'gap not spent')
+  ctx.now = 100.3; ctx.K.on_click(ctx.blind)
+  ctx.now = 100.6; ctx.K.on_click(ctx.blind)
+  eq(ctx.fired[3], 'poked_hard'); eq(ctx.enc.poke.last_hard, nil, 'cooldown not spent')
+  ctx.drop = false
+  ctx.now = 101; ctx.K.on_click(ctx.blind)
+  ctx.now = 101.2; ctx.K.on_click(ctx.blind)
+  ctx.now = 101.4; ctx.K.on_click(ctx.blind)
+  eq(ctx.fired[#ctx.fired], 'poked_hard', 'the next hard poke still gets its line')
+  eq(ctx.enc.poke.last_hard, 101.4); eq(ctx.enc.poke.last_line, 101.4)
+end
+
+T['a dropped grab line does not spend the line gap'] = function()
+  local ctx = setup{enc = {poke = {last_line = 50}}}
+  ctx.drop = true
+  drag_to(ctx, 3, 1)
+  ctx.K.tick()
+  ctx.now = 102; ctx.K.tick()
+  eq(ctx.fired[1], 'grabbed'); eq(ctx.enc.poke.last_line, 50, 'back to what it was')
+end
+
+T['dialogue off: the line gap and the hard cooldown stay booked'] = function()
+  local ctx = setup{dialogue = false}
+  ctx.K.on_click(ctx.blind)
+  ctx.now = 100.2; ctx.K.on_click(ctx.blind)
+  ctx.now = 100.4; ctx.K.on_click(ctx.blind)
+  eq(ctx.enc.poke.last_hard, 100.4); eq(ctx.enc.poke.last_line, 100.4)
 end
 
 T['outside a fight a vanilla drag of the HUD chip is left alone'] = function()

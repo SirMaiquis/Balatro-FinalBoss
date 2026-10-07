@@ -80,6 +80,21 @@ T['poke: the state stays plain data'] = function()
   assert(#s.clicks <= logic.POKE_HARD_CLICKS, 'the window stays small')
 end
 
+T['poke_unsaid: a dropped line gives back the line gap and the hard cooldown'] = function()
+  local s = {last_line = 2, last_hard = 1}
+  local marks = logic.poke_marks(s)
+  logic.poke(s, 10); logic.poke(s, 10.2)
+  eq(logic.poke(s, 10.4), 'poked_hard')
+  logic.poke_unsaid(s, marks)
+  eq(s.last_line, 2); eq(s.last_hard, 1)
+  eq(#s.clicks, 0, 'the click window is not restored')
+  local fresh = {}
+  marks = logic.poke_marks(fresh)
+  eq(logic.grab(fresh, 5), 'grabbed')
+  logic.poke_unsaid(fresh, marks)
+  eq(fresh.last_line, nil); eq(logic.poke(fresh, 5.5), 'poked', 'the gap was not spent')
+end
+
 T['grab: says its line when the gap allows, and books it'] = function()
   local s = {}
   eq(logic.grab(s, 10), 'grabbed'); eq(s.last_line, 10)
@@ -125,6 +140,12 @@ end
 T['poke_allowed: never during the intro, a cinematic, an overlay or a pause'] = function()
   eq(allowed{intro = true}, false); eq(allowed{cinematic = true}, false)
   eq(allowed{overlay = true}, false); eq(allowed{paused = true}, false)
+end
+
+T['poke_allowed: never once the boss is beaten (the winning hand, the finale)'] = function()
+  eq(allowed{won = true}, false)
+  eq(allowed{won = true, tier = 'full'}, false)
+  eq(allowed{won = false}, true)
 end
 
 T['poke_reaction: every personality has both recipes, a hard poke is stronger'] = function()
