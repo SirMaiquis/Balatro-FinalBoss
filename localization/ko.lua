@@ -321,7 +321,7 @@ return {
             fb_bl_house_intro_3 = {"판돈을 거시오.", "하우스는 늘 이기오."},
             fb_bl_house_big_hand_1 = {"찍은 게 맞았소?", "참으로 천하구려."},
             fb_bl_house_big_hand_2 = {"초심자의 행운이군.", "하우스가 거둬 가리다."},
-            fb_bl_house_big_hand_3 = {"눈먼 돼지도", "송로를 찾는 법. 으."},
+            fb_bl_house_big_hand_3 = {"우연히 얻어걸렸군.", "으."},
             fb_bl_house_close_1 = {"하우스는 지지 않소.", "앉으시오, 큰손."},
             fb_bl_house_last_hand_1 = {"마지막 칩이오, 친구.", "집문서는 짐이 갖겠소."},
             fb_bl_house_disabled_1 = {"누가 짐의 집에 불을?", "야만인. 순 야만인."},
@@ -394,7 +394,7 @@ return {
             fb_bl_arm_close_1 = {"짐의 옥좌에서 손 떼라,", "땀내 나는 짐승아!"},
             fb_bl_arm_last_hand_1 = {"마지막 힘자랑이오.", "시드는 걸 보시오."},
             fb_bl_arm_disabled_1 = {"짐의 팔이 축 늘어져?", "씨*, 이건 반역이오."},
-            fb_bl_arm_defeat_1 = {"애송이에게 힘에 밀려?", "곤장을 치리라."},
+            fb_bl_arm_defeat_1 = {"애송이에게 졌다고?", "곤장을 치리라."},
             fb_bl_arm_gloat_1 = {"힘에서 밀리고.", "레벨은 떨어지고."},
             fb_bl_arm_gloat_2 = {"패마다 약해졌다.", "너도 그랬고."},
             fb_bl_arm_gloat_3 = {"완력에 밀려", "런에서 쫓겨났다."},
@@ -436,7 +436,7 @@ return {
             fb_bl_fish_intro_3 = {"낚아 올린 다음,", "물을 흐려 주지!"},
             fb_bl_fish_big_hand_1 = {"우와! 월척이다!", "누가 낚시 가르쳤어?!"},
             fb_bl_fish_big_hand_2 = {"수상해! 엄청 수상해!", "몰래 봤지, 씨*?"},
-            fb_bl_fish_big_hand_3 = {"안 보고 득점했어?!", "이런 고등어 같은! 하!"},
+            fb_bl_fish_big_hand_3 = {"안 보고 득점했어?!", "어이쿠, 대박! 하!"},
             fb_bl_fish_close_1 = {"낚아 올리지 마!", "파닥파닥! 파닥!"},
             fb_bl_fish_last_hand_1 = {"마지막 캐스팅! 히히!", "넌 미끼야! 뻐끔!"},
             fb_bl_fish_disabled_1 = {"누가 어항 물 뺐어?!", "젠장! 나 회 됐어!"},
@@ -614,7 +614,7 @@ return {
             fb_bl_mouth_rematch_lost_1 = {"한 그릇 더 하러 왔소?", "같은 요리겠지."},
 
             -- The Plant: all face cards are debuffed
-            fb_bl_plant_name_1 = {"행성이에요, 새싹아.", "가시 조심해요."},
+            fb_bl_plant_name_1 = {"식물이에요, 새싹아.", "가시 조심해요."},
             fb_bl_plant_intro_1 = {"얼굴들이 참 예쁘네요.", "시들 텐데 아깝다."},
             fb_bl_plant_intro_2 = {"킹이랑 퀸이요, 자기?", "내 정원은 왕족 먹어요."},
             fb_bl_plant_intro_3 = {"얼굴 보여 줘요, 아가.", "아니, 그 얼굴 말고."},
@@ -775,7 +775,7 @@ return {
             fb_bl_flint_rematch_lost_1 = {"또 너구나! 하!", "아직 빚 갚는 중?"},
 
             -- The Mark: all face cards are drawn face down
-            fb_bl_mark_name_1 = {"난 가면이야.", "그리고 호구는 너."},
+            fb_bl_mark_name_1 = {"난 마크야. 웃기지?", "진짜 호구는 너야."},
             fb_bl_mark_intro_1 = {"네 왕족들은 수줍어.", "얼굴을 안 보여 줘."},
             fb_bl_mark_intro_2 = {"아무 카드나 골라.", "누군지 맞혀 봐."},
             fb_bl_mark_intro_3 = {"네 얼굴들은 내 거야.", "눈 감고 쳐, 촌뜨기."},
@@ -823,7 +823,7 @@ return {
             fb_bl_final_acorn_rematch_lost_1 = {"또 왔네! 야호!", "누가 누군지 알아?"},
 
             -- Verdant Leaf: all cards debuffed until 1 Joker sold
-            fb_bl_final_leaf_name_1 = {"난 심록색 잎사귀예요.", "우리 정 들어 봐요."},
+            fb_bl_final_leaf_name_1 = {"난 초록 잎사귀예요.", "우리 정 들어 봐요."},
             fb_bl_final_leaf_intro_1 = {"당신이 쥔 건 다,", "내가 쥐어요. 놓아요."},
             fb_bl_final_leaf_intro_2 = {"조커 귀엽네요, 아가.", "누가 제일 미워요?"},
             fb_bl_final_leaf_intro_3 = {"사방이 뿌리예요.", "덱이 숨을 못 쉬어요."},
@@ -848,16 +848,16 @@ return {
             fb_bl_final_leaf_rematch_lost_1 = {"아직 매달려요, 자기?", "그러길 바랐어요."},
 
             -- Violet Vessel: very large blind
-            fb_bl_final_vessel_name_1 = {"짐은 보라색 술잔이오.", "네 파멸을 담을 잔이지."},
-            fb_bl_final_vessel_intro_1 = {"이 잔의 깊이를 보라.", "네 칩은 물 한 방울."},
+            fb_bl_final_vessel_name_1 = {"짐은 보랏빛 함선이오.", "네 파멸의 기함이지."},
+            fb_bl_final_vessel_intro_1 = {"선체를 보라, 선원.", "네 칩은 조각배요."},
             fb_bl_final_vessel_intro_2 = {"올라오시오, 촌뜨기.", "꼭대기까진 멀다오."},
             fb_bl_final_vessel_intro_3 = {"바다는 깊소.", "짐은 더 깊소."},
-            fb_bl_final_vessel_big_hand_1 = {"조약돌이라. 귀엽군.", "잔은 아직 가득하오."},
-            fb_bl_final_vessel_big_hand_2 = {"잔에 흠집 하나.", "시종이 칠해 두리다."},
+            fb_bl_final_vessel_big_hand_1 = {"대포알이라. 귀엽군.", "갑판은 여러 층이오."},
+            fb_bl_final_vessel_big_hand_2 = {"선체에 흠집 하나.", "선원이 칠해 두리다."},
             fb_bl_final_vessel_big_hand_3 = {"인상적이오. 뗏목치곤.", "계속 노 저으시오."},
-            fb_bl_final_vessel_close_1 = {"잔이 기운다! 누가", "이 시궁쥐를 들였소?"},
-            fb_bl_final_vessel_last_hand_1 = {"마지막 핸드요, 하인.", "잔을 비우고 가라앉게."},
-            fb_bl_final_vessel_disabled_1 = {"짐의 잔에 금이!", "반란이오. 순 반란."},
+            fb_bl_final_vessel_close_1 = {"배가 기운다! 누가", "이 시궁쥐를 태웠소?"},
+            fb_bl_final_vessel_last_hand_1 = {"마지막이오, 갑판원.", "갑판 닦고 가라앉게."},
+            fb_bl_final_vessel_disabled_1 = {"짐의 돛이 찢겼다!", "반란이오. 순 반란."},
             fb_bl_final_vessel_defeat_1 = {"짐이... 가라앉소?", "잔해는 건져 올리리다."},
             fb_bl_final_vessel_gloat_1 = {"가라앉았다.", "남김없이."},
             fb_bl_final_vessel_gloat_2 = {"함대에 맞선 뗏목.", "대담했고, 끝났다."},
@@ -873,7 +873,7 @@ return {
             fb_bl_final_vessel_rematch_lost_1 = {"또 익사하러 왔소?", "네 잔해는 간직했소."},
 
             -- Crimson Heart: one random Joker disabled every hand
-            fb_bl_final_heart_name_1 = {"난 진홍색 술잔이에요.", "마음, 부숴도 될까요?"},
+            fb_bl_final_heart_name_1 = {"난 진홍색 하트예요.", "마음, 부숴도 될까요?"},
             fb_bl_final_heart_intro_1 = {"조커들이 당신 좋대요.", "고쳐 줄게요, 자기."},
             fb_bl_final_heart_intro_2 = {"충직한 조커? 귀여워.", "충성은 깨져요, 아가."},
             fb_bl_final_heart_intro_3 = {"난 마음을 부숴요.", "천천히. 다정하게."},
@@ -886,7 +886,7 @@ return {
             fb_bl_final_heart_defeat_1 = {"내 마음을 부쉈네요.", "다음 런엔 당신 차례."},
             fb_bl_final_heart_gloat_1 = {"상심했다.", "조커도 없이."},
             fb_bl_final_heart_gloat_2 = {"조커들이 떠났다.", "하나씩, 하나씩."},
-            fb_bl_final_heart_gloat_3 = {"조커를 사랑했지.", "조커는 아니었다."},
+            fb_bl_final_heart_gloat_3 = {"조커를 사랑했지.", "조커는 안 사랑했지."},
             fb_bl_final_heart_interrupted_1 = {"인사도 없어요, 자기?", "무정하기도 해라."},
             fb_bl_final_heart_weak_1 = {"하하하! 미안, 자기.", "일부러 그런 거예요?"},
             fb_bl_final_heart_weak_2 = {"누가 보고 싶어요?", "티가 많이 나네요."},
