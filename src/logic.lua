@@ -1175,12 +1175,122 @@ function logic.idle_due(idle_for, said)
   return (idle_for or 0) >= (said == 0 and logic.IDLE_FIRST or logic.IDLE_SECOND)
 end
 
+-- Poke and grab the boss chip (1.2) ----------------------------------------------------------------
+-- A click on the boss's chip pokes it; POKE_HARD_CLICKS clicks within POKE_HARD_WINDOW seconds poke it
+-- hard (then not again for POKE_HARD_COOLDOWN seconds); dragging it grabs it, and it springs back home
+-- after GRAB_RETURN seconds. At most one poke or grab line per POKE_LINE_GAP seconds; the chip's
+-- physical reaction always plays. These lines never touch the fight's bookkeeping (fired, the light
+-- tier's spacing, the comment caps).
+logic.POKE_HARD_CLICKS = 3
+logic.POKE_HARD_WINDOW = 2
+logic.POKE_HARD_COOLDOWN = 8
+logic.POKE_LINE_GAP = 4
+logic.GRAB_RETURN = 1.0
+logic.POKE_MOMENTS = {poked = true, poked_hard = true, grabbed = true}
+
+--- Seconds since t. Never booked, or a clock that went back (a Continue in a new session: the times
+--- are saved, the clock is not), counts as long ago.
+local function since(now, t)
+  if t == nil or now < t then return math.huge end
+  return now - t
+end
+
+--- A click on the boss chip at time now (seconds). state: plain data on the encounter (enc.poke =
+--- {clicks = {times}, last_line, last_hard}), updated here. Returns 'poked_hard' (enough clicks in the
+--- window and the hard cooldown over; the window starts over), 'poked' (the line gap is over) or nil
+--- (no line; the caller still plays the jiggle). A hard poke ignores the line gap.
+function logic.poke(state, now)
+  local kept = {}
+  for _, t in ipairs(state.clicks or {}) do
+    if since(now, t) < logic.POKE_HARD_WINDOW then kept[#kept + 1] = t end
+  end
+  kept[#kept + 1] = now
+  state.clicks = kept
+  if #kept >= logic.POKE_HARD_CLICKS and since(now, state.last_hard) >= logic.POKE_HARD_COOLDOWN then
+    state.clicks = {}
+    state.last_hard, state.last_line = now, now
+    return 'poked_hard'
+  end
+  if since(now, state.last_line) >= logic.POKE_LINE_GAP then
+    state.last_line = now
+    return 'poked'
+  end
+  return nil
+end
+
+--- The boss chip was grabbed (a drag started) at time now: 'grabbed' when the line gap is over, else nil.
+function logic.grab(state, now)
+  if since(now, state.last_line) < logic.POKE_LINE_GAP then return nil end
+  state.last_line = now
+  return 'grabbed'
+end
+
+--- Whether the boss chip reacts to a poke or a grab right now. a: {boss (a boss encounter), ended,
+--- same_blind (the encounter is this blind's), tier, playing (G.STATE is SELECTING_HAND or HAND_PLAYED),
+--- intro (intro lines running), cinematic, overlay (a menu or overlay is open), paused}.
+function logic.poke_allowed(a)
+  if not (a.boss and not a.ended and a.same_blind) then return false end
+  if a.tier ~= 'light' and a.tier ~= 'full' then return false end
+  if not a.playing then return false end
+  if a.intro or a.cinematic or a.overlay or a.paused then return false end
+  return true
+end
+
+-- The chip's physical reaction per personality: juice (juice_up amount) and rot (its rotation), shake
+-- (seconds of jitter) and shake_amp, flash (colour name) and flash_time, recoil (how far it is knocked
+-- back), bounces (extra juices after the first), giggle ('short' | 'full': the boss's laugh), jiggle
+-- (screen jiggle, a screen effect). A hard poke is stronger.
+logic.POKE_REACTIONS = {
+  bully = {
+    poked = {juice = 0.35, rot = 0.3, shake = 0.25, shake_amp = 0.08, flash = 'red', flash_time = 0.15},
+    poked_hard = {juice = 0.6, rot = 0.45, shake = 0.5, shake_amp = 0.14, flash = 'red', flash_time = 0.3, jiggle = 1},
+  },
+  killer = {
+    poked = {juice = 0.06, rot = 0.02},
+    poked_hard = {juice = 0.12, rot = 0.04, shake = 0.1, shake_amp = 0.02},
+  },
+  royal = {
+    poked = {juice = 0.25, rot = 0.15, recoil = 0.25},
+    poked_hard = {juice = 0.45, rot = 0.25, recoil = 0.5, flash = 'white', flash_time = 0.1},
+  },
+  smug = {
+    poked = {juice = 0.12, rot = 0.3},
+    poked_hard = {juice = 0.25, rot = 0.45},
+  },
+  venom = {
+    poked = {juice = 0.15, rot = 0.06},
+    poked_hard = {juice = 0.3, rot = 0.1, flash = 'poison', flash_time = 0.2},
+  },
+  chaos = {
+    poked = {juice = 0.3, rot = 0.2, bounces = 1, giggle = 'short'},
+    poked_hard = {juice = 0.45, rot = 0.3, bounces = 3, giggle = 'full'},
+  },
+}
+logic.POKE_FLASH = 0.08 -- reduced motion: a recipe without a flash gets a short white one instead
+local MOTION = {'juice', 'rot', 'shake', 'shake_amp', 'recoil', 'bounces', 'jiggle'}
+
+--- The physical reaction (a copy of a POKE_REACTIONS recipe) of a personality's chip to kind ('poked',
+--- 'poked_hard' or 'grabbed': the poked recipe without the recoil, since the chip is in the hand).
+--- Unknown personalities react as DEFAULT_PERSONALITY. reduced (reduced motion): flashes and sounds only.
+function logic.poke_reaction(personality, kind, reduced)
+  local set = logic.POKE_REACTIONS[personality] or logic.POKE_REACTIONS[logic.DEFAULT_PERSONALITY]
+  local r = {}
+  for k, v in pairs(set[kind == 'poked_hard' and 'poked_hard' or 'poked']) do r[k] = v end
+  if kind == 'grabbed' then r.recoil = nil end
+  if reduced then
+    for _, k in ipairs(MOTION) do r[k] = nil end
+    if not r.flash then r.flash, r.flash_time = 'white', logic.POKE_FLASH end
+  end
+  return r
+end
+
 --- Every personality has a line for each of these (fb_p_<personality>_<moment>_N; tools/check_loc.py).
 logic.PERSONALITY_MOMENTS = {'jab_counter', 'jab_skipped', 'jab_skipped_both', 'jab_rerolls', 'jab_broke',
   'jab_loaded', 'jab_onesuit', 'jab_tinydeck', 'jab_hugedeck', 'jab_nojokers', 'jab_fulljokers', 'jab_famous',
-  'read_weakhand', 'read_repeat', 'read_discardspam', 'read_onecard', 'idle', 'overkill'}
+  'read_weakhand', 'read_repeat', 'read_discardspam', 'read_onecard', 'idle', 'overkill',
+  'poked', 'poked_hard', 'grabbed'}
 logic.PERSONALITY_VARIANTS = {read_weakhand = 2, read_repeat = 2, read_discardspam = 2, read_onecard = 2,
-  idle = 2, overkill = 2}
+  idle = 2, overkill = 2, poked = 3, poked_hard = 3, grabbed = 3}
 
 function logic.personality_variants(moment)
   return logic.PERSONALITY_VARIANTS[moment] or 1

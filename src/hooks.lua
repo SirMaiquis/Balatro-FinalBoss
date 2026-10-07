@@ -266,6 +266,18 @@ if orig_mousepressed then
   end
 end
 
+-- Poke the boss (1.2): a click on the HUD blind chip (poke.lua; the showdown avatar is FinalBoss's own
+-- object, Avatar:click). Vanilla defines no Blind:click, so this wraps the no-op Node:click
+-- (engine/node.lua:383) that G.CONTROLLER calls on a short press and release (engine/controller.lua:340-346,
+-- :371-374). The intro's chip skip sets its own click on the blind instance (dialogue.lua), which
+-- shadows this wrap while the intro runs. Drags are read from G.CONTROLLER in the tick (poke.tick).
+local orig_blind_click = Blind.click
+function Blind:click(...)
+  local r = pack(orig_blind_click(self, ...))
+  if live() then U.guard('poke', FinalBoss.poke.on_click, self) end
+  return unpack(r, 1, r.n)
+end
+
 local orig_gamepadpressed = love.gamepadpressed
 if orig_gamepadpressed then
   function love.gamepadpressed(...)

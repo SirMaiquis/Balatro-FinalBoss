@@ -209,7 +209,9 @@ end
 --- moment: 1.1 the nemesis's defeat line; 1.2 the overkill line, a Chicot counter jab; it falls back to
 --- the moment's own line when it has none), skip_boss (with line: logic.resolve_prefix skips the boss
 --- level), vars (the line's vars; default Dir.vars), hand (the hand the line is said on; default the
---- current hand id, G.GAME.current_round.hands_played).
+--- current hand id, G.GAME.current_round.hands_played), free (1.2 poke and grab lines: no gate and no
+--- bookkeeping at all, so fired, the light tier's spacing and the comment caps stay untouched; the line
+--- is not forced, so it never cuts a line said in the last REACTION_GAP seconds).
 function Dir.fire(moment, opts)
   opts = opts or {}
   local enc, blind = current()
@@ -217,7 +219,7 @@ function Dir.fire(moment, opts)
   local L = FinalBoss.logic
   local cr = G.GAME.current_round
   local hand = opts.hand or (cr and cr.hands_played)
-  if not opts.force then
+  if not opts.force and not opts.free then
     -- 1.2 run comments have their own gate (the light tier's spacing and single read, the full-tier
     -- cap, no consecutive hands); every other moment: once per blind, the light tier's spacing.
     local ok
@@ -229,7 +231,8 @@ function Dir.fire(moment, opts)
     end
     if not ok then return false end
   end
-  if L.COMMENTS[moment] then
+  if opts.free then -- nothing booked
+  elseif L.COMMENTS[moment] then
     L.note_comment(enc, moment, hand) -- 1.2 run comments: the light tier's spacing, the caps
   else
     L.note_line(enc, moment, hand)
@@ -478,6 +481,7 @@ function Dir.tick(dt)
   local A, V, H = FinalBoss.arena, FinalBoss.avatar, FinalBoss.hpbar
   if FinalBoss.cinematic.active() or FinalBoss.dialogue.intro_active() then Dir.check_interrupt() end
   FinalBoss.observe.idle_tick() -- 1.2 idle taunts (a few field reads per frame)
+  FinalBoss.poke.tick() -- 1.2 poke and grab the boss chip
   if not (Dir.pending or A.active() or V.exists() or H.exists()) then return end
   if Dir.pending then check_pending() end
   V.tick(dt)
@@ -497,7 +501,7 @@ function Dir.reset_stage()
     for _, step in ipairs({FinalBoss.cinematic.reset, FinalBoss.hpbar.remove, FinalBoss.avatar.remove,
         FinalBoss.arena.reset, FinalBoss.fx.reset, FinalBoss.effects.reset, FinalBoss.moves.reset,
         FinalBoss.phases.reset, FinalBoss.phases.clear_twists, FinalBoss.music.unduck,
-        FinalBoss.memory.unpresent}) do
+        FinalBoss.memory.unpresent, FinalBoss.poke.reset}) do
       local sok, serr = pcall(step)
       if not sok then FinalBoss.util.log('error', 'reset_stage step failed: ' .. tostring(serr)) end
     end

@@ -311,6 +311,48 @@ local function censored(v)
   return false
 end
 
+T['the generic set has three poke, hard poke and grab lines'] = function()
+  local quips = load()
+  local missing = {}
+  for _, m in ipairs({'poked', 'poked_hard', 'grabbed'}) do
+    for i = 1, 3 do
+      local key = 'fb_generic_' .. m .. '_' .. i
+      if not quips[key] then missing[#missing + 1] = key end
+    end
+  end
+  assert(#missing == 0, 'missing: ' .. table.concat(missing, ', '))
+end
+
+T['English poke lines: censored swears only on a bully or chaos hard poke, at most one each'] = function()
+  local quips = load()
+  local bad, hard = {}, {}
+  for key, v in pairs(quips) do
+    local owner, m = key:match('^fb_p_(%a+)_(%a[%a_]-)_%d$')
+    if not owner then owner, m = key:match('^fb_(generic)_(%a[%a_]-)_%d$') end
+    if (m == 'poked' or m == 'poked_hard' or m == 'grabbed') and censored(v) then
+      if m ~= 'poked_hard' or (owner ~= 'bully' and owner ~= 'chaos') then
+        bad[#bad + 1] = key
+      else
+        hard[owner] = (hard[owner] or 0) + 1
+      end
+    end
+  end
+  for owner, n in pairs(hard) do
+    if n > 1 then bad[#bad + 1] = owner .. ' poked_hard x' .. n end
+  end
+  table.sort(bad)
+  assert(#bad == 0, 'censored poke lines not allowed: ' .. table.concat(bad, ', '))
+end
+
+T['English killer poke lines never shout'] = function()
+  local quips = load()
+  for key, v in pairs(quips) do
+    if key:match('^fb_p_killer_poked') or key:match('^fb_p_killer_grabbed') then
+      for _, line in ipairs(lines_of(v)) do assert(not line:find('!', 1, true), key .. ': ' .. line) end
+    end
+  end
+end
+
 T['English gloat lines carry no censored swear (the game-over bubble has no bleep)'] = function()
   local quips = load()
   local bad = {}
