@@ -42,7 +42,7 @@ end
 --- mid-blind does not replay an old trick. Dialogue on but the line not shown (dropped inside
 --- dialogue's REACTION_GAP): the booking goes back (like logic.poke_unsaid), so the kind can still
 --- get its line later in the blind.
---- line(enc, blind) (consumables): the card's own moment and vars, or nil for the kind's plain moment.
+--- line(blind) (consumables): the card's own moment and vars, or nil for the kind's plain moment.
 local function react(kind, line)
   local enc = R.encounter()
   if not enc then return end

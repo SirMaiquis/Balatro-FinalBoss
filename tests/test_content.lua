@@ -232,6 +232,22 @@ T['counter, famous and card lines name it (#2#); no other line does'] = function
   assert(#bad == 0, table.concat(bad, '; '))
 end
 
+T['card lines: every voice opens each card moment its own way'] = function()
+  local quips = load()
+  local seen, bad = {}, {}
+  for key, lines in pairs(quips) do
+    local card = card_moment(key)
+    if card and key:match('^fb_p_') or (card and key:match('^fb_generic_')) then
+      local norm = lines[1]:lower():gsub('[^%w#]+', ' '):gsub('^%s+', ''):gsub('%s+$', '')
+      local id = card .. '|' .. norm
+      if seen[id] then bad[#bad + 1] = key .. ' = ' .. seen[id] .. ' (' .. lines[1] .. ')' end
+      seen[id] = key
+    end
+  end
+  table.sort(bad)
+  assert(#bad == 0, 'repeated openers: ' .. table.concat(bad, '; '))
+end
+
 T['card lines: #2# fits (at most 9 other characters), #3# only in used_planet_main and required there'] = function()
   local quips = load()
   local bad = {}
