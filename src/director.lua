@@ -47,11 +47,14 @@ function Dir.on_blind_set(blind)
   if not proto.key then st.encounter = nil; return end
   local entry = FinalBoss.registry.get(proto.key)
   local is_showdown = (proto.boss and proto.boss.showdown) and true or false
+  local ante = G.GAME.round_resets.ante
+  st.max_ante = math.max(st.max_ante or ante, ante)
   local tier = FinalBoss.logic.decide_tier{
     is_boss = blind.boss and true or false,
     is_showdown = is_showdown,
     entry_tier = entry.tier,
-    ante = G.GAME.round_resets.ante,
+    ante = ante,
+    max_ante = st.max_ante,
     min_ante = FinalBoss.config.min_ante,
   }
   local cinematic = (tier == 'full' and is_showdown and FinalBoss.config.cinematic) and true or false

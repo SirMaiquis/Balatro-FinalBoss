@@ -110,12 +110,14 @@ function logic.gloat_rect(panel, room_right, S, min_s, gap)
   return right - size, panel.y - gap - size, size
 end
 
---- args: {is_boss, is_showdown, entry_tier = 'auto'|'light'|'full', ante, min_ante}
+--- args: {is_boss, is_showdown, entry_tier = 'auto'|'light'|'full', ante, max_ante (highest ante this run
+--- reached; nil = ante), min_ante}
 function logic.decide_tier(a)
   if not a.is_boss then return 'none' end
   if a.entry_tier == 'light' or a.entry_tier == 'full' then return a.entry_tier end
   if a.is_showdown then return 'full' end
-  if a.ante >= a.min_ante then return 'light' end
+  local reached = math.max(a.ante or 0, a.max_ante or a.ante or 0)
+  if reached >= a.min_ante then return 'light' end
   return 'none'
 end
 
