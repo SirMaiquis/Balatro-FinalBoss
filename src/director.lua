@@ -217,7 +217,9 @@ end
 --- current hand id, G.GAME.current_round.hands_played), free (1.2 poke and grab lines: no gate and no
 --- bookkeeping at all, so fired, the light tier's spacing and the comment caps stay untouched; the line
 --- is not forced, so it never cuts a line said in the last REACTION_GAP seconds, and it does not start
---- that gap itself, so a reaction right after it still shows: dialogue.say).
+--- that gap itself, so a reaction right after it still shows: dialogue.say), nobook (1.3 live fear
+--- lines: no gate and no bookkeeping, like free, but said as a real line: with force it cuts the
+--- bubble and starts the REACTION_GAP, so a poke or comment right after it cannot replace it).
 --- Returns whether the moment fired, and whether a line was shown (false with dialogue off, with no
 --- line for it, or when dialogue.say dropped it inside its REACTION_GAP).
 function Dir.fire(moment, opts)
@@ -227,7 +229,7 @@ function Dir.fire(moment, opts)
   local L = FinalBoss.logic
   local cr = G.GAME.current_round
   local hand = opts.hand or (cr and cr.hands_played)
-  if not opts.force and not opts.free then
+  if not opts.force and not opts.free and not opts.nobook then
     -- 1.2 run comments have their own gate (the light tier's spacing and single read, the full-tier
     -- cap, no consecutive hands); every other moment: once per blind, the light tier's spacing.
     local ok
@@ -239,7 +241,7 @@ function Dir.fire(moment, opts)
     end
     if not ok then return false end
   end
-  if opts.free then -- nothing booked
+  if opts.free or opts.nobook then -- nothing booked
   elseif L.COMMENTS[moment] then
     L.note_comment(enc, moment, hand) -- 1.2 run comments: the light tier's spacing, the caps
   else
@@ -480,8 +482,8 @@ function Dir.on_blind_defeated()
   -- replaces the defeat effect.
   local chip = false
   if not enc.finale then
-    local ok, res = pcall(Dir.chip_death, enc, blind)
-    if ok then chip = res else FinalBoss.util.log('warn', 'chip death failed: ' .. tostring(res)) end
+    local ok, res = FinalBoss.util.guard('chip_death', Dir.chip_death, enc, blind)
+    chip = ok and res or false
   end
   if not chip then FinalBoss.avatar.set_hud_tremble(false) end -- (a chip death stops it as it shatters)
   if enc.tier ~= 'full' then return end

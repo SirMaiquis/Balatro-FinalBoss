@@ -87,6 +87,21 @@ T['say: a poke line never swallows a reaction said right after it'] = function()
   eq(ctx.D.say(ctx.blind, 'fb_p_bully_poked_2', {}, 1, {free = true}), true, 'after the gap')
 end
 
+T['say: a forced real line (a live fear line) is not cut by a poke or comment right after it'] = function()
+  local ctx = intro_setup()
+  local t = 10
+  FinalBoss.util.now = function() return t end
+  eq(ctx.D.say(ctx.blind, 'fb_bl_ox_close_1', {}, 1, {}), true)
+  t = 10.5
+  eq(ctx.D.say(ctx.blind, 'fb_generic_fear_2_1', {}, 1, {force = true}), true, 'forced over the bubble')
+  t = 11
+  eq(ctx.D.say(ctx.blind, 'fb_p_bully_poked_1', {}, 1, {free = true}), false, 'a poke waits')
+  eq(ctx.D.say(ctx.blind, 'fb_bl_ox_big_hand_1', {}, 1, {}), false, 'a comment waits')
+  eq(ctx.shown[#ctx.shown], 'fb_generic_fear_2_1', 'the fear line stands')
+  t = 11.2
+  eq(ctx.D.say(ctx.blind, 'fb_generic_fear_3_1', {}, 1, {force = true}), true, 'a higher tier still replaces it')
+end
+
 T['text_of: joins a list, passes a string, empty when missing'] = function()
   local ctx = setup{fb_a = {'one', 'two'}, fb_s = 'solo'}
   eq(ctx.D.text_of('fb_a'), 'one two'); eq(ctx.D.text_of('fb_s'), 'solo'); eq(ctx.D.text_of('fb_x'), '')

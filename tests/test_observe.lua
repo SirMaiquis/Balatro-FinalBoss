@@ -233,7 +233,9 @@ T['fear_line: a fear line said live on this hand skips the defeat line; else a f
   local ctx = setup()
   local win = {moment = 'defeat', total = 1500, required = 100, hand = 3}
   eq(ctx.O.fear_line(win, {fear_said = 2, fear_hand = 3}), false, 'said live on this hand')
-  eq(ctx.O.fear_line(win, {fear_said = 1, fear_hand = 4}), false, 'said as the hand cleared')
+  eq(ctx.O.fear_line(win, {fear_said = 2, fear_hand = 2}), nil,
+    'said on the hand before: this hand keeps its defeat line')
+  eq(ctx.O.fear_line(win, {fear_said = 1, fear_hand = 4}), 'fear_2', 'another hand id never skips')
   local enc = {}
   eq(ctx.O.fear_line(win, enc), 'fear_2', 'never said live: the fallback')
   eq(enc.fear_said, 2); eq(enc.fear_hand, 3, 'booked like a live crossing')
@@ -254,6 +256,8 @@ local function fear_setup(o)
   G.STATE = G.STATES.HAND_PLAYED
   G.GAME.chips = 100
   G.GAME.blind.chips = 1000
+  -- vanilla's +1 runs before the score display: hands_played is one ahead of the hand being scored
+  enc.last_hand_seen = 1
   G.GAME.current_round = {hands_played = 2, current_hand = {chips = 0, mult = 0}}
   FinalBoss.director.fear_fx = function(e, b, t) ctx.fx[#ctx.fx + 1] = t end
   ctx.show = function(chips, mult)
@@ -270,8 +274,9 @@ T['fear_tick: the displayed total crosses 2x, 10x, 100x: each line once, forced 
   eq(#ctx.fired, 0, 'below 2x')
   ctx.show(100, 19)
   eq(#ctx.fired, 1); eq(ctx.fired[1], 'fear_1', '100 + 1900 = 2x')
-  eq(ctx.opts[1].force, true); eq(ctx.opts[1].free, true)
-  eq(ctx.enc.fear_said, 1); eq(ctx.enc.fear_hand, 2)
+  eq(ctx.opts[1].force, true); eq(ctx.opts[1].nobook, true)
+  eq(ctx.opts[1].free, nil, 'a real line: it starts the reaction gap')
+  eq(ctx.enc.fear_said, 1); eq(ctx.enc.fear_hand, 1, 'the id on_hand_after booked, not hands_played')
   ctx.show(100, 20)
   eq(#ctx.fired, 1, 'the same tier again says nothing')
   ctx.show(100, 99)
@@ -281,6 +286,16 @@ T['fear_tick: the displayed total crosses 2x, 10x, 100x: each line once, forced 
   eq(#ctx.fx, 3); eq(ctx.fx[1], 1); eq(ctx.fx[2], 2); eq(ctx.fx[3], 3)
   ctx.show(0, 0)
   eq(#ctx.fired, 3, 'the hand clears: nothing new')
+end
+
+T['fear_tick then the defeat line: the same hand skips it, the next hand does not'] = function()
+  local ctx = fear_setup()
+  ctx.show(100, 99)
+  eq(ctx.fired[1], 'fear_2')
+  eq(ctx.O.fear_line({moment = 'defeat', total = 10000, required = 1000, hand = 1}, ctx.enc), false,
+    'the hand that crossed live')
+  eq(ctx.O.fear_line({moment = 'defeat', total = 10000, required = 1000, hand = 2}, ctx.enc), nil,
+    'a later winning hand at the same tier says its defeat line')
 end
 
 T['fear_tick: a jump straight past a tier announces only the top one'] = function()

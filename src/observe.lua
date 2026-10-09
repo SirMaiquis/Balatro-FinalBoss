@@ -143,9 +143,8 @@ end
 function O.fear_line(p, enc)
   if not (p and p.moment == 'defeat' and p.total >= p.required) then return nil end
   enc = enc or {}
-  -- >=: the hand id moves on once the hand is cleared (vanilla counts hands_played up after the
-  -- score display), so a crossing seen on those last frames still belongs to this hand.
-  if enc.fear_hand and p.hand and enc.fear_hand >= p.hand then return false end
+  -- enc.fear_hand is the id Dir.on_hand_after booked (enc.last_hand_seen), the same as p.hand.
+  if enc.fear_hand ~= nil and enc.fear_hand == p.hand then return false end
   local t = L().fear_step(enc.fear_said, L().fear_tier(p.total, p.required))
   if not t then return nil end
   enc.fear_said, enc.fear_hand = t, p.hand
@@ -177,7 +176,8 @@ end
 --- are computed ahead of the animation, so they would cross before the player sees it. At the end of
 --- the hand vanilla zeroes the pair as it eases G.GAME.chips up to the new total, so the sum never
 --- counts the hand twice. Crossing 2x, 10x or 100x the requirement says that tier's line at once,
---- forced over the current bubble and free of the fight's bookkeeping, and plays its visuals
+--- forced over the current bubble (and starting the reaction gap, so a minor line cannot cut it)
+--- but free of the fight's bookkeeping (Dir.fire nobook), and plays its visuals
 --- (Dir.fear_fx; they also play with dialogue off). Each tier at most once per blind, only upwards
 --- (logic.fear_step; enc.fear_said and enc.fear_hand are plain saved data).
 function O.fear_tick()
@@ -187,14 +187,19 @@ function O.fear_tick()
   local shown = cr and cr.current_hand
   if not shown then return end
   local num = FinalBoss.director.num
+  -- With Talisman's score animation off the pair may never show the climb: no live crossing, and
+  -- the defeat fallback (O.fear_line) says the line instead.
   local total = L().live_total(num(G.GAME.chips), num(shown.chips), num(shown.mult))
   local t = L().fear_step(enc.fear_said, L().fear_tier(total, num(blind.chips)))
   if not t then return end
-  enc.fear_said, enc.fear_hand = t, cr.hands_played
+  -- The hand id Dir.on_hand_after booked for this hand: vanilla's hands_played +1 event is queued
+  -- before evaluate_play queues the score display, so during the animation hands_played is already
+  -- one ahead (functions/state_events.lua, G.FUNCS.play_cards_from_highlighted).
+  enc.fear_said, enc.fear_hand = t, enc.last_hand_seen
   -- Visual only: a failure is logged, and the line is still said.
   local ok, err = pcall(FinalBoss.director.fear_fx, enc, blind, t)
   if not ok then FinalBoss.util.log('warn', 'fear visuals failed: ' .. tostring(err)) end
-  FinalBoss.director.fire('fear_' .. t, {force = true, free = true})
+  FinalBoss.director.fire('fear_' .. t, {force = true, nobook = true})
 end
 
 -- Idle taunts (1.2) ------------------------------------------------------------------------------
