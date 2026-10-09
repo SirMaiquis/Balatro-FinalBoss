@@ -133,7 +133,7 @@ return {
             fb_generic_used_planet_1 = {"Leveled up a hand?", "Big deal."},
             fb_generic_used_planet_2 = {"Oh, stronger now?", "Gonna need it."},
             fb_generic_used_planet_3 = {"A planet. Great.", "Your hand got bigger."},
-            fb_generic_joker_created_1 = {"Oh, a new one...", "Like that'll help."},
+            fb_generic_joker_created_1 = {"Fresh joker, huh?", "Like that'll help."},
             fb_generic_joker_created_2 = {"Another joker?", "Desperate much?"},
             fb_generic_joker_created_3 = {"Bringing friends now?", "More clowns to beat."},
 
@@ -241,7 +241,7 @@ return {
             fb_p_smug_grabbed_1 = {"Devuélveme, por favor.", "Me estás manchando."},
             fb_p_smug_grabbed_2 = {"Arrastrarme por ahí", "no arregla tu mano."},
             fb_p_smug_grabbed_3 = {"¿Mover al jefe?", "Tierno. No funciona."},
-            fb_p_smug_used_tarot_1 = {"Editing your deck?", "Mid-fight? Adorable."},
+            fb_p_smug_used_tarot_1 = {"Editing your deck?", "Studying mid-exam?"},
             fb_p_smug_used_tarot_2 = {"A tarot won't fix", "a strategy problem."},
             fb_p_smug_used_tarot_3 = {"Rewriting the cards", "won't rewrite you."},
             fb_p_smug_used_spectral_1 = {"A spectral? Gambling.", "I already ran the odds."},
@@ -351,7 +351,7 @@ return {
             fb_p_venom_used_tarot_2 = {"Oh, a tarot, sweetie.", "Did it say you'd lose?"},
             fb_p_venom_used_tarot_3 = {"Tidying up, pet?", "Messes suit you."},
             fb_p_venom_used_spectral_1 = {"Dark magic, darling?", "Careful. It bites."},
-            fb_p_venom_used_spectral_2 = {"Playing with spirits?", "Naughty, naughty."},
+            fb_p_venom_used_spectral_2 = {"Playing with spirits?", "They'll haunt you, dear."},
             fb_p_venom_used_spectral_3 = {"Such a risky gamble,", "love. I adore it."},
             fb_p_venom_used_planet_1 = {"A stronger hand, dear?", "Stronger poison, then."},
             fb_p_venom_used_planet_2 = {"Grown a little, pet?", "Weeds do that too."},
@@ -463,7 +463,7 @@ return {
             fb_p_royal_used_planet_2 = {"Leveled, have we?", "A peasant on stilts."},
             fb_p_royal_used_planet_3 = {"Borrowing the stars?", "They belong to us."},
             fb_p_royal_joker_created_1 = {"Another jester?", "Our court has better."},
-            fb_p_royal_joker_created_2 = {"Hiring help, peasant?", "How desperate."},
+            fb_p_royal_joker_created_2 = {"Recruiting, peasant?", "How desperate."},
             fb_p_royal_joker_created_3 = {"A new fool joins.", "We won't learn its name."},
 
             -- The Hook: discards 2 random cards per hand played
