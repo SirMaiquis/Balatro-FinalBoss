@@ -108,7 +108,7 @@ local Mark = Moveable:extend()
 E.Mark = Mark
 
 --- args: shape ('ring', 'flash', 'coin', 'bar', 'fill', 'beam', 'glyph', 'heart', 'leaf', 'dot',
---- 'none'), colour, alpha (bar), life (s), glyph (logic.GLYPHS key), width (line width, room units),
+--- 'shard', 'none'), colour, alpha (bar), life (s), glyph (logic.GLYPHS key), width (line width, room units),
 --- x2/y2 (beam end, room units), path {x0, y0, x1, y1} (top-left travels over `travel` seconds,
 --- default life; eased out, or steady with linear = true), wave {amplitude, waves} (the path snakes
 --- side to side, back on the line at both ends), follower (an object whose top-left follows this
@@ -208,6 +208,9 @@ function Mark:draw()
   elseif s == 'dot' then
     paint(self.colour, math.min(1, 5 * a))
     love.graphics.circle('fill', w / 2, h / 2, w / 2, 24)
+  elseif s == 'shard' then -- 1.3: a broken piece of the chip (tiered deaths)
+    paint(self.colour, math.min(1, 3 * a))
+    love.graphics.polygon('fill', 0, h * 0.2, w, 0, w * 0.6, h)
   end
   love.graphics.pop()
   love.graphics.setLineWidth(lw)

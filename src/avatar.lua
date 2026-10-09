@@ -511,6 +511,11 @@ V.POKE_BOUNCE = 0.12 -- seconds between a bouncy chip's extra juices
 V.GIGGLE_GAP = 1.0   -- spam clicks: a new giggle at most this often
 V.GIGGLE_BEATS = 3   -- a short giggle (a full one is the boss laugh)
 V.hud_shake = nil    -- {until_t, amp, time}: the HUD chip's poke shake (V.hud_tick)
+V.hud_tremble = false -- 1.3 fear: the HUD chip trembles until the blind ends (V.hud_tick; never saved)
+V.HUD_TREMBLE = 0.035 -- its jitter amplitude (room units)
+
+--- The HUD chip's fear tremble (1.3); the avatar's is V.set_tremble.
+function V.set_hud_tremble(on) V.hud_tremble = on and true or false end
 
 local function hud_sprite(blind)
   return blind and blind.children and blind.children.animatedSprite
@@ -580,11 +585,17 @@ end
 --- spring settles it once the shake is over.
 function V.hud_tick(blind)
   local h = V.hud_shake
-  if not h then return end
+  if not (h or V.hud_tremble) then return end
   local s = hud_sprite(blind)
-  local left = h.until_t - now()
-  if left <= 0 or not s or reduced() or (s.states and s.states.drag.is) then V.hud_shake = nil; return end
-  local a = h.amp * left / h.time
+  local still = not s or reduced() or (s.states and s.states.drag.is)
+  local a = 0
+  if h then
+    local left = h.until_t - now()
+    if left <= 0 or still then V.hud_shake = nil else a = h.amp * left / h.time end
+  end
+  -- 1.3 fear: the chip keeps trembling (never under reduced motion or while dragged)
+  if V.hud_tremble and not still then a = math.max(a, V.HUD_TREMBLE) end
+  if a <= 0 then return end
   s.VT.x = s.T.x + (math.random() - 0.5) * 2 * a
   s.VT.y = s.T.y + (math.random() - 0.5) * 2 * a
 end

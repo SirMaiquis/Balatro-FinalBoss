@@ -19,13 +19,13 @@ local function setup(death, opts)
       if opts.fail == name then error('boom ' .. name) end
     end
   end
-  _G.G = {ROOM = {jiggle = 0}, play = {T = {x = 1, y = 1, w = 5, h = 3}},
+  _G.G = {ROOM = {jiggle = 0}, C = {WHITE = {1, 1, 1, 1}}, play = {T = {x = 1, y = 1, w = 5, h = 3}},
     E_MANAGER = {add_event = function() end}}
   _G.Event = function(t) return t end
   _G.play_sound = function() end
   _G.darken = function(c) return c end
   local effects = {}
-  for _, name in ipairs({'scatter', 'burst', 'ring', 'sweep', 'crack', 'pour', 'curse', 'stamp'}) do
+  for _, name in ipairs({'scatter', 'burst', 'ring', 'sweep', 'crack', 'pour', 'curse', 'stamp', 'flash_at'}) do
     effects[name] = rec(name)
   end
   _G.FinalBoss = {
@@ -107,4 +107,49 @@ T['deaths.play: a recipe only runs death-safe effects'] = function()
   eq(warns, 2, 'one warning per skipped effect')
 end
 
+
+-- Tiered deaths (1.3) -------------------------------------------------------------------------------
+
+local src = {x = 1, y = 1, w = 2, h = 2}
+
+T['amplify: tier 2 adds, tier 3 adds more; tier 1, nil or screen effects off add nothing'] = function()
+  local D, ctx = setup('hearts')
+  eq(D.amplify(blind, src, 1, false), false); eq(D.amplify(blind, src, nil, false), false)
+  eq(#ctx.calls, 0)
+  eq(D.amplify(blind, src, 2, false), true)
+  eq(count(ctx, 'burst'), 1); eq(count(ctx, 'scatter'), 1); eq(count(ctx, 'ring'), 0)
+  local j2 = G.ROOM.jiggle
+  eq(ctx.args.scatter[2].shape, 'shard')
+  eq(D.amplify(blind, src, 3, false), true)
+  eq(count(ctx, 'ring'), 1, 'rings at full intensity')
+  assert(G.ROOM.jiggle - j2 > j2, 'a bigger shake for tier 3')
+  assert(ctx.args.burst[3].scale > 2, 'a bigger burst')
+  D, ctx = setup('hearts', {fx_off = true})
+  eq(D.amplify(blind, src, 3, false), false); eq(#ctx.calls, 0)
+end
+
+T['amplify: reduced motion flashes only'] = function()
+  local D, ctx = setup('hearts')
+  eq(D.amplify(blind, src, 3, true), true)
+  eq(#ctx.calls, 1); eq(ctx.calls[1], 'flash_at'); eq(G.ROOM.jiggle, 0)
+end
+
+T['chip: tier 2 cracks and shatters, tier 3 explodes with a shake; reduced motion flashes only'] = function()
+  local D, ctx = setup(nil)
+  eq(D.chip(blind, src, 1, false), false, 'tier 1: as today'); eq(#ctx.calls, 0)
+  eq(D.chip(blind, src, 2, false), true)
+  eq(count(ctx, 'flash'), 1); eq(count(ctx, 'crack'), 1); eq(count(ctx, 'scatter'), 1)
+  eq(ctx.args.crack[3].bare, true); eq(ctx.args.scatter[2].shape, 'shard')
+  local j2 = G.ROOM.jiggle
+  eq(D.chip(blind, src, 3, false), true)
+  eq(count(ctx, 'ring'), 1, 'only the explosion rings')
+  assert(G.ROOM.jiggle - j2 >= 10, 'the explosion shakes the screen')
+  assert(ctx.args.scatter[2].count > 12, 'more pieces')
+  D, ctx = setup(nil)
+  eq(D.chip(blind, src, 3, true), true)
+  eq(count(ctx, 'flash'), 1); eq(count(ctx, 'flash_at'), 1); eq(#ctx.calls, 2, 'no pieces')
+  eq(G.ROOM.jiggle, 0)
+  D, ctx = setup(nil, {fx_off = true})
+  eq(D.chip(blind, src, 3, false), false); eq(#ctx.calls, 0)
+end
 return T

@@ -111,4 +111,62 @@ function D.play(blind, x, y, w, h, calm)
   return true
 end
 
+-- Tiered deaths (1.3) -----------------------------------------------------------------------------
+-- A crushing win (logic.death_tier 2 or 3) makes the death bigger. Final bosses: their own death (or
+-- the 1.0 explosion) with D.amplify on top. Regular bosses: the HUD blind chip cracks and shatters
+-- (2) or explodes into pieces with a screen shake (3), D.chip. Visual only, never blocking: vanilla's
+-- defeat and cash-out go on underneath. Both need screen effects; reduced motion: flashes only.
+
+--- Extra layers per tier: bursts (scale), shards flung out, extra screen jiggle, rings.
+D.AMPLIFY = {
+  [2] = {burst = 2, shards = 10, spread = 3, jiggle = 3},
+  [3] = {burst = 3.5, shards = 22, spread = 4.5, jiggle = 8, rings = 3},
+}
+
+--- A final boss's death, amplified: src = {x, y, w, h} where the avatar was. Returns true when it
+--- added anything.
+function D.amplify(blind, src, tier, calm)
+  local a = D.AMPLIFY[tier]
+  if not a or not FinalBoss.config.fx then return false end
+  local s = {x = src.x, y = src.y, w = src.w, h = src.h, colour = FinalBoss.moves.boss_colour(blind)}
+  if calm then -- reduced motion: one more flash over the chip, nothing flies
+    E().flash_at(s.x, s.y, s.w, s.h, G.C.WHITE)
+    return true
+  end
+  E().burst(s, nil, {colour = s.colour, scale = a.burst})
+  E().scatter(s, {shape = 'shard', colour = s.colour, count = a.shards, spread = a.spread, size = 0.35,
+    life = 1.4})
+  if a.rings then E().ring(s, nil, {colour = s.colour, count = a.rings, scale = 2}) end
+  G.ROOM.jiggle = G.ROOM.jiggle + a.jiggle
+  play_sound(tier >= 3 and 'explosion1' or 'glass4', 0.9, 0.6)
+  return true
+end
+
+--- The HUD chip's death (regular bosses), src = {x, y, w, h} of the chip. Tier 2: it cracks and
+--- shatters; tier 3: it explodes into pieces with a screen shake and a flash. Returns true when it
+--- played (needs screen effects and tier 2 or more).
+function D.chip(blind, src, tier, calm)
+  if not D.AMPLIFY[tier] or not FinalBoss.config.fx then return false end
+  local s = {x = src.x, y = src.y, w = src.w, h = src.h, colour = FinalBoss.moves.boss_colour(blind)}
+  FinalBoss.fx.play('flash', blind, '') -- '' = the neutral colour vanilla eases to after a win
+  if calm then
+    E().flash_at(s.x, s.y, s.w, s.h, G.C.WHITE)
+    return true
+  end
+  local big = tier >= 3
+  E().crack(s, {T = {x = s.x, y = s.y, w = s.w, h = s.h}}, {colour = s.colour, bare = true})
+  E().scatter(s, {shape = 'shard', colour = s.colour, count = big and 24 or 12, spread = big and 5 or 2,
+    size = big and 0.45 or 0.3, life = big and 1.6 or 1.1})
+  E().burst(s, nil, {colour = s.colour, scale = big and 3 or 1.2})
+  if big then
+    E().ring(s, nil, {colour = s.colour, count = 2, scale = 2.5})
+    G.ROOM.jiggle = G.ROOM.jiggle + 10
+    play_sound('explosion_release1', 1, 0.7)
+  else
+    G.ROOM.jiggle = G.ROOM.jiggle + 2
+  end
+  play_sound('glass1', big and 0.8 or 1.1, 0.6)
+  return true
+end
+
 return D

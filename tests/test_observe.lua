@@ -229,6 +229,99 @@ T['fear_line: only the winning defeat hand, by tier, always'] = function()
   eq(ctx.O.fear_line({moment = 'defeat', total = 0, required = 0}), nil, 'no requirement')
 end
 
+T['fear_line: a fear line said live on this hand skips the defeat line; else a fallback, once'] = function()
+  local ctx = setup()
+  local win = {moment = 'defeat', total = 1500, required = 100, hand = 3}
+  eq(ctx.O.fear_line(win, {fear_said = 2, fear_hand = 3}), false, 'said live on this hand')
+  eq(ctx.O.fear_line(win, {fear_said = 1, fear_hand = 4}), false, 'said as the hand cleared')
+  local enc = {}
+  eq(ctx.O.fear_line(win, enc), 'fear_2', 'never said live: the fallback')
+  eq(enc.fear_said, 2); eq(enc.fear_hand, 3, 'booked like a live crossing')
+  eq(ctx.O.fear_line(win, {fear_said = 2, fear_hand = 1}), nil, 'this tier was said on an earlier hand')
+  eq(ctx.O.fear_line(win, {fear_said = 1, fear_hand = 1}), 'fear_2', 'a higher tier than an earlier hand')
+  eq(ctx.O.fear_line({moment = 'defeat', total = 150, required = 100, hand = 3}, {}), nil, 'below 2x')
+end
+
+-- The live fear scale -------------------------------------------------------------------------------
+
+--- A boss fight with a hand scoring: round score 100 of a 1000 requirement, displayed chips x mult.
+local function fear_setup(o)
+  o = o or {}
+  local enc = {key = 'bl_hook', boss = true, tier = o.tier or 'full', ended = false, fired = {}}
+  local ctx = setup{enc = enc}
+  ctx.enc = enc
+  ctx.fx = {}
+  G.STATE = G.STATES.HAND_PLAYED
+  G.GAME.chips = 100
+  G.GAME.blind.chips = 1000
+  G.GAME.current_round = {hands_played = 2, current_hand = {chips = 0, mult = 0}}
+  FinalBoss.director.fear_fx = function(e, b, t) ctx.fx[#ctx.fx + 1] = t end
+  ctx.show = function(chips, mult)
+    G.GAME.current_round.current_hand.chips = chips
+    G.GAME.current_round.current_hand.mult = mult
+    ctx.O.fear_tick()
+  end
+  return ctx
+end
+
+T['fear_tick: the displayed total crosses 2x, 10x, 100x: each line once, forced and free'] = function()
+  local ctx = fear_setup()
+  ctx.show(30, 4)
+  eq(#ctx.fired, 0, 'below 2x')
+  ctx.show(100, 19)
+  eq(#ctx.fired, 1); eq(ctx.fired[1], 'fear_1', '100 + 1900 = 2x')
+  eq(ctx.opts[1].force, true); eq(ctx.opts[1].free, true)
+  eq(ctx.enc.fear_said, 1); eq(ctx.enc.fear_hand, 2)
+  ctx.show(100, 20)
+  eq(#ctx.fired, 1, 'the same tier again says nothing')
+  ctx.show(100, 99)
+  eq(ctx.fired[2], 'fear_2', 'escalation replaces the bubble')
+  ctx.show(1000, 100)
+  eq(ctx.fired[3], 'fear_3'); eq(ctx.enc.fear_said, 3)
+  eq(#ctx.fx, 3); eq(ctx.fx[1], 1); eq(ctx.fx[2], 2); eq(ctx.fx[3], 3)
+  ctx.show(0, 0)
+  eq(#ctx.fired, 3, 'the hand clears: nothing new')
+end
+
+T['fear_tick: a jump straight past a tier announces only the top one'] = function()
+  local ctx = fear_setup()
+  ctx.show(500, 200)
+  eq(#ctx.fired, 1); eq(ctx.fired[1], 'fear_3')
+end
+
+T['fear_tick: only while a hand scores in a live boss fight with no intro'] = function()
+  local ctx = fear_setup()
+  G.STATE = G.STATES.SELECTING_HAND
+  ctx.show(100, 99)
+  eq(#ctx.fired, 0, 'not scoring (choosing cards)')
+  G.STATE = G.STATES.HAND_PLAYED
+  ctx.enc.ended = true
+  ctx.show(100, 99)
+  eq(#ctx.fired, 0, 'the fight is over')
+  ctx.enc.ended = false
+  FinalBoss.dialogue.intro_active = function() return true end
+  ctx.show(100, 99)
+  eq(#ctx.fired, 0, 'the intro is still running')
+  FinalBoss.dialogue.intro_active = function() return false end
+  G.GAME.blind.config.blind.key = 'bl_other'
+  ctx.show(100, 99)
+  eq(#ctx.fired, 0, 'another blind')
+  G.GAME.blind.config.blind.key = 'bl_hook'
+  ctx.enc.tier = 'none'
+  ctx.show(100, 99)
+  eq(#ctx.fired, 0, 'a silent encounter')
+  ctx.enc.tier = 'light'
+  ctx.show(100, 99)
+  eq(#ctx.fired, 1, 'the light tier is watched too')
+end
+
+T['fear_tick: a visual failure is logged and the line is still said'] = function()
+  local ctx = fear_setup()
+  FinalBoss.director.fear_fx = function() error('no chip') end
+  ctx.show(100, 99)
+  eq(ctx.fired[1], 'fear_2'); eq(ctx.enc.fear_said, 2)
+end
+
 -- Idle taunts ------------------------------------------------------------------------------------------
 
 local function idle_setup()

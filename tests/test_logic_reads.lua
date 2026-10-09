@@ -182,4 +182,49 @@ T['personality moments: 28 run moments, 1 to 3 variants each'] = function()
   eq(logic.personality_variants('read_repeat'), 2); eq(logic.personality_variants('jab_broke'), 1)
 end
 
+T['live_total: the round score plus the displayed chips x mult, missing values count 0'] = function()
+  eq(logic.live_total(100, 30, 4), 220)
+  eq(logic.live_total(nil, 30, 4), 120, 'no round score yet')
+  eq(logic.live_total(100, nil, 4), 100); eq(logic.live_total(100, 30, nil), 100)
+  eq(logic.live_total(100, '?', 4), 100, 'a text value')
+end
+
+T['fear_step: only a higher tier is announced, once'] = function()
+  eq(logic.fear_step(nil, 1), 1, 'first crossing'); eq(logic.fear_step(0, 2), 2)
+  eq(logic.fear_step(1, 2), 2, 'escalation'); eq(logic.fear_step(1, 3), 3, 'a skipped tier')
+  eq(logic.fear_step(2, 2), nil, 'already said'); eq(logic.fear_step(3, 2), nil, 'lower')
+  eq(logic.fear_step(2, nil), nil, 'below 2x'); eq(logic.fear_step(nil, nil), nil)
+  eq(logic.fear_step('x', 1), 1, 'a broken saved value counts as none')
+end
+
+T['death_tier: the higher of the live tier and the final tier, nil-safe'] = function()
+  eq(logic.death_tier(nil, nil), nil); eq(logic.death_tier(0, nil), nil)
+  eq(logic.death_tier(2, nil), 2, 'said live, final below'); eq(logic.death_tier(nil, 3), 3, 'never said live')
+  eq(logic.death_tier(3, 2), 3); eq(logic.death_tier(1, 2), 2)
+end
+
+T['fear_watch: a live boss fight on its blind, a hand scoring, no intro or cinematic'] = function()
+  local function a(o)
+    local t = {boss = true, ended = false, same_blind = true, hand_played = true, tier = 'light'}
+    for k, v in pairs(o or {}) do t[k] = v end
+    return t
+  end
+  eq(logic.fear_watch(a()), true); eq(logic.fear_watch(a{tier = 'full'}), true)
+  eq(logic.fear_watch(a{tier = 'none'}), false, 'silent tier')
+  eq(logic.fear_watch(a{boss = false}), false); eq(logic.fear_watch(a{ended = true}), false)
+  eq(logic.fear_watch(a{same_blind = false}), false); eq(logic.fear_watch(a{hand_played = false}), false)
+  eq(logic.fear_watch(a{intro = true}), false); eq(logic.fear_watch(a{cinematic = true}), false)
+end
+
+T['slowmo: short for scared, longer with a flash for terrified, none under reduced motion'] = function()
+  eq(logic.slowmo(1), nil); eq(logic.slowmo(nil), nil)
+  local s2, s3 = logic.slowmo(2), logic.slowmo(3)
+  eq(s2.duration, 0.6); eq(s3.duration, 1.2); eq(s2.flash, nil); eq(s3.flash, true)
+  assert(s3.scale < s2.scale and s2.scale < 1, 'slower for the bigger win')
+  assert(s2.scale ~= 0.35 and s3.scale ~= 0.35, 'never the phase freeze value (phases.lua tells them apart by it)')
+  eq(logic.slowmo(2, true), nil); eq(logic.slowmo(3, true), nil)
+  s2.duration = 99
+  eq(logic.SLOWMO[2].duration, 0.6, 'a copy')
+end
+
 return T

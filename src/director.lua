@@ -43,6 +43,7 @@ function Dir.on_blind_set(blind)
   FinalBoss.dialogue.reset(blind)
   FinalBoss.moves.on_blind_set()
   FinalBoss.memory.unpresent()
+  FinalBoss.avatar.set_hud_tremble(false) -- 1.3 fear: a new chip is calm
   local proto = blind.config.blind or {}
   if not proto.key then st.encounter = nil; return end
   local entry = FinalBoss.registry.get(proto.key)
@@ -192,6 +193,7 @@ function Dir.on_round_end()
   FinalBoss.memory.unpresent() -- after the loss is recorded (memory's safe: a visual error is only logged)
   if not enc then return end
   if over then
+    FinalBoss.avatar.set_hud_tremble(false)
     FinalBoss.fx.stop()
     FinalBoss.arena.stop(true)
     if enc.cinematic then
@@ -321,23 +323,25 @@ local function fire_after(enc, wait, moment, opts)
     end}))
 end
 
---- The fear scale's visuals (1.3), played as the fear line is said (the defeat moment: no laugh to
---- wait for). Scared (fear_2): the chip trembles. Terrified (fear_3): a screen shake and flash, and
---- the chip cowers with a white flash (logic.fear_reaction). On the avatar in a showdown, else on the
---- HUD blind chip. Reduced motion: flashes only (fx.shake is a no-op there, fear_reaction strips the
---- motion). The flash restores to the neutral colour ('') since the boss is beaten, like the finale.
---- Sore (fear_1) and any other line: nothing. The finale and the death still run as usual.
-local function fear_fx(enc, blind, line)
-  local tier = type(line) == 'string' and tonumber(line:match('^fear_(%d)$'))
-  if not tier or tier < 2 then return end
+Dir.FEAR_SHAKE = 12 -- the terrified crossing's screen jiggle (fx shake; a plain big hand is 4)
+
+--- The fear scale's visuals (1.3), played at the live crossing (observe.fear_tick) or with the
+--- fallback fear line (react). Scared (2): the chip starts to tremble and keeps trembling (the
+--- showdown avatar until it is removed, the HUD chip until the blind ends). Terrified (3): a big
+--- screen shake and a flash, and the chip cowers with a white flash (logic.fear_reaction). Crossing
+--- straight to 3 also starts the tremble. Reduced motion: flashes only (fx.shake is a no-op there,
+--- the trembles stay still, fear_reaction strips the motion). Screen effects follow config.fx (fx.play).
+--- The flash restores to the neutral colour ('') on the winning hand, like the finale. Sore (1):
+--- nothing. They play with dialogue off too.
+function Dir.fear_fx(enc, blind, tier)
+  if type(tier) ~= 'number' or tier < 2 then return end
   local V = FinalBoss.avatar
   local reduced = G.SETTINGS.reduced_motion
-  if tier == 3 then
-    FinalBoss.fx.play('shake', blind)
-    FinalBoss.fx.play('flash', blind, '')
+  if tier >= 3 then
+    FinalBoss.fx.play('shake', blind, Dir.FEAR_SHAKE)
+    FinalBoss.fx.play('flash', blind, enc.win_hand and '' or nil)
   end
-  -- The showdown avatar keeps trembling (Avatar:move; calm under reduced motion) until it is removed.
-  if V.exists() then V.set_tremble(true) end
+  if V.exists() then V.set_tremble(true) else V.set_hud_tremble(true) end
   V.poke(blind, FinalBoss.logic.fear_reaction(tier, reduced), FinalBoss.registry.get(enc.key).voice.pitch)
 end
 
@@ -370,12 +374,18 @@ local function react(p)
     if comment then fire_after(enc, wait, comment, {hand = p.hand}) end
     return
   end
-  -- The nemesis's own defeat line (1.1), else the fear line (1.3: the winning hand at 2x, 10x or
-  -- 100x the requirement, always), replaces the defeat line. Either is said as the defeat moment, so
-  -- it is forced like the defeat line. A fear line brings its visuals with it (fear_fx).
-  local line = FinalBoss.memory.defeat_line(enc, p.moment) or FinalBoss.observe.fear_line(p)
+  -- The nemesis's own defeat line (1.1) always replaces the defeat line, even a fear line said live.
+  -- Else the live fear scale (1.3, observe.fear_tick) decides: a fear line already said on this hand
+  -- stands and the defeat line is skipped (the death follows); a tier the live scale never announced
+  -- gets its fear line now, with its visuals (Dir.fear_fx); otherwise the plain defeat line. Any of
+  -- them is said as the defeat moment, forced like the defeat line.
+  local line = FinalBoss.memory.defeat_line(enc, p.moment)
+  if not line then
+    line = FinalBoss.observe.fear_line(p, enc)
+    if line == false then return end
+    if line then FinalBoss.util.guard('fear_fx', Dir.fear_fx, enc, blind, enc.fear_said) end
+  end
   fire_after(enc, wait, p.moment, {line = line, hand = p.hand})
-  FinalBoss.util.guard('fear_fx', fear_fx, enc, blind, line)
 end
 
 --- Run a pending reaction now (blind defeated, round end: keeps the finale / game-over order).
@@ -408,7 +418,11 @@ function Dir.stage_hit(enc, blind, delta, total, required, moment, hand)
   if moment == 'defeat' then
     -- The defeat line (fired next) shows during the shake. The flag is plain data on the saved
     -- encounter: on_blind_defeated runs seconds later, so the finale's phase is no use there.
-    enc.finale = FinalBoss.cinematic.play_finale(blind) and true or nil
+    -- 1.3: a crushing win (the fear tier said live, or the final total's) stretches it and
+    -- amplifies the death.
+    local L = FinalBoss.logic
+    local tier = L.death_tier(enc.fear_said, L.fear_tier(total, required))
+    enc.finale = FinalBoss.cinematic.play_finale(blind, tier) and true or nil
     return 0
   end
   FinalBoss.avatar.hit(size)
@@ -462,19 +476,58 @@ function Dir.on_blind_defeated()
   local enc, blind = current()
   if not enc then return end
   enc.ended = true
+  -- 1.3: a crushing win with no finale gets the HUD chip's tiered death (light and full tiers); it
+  -- replaces the defeat effect.
+  local chip = false
+  if not enc.finale then
+    local ok, res = pcall(Dir.chip_death, enc, blind)
+    if ok then chip = res else FinalBoss.util.log('warn', 'chip death failed: ' .. tostring(res)) end
+  end
+  if not chip then FinalBoss.avatar.set_hud_tremble(false) end -- (a chip death stops it as it shatters)
   if enc.tier ~= 'full' then return end
   if enc.cinematic then
     -- The finale (started on the winning hand) owns the explosion; clean up if it never ran.
     if not enc.finale then
-      FinalBoss.fx.play(FinalBoss.registry.get(enc.key).fx.defeat, blind)
+      if not chip then FinalBoss.fx.play(FinalBoss.registry.get(enc.key).fx.defeat, blind) end
       FinalBoss.hpbar.remove()
       FinalBoss.avatar.remove()
     end
-  else
+  elseif not chip then
     FinalBoss.fx.play(FinalBoss.registry.get(enc.key).fx.defeat, blind)
   end
   FinalBoss.fx.stop()
   FinalBoss.arena.stop()
+end
+
+--- The HUD chip's tiered death (1.3) for the blind just defeated: tier 2 (logic.death_tier: the fear
+--- tier said live, or the final total's) a short slow motion while the chip cracks, then it shatters;
+--- tier 3 a longer slow motion and a screen flash, then it explodes into pieces with a screen shake
+--- (deaths.chip). Reduced motion: no slow motion, no pieces, flashes only. Needs screen effects.
+--- Visual only and never blocking (vanilla's defeat and cash-out go on; cinematic.slow_motion's time
+--- comes back by itself). Returns true when it plays.
+function Dir.chip_death(enc, blind)
+  local L = FinalBoss.logic
+  local total, required = fight_numbers(blind)
+  local tier = L.death_tier(enc.fear_said, L.fear_tier(total, required))
+  if not (tier and tier >= 2 and FinalBoss.config.fx and blind.T) then return false end
+  local calm = G.SETTINGS.reduced_motion
+  local src = {x = blind.T.x, y = blind.T.y, w = blind.T.w, h = blind.T.h}
+  local slow = L.slowmo(tier, calm)
+  if slow then FinalBoss.cinematic.slow_motion(slow.duration, slow.scale) end
+  if slow and slow.flash then FinalBoss.fx.play('flash', blind, '') end
+  if not calm then -- the cracks show through the slow motion
+    FinalBoss.effects.crack(src, {T = src}, {bare = true})
+    blind:juice_up(0.3, 0.2)
+  end
+  G.E_MANAGER:add_event(Event({trigger = 'after', delay = slow and slow.duration or 0, timer = 'REAL',
+    blocking = false, blockable = false, func = function()
+      FinalBoss.util.guard('chip_death', function()
+        FinalBoss.avatar.set_hud_tremble(false)
+        FinalBoss.deaths.chip(blind, src, tier, calm)
+      end)
+      return true
+    end}))
+  return true
 end
 
 --- The player pressed Play while the boss's intro (cinematic beats or intro lines) is still
@@ -507,8 +560,10 @@ end
 --- Per-frame tick (hooks: Game:update wrap). Cheap when nothing is on stage or pending.
 function Dir.tick(dt)
   local A, V, H = FinalBoss.arena, FinalBoss.avatar, FinalBoss.hpbar
+  FinalBoss.cinematic.tick() -- 1.3: slow motion ends on time
   if FinalBoss.cinematic.active() or FinalBoss.dialogue.intro_active() then Dir.check_interrupt() end
   FinalBoss.observe.idle_tick() -- 1.2 idle taunts (a few field reads per frame)
+  FinalBoss.observe.fear_tick() -- 1.3 the live fear scale (a few field reads while a hand scores)
   FinalBoss.poke.tick() -- 1.2 poke and grab the boss chip
   if not (Dir.pending or A.active() or V.exists() or H.exists()) then return end
   if Dir.pending then check_pending() end
@@ -529,7 +584,8 @@ function Dir.reset_stage()
     for _, step in ipairs({FinalBoss.cinematic.reset, FinalBoss.hpbar.remove, FinalBoss.avatar.remove,
         FinalBoss.arena.reset, FinalBoss.fx.reset, FinalBoss.effects.reset, FinalBoss.moves.reset,
         FinalBoss.phases.reset, FinalBoss.phases.clear_twists, FinalBoss.music.unduck,
-        FinalBoss.memory.unpresent, FinalBoss.poke.reset}) do
+        FinalBoss.memory.unpresent, FinalBoss.poke.reset,
+        function() FinalBoss.avatar.set_hud_tremble(false) end}) do
       local sok, serr = pcall(step)
       if not sok then FinalBoss.util.log('error', 'reset_stage step failed: ' .. tostring(serr)) end
     end

@@ -1196,6 +1196,51 @@ function logic.fear_tier(total, required)
   return tier
 end
 
+--- The live fear scale (1.3): the running total the player sees while a hand scores. base is the round
+--- score before this hand (G.GAME.chips), chips and mult the hand's displayed chips and mult (plain
+--- numbers, director.num); a missing value counts as 0.
+function logic.live_total(base, chips, mult)
+  local function n(x) return type(x) == 'number' and x or 0 end
+  return n(base) + n(chips) * n(mult)
+end
+
+--- The tier to announce now: live_tier when it is higher than the highest tier said this blind
+--- (said, nil = none), else nil. Each tier is said at most once per blind, and only ever upwards.
+function logic.fear_step(said, live_tier)
+  if type(live_tier) ~= 'number' then return nil end
+  if live_tier <= (type(said) == 'number' and said or 0) then return nil end
+  return live_tier
+end
+
+--- The death a winning hand earns: the higher of the tier said live this blind and the final total's
+--- tier (fear_tier). nil when neither is a tier.
+function logic.death_tier(said, final_tier)
+  local a = type(said) == 'number' and said or 0
+  local b = type(final_tier) == 'number' and final_tier or 0
+  local t = math.max(a, b)
+  return t > 0 and t or nil
+end
+
+--- Whether the live fear scale watches this frame: a live boss encounter on its own blind (any tier
+--- that talks), a hand being scored, no intro or cinematic running.
+function logic.fear_watch(a)
+  if not (a.boss and not a.ended and a.same_blind and a.hand_played) then return false end
+  if a.tier ~= 'light' and a.tier ~= 'full' then return false end
+  return not (a.intro or a.cinematic)
+end
+
+--- Slow motion before a tiered death (1.3), in real seconds at FinalBoss.timescale = scale. Tier 3
+--- adds a screen flash. Tier 1 or less: none. Reduced motion: none (the flash is the caller's).
+logic.SLOWMO = {
+  [2] = {scale = 0.3, duration = 0.6},
+  [3] = {scale = 0.2, duration = 1.2, flash = true},
+}
+function logic.slowmo(tier, reduced)
+  local s = logic.SLOWMO[tier]
+  if not s or reduced then return nil end
+  return {scale = s.scale, duration = s.duration, flash = s.flash}
+end
+
 --- Whether an idle taunt is due after idle_for seconds without input; said = taunts said this blind.
 function logic.idle_due(idle_for, said)
   said = said or 0
