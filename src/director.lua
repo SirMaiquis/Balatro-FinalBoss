@@ -271,6 +271,7 @@ function Dir.on_hand_after(context)
   -- (functions/state_events.lua:524, :298), so it is monotonic per blind.
   local hands_played = cr.hands_played
   if enc.last_hand_seen == hands_played then return end -- defensive: one evaluation per hand
+  FinalBoss.logic.trick_new_turn(enc.tricks) -- 1.3 tricks: each card may get its line again
   Dir.flush_pending() -- a previous hand's reaction updates enc.fired / last_line_hand, read below
   enc.last_hand_seen = hands_played
   local delta = num(SMODS.last_hand_score)

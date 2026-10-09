@@ -15,14 +15,14 @@ local NAMES = {'G', 'FinalBoss', 'Blind', 'Card', 'Game', 'love', 'SMODS', 'end_
 local function with_hooks(f)
   local saved = {}
   for _, k in ipairs(NAMES) do saved[k] = _G[k] end
-  local ctx = {joker_calls = {}, seen_restoring = {}}
+  local ctx = {joker_calls = {}, seen_restoring = {}, order = {}}
   local ok, err = pcall(function()
     _G.G = {GAME = {}, jokers = {}}
     _G.Blind, _G.love, _G.SMODS = {}, {}, {}
     _G.end_round = function() end
     _G.ease_background_colour_blind = function() end
     _G.Card = {add_to_deck = function(self) self.added_to_deck = true; return 'added' end,
-      use_consumeable = function() end}
+      use_consumeable = function() ctx.order[#ctx.order + 1] = 'original'; return 'used', 7 end}
     _G.Game = {start_run = function(self, args)
       ctx.seen_restoring[#ctx.seen_restoring + 1] = FinalBoss.tricks.restoring
       if args and args.boom then error('boom', 0) end
@@ -35,7 +35,9 @@ local function with_hooks(f)
       tricks = {restoring = false, on_joker_added = function(card, from_debuff, was_added, in_jokers)
         ctx.joker_calls[#ctx.joker_calls + 1] = {card = card, from_debuff = from_debuff, was_added = was_added,
           in_jokers = in_jokers}
-      end},
+      end,
+      snapshot = function(card) ctx.order[#ctx.order + 1] = 'snapshot'; return {of = card} end,
+      on_consumable = function(card, before) ctx.order[#ctx.order + 1] = 'use'; ctx.use = {card, before} end},
     }
     package.loaded['src.hooks'] = nil
     require('src.hooks')
@@ -55,6 +57,16 @@ T['add_to_deck: a new joker, then one transforming in the joker slots'] = functi
     local old = setmetatable({area = G.jokers}, {__index = Card})
     old:add_to_deck()
     eq(ctx.joker_calls[2].in_jokers, true, 'already in G.jokers before the call')
+  end)
+end
+
+T['use_consumeable: snapshot before the original, passed to on_consumable after'] = function()
+  with_hooks(function(ctx)
+    local c = setmetatable({}, {__index = Card})
+    local a, b = c:use_consumeable()
+    eq(a, 'used'); eq(b, 7, 'all results passed on')
+    eq(table.concat(ctx.order, ','), 'snapshot,original,use')
+    eq(ctx.use[1], c); eq(ctx.use[2].of, c, 'the snapshot reaches on_consumable')
   end)
 end
 

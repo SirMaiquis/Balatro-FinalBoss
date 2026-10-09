@@ -284,10 +284,14 @@ end
 -- buying). The joker check reads added_to_deck and the card's area before the original runs: new jokers
 -- are emplaced in G.jokers only after add_to_deck, while a joker already there that transforms
 -- (smods lovely/fixes.toml:170-189: set_ability calls remove_from_deck then add_to_deck) is not new.
+-- The Wheel of Fortune's jokers are read before the original runs (tricks.snapshot): its edition lands
+-- in an event the use queues, and tricks compares once that has run.
 local orig_use_consumeable = Card.use_consumeable
 function Card:use_consumeable(...)
+  local before
+  if live() then U.guard('trick_snapshot', function() before = FinalBoss.tricks.snapshot(self) end) end
   local r = pack(orig_use_consumeable(self, ...))
-  if live() then U.guard('trick_use', FinalBoss.tricks.on_consumable, self) end
+  if live() then U.guard('trick_use', FinalBoss.tricks.on_consumable, self, before) end
   return unpack(r, 1, r.n)
 end
 

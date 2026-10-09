@@ -110,6 +110,43 @@ T['trick_allowed: only in the live fight'] = function()
   local a = {}; for x, v in pairs(ok) do a[x] = v end; a.tier = 'none'
   assert(not logic.trick_allowed(a), 'below the dialogue ante')
 end
+T['trick: the same card once per turn'] = function()
+  local s = {}
+  eq(logic.trick_reaction(s, 'Tarot', 10, 'c_star'), 'used_tarot')
+  eq(logic.trick_reaction(s, 'Tarot', 20, 'c_star'), nil, 'same key, same turn, gap passed')
+  eq(logic.trick_reaction(s, 'Tarot', 12, 'c_moon'), nil, 'another key inside the gap')
+  eq(s.turn_keys.c_moon, nil, 'refused: not booked')
+  eq(logic.trick_reaction(s, 'Tarot', 30, 'c_moon'), 'used_tarot', 'another key after the gap')
+  eq(logic.trick_reaction(s, 'Joker', 40, 'c_star'), nil, 'a joker line for a booked card')
+  logic.trick_new_turn(s)
+  eq(s.turn_keys, nil)
+  eq(logic.trick_reaction(s, 'Tarot', 40, 'c_star'), 'used_tarot', 'a hand was played')
+  eq(logic.trick_reaction(s, 'Tarot', 50), 'used_tarot', 'no key: never booked')
+  logic.trick_new_turn(nil) -- no tricks yet: nothing to clear
+end
+T['joker_card_resolution: the joker line only for a new joker not yet named this blind'] = function()
+  eq(logic.joker_card_resolution(true, false), 'Joker')
+  eq(logic.joker_card_resolution(true, true), 'card', 'joker_created already said')
+  eq(logic.joker_card_resolution(false, false), 'card', 'no joker came (full slots)')
+  eq(logic.joker_card_resolution(nil, nil), 'card')
+end
+T['wheel_moment: hit, miss, rigged on either, nil-safe'] = function()
+  eq(logic.wheel_moment(true, 1, 4), 'used_tarot_wheel_hit')
+  eq(logic.wheel_moment(false, 1, 4), 'used_tarot_wheel_miss')
+  eq(logic.wheel_moment(true, 2, 4), 'used_tarot_wheel_rigged', 'Oops! All 6s, hit')
+  eq(logic.wheel_moment(false, 2, 4), 'used_tarot_wheel_rigged', 'Oops! All 6s, miss')
+  eq(logic.wheel_moment(nil, nil, nil), 'used_tarot_wheel_miss')
+  eq(logic.wheel_moment(true, 2, nil), 'used_tarot_wheel_hit', 'unknown odds are fair')
+  eq(logic.wheel_moment(false, 2, 0), 'used_tarot_wheel_miss', 'no divide by zero')
+  eq(logic.wheel_moment(true, 0.5, 4), 'used_tarot_wheel_hit', 'worse odds are not rigged')
+end
+T['wheel moments are personality moments with 2 variants'] = function()
+  local has = {}
+  for _, m in ipairs(logic.PERSONALITY_MOMENTS) do has[m] = true end
+  for _, r in ipairs({'hit', 'miss', 'rigged'}) do
+    assert(has['used_tarot_wheel_' .. r], r); eq(logic.personality_variants('used_tarot_wheel_' .. r), 2)
+  end
+end
 T['joker_created is a personality moment with 3 variants'] = function()
   local has = {}
   for _, m in ipairs(logic.PERSONALITY_MOMENTS) do has[m] = true end

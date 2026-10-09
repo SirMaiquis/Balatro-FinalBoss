@@ -1412,18 +1412,50 @@ logic.TRICK_MOMENTS = {Tarot = 'used_tarot', Spectral = 'used_spectral', Planet 
 logic.TRICK_ONCE_PER_BLIND = {Joker = true}
 
 --- A trick of kind (a TRICK_MOMENTS key) at time now. state: plain data on the encounter (enc.tricks =
---- {seen = {Joker = true}, last}), updated only when a line is due. Returns the kind's moment or nil
---- (tricks.lua picks the card's own moment with logic.consumable_moment). The gap uses since (the poke
---- section): a clock that went back (a loaded save) never blocks.
-function logic.trick_reaction(state, kind, now)
+--- {seen = {Joker = true}, last, turn_keys = {[center_key] = true}}), updated only when a line is due.
+--- key: the consumable's center key, or nil; a key that already got a line this turn (since the last
+--- hand played, logic.trick_new_turn) is refused. Returns the kind's moment or nil (tricks.lua picks the
+--- card's own moment with logic.consumable_moment). The gap uses since (the poke section): a clock that
+--- went back (a loaded save) never blocks.
+function logic.trick_reaction(state, kind, now, key)
   local moment = logic.TRICK_MOMENTS[kind]
   if not moment then return nil end
   state.seen = state.seen or {}
   if state.seen[kind] then return nil end
+  if key ~= nil and state.turn_keys and state.turn_keys[key] then return nil end
   if since(now, state.last) < logic.TRICK_GAP then return nil end
   if logic.TRICK_ONCE_PER_BLIND[kind] then state.seen[kind] = true end
+  if key ~= nil then
+    state.turn_keys = state.turn_keys or {}
+    state.turn_keys[key] = true
+  end
   state.last = now
   return moment
+end
+
+--- A hand was played: every consumable may get its line again. state: enc.tricks or nil.
+function logic.trick_new_turn(state)
+  if state then state.turn_keys = nil end
+end
+
+--- What a consumable's line becomes once its own effects have run. joker_arrived: its use created a
+--- joker; joker_said: joker_created was already said this blind. 'Joker' (the joker_created line,
+--- naming the new joker) or 'card' (the card's own line).
+function logic.joker_card_resolution(joker_arrived, joker_said)
+  if joker_arrived and not joker_said then return 'Joker' end
+  return 'card'
+end
+
+--- The Wheel of Fortune's moment. hit: an edition landed on a joker. normal / extra: the live
+--- G.GAME.probabilities.normal and the card's ability.extra (vanilla rolls normal/extra, 1 in 4).
+--- Rigged odds (better than 1 in 4, e.g. Oops! All 6s) win over the result; unknown odds are fair.
+logic.WHEEL_ODDS = 1 / 4
+function logic.wheel_moment(hit, normal, extra)
+  if type(normal) == 'number' and type(extra) == 'number' and extra > 0
+    and normal / extra > logic.WHEEL_ODDS then
+    return 'used_tarot_wheel_rigged'
+  end
+  return hit and 'used_tarot_wheel_hit' or 'used_tarot_wheel_miss'
 end
 
 --- Tarot and spectral effect groups by vanilla center key (game.lua P_CENTERS; note vanilla's
@@ -1513,6 +1545,11 @@ for _, set in ipairs({{'used_tarot_', logic.TAROT_GROUPS}, {'used_spectral_', lo
     logic.PERSONALITY_MOMENTS[#logic.PERSONALITY_MOMENTS + 1] = set[1] .. g
     logic.PERSONALITY_VARIANTS[set[1] .. g] = 2
   end
+end
+-- The Wheel of Fortune by result (logic.wheel_moment): 2 variants each.
+for _, m in ipairs({'used_tarot_wheel_hit', 'used_tarot_wheel_miss', 'used_tarot_wheel_rigged'}) do
+  logic.PERSONALITY_MOMENTS[#logic.PERSONALITY_MOMENTS + 1] = m
+  logic.PERSONALITY_VARIANTS[m] = 2
 end
 
 function logic.personality_variants(moment)

@@ -40,16 +40,17 @@ end
 
 --- Book the trick and, with dialogue on, say its line. Dialogue off: still booked, so turning it on
 --- mid-blind does not replay an old trick. Dialogue on but the line not shown (dropped inside
---- dialogue's REACTION_GAP): the booking goes back (like logic.poke_unsaid), so the kind can still
---- get its line later in the blind.
---- line(blind) (consumables): the card's own moment and vars, or nil for the kind's plain moment.
-local function react(kind, line)
+--- dialogue's REACTION_GAP): the booking goes back (like logic.poke_unsaid), so the kind and the card
+--- can still get their line later.
+--- line(blind): the card's or joker's own moment and vars, or nil for the kind's plain moment.
+--- key: the consumable's center key (once per turn, logic.trick_reaction), or nil.
+local function react(kind, line, key)
   local enc = R.encounter()
   if not enc then return end
   local state = enc.tricks or {}
   enc.tricks = state
   local last = state.last
-  local moment = L().trick_reaction(state, kind, FinalBoss.util.now())
+  local moment = L().trick_reaction(state, kind, FinalBoss.util.now(), key)
   if not (moment and FinalBoss.config.dialogue) then return end
   local opts = {free = true}
   if line then
@@ -57,11 +58,14 @@ local function react(kind, line)
     if m then moment, opts.vars = m, vars end
   end
   local _, shown = FinalBoss.director.fire(moment, opts)
-  if not shown then state.seen[kind], state.last = nil, last end
+  if not shown then
+    state.seen[kind], state.last = nil, last
+    if key ~= nil and state.turn_keys then state.turn_keys[key] = nil end
+  end
 end
 
 --- A consumable's name in the current language (functions/misc_functions.lua:1744-1746); its key if
---- that fails.
+--- that fails. Jokers too (set 'Joker').
 local function card_name(set, key)
   local ok, name = pcall(localize, {type = 'name_text', set = set, key = key})
   if ok and type(name) == 'string' and name ~= 'ERROR' then return name end
@@ -88,9 +92,13 @@ end
 --- level goes up inside Card:use_consumeable: level_up_hand (functions/common_events.lua:464-466)
 --- sets G.GAME.hands[hand].level at once and only queues the display. Our hook runs after the
 --- original returns, so the level read here is already the new one.
-local function consumable_line(card, set)
+local function center_key(card)
   local center = card.config and card.config.center
-  local key = (center and center.key) or (card.config and card.config.center_key)
+  return (center and center.key) or (card.config and card.config.center_key)
+end
+
+local function consumable_line(card, set)
+  local key = center_key(card)
   local hand = set == 'Planet' and card.ability.consumeable and card.ability.consumeable.hand_type or nil
   local history = set == 'Planet' and planet_history(hand) or nil
   if set == 'Planet' and not history then return nil end -- a planet with no known hand: plain line
@@ -108,12 +116,83 @@ local function consumable_line(card, set)
   end
 end
 
---- A consumable was used (hooks.lua's Card:use_consumeable wrap).
-function R.on_consumable(card)
-  local set = card and card.ability and card.ability.set
-  if set == 'Tarot' or set == 'Spectral' or set == 'Planet' then
-    react(set, consumable_line(card, set))
+--- The joker_created line naming the new joker (#2#).
+local function joker_line(joker)
+  return function(blind)
+    local vars = FinalBoss.director.vars(blind)
+    vars[2] = card_name('Joker', center_key(joker))
+    return 'joker_created', vars
   end
+end
+
+-- Wheel of Fortune (vanilla card.lua:1467-1530): the roll happens inside Card:use_consumeable, but
+-- the edition lands in an event it queues (set_edition, :1484), and a miss only queues "Nope!"
+-- (:1501-1517). So the jokers without an edition are noted before the use (R.snapshot, from
+-- hooks.lua) and compared once the use's events have run (resolve, below).
+R.WHEEL = 'c_wheel_of_fortune'
+
+--- Before a consumable is used: for the Wheel of Fortune, the set of jokers with no edition (card
+--- references, never saved); nil for any other card.
+function R.snapshot(card)
+  if not (card and card.ability and card.ability.set == 'Tarot' and center_key(card) == R.WHEEL) then
+    return nil
+  end
+  local bare = {}
+  for _, j in ipairs(G.jokers and G.jokers.cards or {}) do
+    if not j.edition then bare[j] = true end
+  end
+  return bare
+end
+
+local function wheel_line(card, before)
+  local probs = G.GAME and G.GAME.probabilities
+  local normal = probs and probs.normal
+  local extra = card.ability and card.ability.extra -- 4 (game.lua P_CENTERS c_wheel_of_fortune)
+  return function(blind)
+    local hit = false
+    for j in pairs(before) do
+      if j.edition then hit = true; break end
+    end
+    local vars = FinalBoss.director.vars(blind)
+    vars[2] = card_name('Tarot', R.WHEEL)
+    return L().wheel_moment(hit, normal, extra), vars
+  end
+end
+
+-- A consumable's line waits until its own effects have run: vanilla makes jokers in events queued by
+-- the use (Judgement and The Soul card.lua:1415-1425, Ankh :1426-1453, Wraith :1454-1466), so the
+-- joker arrives after the use returns. R.pending marks the consumable whose effects are running (not
+-- saved); a joker added meanwhile is noted on it instead of getting its own line. The resolve event is
+-- queued after every event of the use, and before G.FUNCS.use_card's own state restore event
+-- (functions/button_callbacks.lua:2218-2263), so the fight is still in PLAY_TAROT when it runs.
+-- PENDING_MAX: a pending card older than this is stale (its event was lost with a cleared queue).
+R.PENDING_MAX = 10
+R.pending = nil
+
+local function resolve(p, set, line)
+  if R.pending == p then R.pending = nil end
+  local enc = R.encounter()
+  local said = enc and enc.tricks and enc.tricks.seen and enc.tricks.seen.Joker or false
+  if L().joker_card_resolution(p.joker ~= nil, said) == 'Joker' then
+    react('Joker', joker_line(p.joker), p.key)
+  else
+    react(set, line, p.key)
+  end
+end
+
+--- A consumable was used (hooks.lua's Card:use_consumeable wrap, after the original). before: the
+--- Wheel of Fortune's R.snapshot, or nil.
+function R.on_consumable(card, before)
+  local set = card and card.ability and card.ability.set
+  if not (set == 'Tarot' or set == 'Spectral' or set == 'Planet') then return end
+  if not R.encounter() then return end
+  local line = before and wheel_line(card, before) or consumable_line(card, set)
+  local p = {key = center_key(card), t = FinalBoss.util.now()}
+  R.pending = p
+  G.E_MANAGER:add_event(Event({func = function()
+    FinalBoss.util.guard('trick_resolve', resolve, p, set, line)
+    return true
+  end}))
 end
 
 --- A card was added to the deck (hooks.lua's Card:add_to_deck wrap): a joker newly created. Not a
@@ -123,9 +202,20 @@ end
 --- added_to_deck from the save, card.lua:4706); R.restoring covers mods that do. in_jokers: the card
 --- was already in G.jokers before the call (a joker transforming in place; new ones are emplaced after).
 --- Riff-raff's jokers come in setting_blind, while the intro speaks: no line, on purpose.
+--- A joker made by a consumable still resolving (R.pending) is left to that consumable's line.
 function R.on_joker_added(card, from_debuff, was_added, in_jokers)
   if from_debuff or was_added or in_jokers or R.restoring then return end
-  if card and card.ability and card.ability.set == 'Joker' then react('Joker') end
+  if not (card and card.ability and card.ability.set == 'Joker') then return end
+  local p = R.pending
+  if p then
+    local age = FinalBoss.util.now() - p.t
+    if age >= 0 and age <= R.PENDING_MAX then
+      p.joker = p.joker or card
+      return
+    end
+    R.pending = nil
+  end
+  react('Joker', joker_line(card))
 end
 
 return R

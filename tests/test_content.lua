@@ -207,11 +207,12 @@ T['every personality has every run moment'] = function()
   assert(#missing == 0, 'missing: ' .. table.concat(missing, ', '))
 end
 
---- The card-specific consumable moments of a key (used_tarot_<group>, used_spectral_<group>,
---- used_planet_main / _waste), or nil. The fallbacks (used_tarot, used_spectral, used_planet) are not.
+--- The card-specific consumable moments of a key (used_tarot_<group>, used_tarot_wheel_<result>,
+--- used_spectral_<group>, used_planet_main / _waste) and joker_created (it names the joker), or nil.
+--- The fallbacks (used_tarot, used_spectral, used_planet) are not.
 local function card_moment(key)
-  local m = key:match('_(used_tarot_%a+)_%d+$') or key:match('_(used_spectral_%a+)_%d+$')
-    or key:match('_(used_planet_%a+)_%d+$')
+  local m = key:match('_(used_tarot_[%a_]+)_%d+$') or key:match('_(used_spectral_%a+)_%d+$')
+    or key:match('_(used_planet_%a+)_%d+$') or key:match('_(joker_created)_%d+$')
   return m
 end
 
