@@ -113,6 +113,7 @@ DT.JABS = {
   {name = 'onesuit', state = {suit_max = 45}},
   {name = 'counter', state = {counter = true}},
   {name = 'famous', state = {jokers = {'j_blueprint'}}},
+  {name = 'combo', state = {combo = true}},
 }
 DT.jab_idx = 0
 

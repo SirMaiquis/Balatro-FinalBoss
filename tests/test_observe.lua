@@ -140,6 +140,13 @@ T['jab_vars: the boss name, then the joker name'] = function()
   eq(ctx.O.jab_vars({key = 'bl_hook', jab = {moment = 'jab_broke'}}, G.GAME.blind)[2], nil)
 end
 
+T['jab_vars: a combo names both jokers'] = function()
+  local ctx = setup()
+  local v = ctx.O.jab_vars({key = 'bl_hook', jab = {moment = 'jab_combo', combo = {'j_blueprint', 'j_brainstorm'}}},
+    G.GAME.blind)
+  eq(v[2], 'Name of j_blueprint & Name of j_brainstorm')
+end
+
 T['joker_name: falls back to the key when localize fails'] = function()
   local ctx = setup()
   _G.localize = function() return 'ERROR' end
@@ -321,6 +328,10 @@ T['dev_jab: fakes a run and says its jab now'] = function()
   eq(ctx.O.dev_jab({counter = true}), 'jab_counter')
   eq(ctx.opts[2].skip_boss, false); eq(ctx.opts[2].vars[2], 'Name of j_chicot')
   eq(G.GAME.FinalBoss.encounter.jab.joker, 'j_chicot')
+  G.GAME.FinalBoss.last_jab = nil
+  eq(ctx.O.dev_jab({combo = true}), 'jab_combo')
+  eq(G.GAME.FinalBoss.encounter.jab.combo[1], 'j_blueprint')
+  G.GAME.FinalBoss.last_jab = nil
   eq(ctx.O.dev_jab({}), nil, 'the neutral run has no jab')
   local none = setup()
   eq(none.O.dev_jab({dollars = 0}), nil, 'no encounter')

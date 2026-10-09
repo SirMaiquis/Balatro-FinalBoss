@@ -80,10 +80,12 @@ function O.joker_name(key)
   return key
 end
 
---- Vars of a jab line: #1# the boss name, #2# the joker (jab_counter, jab_famous).
+--- Vars of a jab line: #1# the boss name, #2# the joker (jab_counter, jab_famous), or "A & B" for a jab_combo.
 function O.jab_vars(enc, blind)
   local v = FinalBoss.director.vars(blind)
-  if enc.jab and enc.jab.joker then v[2] = O.joker_name(enc.jab.joker) end
+  if enc.jab and enc.jab.combo then
+    v[2] = O.joker_name(enc.jab.combo[1]) .. ' & ' .. O.joker_name(enc.jab.combo[2])
+  elseif enc.jab and enc.jab.joker then v[2] = O.joker_name(enc.jab.joker) end
   return v
 end
 
@@ -185,7 +187,7 @@ O.NEUTRAL = {jokers = {}, joker_count = 1, joker_slots = 5, skipped = 0, rerolls
 
 --- Developer key Shift+F6: the jab a faked run gives on the current boss, said now (forced); the
 --- encounter keeps that jab. state overrides O.NEUTRAL; state.counter = own the boss's
---- signature counter. Returns the jab moment, or nil (no live boss encounter, or no jab).
+--- signature counter; state.combo = own the first famous combo. Returns the jab moment, or nil (no live boss encounter, or no jab).
 function O.dev_jab(state)
   local st = G.GAME and G.GAME.FinalBoss
   local enc = st and st.encounter
@@ -197,6 +199,7 @@ function O.dev_jab(state)
   for k, v in pairs(state or {}) do s[k] = v end
   s.signature = L().signature_counter(enc.key)
   if s.counter then s.jokers, s.counter = {s.signature}, nil end
+  if s.combo then s.jokers, s.combo = {L().COMBOS[1][1], L().COMBOS[1][2]}, nil end
   s.force = true -- the faked jab always comes, whatever the chance roll
   enc.jab = L().intro_jab(s, math.random)
   enc.jab_said = true

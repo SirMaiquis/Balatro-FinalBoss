@@ -213,6 +213,7 @@ T['counter and famous lines name the joker (#2#); no other line does'] = functio
   for key, lines in pairs(quips) do
     local text = type(lines) == 'table' and table.concat(lines, ' ') or tostring(lines)
     local wants = key:find('_jab_counter_', 1, true) or key:find('_jab_famous_', 1, true)
+      or key:find('_jab_combo_', 1, true)
     local has = text:find('#2#', 1, true)
     if wants and not has then bad[#bad + 1] = key .. ' needs #2#' end
     if has and not wants then bad[#bad + 1] = key .. ' must not use #2#' end

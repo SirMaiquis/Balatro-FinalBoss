@@ -976,6 +976,15 @@ logic.JAB = {rerolls = 5, broke = 3, loaded = 50, onesuit = 0.75, tiny = 30, hug
 --- Chance that a non-counter jab replaces the boss's own threat (counter jokers always jab).
 logic.JAB_CHANCE = 1 / 3
 
+--- Famous joker pairs (the jab_combo jab names both as #2#, "A & B"). Each pair counts when both
+--- jokers can act (O.run_state lists only those).
+logic.COMBOS = {
+  {'j_blueprint', 'j_brainstorm'}, {'j_baron', 'j_mime'}, {'j_dna', 'j_blueprint'},
+  {'j_perkeo', 'j_blueprint'}, {'j_triboulet', 'j_chicot'}, {'j_blueprint', 'j_baron'},
+  {'j_brainstorm', 'j_baron'}, {'j_mime', 'j_sock_and_buskin'}, {'j_cavendish', 'j_oops'},
+  {'j_hologram', 'j_dna'},
+}
+
 local FAMOUS_SET = {}
 for _, k in ipairs(logic.FAMOUS_JOKERS) do FAMOUS_SET[k] = true end
 
@@ -997,7 +1006,8 @@ end
 --- random owned counter. Every other jab that applies is one candidate in a flat list (no tiers),
 --- minus the last jab said; with JAB_CHANCE (or force) one is picked uniformly. rand has the
 --- math.random signature: rand() the chance roll, rand(n) the pick. Returns {moment, joker} (joker:
---- the center key said as #2# for jab_counter and jab_famous) or nil.
+--- the center key said as #2# for jab_counter and jab_famous), {moment = 'jab_combo', combo = {a, b}}
+--- (both keys said as #2#), or nil. An owned combo drops jab_famous from the candidates.
 function logic.intro_jab(s, rand)
   local J = logic.JAB
   local jokers = s.jokers or {}
@@ -1032,10 +1042,16 @@ function logic.intro_jab(s, rand)
   for _, k in ipairs(jokers) do
     if FAMOUS_SET[k] then famous[#famous + 1] = k end
   end
-  add('jab_famous', #famous > 0)
+  local owned_combos = {}
+  for _, c in ipairs(logic.COMBOS) do
+    if owned[c[1]] and owned[c[2]] then owned_combos[#owned_combos + 1] = c end
+  end
+  add('jab_combo', #owned_combos > 0)
+  add('jab_famous', #famous > 0 and #owned_combos == 0)
   if #list == 0 then return nil end
   if not (s.force or rand() < logic.JAB_CHANCE) then return nil end
   local moment = list[rand(#list)]
+  if moment == 'jab_combo' then return {moment = moment, combo = owned_combos[rand(#owned_combos)]} end
   if moment == 'jab_famous' then return {moment = moment, joker = famous[rand(#famous)]} end
   return {moment = moment}
 end
@@ -1361,10 +1377,10 @@ end
 --- Every personality has a line for each of these (fb_p_<personality>_<moment>_N; tools/check_loc.py).
 logic.PERSONALITY_MOMENTS = {'jab_counter', 'jab_skipped', 'jab_skipped_both', 'jab_rerolls', 'jab_broke',
   'jab_loaded', 'jab_onesuit', 'jab_tinydeck', 'jab_hugedeck', 'jab_nojokers', 'jab_fulljokers', 'jab_famous',
-  'read_weakhand', 'read_repeat', 'read_discardspam', 'read_onecard', 'idle', 'fear_1',
+  'jab_combo', 'read_weakhand', 'read_repeat', 'read_discardspam', 'read_onecard', 'idle', 'fear_1',
   'fear_2', 'fear_3', 'poked', 'poked_hard', 'grabbed', 'used_tarot', 'used_spectral', 'used_planet',
   'joker_created'}
-logic.PERSONALITY_VARIANTS = {read_weakhand = 2, read_repeat = 2, read_discardspam = 2, read_onecard = 2,
+logic.PERSONALITY_VARIANTS = {jab_combo = 2, read_weakhand = 2, read_repeat = 2, read_discardspam = 2, read_onecard = 2,
   idle = 2, fear_1 = 3, fear_2 = 3, fear_3 = 3, poked = 3, poked_hard = 3, grabbed = 3, used_tarot = 3,
   used_spectral = 3, used_planet = 3, joker_created = 3}
 

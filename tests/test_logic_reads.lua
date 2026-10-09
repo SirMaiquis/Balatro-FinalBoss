@@ -172,8 +172,8 @@ T['can_fire: idle may repeat and is not spaced; comments have their own gate'] =
   eq(logic.COMMENTS.idle, nil)
 end
 
-T['personality moments: 27 run moments, 1 to 3 variants each'] = function()
-  eq(#logic.PERSONALITY_MOMENTS, 27)
+T['personality moments: 28 run moments, 1 to 3 variants each'] = function()
+  eq(#logic.PERSONALITY_MOMENTS, 28)
   for _, m in ipairs(logic.PERSONALITY_MOMENTS) do
     local n = logic.personality_variants(m)
     assert(n >= 1 and n <= 3, m .. ' variants ' .. tostring(n))

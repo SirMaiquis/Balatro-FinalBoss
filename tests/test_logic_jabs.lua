@@ -186,4 +186,33 @@ T['bleep: a vanilla sound, pitched high'] = function()
   assert(logic.BLEEP.volume > 0 and logic.BLEEP.volume <= 1, 'volume in (0, 1]')
 end
 
+T['intro_jab: an owned combo is a candidate, its famous jab is dropped'] = function()
+  local rand = function(n) return n and 1 or 0 end -- chance passes, first candidate
+  local j = logic.intro_jab({jokers = {'j_blueprint', 'j_brainstorm'}, joker_count = 2, joker_slots = 5,
+    deck_size = 52, suit_max = 13, dollars = 10}, rand)
+  eq(j.moment, 'jab_combo'); eq(j.combo[1], 'j_blueprint'); eq(j.combo[2], 'j_brainstorm')
+end
+T['intro_jab: half a combo is not a combo'] = function()
+  local rand = function(n) return n and 1 or 0 end
+  local j = logic.intro_jab({jokers = {'j_blueprint'}, joker_count = 1, joker_slots = 5,
+    deck_size = 52, suit_max = 13, dollars = 10}, rand)
+  eq(j.moment, 'jab_famous')
+end
+T['intro_jab: counter jokers still come first'] = function()
+  local j = logic.intro_jab({jokers = {'j_blueprint', 'j_brainstorm', 'j_luchador'}, signature = 'j_luchador'},
+    function(n) return n and 1 or 0 end)
+  eq(j.moment, 'jab_counter')
+end
+T['intro_jab: the last jab said is not repeated'] = function()
+  local j = logic.intro_jab({jokers = {'j_blueprint', 'j_brainstorm'}, joker_count = 2, joker_slots = 5,
+    deck_size = 52, suit_max = 13, dollars = 10, last_jab = 'jab_combo'}, function(n) return n and 1 or 0 end)
+  eq(j, nil, 'combo excluded and its famous jab dropped: nothing left')
+end
+T['COMBOS: pairs of distinct joker keys'] = function()
+  assert(#logic.COMBOS >= 8)
+  for _, c in ipairs(logic.COMBOS) do
+    assert(c[1]:match('^j_') and c[2]:match('^j_') and c[1] ~= c[2])
+  end
+end
+
 return T

@@ -25,6 +25,7 @@ LOC = ROOT / 'localization'
 TAG = re.compile(r'\{([^{}]*)\}')
 PLACEHOLDER = re.compile(r'#\d+#')
 SECTIONS = ('quips', 'dictionary', 'achievement_names', 'achievement_descriptions')
+JOKER_KEY = re.compile(r'_jab_(?:counter|famous|combo)_\d+$')
 GLOAT_KEY = re.compile(r'^quips\.fb_(?:\w+_)?gloat(?:_\d+)?$')
 OPEN_QUOTES = '"“„«‹「『‘'   # " “ „ « ‹ 「 『 ‘
 CLOSE_QUOTES = '"”“»›」』’'  # " ” “ » › 」 』 ’
@@ -130,6 +131,8 @@ def main(names):
                 why = tag_problem(line)
                 if why:
                     errors.append(f'{path.name}: {key}: {why} in {ascii(line)}')
+            if JOKER_KEY.search(key) and '#2#' not in ' '.join(lines):
+                errors.append(f'{path.name}: {key}: joker jab line needs #2#')
             if GLOAT_KEY.match(key):
                 why = gloat_problem(lines)
                 if why:
