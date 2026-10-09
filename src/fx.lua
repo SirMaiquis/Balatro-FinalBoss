@@ -1,4 +1,5 @@
---- Screen effects for full-tier encounters. Respects config.fx and the game's reduced-motion
+--- Screen effects for full-tier encounters, plus the fear scale's shake and flash on any boss's
+--- winning hand (1.3). Respects config.fx and the game's reduced-motion
 --- setting (screen-shake strength is already scaled by vanilla from G.SETTINGS.screenshake).
 local F = {}
 F.PEAK = 1.0   -- vignette intensity during the intro

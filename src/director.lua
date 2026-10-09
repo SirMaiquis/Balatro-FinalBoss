@@ -375,7 +375,7 @@ local function react(p)
   -- it is forced like the defeat line. A fear line brings its visuals with it (fear_fx).
   local line = FinalBoss.memory.defeat_line(enc, p.moment) or FinalBoss.observe.fear_line(p)
   fire_after(enc, wait, p.moment, {line = line, hand = p.hand})
-  fear_fx(enc, blind, line)
+  FinalBoss.util.guard('fear_fx', fear_fx, enc, blind, line)
 end
 
 --- Run a pending reaction now (blind defeated, round end: keeps the finale / game-over order).

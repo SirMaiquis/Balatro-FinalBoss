@@ -1163,14 +1163,19 @@ function logic.note_comment(enc, moment, hand)
 end
 
 --- The fear scale (1.3): how many times the requirement the winning total reached. 1 sore, 2 scared,
---- 3 terrified. Totals are plain numbers (director.num); a nan or missing value is no tier.
+--- 3 terrified. Totals are plain numbers (director.num), capped near 1.8e308 or inf at Talisman scale,
+--- so the ratio is compared (x * required would overflow). A nan or missing value is no tier; an
+--- infinite total over a finite requirement is the top tier; any other non-finite ratio is no tier.
 logic.FEAR_TIERS = {2, 10, 100}
 function logic.fear_tier(total, required)
   if type(total) ~= 'number' or type(required) ~= 'number' or required <= 0 then return nil end
-  if total ~= total then return nil end
+  if total ~= total or required ~= required then return nil end
+  if total == math.huge then return required < math.huge and #logic.FEAR_TIERS or nil end
+  local ratio = total / required
+  if ratio ~= ratio or ratio == math.huge then return nil end
   local tier
   for i, x in ipairs(logic.FEAR_TIERS) do
-    if total >= x * required then tier = i end
+    if ratio >= x then tier = i end
   end
   return tier
 end
