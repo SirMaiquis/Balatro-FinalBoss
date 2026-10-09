@@ -256,7 +256,8 @@ function C.play_finale(blind, tier)
   if not calm then C.slow_motion(slow, 0.35) end
   if s and s.flash then FinalBoss.fx.play('flash', blind, '') end
   local boom = s and s.explode_at or slow + 0.4
-  FinalBoss.avatar.set_tremble(type(tier) == 'number' and tier >= 2 and tier or 1)
+  -- the harder trembles need screen effects; the plain one plays as before
+  FinalBoss.avatar.set_tremble(FinalBoss.config.fx and type(tier) == 'number' and tier >= 2 and tier or 1)
   FinalBoss.avatar.set_dissolve(0.5, 1.0)
   play_sound('explosion_buildup1', 1, 0.6)
   for i = 0, math.floor(slow / 0.15) + 1 do

@@ -346,9 +346,10 @@ function Dir.fear_fx(enc, blind, tier)
     FinalBoss.fx.play('shake', blind, Dir.FEAR_SHAKE)
     FinalBoss.fx.play('flash', blind, enc.win_hand and '' or nil)
   end
-  if V.exists() then V.set_tremble(tier) else V.set_hud_tremble(true) end
+  local fx = FinalBoss.config.fx -- screen effects off: the plain tremble, no flash or jolt
+  if V.exists() then V.set_tremble(fx and tier or 1) else V.set_hud_tremble(true) end
   V.poke(blind, FinalBoss.logic.fear_reaction(tier, reduced), FinalBoss.registry.get(enc.key).voice.pitch)
-  if tier >= 3 and V.exists() then
+  if fx and tier >= 3 and V.exists() then
     V.flash(0.5)
     V.jolt(Dir.FEAR_JOLT, 0.6)
   end
@@ -554,6 +555,8 @@ function Dir.chip_death(enc, blind)
   end
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = L.death_boom(tier, calm), timer = 'REAL',
     blocking = false, blockable = false, func = function()
+      -- quit or a new run within the wait: the blind is stale, play nothing
+      if (G.GAME and G.GAME.FinalBoss and G.GAME.FinalBoss.encounter) ~= enc then return true end
       FinalBoss.util.guard('chip_death', function()
         FinalBoss.avatar.set_hud_tremble(false)
         FinalBoss.deaths.chip(blind, src, tier, calm)
