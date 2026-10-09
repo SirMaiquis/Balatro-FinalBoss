@@ -1309,6 +1309,35 @@ function logic.poke_reaction(personality, kind, reduced)
   return r
 end
 
+-- Tricks: consumables used and jokers created in the fight (1.3) ----------------------------------
+-- One line per kind per blind, at most one trick line per TRICK_GAP seconds (a spectral that also
+-- creates a joker gives one line). Free lines: never the fight's bookkeeping.
+logic.TRICK_GAP = 4
+logic.TRICK_MOMENTS = {Tarot = 'used_tarot', Spectral = 'used_spectral', Planet = 'used_planet',
+  Joker = 'joker_created'}
+
+--- A trick of kind (a TRICK_MOMENTS key) at time now. state: plain data on the encounter (enc.tricks =
+--- {seen = {kind = true}, last}), updated only when a line is due. Returns the moment or nil. The gap
+--- uses since (the poke section): a clock that went back (a loaded save) never blocks.
+function logic.trick_reaction(state, kind, now)
+  local moment = logic.TRICK_MOMENTS[kind]
+  if not moment then return nil end
+  state.seen = state.seen or {}
+  if state.seen[kind] then return nil end
+  if since(now, state.last) < logic.TRICK_GAP then return nil end
+  state.seen[kind] = true
+  state.last = now
+  return moment
+end
+
+--- Whether a trick may get a line now: a live, unbeaten boss encounter on this blind, in play. a: the
+--- fields of logic.poke_allowed (playing: the trick's own states, tricks.lua).
+function logic.trick_allowed(a)
+  if not (a.boss and not a.ended and not a.won and a.same_blind and a.playing) then return false end
+  if a.tier ~= 'light' and a.tier ~= 'full' then return false end
+  return not (a.intro or a.cinematic or a.overlay or a.paused)
+end
+
 --- The fear scale's chip reaction (1.3), a recipe for avatar.poke: scared (2) trembles, a short
 --- repeated jitter; terrified (3) cowers, knocked back with a big shake and a white flash. Tier 1
 --- keeps the plain defeat. reduced (reduced motion): flashes only, like logic.poke_reaction.
@@ -1333,9 +1362,11 @@ end
 logic.PERSONALITY_MOMENTS = {'jab_counter', 'jab_skipped', 'jab_skipped_both', 'jab_rerolls', 'jab_broke',
   'jab_loaded', 'jab_onesuit', 'jab_tinydeck', 'jab_hugedeck', 'jab_nojokers', 'jab_fulljokers', 'jab_famous',
   'read_weakhand', 'read_repeat', 'read_discardspam', 'read_onecard', 'idle', 'fear_1',
-  'fear_2', 'fear_3', 'poked', 'poked_hard', 'grabbed'}
+  'fear_2', 'fear_3', 'poked', 'poked_hard', 'grabbed', 'used_tarot', 'used_spectral', 'used_planet',
+  'joker_created'}
 logic.PERSONALITY_VARIANTS = {read_weakhand = 2, read_repeat = 2, read_discardspam = 2, read_onecard = 2,
-  idle = 2, fear_1 = 3, fear_2 = 3, fear_3 = 3, poked = 3, poked_hard = 3, grabbed = 3}
+  idle = 2, fear_1 = 3, fear_2 = 3, fear_3 = 3, poked = 3, poked_hard = 3, grabbed = 3, used_tarot = 3,
+  used_spectral = 3, used_planet = 3, joker_created = 3}
 
 function logic.personality_variants(moment)
   return logic.PERSONALITY_VARIANTS[moment] or 1
