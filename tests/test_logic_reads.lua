@@ -172,8 +172,8 @@ T['can_fire: idle may repeat and is not spaced; comments have their own gate'] =
   eq(logic.COMMENTS.idle, nil)
 end
 
-T['personality moments: 43 run moments, 1 to 3 variants each'] = function()
-  eq(#logic.PERSONALITY_MOMENTS, 43)
+T['personality moments: 44 run moments, 1 to 3 variants each'] = function()
+  eq(#logic.PERSONALITY_MOMENTS, 44)
   for _, m in ipairs(logic.PERSONALITY_MOMENTS) do
     local n = logic.personality_variants(m)
     assert(n >= 1 and n <= 3, m .. ' variants ' .. tostring(n))
@@ -216,15 +216,46 @@ T['fear_watch: a live boss fight on its blind, a hand scoring, no intro or cinem
   eq(logic.fear_watch(a{intro = true}), false); eq(logic.fear_watch(a{cinematic = true}), false)
 end
 
-T['slowmo: short for scared, longer with a flash for terrified, none under reduced motion'] = function()
-  eq(logic.slowmo(1), nil); eq(logic.slowmo(nil), nil)
-  local s2, s3 = logic.slowmo(2), logic.slowmo(3)
-  eq(s2.duration, 0.6); eq(s3.duration, 1.2); eq(s2.flash, nil); eq(s3.flash, true)
-  assert(s3.scale < s2.scale and s2.scale < 1, 'slower for the bigger win')
-  assert(s2.scale ~= 0.35 and s3.scale ~= 0.35, 'never the phase freeze value (phases.lua tells them apart by it)')
-  eq(logic.slowmo(2, true), nil); eq(logic.slowmo(3, true), nil)
-  s2.duration = 99
-  eq(logic.SLOWMO[2].duration, 0.6, 'a copy')
+T['slowmo: each death tier plays the tier above it: short at 2x, longer with a flash at 10x, longest at 100x'] = function()
+  eq(logic.slowmo(0), nil); eq(logic.slowmo(nil), nil); eq(logic.slowmo(4), nil)
+  local s1, s2, s3 = logic.slowmo(1), logic.slowmo(2), logic.slowmo(3)
+  eq(s1.duration, 0.6, '2x: the former 10x'); eq(s1.flash, nil)
+  eq(s2.duration, 1.2, '10x: the former 100x'); eq(s2.flash, true)
+  assert(s3.duration > s2.duration and s3.duration >= 1.8, '100x: the longest freeze')
+  assert(s3.scale < s2.scale and s2.scale < s1.scale and s1.scale < 1, 'slower for the bigger win')
+  for _, s in ipairs({s1, s2, s3}) do
+    assert(s.scale ~= 0.35, 'never the phase freeze value (phases.lua tells them apart by it)')
+  end
+  for t = 1, 3 do eq(logic.slowmo(t, true), nil, 'reduced motion ' .. t) end
+  s1.duration = 99
+  eq(logic.SLOWMO[1].duration, 0.6, 'a copy')
+end
+
+T['death_boom: 100x explodes inside the freeze once the last words are readable'] = function()
+  eq(logic.death_boom(1), 0.6, 'after the slow motion'); eq(logic.death_boom(2), 1.2)
+  eq(logic.death_boom(1, true), 0, 'reduced motion: no slow motion to wait for')
+  local b = logic.death_boom(3)
+  assert(b >= 1.2 and b <= 1.5, 'readable first: ' .. tostring(b))
+  assert(b < logic.SLOWMO[3].duration, 'inside the freeze')
+  eq(logic.death_boom(3, true), b, 'reduced motion still waits for the line')
+  eq(logic.slowmo(3).explode_at, b)
+  eq(logic.death_boom(nil), nil); eq(logic.death_boom(0), nil)
+end
+
+T['last words: only the 100x death, never a nemesis; the moment has 3 variants'] = function()
+  eq(logic.last_words_due(3), true); eq(logic.last_words_due(3, false), true)
+  eq(logic.last_words_due(3, true), false, 'a nemesis says its own defeat line')
+  eq(logic.last_words_due(2), false); eq(logic.last_words_due(1), false); eq(logic.last_words_due(nil), false)
+  local has = false
+  for _, m in ipairs(logic.PERSONALITY_MOMENTS) do if m == 'last_words' then has = true end end
+  assert(has, 'a personality moment'); eq(logic.personality_variants('last_words'), 3)
+end
+
+T['tremble: the avatar shakes harder with the tier, violent at 100x'] = function()
+  eq(logic.tremble(0), nil); eq(logic.tremble(nil), nil)
+  local t1, t2, t3 = logic.tremble(1), logic.tremble(2), logic.tremble(3)
+  assert(t2.amp >= 2 * t1.amp, '10x: clearly more than the plain tremble')
+  assert(t3.amp >= 2 * t2.amp and t3.rot, '100x: violent, with a twitching tilt')
 end
 
 return T

@@ -235,6 +235,16 @@ function E.flash_at(x, y, w, h, colour)
   expire(adopt(Mark(x, y, w, h, {shape = 'flash', colour = colour, life = 0.35})), 0.35)
 end
 
+--- The 100x death's white-out (1.3): the whole room goes white, holds, then fades over life seconds.
+--- A flash, so it also plays under reduced motion.
+function E.whiteout(life)
+  life = life or 0.8
+  local R = G.ROOM and G.ROOM.T
+  if not R then return end
+  expire(adopt(Mark(-2, -2, R.w + 4, R.h + 4, {shape = 'bar', colour = G.C.WHITE, alpha = 0.95,
+    life = life})), life)
+end
+
 local function flash_rect(T, colour, top)
   expire(adopt(Mark(T.x, T.y, T.w, T.h, {shape = 'bar', colour = colour, alpha = 0.5, life = 0.3}), top), 0.3)
 end

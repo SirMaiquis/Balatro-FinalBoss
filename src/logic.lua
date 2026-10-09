@@ -1229,16 +1229,48 @@ function logic.fear_watch(a)
   return not (a.intro or a.cinematic)
 end
 
---- Slow motion before a tiered death (1.3), in real seconds at FinalBoss.timescale = scale. Tier 3
---- adds a screen flash. Tier 1 or less: none. Reduced motion: none (the flash is the caller's).
+--- Slow motion before a tiered death (1.3), keyed by logic.death_tier, in real seconds at
+--- FinalBoss.timescale = scale. Each tier plays what the tier above it played before: 2x a short
+--- slow motion, 10x a longer one with a screen flash, 100x the longest freeze, in which the boss says
+--- its last words and explodes explode_at seconds in. Reduced motion: none (the flash is the caller's).
 logic.SLOWMO = {
-  [2] = {scale = 0.3, duration = 0.6},
-  [3] = {scale = 0.2, duration = 1.2, flash = true},
+  [1] = {scale = 0.3, duration = 0.6},
+  [2] = {scale = 0.2, duration = 1.2, flash = true},
+  [3] = {scale = 0.15, duration = 2.0, explode_at = 1.4},
 }
 function logic.slowmo(tier, reduced)
   local s = logic.SLOWMO[tier]
   if not s or reduced then return nil end
-  return {scale = s.scale, duration = s.duration, flash = s.flash}
+  return {scale = s.scale, duration = s.duration, flash = s.flash, explode_at = s.explode_at}
+end
+
+--- Real seconds from the start of a tiered death to its explosion: the 100x death waits explode_at
+--- so its last words can be read (also under reduced motion, which only drops the slowing); the
+--- others explode as their slow motion ends (at once under reduced motion). nil: no tiered death.
+function logic.death_boom(tier, reduced)
+  local s = logic.SLOWMO[tier]
+  if not s then return nil end
+  if s.explode_at then return s.explode_at end
+  return reduced and 0 or s.duration
+end
+
+--- The 100x death: the boss says its last words as the freeze starts. A nemesis says its own defeat
+--- line instead (memory.defeat_line), so it never gets them.
+logic.LAST_WORDS_TIER = 3
+function logic.last_words_due(tier, nemesis)
+  return type(tier) == 'number' and tier >= logic.LAST_WORDS_TIER and not nemesis
+end
+
+--- The showdown avatar's tremble (1.3), by level: 1 the plain tremble (a final boss's finale,
+--- phase III), 2 the 10x fear (clearly visible), 3 the 100x fear (violent). Amplitude in room
+--- units; rot adds a twitching tilt. Level 0 or unknown: still.
+logic.TREMBLE = {
+  [1] = {amp = 0.03},
+  [2] = {amp = 0.07},
+  [3] = {amp = 0.16, rot = 0.08},
+}
+function logic.tremble(level)
+  return logic.TREMBLE[level]
 end
 
 --- Whether an idle taunt is due after idle_for seconds without input; said = taunts said this blind.
@@ -1470,10 +1502,11 @@ logic.PERSONALITY_MOMENTS = {'jab_counter', 'jab_skipped', 'jab_skipped_both', '
   'jab_loaded', 'jab_onesuit', 'jab_tinydeck', 'jab_hugedeck', 'jab_nojokers', 'jab_fulljokers', 'jab_famous',
   'jab_combo', 'read_weakhand', 'read_repeat', 'read_discardspam', 'read_onecard', 'idle', 'fear_1',
   'fear_2', 'fear_3', 'poked', 'poked_hard', 'grabbed', 'used_tarot', 'used_spectral', 'used_planet',
-  'joker_created', 'used_planet_main', 'used_planet_waste'}
+  'joker_created', 'used_planet_main', 'used_planet_waste', 'last_words'}
 logic.PERSONALITY_VARIANTS = {jab_combo = 2, read_weakhand = 2, read_repeat = 2, read_discardspam = 2, read_onecard = 2,
   idle = 2, fear_1 = 3, fear_2 = 3, fear_3 = 3, poked = 3, poked_hard = 3, grabbed = 3, used_tarot = 2,
-  used_spectral = 2, used_planet = 2, joker_created = 3, used_planet_main = 2, used_planet_waste = 2}
+  used_spectral = 2, used_planet = 2, joker_created = 3, used_planet_main = 2, used_planet_waste = 2,
+  last_words = 3}
 -- The card-specific consumable moments (used_tarot_<group>, used_spectral_<group>): 2 variants each.
 for _, set in ipairs({{'used_tarot_', logic.TAROT_GROUPS}, {'used_spectral_', logic.SPECTRAL_GROUPS}}) do
   for _, g in ipairs(set[2]) do

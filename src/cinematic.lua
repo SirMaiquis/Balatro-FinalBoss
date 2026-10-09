@@ -202,7 +202,7 @@ local function explode(blind, calm, tier)
   FinalBoss.avatar.remove()
   if not x then return end
   -- 1.1: the boss's own death (deaths.lua); bosses without one keep the shared explosion below.
-  -- 1.3: a crushing win amplifies either one (deaths.amplify: tier 2 more, tier 3 full intensity).
+  -- 1.3: a crushing win amplifies either one (deaths.amplify: 2x more, 10x full, 100x maximum).
   local own = FinalBoss.deaths.play(blind, x, y, w, h, calm)
   FinalBoss.deaths.amplify(blind, {x = x, y = y, w = w, h = h}, tier, calm)
   if own then return end
@@ -237,8 +237,10 @@ function C.tick()
 end
 
 --- Winning hand: slow motion, violent shake + flashes while the defeat line plays, then boom.
---- tier (1.3, logic.death_tier): 2 or 3 stretches the slow motion (logic.slowmo, never shorter than
---- the finale's own) and amplifies the death; 3 also flashes the screen as it starts.
+--- tier (1.3, logic.death_tier): any tier stretches the slow motion (logic.slowmo, never shorter than
+--- the finale's own), shakes the avatar harder (avatar.set_tremble) and amplifies the death; 2 also
+--- flashes the screen as it starts. 3 (100x) is the longest freeze: the boss's last words show
+--- (director) and it explodes explode_at seconds in, inside the freeze, at maximum intensity.
 --- Returns true when the finale started (the director then skips its own defeat effect).
 function C.play_finale(blind, tier)
   if not FinalBoss.avatar.exists() then return false end
@@ -253,15 +255,16 @@ function C.play_finale(blind, tier)
   -- 0.35: phases.lua tells the finale's slow motion from its own freeze by C.phase, not the value
   if not calm then C.slow_motion(slow, 0.35) end
   if s and s.flash then FinalBoss.fx.play('flash', blind, '') end
-  FinalBoss.avatar.set_tremble(true)
+  local boom = s and s.explode_at or slow + 0.4
+  FinalBoss.avatar.set_tremble(type(tier) == 'number' and tier >= 2 and tier or 1)
   FinalBoss.avatar.set_dissolve(0.5, 1.0)
   play_sound('explosion_buildup1', 1, 0.6)
   for i = 0, math.floor(slow / 0.15) + 1 do
     after(i * 0.15, token, function() FinalBoss.avatar.flash(0.08) end)
   end
   later(slow, C.tick) -- also restored here, even if the token moves on (C.tick: every frame)
-  after(slow + 0.4, token, function() explode(blind, calm, tier) end)
-  later(slow + 0.8, function()
+  after(boom, token, function() explode(blind, calm, tier) end)
+  later(math.max(boom + 0.4, slow), function()
     if C.phase == 'finale' then C.phase = nil end
     FinalBoss.fx.stop() -- vignette and arena revert with the explosion; both are idempotent
     FinalBoss.arena.stop()

@@ -30,7 +30,7 @@ V.next_roam = 0
 V.scoring = false -- parked at ringside while a played hand resolves
 V.talking = false
 V.fading = false
-V.tremble = false
+V.tremble = 0 -- tremble level (logic.TREMBLE): 0 still, 1 the finale's, 2 / 3 the fear scale's
 V.wound = 0
 V.laugh_id = 0 -- bumped per laugh: a newer laugh silences the older one's remaining beats
 V.laugh_start, V.laugh_until = 0, 0 -- REAL-time window the update reads for hops, tilt and shake
@@ -94,9 +94,12 @@ function Avatar:move(dt)
   local calm = reduced()
   local speed = V.wound >= 1 and 1.5 or 1
   local gloat = V.gloating ~= nil
-  local shaking = (V.tremble or V.wound >= 2 or V.stance >= 3) and not calm and not gloat
-  local jx = shaking and (math.random() - 0.5) * 0.06 or 0
-  local jy = shaking and (math.random() - 0.5) * 0.06 or 0
+  local shaking = (V.tremble > 0 or V.wound >= 2 or V.stance >= 3) and not calm and not gloat
+  -- 1.3: the fear scale raises the tremble (logic.tremble: clearly visible at 10x, violent at 100x)
+  local tr = FinalBoss.logic.tremble(math.max(V.tremble, 1))
+  local jx = shaking and (math.random() - 0.5) * 2 * tr.amp or 0
+  local jy = shaking and (math.random() - 0.5) * 2 * tr.amp or 0
+  local jr = shaking and tr.rot and (math.random() - 0.5) * 2 * tr.rot or 0
   -- Interrupted: a sharp, quickly decaying shake (sprite only, like the laugh).
   local anger = (not calm and now() < V.anger_until) and V.anger_amp * (V.anger_until - now()) / V.anger_time or 0
   if anger > 0 then
@@ -112,7 +115,9 @@ function Avatar:move(dt)
     s.T.r = calm and 0 or 0.05 * math.sin(t * speed * 1.3)
   end
   s.T.w, s.T.h = self.T.w, self.T.h
-  if anger > 0 then s.VT.x, s.VT.y = s.T.x, s.T.y end -- the sprite's spring would smooth the shake away
+  if not gloat and jr ~= 0 then s.T.r = s.T.r + jr end
+  -- the sprite's spring would smooth the shake away (also a fear tremble above the plain one)
+  if anger > 0 or (shaking and V.tremble >= 2) then s.VT.x, s.VT.y, s.VT.r = s.T.x, s.T.y, s.T.r end
   -- Laughing: hop, tilt and shake on the sprite only (the avatar's T is the perch, so roaming
   -- never fights it), written straight to VT since the sprite's spring would smooth a 0.1 s hop
   -- away. Offsets are zero outside the window, so the chip ends exactly on its bob.
@@ -334,7 +339,7 @@ function V.gloat(pitch)
   -- opens the run setup), the chip leaves.
   V.gloating = {pitch = pitch, laughed = false, t0 = now(), laugh_at = nil, leaving = false,
     menu = is_game_over_menu(G.OVERLAY_MENU) and G.OVERLAY_MENU or nil}
-  V.talking, V.tremble, V.scoring, V.fading = false, false, false, false
+  V.talking, V.tremble, V.scoring, V.fading = false, 0, false, false
   V.anger_until = 0
   o.created_on_pause = true
   local s = o.children.sprite
@@ -450,7 +455,21 @@ function V.talk_bump()
   if V.obj then V.obj:juice_up(0.15, 0.1) end
 end
 
-function V.set_tremble(on) V.tremble = on and true or false end
+--- The avatar's tremble. on: false / nil / 0 stops it; true is level 1; a number is that level
+--- (logic.TREMBLE). It only rises until stopped (the fear scale's 3 outlasts the finale's 1).
+function V.set_tremble(on)
+  if not on or on == 0 then V.tremble = 0; return end
+  V.tremble = math.max(V.tremble, type(on) == 'number' and math.min(on, 3) or 1)
+end
+
+--- A sharp jolt on the avatar (the 100x fear): a decaying shake of amp for time seconds, like the
+--- interrupted snap without its red flash, plus a big juice. No-op under reduced motion.
+function V.jolt(amp, time)
+  local o = V.obj
+  if not o or reduced() then return end
+  V.anger_until, V.anger_amp, V.anger_time = now() + time, amp, time
+  o:juice_up(0.8, 0.5)
+end
 
 --- Phase transformation (1.1): the chip swells and shakes for `duration` seconds. No-op under
 --- reduced motion (no rise, no shake).
@@ -650,7 +669,7 @@ function V.remove()
   local o = V.obj
   V.obj = nil
   restore_hud_blind()
-  V.talking, V.fading, V.tremble, V.wound, V.scoring = false, false, false, 0, false
+  V.talking, V.fading, V.tremble, V.wound, V.scoring = false, false, 0, 0, false
   -- Remove every aura explicitly: Avatar:remove walks the children with pairs while Particles:remove
   -- table.removes itself from that list, which would skip the second aura.
   for _, p in pairs(V.auras) do FinalBoss.effects.remove_aura(p) end
