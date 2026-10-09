@@ -1076,7 +1076,7 @@ function logic.has_censored(text)
   return text:find('[%a\128-\255]%*') ~= nil
 end
 
--- Reading the run: in-fight comments, overkill, idle (1.2) ----------------------------------------
+-- Reading the run: in-fight comments, idle (1.2), the fear scale (1.3) ----------------------------
 
 --- Moments said on a hand that fired nothing else. The reads are run comments (booked by
 --- logic.note_comment, capped per blind). 'weak' is the boss's own line: it follows the light tier's
@@ -1087,8 +1087,6 @@ logic.READ_ORDER = {'read_repeat', 'read_discardspam', 'read_onecard', 'read_wea
 logic.WEAK_HANDS = {['High Card'] = true, ['Pair'] = true} -- vanilla hand keys (game.lua:2012-2013)
 logic.REPEAT_STREAK = 3     -- the same hand type this many hands in a row
 logic.DISCARDSPAM_HANDS = 3 -- no discards left with at least this many hands to play, this one included
-logic.OVERKILL_RATIO = 2    -- a winning total at least twice the requirement
-logic.OVERKILL_CHANCE = 0.5 -- chance the overkill line replaces the boss's own defeat line
 logic.COMMENT_CAP = 3       -- run comments per blind for final bosses (full tier)
 logic.IDLE_FIRST = 25       -- seconds without input before the first idle taunt
 logic.IDLE_SECOND = 45      -- seconds after the first before the second
@@ -1164,10 +1162,17 @@ function logic.note_comment(enc, moment, hand)
   enc.last_comment_hand = hand
 end
 
---- The winning hand scored at least OVERKILL_RATIO times the requirement.
-function logic.is_overkill(total, required)
-  if not required or required <= 0 then return false end
-  return (total or 0) >= logic.OVERKILL_RATIO * required
+--- The fear scale (1.3): how many times the requirement the winning total reached. 1 sore, 2 scared,
+--- 3 terrified. Totals are plain numbers (director.num); a nan or missing value is no tier.
+logic.FEAR_TIERS = {2, 10, 100}
+function logic.fear_tier(total, required)
+  if type(total) ~= 'number' or type(required) ~= 'number' or required <= 0 then return nil end
+  if total ~= total then return nil end
+  local tier
+  for i, x in ipairs(logic.FEAR_TIERS) do
+    if total >= x * required then tier = i end
+  end
+  return tier
 end
 
 --- Whether an idle taunt is due after idle_for seconds without input; said = taunts said this blind.
@@ -1299,13 +1304,33 @@ function logic.poke_reaction(personality, kind, reduced)
   return r
 end
 
+--- The fear scale's chip reaction (1.3), a recipe for avatar.poke: scared (2) trembles, a short
+--- repeated jitter; terrified (3) cowers, knocked back with a big shake and a white flash. Tier 1
+--- keeps the plain defeat. reduced (reduced motion): flashes only, like logic.poke_reaction.
+logic.FEAR_REACTIONS = {
+  [2] = {juice = 0.12, rot = 0.06, bounces = 4, shake = 1.2, shake_amp = 0.08},
+  [3] = {juice = 0.6, rot = 0.4, shake = 1.0, shake_amp = 0.16, recoil = 0.4, jiggle = 2,
+    flash = 'white', flash_time = 0.3},
+}
+function logic.fear_reaction(tier, reduced)
+  local recipe = logic.FEAR_REACTIONS[tier]
+  if not recipe then return nil end
+  local r = {}
+  for k, v in pairs(recipe) do r[k] = v end
+  if reduced then
+    for _, k in ipairs(MOTION) do r[k] = nil end
+    if not r.flash then r.flash, r.flash_time = 'white', logic.POKE_FLASH end
+  end
+  return r
+end
+
 --- Every personality has a line for each of these (fb_p_<personality>_<moment>_N; tools/check_loc.py).
 logic.PERSONALITY_MOMENTS = {'jab_counter', 'jab_skipped', 'jab_skipped_both', 'jab_rerolls', 'jab_broke',
   'jab_loaded', 'jab_onesuit', 'jab_tinydeck', 'jab_hugedeck', 'jab_nojokers', 'jab_fulljokers', 'jab_famous',
-  'read_weakhand', 'read_repeat', 'read_discardspam', 'read_onecard', 'idle', 'overkill',
-  'poked', 'poked_hard', 'grabbed'}
+  'read_weakhand', 'read_repeat', 'read_discardspam', 'read_onecard', 'idle', 'fear_1',
+  'fear_2', 'fear_3', 'poked', 'poked_hard', 'grabbed'}
 logic.PERSONALITY_VARIANTS = {read_weakhand = 2, read_repeat = 2, read_discardspam = 2, read_onecard = 2,
-  idle = 2, overkill = 2, poked = 3, poked_hard = 3, grabbed = 3}
+  idle = 2, fear_1 = 3, fear_2 = 3, fear_3 = 3, poked = 3, poked_hard = 3, grabbed = 3}
 
 function logic.personality_variants(moment)
   return logic.PERSONALITY_VARIANTS[moment] or 1

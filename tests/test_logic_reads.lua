@@ -121,9 +121,36 @@ T['note_comment: weak is a reaction, not a run comment'] = function()
   eq(enc.last_line_hand, 2, 'weak follows the light tier spacing')
 end
 
-T['is_overkill: at least twice the requirement'] = function()
-  eq(logic.is_overkill(200, 100), true); eq(logic.is_overkill(199, 100), false)
-  eq(logic.is_overkill(10, 0), false); eq(logic.is_overkill(10, nil), false)
+T['fear_tier: 2x sore, 10x scared, 100x terrified'] = function()
+  eq(logic.fear_tier(199, 100), nil); eq(logic.fear_tier(200, 100), 1)
+  eq(logic.fear_tier(999, 100), 1); eq(logic.fear_tier(1000, 100), 2)
+  eq(logic.fear_tier(9999, 100), 2); eq(logic.fear_tier(10000, 100), 3)
+  eq(logic.fear_tier(1e300, 100), 3, 'huge')
+  eq(logic.fear_tier(50, 0), nil, 'no requirement'); eq(logic.fear_tier(nil, 100), nil)
+  eq(logic.fear_tier(math.huge, 100), 3, 'inf')
+  eq(logic.fear_tier(0/0, 100), nil, 'nan')
+end
+T['fear moments replace overkill in every personality'] = function()
+  local has = {}
+  for _, m in ipairs(logic.PERSONALITY_MOMENTS) do has[m] = true end
+  assert(not has.overkill)
+  for t = 1, 3 do assert(has['fear_' .. t]); eq(logic.personality_variants('fear_' .. t), 3) end
+end
+T['fear_reaction: scared trembles, terrified cowers and flashes; reduced motion flashes only'] = function()
+  eq(logic.fear_reaction(1), nil, 'sore keeps the plain defeat'); eq(logic.fear_reaction(nil), nil)
+  local scared, terrified = logic.fear_reaction(2), logic.fear_reaction(3)
+  assert(scared.shake and scared.bounces and not scared.flash)
+  assert(terrified.shake > 0 and terrified.recoil and terrified.flash == 'white')
+  assert(terrified.shake_amp > scared.shake_amp, 'terrified shakes harder')
+  for t = 2, 3 do
+    local r = logic.fear_reaction(t, true)
+    for _, k in ipairs({'juice', 'rot', 'shake', 'shake_amp', 'recoil', 'bounces', 'jiggle'}) do
+      eq(r[k], nil, t .. ' ' .. k)
+    end
+    assert(r.flash, 'reduced motion still flashes')
+  end
+  logic.fear_reaction(2).shake = 99
+  eq(logic.FEAR_REACTIONS[2].shake, 1.2, 'a copy')
 end
 
 T['idle_due: 25 s, then 45 s more, at most two'] = function()
@@ -139,13 +166,13 @@ T['can_fire: idle may repeat and is not spaced; comments have their own gate'] =
   eq(logic.COMMENTS.idle, nil)
 end
 
-T['personality moments: 21 run moments, 1 to 3 variants each'] = function()
-  eq(#logic.PERSONALITY_MOMENTS, 21)
+T['personality moments: 23 run moments, 1 to 3 variants each'] = function()
+  eq(#logic.PERSONALITY_MOMENTS, 23)
   for _, m in ipairs(logic.PERSONALITY_MOMENTS) do
     local n = logic.personality_variants(m)
     assert(n >= 1 and n <= 3, m .. ' variants ' .. tostring(n))
   end
-  eq(logic.personality_variants('idle'), 2); eq(logic.personality_variants('overkill'), 2)
+  eq(logic.personality_variants('idle'), 2); eq(logic.personality_variants('fear_2'), 3)
   eq(logic.personality_variants('read_repeat'), 2); eq(logic.personality_variants('jab_broke'), 1)
 end
 

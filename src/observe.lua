@@ -129,15 +129,12 @@ function O.comment_for(enc, p)
     last_line_hand = enc.last_line_hand, hand = p.hand}
 end
 
---- The winning hand scored at least twice the requirement: with OVERKILL_CHANCE its overkill line
---- replaces the defeat line; otherwise (nil) the boss says its own defeat line. rand: math.random
---- unless given (tests).
-function O.overkill_line(p, rand)
+--- The winning hand's fear line (1.3): the tier of total over required (logic.fear_tier) replaces the
+--- defeat line, always; below 2x the boss says its own defeat line (nil).
+function O.fear_line(p)
   if not (p and p.moment == 'defeat' and p.total >= p.required) then return nil end
-  if L().is_overkill(p.total, p.required) and (rand or math.random)() < L().OVERKILL_CHANCE then
-    return 'overkill'
-  end
-  return nil
+  local t = L().fear_tier(p.total, p.required)
+  return t and ('fear_' .. t) or nil
 end
 
 -- Idle taunts (1.2) ------------------------------------------------------------------------------

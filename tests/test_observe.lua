@@ -176,7 +176,7 @@ T['on_blind_set: a Chicot that will act is always the jab'] = function()
   eq(enc3.jab.joker, 'j_luchador', 'a debuffed Chicot never acts')
 end
 
--- In-fight comments and overkill --------------------------------------------------------------------
+-- In-fight comments and the fear scale --------------------------------------------------------------
 
 local function pending(o)
   local p = {total = 5, required = 100, delta = 5, hand_type = 'Flush', streak = 1, discards_left = 1,
@@ -212,20 +212,14 @@ T['comment_for: full tier reads are capped and never on consecutive hands'] = fu
   eq(ctx.O.comment_for(enc, pending{hand = 3}), 'weak', 'weak is outside the cap and the rule')
 end
 
-T['overkill_line: a defeat with twice the requirement, on a passing roll'] = function()
+T['fear_line: only the winning defeat hand, by tier, always'] = function()
   local ctx = setup()
-  local pass = function() return 0 end
-  eq(ctx.O.overkill_line({moment = 'defeat', total = 250, required = 100}, pass), 'overkill')
-  eq(ctx.O.overkill_line({moment = 'defeat', total = 150, required = 100}, pass), nil)
-  eq(ctx.O.overkill_line({moment = 'close', total = 250, required = 100}, pass), nil)
-  eq(ctx.O.overkill_line({moment = 'defeat', total = 0, required = 0}, pass), nil, 'no requirement')
-end
-
-T['overkill_line: a failed roll keeps the boss its own defeat line'] = function()
-  local ctx = setup()
-  eq(FinalBoss.logic.OVERKILL_CHANCE, 0.5)
-  eq(ctx.O.overkill_line({moment = 'defeat', total = 250, required = 100}, function() return 0.5 end), nil)
-  eq(ctx.O.overkill_line({moment = 'defeat', total = 250, required = 100}, function() return 0.49 end), 'overkill')
+  eq(ctx.O.fear_line({moment = 'defeat', total = 250, required = 100}), 'fear_1')
+  eq(ctx.O.fear_line({moment = 'defeat', total = 1500, required = 100}), 'fear_2')
+  eq(ctx.O.fear_line({moment = 'defeat', total = 1e6, required = 100}), 'fear_3')
+  eq(ctx.O.fear_line({moment = 'defeat', total = 150, required = 100}), nil)
+  eq(ctx.O.fear_line({moment = 'close', total = 5000, required = 100}), nil)
+  eq(ctx.O.fear_line({moment = 'defeat', total = 0, required = 0}), nil, 'no requirement')
 end
 
 -- Idle taunts ------------------------------------------------------------------------------------------

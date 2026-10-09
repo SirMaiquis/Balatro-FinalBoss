@@ -209,7 +209,7 @@ function Dir.on_round_end()
 end
 
 --- opts: force (no once-per-blind check, no cooldown), line (say another moment's line for this
---- moment: 1.1 the nemesis's defeat line; 1.2 the overkill line, a Chicot counter jab; it falls back to
+--- moment: 1.1 the nemesis's defeat line; 1.2 a Chicot counter jab; 1.3 the fear line; it falls back to
 --- the moment's own line when it has none), skip_boss (with line: logic.resolve_prefix skips the boss
 --- level), vars (the line's vars; default Dir.vars), hand (the hand the line is said on; default the
 --- current hand id, G.GAME.current_round.hands_played), free (1.2 poke and grab lines: no gate and no
@@ -321,6 +321,26 @@ local function fire_after(enc, wait, moment, opts)
     end}))
 end
 
+--- The fear scale's visuals (1.3), played as the fear line is said (the defeat moment: no laugh to
+--- wait for). Scared (fear_2): the chip trembles. Terrified (fear_3): a screen shake and flash, and
+--- the chip cowers with a white flash (logic.fear_reaction). On the avatar in a showdown, else on the
+--- HUD blind chip. Reduced motion: flashes only (fx.shake is a no-op there, fear_reaction strips the
+--- motion). The flash restores to the neutral colour ('') since the boss is beaten, like the finale.
+--- Sore (fear_1) and any other line: nothing. The finale and the death still run as usual.
+local function fear_fx(enc, blind, line)
+  local tier = type(line) == 'string' and tonumber(line:match('^fear_(%d)$'))
+  if not tier or tier < 2 then return end
+  local V = FinalBoss.avatar
+  local reduced = G.SETTINGS.reduced_motion
+  if tier == 3 then
+    FinalBoss.fx.play('shake', blind)
+    FinalBoss.fx.play('flash', blind, '')
+  end
+  -- The showdown avatar keeps trembling (Avatar:move; calm under reduced motion) until it is removed.
+  if V.exists() then V.set_tremble(true) end
+  V.poke(blind, FinalBoss.logic.fear_reaction(tier, reduced), FinalBoss.registry.get(enc.key).voice.pitch)
+end
+
 --- The deferred reaction to a scored hand; dropped if its encounter is gone or over.
 local function react(p)
   local enc, blind = current()
@@ -350,10 +370,12 @@ local function react(p)
     if comment then fire_after(enc, wait, comment, {hand = p.hand}) end
     return
   end
-  -- The nemesis's own defeat line (1.1), else the overkill line (1.2: the winning hand only), may
-  -- replace the defeat line. Either is said as the defeat moment, so it is forced like the defeat line.
-  local line = FinalBoss.memory.defeat_line(enc, p.moment) or FinalBoss.observe.overkill_line(p)
+  -- The nemesis's own defeat line (1.1), else the fear line (1.3: the winning hand at 2x, 10x or
+  -- 100x the requirement, always), replaces the defeat line. Either is said as the defeat moment, so
+  -- it is forced like the defeat line. A fear line brings its visuals with it (fear_fx).
+  local line = FinalBoss.memory.defeat_line(enc, p.moment) or FinalBoss.observe.fear_line(p)
   fire_after(enc, wait, p.moment, {line = line, hand = p.hand})
+  fear_fx(enc, blind, line)
 end
 
 --- Run a pending reaction now (blind defeated, round end: keeps the finale / game-over order).
