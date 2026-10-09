@@ -1371,24 +1371,70 @@ function logic.poke_reaction(personality, kind, reduced)
 end
 
 -- Tricks: consumables used and jokers created in the fight (1.3) ----------------------------------
--- One line per kind per blind, at most one trick line per TRICK_GAP seconds (a spectral that also
--- creates a joker gives one line). Free lines: never the fight's bookkeeping.
+-- At most one trick line per TRICK_GAP seconds (quick spam collapses; a spectral that also creates a
+-- joker gives one line). Every tarot, spectral and planet may get a line; a created joker only once
+-- per blind (ONCE_PER_BLIND). Free lines: never the fight's bookkeeping.
 logic.TRICK_GAP = 4
 logic.TRICK_MOMENTS = {Tarot = 'used_tarot', Spectral = 'used_spectral', Planet = 'used_planet',
   Joker = 'joker_created'}
+logic.TRICK_ONCE_PER_BLIND = {Joker = true}
 
 --- A trick of kind (a TRICK_MOMENTS key) at time now. state: plain data on the encounter (enc.tricks =
---- {seen = {kind = true}, last}), updated only when a line is due. Returns the moment or nil. The gap
---- uses since (the poke section): a clock that went back (a loaded save) never blocks.
+--- {seen = {Joker = true}, last}), updated only when a line is due. Returns the kind's moment or nil
+--- (tricks.lua picks the card's own moment with logic.consumable_moment). The gap uses since (the poke
+--- section): a clock that went back (a loaded save) never blocks.
 function logic.trick_reaction(state, kind, now)
   local moment = logic.TRICK_MOMENTS[kind]
   if not moment then return nil end
   state.seen = state.seen or {}
   if state.seen[kind] then return nil end
   if since(now, state.last) < logic.TRICK_GAP then return nil end
-  state.seen[kind] = true
+  if logic.TRICK_ONCE_PER_BLIND[kind] then state.seen[kind] = true end
   state.last = now
   return moment
+end
+
+--- Tarot and spectral effect groups by vanilla center key (game.lua P_CENTERS; note vanilla's
+--- c_heirophant spelling). A key not listed (a modded card) uses the set's fallback moment.
+logic.CONSUMABLE_GROUPS = {
+  Tarot = {
+    c_magician = 'enhance', c_empress = 'enhance', c_heirophant = 'enhance', c_lovers = 'enhance',
+    c_chariot = 'enhance', c_justice = 'enhance', c_devil = 'enhance', c_tower = 'enhance',
+    c_star = 'suit', c_moon = 'suit', c_sun = 'suit', c_world = 'suit',
+    c_strength = 'rank', c_hanged_man = 'destroy', c_death = 'copy',
+    c_hermit = 'money', c_temperance = 'money',
+    c_fool = 'create', c_high_priestess = 'create', c_emperor = 'create', c_judgement = 'create',
+    c_wheel_of_fortune = 'gamble',
+  },
+  Spectral = {
+    c_soul = 'joker', c_wraith = 'joker', c_ankh = 'joker', c_hex = 'joker', c_ectoplasm = 'joker',
+    c_familiar = 'deck', c_grim = 'deck', c_incantation = 'deck', c_immolate = 'deck', c_cryptid = 'deck',
+    c_talisman = 'seal', c_deja_vu = 'seal', c_trance = 'seal', c_medium = 'seal',
+    c_sigil = 'transform', c_ouija = 'transform', c_aura = 'transform',
+    c_black_hole = 'blackhole',
+  },
+}
+logic.TAROT_GROUPS = {'enhance', 'suit', 'rank', 'destroy', 'copy', 'money', 'create', 'gamble'}
+logic.SPECTRAL_GROUPS = {'joker', 'deck', 'seal', 'transform', 'blackhole'}
+logic.PLANET_WASTE_RATIO = 10 -- a hand played less than a tenth as often as your most played one
+
+--- The moment for a consumable of set (Tarot, Spectral, Planet) with center key. planet (Planet only):
+--- {played = the planet's hand's times played, max_played = the most played count over all hands}.
+--- Tarot / Spectral: 'used_<set>_<group>', or the set's fallback for an unknown key. Planet: main when
+--- its hand is your most played (ties too), waste when never played or played under a tenth of the most
+--- played, else the fallback. Nil for any other set.
+function logic.consumable_moment(set, key, planet)
+  local base = logic.TRICK_MOMENTS[set]
+  if not base or set == 'Joker' then return nil end
+  if set == 'Planet' then
+    local played, max_played = planet and planet.played, planet and planet.max_played
+    if type(played) ~= 'number' or type(max_played) ~= 'number' then return base end
+    if played > 0 and played >= max_played then return 'used_planet_main' end
+    if played == 0 or played * logic.PLANET_WASTE_RATIO < max_played then return 'used_planet_waste' end
+    return base
+  end
+  local group = key and logic.CONSUMABLE_GROUPS[set][key]
+  return group and (base .. '_' .. group) or base
 end
 
 --- Whether a trick may get a line now: a live, unbeaten boss encounter on this blind, in play. a: the
@@ -1424,10 +1470,17 @@ logic.PERSONALITY_MOMENTS = {'jab_counter', 'jab_skipped', 'jab_skipped_both', '
   'jab_loaded', 'jab_onesuit', 'jab_tinydeck', 'jab_hugedeck', 'jab_nojokers', 'jab_fulljokers', 'jab_famous',
   'jab_combo', 'read_weakhand', 'read_repeat', 'read_discardspam', 'read_onecard', 'idle', 'fear_1',
   'fear_2', 'fear_3', 'poked', 'poked_hard', 'grabbed', 'used_tarot', 'used_spectral', 'used_planet',
-  'joker_created'}
+  'joker_created', 'used_planet_main', 'used_planet_waste'}
 logic.PERSONALITY_VARIANTS = {jab_combo = 2, read_weakhand = 2, read_repeat = 2, read_discardspam = 2, read_onecard = 2,
-  idle = 2, fear_1 = 3, fear_2 = 3, fear_3 = 3, poked = 3, poked_hard = 3, grabbed = 3, used_tarot = 3,
-  used_spectral = 3, used_planet = 3, joker_created = 3}
+  idle = 2, fear_1 = 3, fear_2 = 3, fear_3 = 3, poked = 3, poked_hard = 3, grabbed = 3, used_tarot = 2,
+  used_spectral = 2, used_planet = 2, joker_created = 3, used_planet_main = 2, used_planet_waste = 2}
+-- The card-specific consumable moments (used_tarot_<group>, used_spectral_<group>): 2 variants each.
+for _, set in ipairs({{'used_tarot_', logic.TAROT_GROUPS}, {'used_spectral_', logic.SPECTRAL_GROUPS}}) do
+  for _, g in ipairs(set[2]) do
+    logic.PERSONALITY_MOMENTS[#logic.PERSONALITY_MOMENTS + 1] = set[1] .. g
+    logic.PERSONALITY_VARIANTS[set[1] .. g] = 2
+  end
+end
 
 function logic.personality_variants(moment)
   return logic.PERSONALITY_VARIANTS[moment] or 1

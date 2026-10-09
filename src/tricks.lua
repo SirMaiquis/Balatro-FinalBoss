@@ -42,7 +42,8 @@ end
 --- mid-blind does not replay an old trick. Dialogue on but the line not shown (dropped inside
 --- dialogue's REACTION_GAP): the booking goes back (like logic.poke_unsaid), so the kind can still
 --- get its line later in the blind.
-local function react(kind)
+--- line(enc, blind) (consumables): the card's own moment and vars, or nil for the kind's plain moment.
+local function react(kind, line)
   local enc = R.encounter()
   if not enc then return end
   local state = enc.tricks or {}
@@ -50,14 +51,69 @@ local function react(kind)
   local last = state.last
   local moment = L().trick_reaction(state, kind, FinalBoss.util.now())
   if not (moment and FinalBoss.config.dialogue) then return end
-  local _, shown = FinalBoss.director.fire(moment, {free = true})
+  local opts = {free = true}
+  if line then
+    local m, vars = line(G.GAME.blind)
+    if m then moment, opts.vars = m, vars end
+  end
+  local _, shown = FinalBoss.director.fire(moment, opts)
   if not shown then state.seen[kind], state.last = nil, last end
+end
+
+--- A consumable's name in the current language (functions/misc_functions.lua:1744-1746); its key if
+--- that fails.
+local function card_name(set, key)
+  local ok, name = pcall(localize, {type = 'name_text', set = set, key = key})
+  if ok and type(name) == 'string' and name ~= 'ERROR' then return name end
+  return key or '?'
+end
+
+--- A planet's hand history: {played, max_played} of its hand over G.GAME.hands, or nil.
+local function planet_history(hand)
+  local hands = G.GAME and G.GAME.hands
+  local h = hand and hands and hands[hand]
+  if not h then return nil end
+  local max_played = 0
+  for _, v in pairs(hands) do
+    if type(v) == 'table' and (v.played or 0) > max_played then max_played = v.played end
+  end
+  return {played = h.played or 0, max_played = max_played}
+end
+
+--- The card's moment (logic.consumable_moment) and its vars: #1# the boss, #2# the card's name (tarot,
+--- spectral) or its hand's name (planet), #3# the hand's level (planet).
+---
+--- Planets (vanilla card.lua:302, :1264-1266): the card keeps its center's config as
+--- card.ability.consumeable, so its hand is card.ability.consumeable.hand_type (game.lua:557+). The
+--- level goes up inside Card:use_consumeable: level_up_hand (functions/common_events.lua:464-466)
+--- sets G.GAME.hands[hand].level at once and only queues the display. Our hook runs after the
+--- original returns, so the level read here is already the new one.
+local function consumable_line(card, set)
+  local center = card.config and card.config.center
+  local key = (center and center.key) or (card.config and card.config.center_key)
+  local hand = set == 'Planet' and card.ability.consumeable and card.ability.consumeable.hand_type or nil
+  local history = set == 'Planet' and planet_history(hand) or nil
+  if set == 'Planet' and not history then return nil end -- a planet with no known hand: plain line
+  local moment = L().consumable_moment(set, key, history)
+  return function(blind)
+    local vars = FinalBoss.director.vars(blind)
+    if set == 'Planet' then
+      local ok, name = pcall(localize, hand, 'poker_hands')
+      vars[2] = (ok and type(name) == 'string' and name ~= 'ERROR') and name or hand
+      vars[3] = G.GAME.hands[hand].level
+    else
+      vars[2] = card_name(set, key)
+    end
+    return moment, vars
+  end
 end
 
 --- A consumable was used (hooks.lua's Card:use_consumeable wrap).
 function R.on_consumable(card)
   local set = card and card.ability and card.ability.set
-  if set == 'Tarot' or set == 'Spectral' or set == 'Planet' then react(set) end
+  if set == 'Tarot' or set == 'Spectral' or set == 'Planet' then
+    react(set, consumable_line(card, set))
+  end
 end
 
 --- A card was added to the deck (hooks.lua's Card:add_to_deck wrap): a joker newly created. Not a

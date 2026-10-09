@@ -10,6 +10,8 @@ identical to English, gloat lines (Jimbo says them on the game-over screen) are 
 no "Name:" header line, not wrapped in quotation marks. A name ending in .lua is used as a file
 path (default.lua stays the base).
 Every personality (src/logic.lua PERSONALITIES) has a line for every run moment (PERSONALITY_MOMENTS, with personality_variants of each).
+Card lines: used_tarot_<group>, used_spectral_<group> and used_planet_waste need #2#; used_planet_main
+needs #3#, and no other quip may use #3#.
 """
 import pathlib
 import re
@@ -26,6 +28,10 @@ TAG = re.compile(r'\{([^{}]*)\}')
 PLACEHOLDER = re.compile(r'#\d+#')
 SECTIONS = ('quips', 'dictionary', 'achievement_names', 'achievement_descriptions')
 JOKER_KEY = re.compile(r'_jab_(?:counter|famous|combo)_\d+$')
+# Card-specific consumable lines (1.3): #2# names the card (tarot, spectral) or the planet's hand
+# (planet waste); #3# is the planet hand's new level, only in used_planet_main, where it is required.
+CARD_KEY = re.compile(r'_used_(?:tarot|spectral)_[a-z]+_\d+$|_used_planet_waste_\d+$')
+LEVEL_KEY = re.compile(r'_used_planet_main_\d+$')
 GLOAT_KEY = re.compile(r'^quips\.fb_(?:\w+_)?gloat(?:_\d+)?$')
 OPEN_QUOTES = '"“„«‹「『‘'   # " “ „ « ‹ 「 『 ‘
 CLOSE_QUOTES = '"”“»›」』’'  # " ” “ » › 」 』 ’
@@ -133,6 +139,12 @@ def main(names):
                     errors.append(f'{path.name}: {key}: {why} in {ascii(line)}')
             if JOKER_KEY.search(key) and '#2#' not in ' '.join(lines):
                 errors.append(f'{path.name}: {key}: joker jab line needs #2#')
+            if CARD_KEY.search(key) and '#2#' not in ' '.join(lines):
+                errors.append(f'{path.name}: {key}: card line needs #2#')
+            if LEVEL_KEY.search(key) and '#3#' not in ' '.join(lines):
+                errors.append(f'{path.name}: {key}: planet main line needs #3#')
+            if '#3#' in ' '.join(lines) and key.startswith('quips.') and not LEVEL_KEY.search(key):
+                errors.append(f'{path.name}: {key}: #3# is only for used_planet_main')
             if GLOAT_KEY.match(key):
                 why = gloat_problem(lines)
                 if why:
