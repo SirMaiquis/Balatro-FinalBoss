@@ -31,7 +31,7 @@ local function setup(o)
     util = {now = function() return ctx.now end},
     director = {fire = function(m, opts)
       ctx.fired[#ctx.fired + 1] = m; ctx.opts[#ctx.opts + 1] = opts
-      return true, true
+      return true, not ctx.drop -- ctx.drop: dialogue drops the line (its REACTION_GAP)
     end},
     cinematic = {active = function() return false end},
     dialogue = {intro_active = function() return o.intro or false end},
@@ -116,6 +116,33 @@ T['a joker back from a debuff, already in the deck, or restored from a save: not
   ctx.R.restoring = false
   ctx.R.on_joker_added(card('Joker'), false, false)
   eq(ctx.fired[1], 'joker_created')
+end
+
+T['a joker already in the joker slots that transforms: nothing'] = function()
+  local ctx = setup()
+  ctx.R.on_joker_added(card('Joker'), nil, false, true)
+  eq(#ctx.fired, 0)
+  eq(ctx.enc.tricks, nil, 'not booked either')
+end
+
+T['a line the dialogue dropped is not used up'] = function()
+  local ctx = setup()
+  ctx.drop = true
+  ctx.R.on_consumable(card('Tarot'))
+  eq(#ctx.fired, 1, 'tried')
+  eq(ctx.enc.tricks.seen.Tarot, nil, 'kind unbooked'); eq(ctx.enc.tricks.last, nil, 'gap unbooked')
+  ctx.drop = false
+  ctx.now = 101; ctx.R.on_consumable(card('Tarot'))
+  eq(#ctx.fired, 2); eq(ctx.fired[2], 'used_tarot')
+  eq(ctx.enc.tricks.seen.Tarot, true); eq(ctx.enc.tricks.last, 101)
+end
+
+T['a dropped line puts back the previous gap mark'] = function()
+  local ctx = setup()
+  ctx.R.on_consumable(card('Planet'))
+  ctx.drop = true
+  ctx.now = 110; ctx.R.on_consumable(card('Tarot'))
+  eq(ctx.enc.tricks.last, 100); eq(ctx.enc.tricks.seen.Planet, true)
 end
 
 T['a spectral that makes a joker: one line'] = function()

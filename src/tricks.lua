@@ -39,13 +39,19 @@ function R.encounter()
 end
 
 --- Book the trick and, with dialogue on, say its line. Dialogue off: still booked, so turning it on
---- mid-blind does not replay an old trick.
+--- mid-blind does not replay an old trick. Dialogue on but the line not shown (dropped inside
+--- dialogue's REACTION_GAP): the booking goes back (like logic.poke_unsaid), so the kind can still
+--- get its line later in the blind.
 local function react(kind)
   local enc = R.encounter()
   if not enc then return end
-  enc.tricks = enc.tricks or {}
-  local moment = L().trick_reaction(enc.tricks, kind, FinalBoss.util.now())
-  if moment and FinalBoss.config.dialogue then FinalBoss.director.fire(moment, {free = true}) end
+  local state = enc.tricks or {}
+  enc.tricks = state
+  local last = state.last
+  local moment = L().trick_reaction(state, kind, FinalBoss.util.now())
+  if not (moment and FinalBoss.config.dialogue) then return end
+  local _, shown = FinalBoss.director.fire(moment, {free = true})
+  if not shown then state.seen[kind], state.last = nil, last end
 end
 
 --- A consumable was used (hooks.lua's Card:use_consumeable wrap).
@@ -58,9 +64,11 @@ end
 --- joker coming back from a debuff (from_debuff: Card:set_debuff, card.lua:535), not one already in
 --- the deck (was_added: self.added_to_deck before the call), not a save being restored (R.restoring).
 --- Vanilla's restore never calls add_to_deck (CardArea:load builds the cards and Card:load copies
---- added_to_deck from the save, card.lua:4706); R.restoring covers mods that do.
-function R.on_joker_added(card, from_debuff, was_added)
-  if from_debuff or was_added or R.restoring then return end
+--- added_to_deck from the save, card.lua:4706); R.restoring covers mods that do. in_jokers: the card
+--- was already in G.jokers before the call (a joker transforming in place; new ones are emplaced after).
+--- Riff-raff's jokers come in setting_blind, while the intro speaks: no line, on purpose.
+function R.on_joker_added(card, from_debuff, was_added, in_jokers)
+  if from_debuff or was_added or in_jokers or R.restoring then return end
   if card and card.ability and card.ability.set == 'Joker' then react('Joker') end
 end
 

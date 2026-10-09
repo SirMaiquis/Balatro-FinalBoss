@@ -281,7 +281,9 @@ end
 -- Tricks (1.3): a consumable used or a joker created mid-fight (tricks.lua). G.FUNCS.use_card calls
 -- Card:use_consumeable for every consumable used from the slots (functions/button_callbacks.lua:2218);
 -- jokers enter play through Card:add_to_deck (card.lua:564: effects, common_events.lua:377 create_card,
--- buying). The joker check reads added_to_deck before the original sets it.
+-- buying). The joker check reads added_to_deck and the card's area before the original runs: new jokers
+-- are emplaced in G.jokers only after add_to_deck, while a joker already there that transforms
+-- (smods lovely/fixes.toml:170-189: set_ability calls remove_from_deck then add_to_deck) is not new.
 local orig_use_consumeable = Card.use_consumeable
 function Card:use_consumeable(...)
   local r = pack(orig_use_consumeable(self, ...))
@@ -292,19 +294,24 @@ end
 local orig_add_to_deck = Card.add_to_deck
 function Card:add_to_deck(from_debuff, ...)
   local was_added = self.added_to_deck
+  local in_jokers = G.jokers ~= nil and self.area == G.jokers
   local r = pack(orig_add_to_deck(self, from_debuff, ...))
-  if live() then U.guard('trick_joker', FinalBoss.tricks.on_joker_added, self, from_debuff, was_added) end
+  if live() then
+    U.guard('trick_joker', FinalBoss.tricks.on_joker_added, self, from_debuff, was_added, in_jokers)
+  end
   return unpack(r, 1, r.n)
 end
 
 -- A Continue rebuilds the jokers inside Game:start_run (game.lua:2311, CardArea:load) after G.STATE is
--- already the saved one (:2024): tricks.restoring keeps that rebuild from counting as new jokers.
+-- already the saved one (:2024): tricks.restoring keeps that rebuild from counting as new jokers. The
+-- flag is cleared even when start_run throws; the error is passed on unchanged.
 local orig_start_run = Game.start_run
 function Game:start_run(args, ...)
   FinalBoss.tricks.restoring = (args and args.savetext) and true or false
-  local r = pack(orig_start_run(self, args, ...))
+  local r = pack(pcall(orig_start_run, self, args, ...))
   FinalBoss.tricks.restoring = false
-  return unpack(r, 1, r.n)
+  if not r[1] then error(r[2], 0) end
+  return unpack(r, 2, r.n)
 end
 
 local orig_gamepadpressed = love.gamepadpressed
