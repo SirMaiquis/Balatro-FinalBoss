@@ -320,6 +320,24 @@ T['a stale pending card does not swallow a later joker'] = function()
   eq(ctx.fired[1], 'joker_created'); eq(ctx.R.pending, nil)
 end
 
+T['the pending card ages on the game clock, not real time'] = function()
+  local ctx = setup()
+  ctx.hold = true
+  G.TIMERS = {TOTAL = 50}
+  ctx.R.on_consumable(keyed('Tarot', 'c_judgement'))
+  ctx.now = 1000 -- a long real-time pause; the game clock barely moved
+  G.TIMERS.TOTAL = 51
+  ctx.R.on_joker_added(joker('j_joker'), false, false, false)
+  eq(#ctx.fired, 0, 'still waiting for its card')
+  flush(ctx)
+  eq(ctx.fired[1], 'joker_created')
+  ctx.R.on_consumable(keyed('Tarot', 'c_fool'))
+  ctx.queue = {}
+  G.TIMERS.TOTAL = 51 + ctx.R.PENDING_MAX + 1
+  ctx.now = 2000; ctx.R.on_joker_added(joker('j_egg'), false, false, false)
+  eq(ctx.R.pending, nil, 'stale on the game clock')
+end
+
 T['no pending card and no event outside the fight'] = function()
   local ctx = setup{intro = true}
   ctx.hold = true

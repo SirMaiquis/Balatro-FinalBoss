@@ -81,6 +81,14 @@ T['start_run: restoring only while a save loads, cleared after'] = function()
   end)
 end
 
+T['start_run: a consumable still waiting from the old run is dropped'] = function()
+  with_hooks(function()
+    FinalBoss.tricks.pending = {key = 'c_judgement', t = 1}
+    Game.start_run({}, {})
+    eq(FinalBoss.tricks.pending, nil)
+  end)
+end
+
 T['start_run: an error still clears the flag and is passed on unchanged'] = function()
   with_hooks(function()
     local ok, err = pcall(Game.start_run, {}, {savetext = {}, boom = true})

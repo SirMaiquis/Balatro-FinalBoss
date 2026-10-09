@@ -308,9 +308,11 @@ end
 
 -- A Continue rebuilds the jokers inside Game:start_run (game.lua:2311, CardArea:load) after G.STATE is
 -- already the saved one (:2024): tricks.restoring keeps that rebuild from counting as new jokers. The
--- flag is cleared even when start_run throws; the error is passed on unchanged.
+-- flag is cleared even when start_run throws; the error is passed on unchanged. A consumable still
+-- waiting for its line (tricks.pending) belongs to the old run: its resolve event left with the queue.
 local orig_start_run = Game.start_run
 function Game:start_run(args, ...)
+  FinalBoss.tricks.pending = nil
   FinalBoss.tricks.restoring = (args and args.savetext) and true or false
   local r = pack(pcall(orig_start_run, self, args, ...))
   FinalBoss.tricks.restoring = false

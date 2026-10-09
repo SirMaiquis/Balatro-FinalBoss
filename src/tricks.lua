@@ -165,9 +165,19 @@ end
 -- saved); a joker added meanwhile is noted on it instead of getting its own line. The resolve event is
 -- queued after every event of the use, and before G.FUNCS.use_card's own state restore event
 -- (functions/button_callbacks.lua:2218-2263), so the fight is still in PLAY_TAROT when it runs.
--- PENDING_MAX: a pending card older than this is stale (its event was lost with a cleared queue).
+-- Known limit: a modded card whose queued event queues another event that adds the joker lands after
+-- the resolve; that joker then gets its own line (or none inside the gap) and the card its card line.
+-- PENDING_MAX: a pending card older than this is stale (its event was lost with a cleared queue). Its
+-- age is measured on the game clock (G.TIMERS.TOTAL, the clock the event queue runs on); hooks.lua's
+-- Game:start_run wrap also clears R.pending.
 R.PENDING_MAX = 10
 R.pending = nil
+
+local function clock()
+  local t = G.TIMERS and G.TIMERS.TOTAL
+  if type(t) == 'number' then return t end
+  return FinalBoss.util.now()
+end
 
 local function resolve(p, set, line)
   if R.pending == p then R.pending = nil end
@@ -187,7 +197,7 @@ function R.on_consumable(card, before)
   if not (set == 'Tarot' or set == 'Spectral' or set == 'Planet') then return end
   if not R.encounter() then return end
   local line = before and wheel_line(card, before) or consumable_line(card, set)
-  local p = {key = center_key(card), t = FinalBoss.util.now()}
+  local p = {key = center_key(card), t = clock()}
   R.pending = p
   G.E_MANAGER:add_event(Event({func = function()
     FinalBoss.util.guard('trick_resolve', resolve, p, set, line)
@@ -208,7 +218,7 @@ function R.on_joker_added(card, from_debuff, was_added, in_jokers)
   if not (card and card.ability and card.ability.set == 'Joker') then return end
   local p = R.pending
   if p then
-    local age = FinalBoss.util.now() - p.t
+    local age = clock() - p.t
     if age >= 0 and age <= R.PENDING_MAX then
       p.joker = p.joker or card
       return

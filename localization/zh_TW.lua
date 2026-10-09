@@ -171,7 +171,7 @@ return {
             fb_generic_used_planet_main_2 = {"Your #2#?", "#3# levels won't help."},
             fb_generic_used_planet_waste_1 = {"#2#?", "Leveling a ghost hand?"},
             fb_generic_used_planet_waste_2 = {"#2#? Really?", "Wasted on a dead hand."},
-            fb_generic_joker_created_1 = {"A #2#? Cute.", "Like that'll help."},
+            fb_generic_joker_created_1 = {"#2#? Cute.", "Like that'll help."},
             fb_generic_joker_created_2 = {"#2#? Really?", "Desperate much?"},
             fb_generic_joker_created_3 = {"Oh, #2#.", "More clowns to beat."},
             fb_generic_jab_combo_1 = {"#2#?", "I've seen that trick."},
@@ -732,7 +732,7 @@ return {
             fb_p_royal_used_planet_waste_2 = {"#2#? Pah.", "Polishing unused silver?"},
             fb_p_royal_joker_created_1 = {"#2#? Hmph.", "Our court has better."},
             fb_p_royal_joker_created_2 = {"#2#? Pah.", "Recruiting? Desperate."},
-            fb_p_royal_joker_created_3 = {"A #2#? Dull.", "Its name bores us."},
+            fb_p_royal_joker_created_3 = {"#2#? Dull.", "Its name bores us."},
 
             -- The Hook: discards 2 random cards per hand played
             fb_bl_hook_name_1 = {"我是鉤子。"},
