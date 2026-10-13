@@ -344,7 +344,7 @@ return {
             fb_p_smug_used_tarot_create_2 = {"#2#, então.", "Mais cartas. Zero plano."},
             fb_p_smug_used_tarot_gamble_1 = {"#2#? Sorte?", "1 em 4. As suas: 0."},
             fb_p_smug_used_tarot_gamble_2 = {"#2#? Uau.", "Esperança não é estratégia."},
-            fb_p_smug_used_tarot_wheel_hit_1 = {"#2#? Sério?", "Um acaso. Estatístico."},
+            fb_p_smug_used_tarot_wheel_hit_1 = {"#2#? Sério?", "Acaso. Estatisticamente."},
             fb_p_smug_used_tarot_wheel_hit_2 = {"#2#? Raro.", "Um em quatro. Aproveite."},
             fb_p_smug_used_tarot_wheel_miss_1 = {"#2#? Pena.", "Como previsto. Nada."},
             fb_p_smug_used_tarot_wheel_miss_2 = {"#2#? Triste.", "A matemática sempre vence."},
