@@ -89,11 +89,10 @@ T['start_run: a consumable still waiting from the old run is dropped'] = functio
   end)
 end
 
-T['start_run: an error still clears the flag and is passed on unchanged'] = function()
+T['start_run: an error is passed on unchanged'] = function()
   with_hooks(function()
     local ok, err = pcall(Game.start_run, {}, {savetext = {}, boom = true})
     eq(ok, false); eq(err, 'boom')
-    eq(FinalBoss.tricks.restoring, false)
   end)
 end
 

@@ -191,6 +191,7 @@ T['intro_jab: an owned combo is a candidate, its famous jab is dropped'] = funct
   local j = logic.intro_jab({jokers = {'j_blueprint', 'j_brainstorm'}, joker_count = 2, joker_slots = 5,
     deck_size = 52, suit_max = 13, dollars = 10}, rand)
   eq(j.moment, 'jab_combo'); eq(j.combo[1], 'j_blueprint'); eq(j.combo[2], 'j_brainstorm')
+  for _, c in ipairs(logic.COMBOS) do assert(j.combo ~= c, 'the jab holds a copy, not the COMBOS entry') end
 end
 T['intro_jab: half a combo is not a combo'] = function()
   local rand = function(n) return n and 1 or 0 end

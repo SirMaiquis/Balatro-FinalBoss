@@ -980,7 +980,7 @@ logic.JAB_CHANCE = 1 / 3
 --- jokers can act (O.run_state lists only those).
 logic.COMBOS = {
   {'j_blueprint', 'j_brainstorm'}, {'j_baron', 'j_mime'}, {'j_dna', 'j_blueprint'},
-  {'j_perkeo', 'j_blueprint'}, {'j_triboulet', 'j_chicot'}, {'j_blueprint', 'j_baron'},
+  {'j_perkeo', 'j_blueprint'}, {'j_triboulet', 'j_sock_and_buskin'}, {'j_blueprint', 'j_baron'},
   {'j_brainstorm', 'j_baron'}, {'j_mime', 'j_sock_and_buskin'}, {'j_cavendish', 'j_oops'},
   {'j_hologram', 'j_dna'},
 }
@@ -1051,7 +1051,10 @@ function logic.intro_jab(s, rand)
   if #list == 0 then return nil end
   if not (s.force or rand() < logic.JAB_CHANCE) then return nil end
   local moment = list[rand(#list)]
-  if moment == 'jab_combo' then return {moment = moment, combo = owned_combos[rand(#owned_combos)]} end
+  if moment == 'jab_combo' then
+    local c = owned_combos[rand(#owned_combos)]
+    return {moment = moment, combo = {c[1], c[2]}}
+  end
   if moment == 'jab_famous' then return {moment = moment, joker = famous[rand(#famous)]} end
   return {moment = moment}
 end

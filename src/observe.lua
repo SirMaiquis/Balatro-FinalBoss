@@ -155,6 +155,7 @@ end
 
 --- The encounter the fear scale watches right now, or nil (logic.fear_watch).
 local function fear_encounter()
+  if not (G.STATES and G.STATE == G.STATES.HAND_PLAYED) then return nil end
   local st = G.GAME and G.GAME.FinalBoss
   local enc = st and st.encounter
   local blind = G.GAME and G.GAME.blind
