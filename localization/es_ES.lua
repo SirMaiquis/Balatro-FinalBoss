@@ -34,7 +34,7 @@ return {
             fb_credits_github = "GitHub",
             fb_tip_me = "Invítame a un café",
             fb_tip_me_message_1 = "Si te gusta FinalBoss, plantéate darme",
-            fb_tip_me_message_2 = "una pequeña propina como muestra de apoyo.",
+            fb_tip_me_message_2 = "una pequeña donación como muestra de apoyo.",
             fb_tip_me_message_3 = "¡Te lo agradezco muchísimo!",
         },
         achievement_names = {
