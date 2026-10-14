@@ -1,5 +1,47 @@
 # Changelog
 
+## 1.3.0
+
+Bosses react to your tricks.
+
+### The fear scale
+- The boss watches your score climb, card by card. Past 2×, 10× and 100× the requirement it gets sore, scared, then terrified, and says so on the spot; a higher tier replaces the bubble.
+- At 10× its chip (or the showdown avatar) starts to tremble; at 100× the screen shakes and flashes and the boss cowers. The showdown avatar shakes harder at higher tiers.
+- A fear line replaces the defeat line. A nemesis keeps its own defeat line.
+- This replaces the old overkill line.
+
+### Tiered deaths
+- 2×: a short slow motion. A regular boss's chip cracks and shatters; a showdown boss's own death is amplified.
+- 10×: a longer slow motion and a flash. The chip explodes into pieces; a showdown boss dies at full intensity.
+- 100×: the longest freeze, in which the boss says its last words, then the biggest explosion. A nemesis says its own defeat line instead.
+- Reduced motion and the Screen effects setting are respected: reduced motion keeps only the flashes, and with screen effects off there is no shake or flash.
+
+### Consumables used mid-fight
+- Use a tarot, spectral or planet during a boss fight and the boss answers, naming the card. Tarots and spectrals are grouped by what they do.
+- Planets read your hand history: level up your most played hand and the boss mocks the new level; level up a hand you never play and it calls it a waste.
+- The Wheel of Fortune reacts to a hit, a miss, or rigged odds (for example with Oops! All 6s).
+- The same card gets a line once per turn, quick spam is collapsed, and the line comes after the card's effect has played out.
+
+### Jokers created mid-fight
+- A joker created during the fight gets one line per blind, naming it.
+- Judgement, The Soul, Wraith and Ankh say the joker line instead of their card line.
+- Riff-raff's jokers arrive during the intro, so they get no line.
+
+### Combo jabs
+- About ten famous joker pairs can be called out at the intro, such as Blueprint & Brainstorm or Baron & Mime.
+
+### Fixes
+- Bosses keep talking after Hieroglyph or Petroglyph send the run back to ante 0 or below.
+- Both Spanish translations are rewritten, and the other languages are updated.
+
+### For mod authors
+- The `overkill` keys are removed. Use `fear_1`, `fear_2`, `fear_3` and `last_words` instead.
+- New moments: `fear_1..3`, `last_words`, `used_tarot_<group>`, `used_spectral_<group>`, `used_tarot_wheel_hit`, `used_tarot_wheel_miss`, `used_tarot_wheel_rigged`, `used_planet_main`, `used_planet_waste`, the `used_tarot`, `used_spectral` and `used_planet` fallbacks, `joker_created` and `jab_combo`. See the README for the groups.
+- Placeholders: `#2#` now also names the card, the planet's hand, the new joker, or both jokers of a combo ("A & B"); the new `#3#` is a planet's new hand level.
+
+### Developer keys
+- The Shift+F6 jab cycle now includes `combo`.
+
 ## 1.2.0
 
 Savage bosses that read your run.
