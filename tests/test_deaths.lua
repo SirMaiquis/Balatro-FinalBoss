@@ -19,13 +19,13 @@ local function setup(death, opts)
       if opts.fail == name then error('boom ' .. name) end
     end
   end
-  _G.G = {ROOM = {jiggle = 0}, play = {T = {x = 1, y = 1, w = 5, h = 3}},
+  _G.G = {ROOM = {jiggle = 0}, C = {WHITE = {1, 1, 1, 1}}, play = {T = {x = 1, y = 1, w = 5, h = 3}},
     E_MANAGER = {add_event = function() end}}
   _G.Event = function(t) return t end
-  _G.play_sound = function() end
+  _G.play_sound = function(name) ctx.sounds = ctx.sounds or {}; ctx.sounds[#ctx.sounds + 1] = name end
   _G.darken = function(c) return c end
   local effects = {}
-  for _, name in ipairs({'scatter', 'burst', 'ring', 'sweep', 'crack', 'pour', 'curse', 'stamp'}) do
+  for _, name in ipairs({'scatter', 'burst', 'ring', 'sweep', 'crack', 'pour', 'curse', 'stamp', 'flash_at', 'whiteout'}) do
     effects[name] = rec(name)
   end
   _G.FinalBoss = {
@@ -107,4 +107,67 @@ T['deaths.play: a recipe only runs death-safe effects'] = function()
   eq(warns, 2, 'one warning per skipped effect')
 end
 
+
+-- Tiered deaths (1.3) -------------------------------------------------------------------------------
+
+local src = {x = 1, y = 1, w = 2, h = 2}
+
+T['amplify: 2x adds, 10x adds more, 100x the most with a white-out; none or screen effects off add nothing'] = function()
+  local D, ctx = setup('hearts')
+  eq(D.amplify(blind, src, 0, false), false); eq(D.amplify(blind, src, nil, false), false)
+  eq(#ctx.calls, 0)
+  eq(D.amplify(blind, src, 1, false), true, '2x: the former 10x')
+  eq(count(ctx, 'burst'), 1); eq(count(ctx, 'scatter'), 1); eq(count(ctx, 'ring'), 0)
+  local j1 = G.ROOM.jiggle
+  eq(ctx.args.scatter[2].shape, 'shard')
+  eq(D.amplify(blind, src, 2, false), true, '10x: the former 100x')
+  eq(count(ctx, 'ring'), 1, 'rings at full intensity'); eq(count(ctx, 'whiteout'), 0)
+  local j2 = G.ROOM.jiggle - j1
+  assert(j2 > j1, 'a bigger shake for 10x')
+  assert(ctx.args.burst[3].scale > 2, 'a bigger burst')
+  local n2 = ctx.args.scatter[2].count
+  eq(D.amplify(blind, src, 3, false), true, '100x')
+  eq(count(ctx, 'whiteout'), 1, 'the white-out')
+  assert(G.ROOM.jiggle - j1 - j2 > j2, 'the hardest shake')
+  assert(ctx.args.scatter[2].count > n2 and ctx.args.scatter[2].spread > 4.5, 'more pieces, farther')
+  D, ctx = setup('hearts', {fx_off = true})
+  eq(D.amplify(blind, src, 3, false), false); eq(#ctx.calls, 0)
+end
+
+T['amplify: reduced motion flashes only'] = function()
+  local D, ctx = setup('hearts')
+  eq(D.amplify(blind, src, 2, true), true)
+  eq(#ctx.calls, 1); eq(ctx.calls[1], 'flash_at'); eq(G.ROOM.jiggle, 0)
+  eq(D.amplify(blind, src, 3, true), true)
+  eq(count(ctx, 'whiteout'), 1, 'the white-out is a flash'); eq(count(ctx, 'scatter'), 0); eq(G.ROOM.jiggle, 0)
+end
+
+T['chip: 2x cracks and shatters, 10x explodes with a shake, 100x blows apart; reduced motion flashes only'] = function()
+  local D, ctx = setup(nil)
+  eq(D.chip(blind, src, 0, false), false, 'below 2x: as today'); eq(D.chip(blind, src, nil, false), false)
+  eq(#ctx.calls, 0)
+  eq(D.chip(blind, src, 1, false), true, '2x: the former 10x shatter')
+  eq(count(ctx, 'flash'), 1); eq(count(ctx, 'crack'), 1); eq(count(ctx, 'scatter'), 1); eq(count(ctx, 'ring'), 0)
+  eq(ctx.args.crack[3].bare, true); eq(ctx.args.scatter[2].shape, 'shard')
+  local j1 = G.ROOM.jiggle
+  eq(D.chip(blind, src, 2, false), true, '10x: the former 100x explosion')
+  eq(count(ctx, 'ring'), 1, 'only the explosion rings'); eq(count(ctx, 'whiteout'), 0)
+  assert(G.ROOM.jiggle - j1 >= 10, 'the explosion shakes the screen')
+  assert(ctx.args.scatter[2].count > 12, 'more pieces')
+  local n2, s2, j2 = ctx.args.scatter[2].count, ctx.args.scatter[2].spread, G.ROOM.jiggle
+  ctx.sounds = {}
+  eq(D.chip(blind, src, 3, false), true, '100x')
+  eq(count(ctx, 'whiteout'), 1, 'the white-out')
+  assert(ctx.args.scatter[2].count > n2 and ctx.args.scatter[2].spread > s2, 'more pieces, farther')
+  assert(G.ROOM.jiggle - j2 > 10, 'a hard shake')
+  eq(ctx.sounds[1], 'explosion1', 'a heavy blast'); assert(#ctx.sounds >= 2, 'layered')
+  D, ctx = setup(nil)
+  eq(D.chip(blind, src, 2, true), true)
+  eq(count(ctx, 'flash'), 1); eq(count(ctx, 'flash_at'), 1); eq(#ctx.calls, 2, 'no pieces')
+  eq(D.chip(blind, src, 3, true), true)
+  eq(count(ctx, 'whiteout'), 1); eq(count(ctx, 'scatter'), 0); eq(count(ctx, 'crack'), 0)
+  eq(G.ROOM.jiggle, 0)
+  D, ctx = setup(nil, {fx_off = true})
+  eq(D.chip(blind, src, 3, false), false); eq(#ctx.calls, 0)
+end
 return T

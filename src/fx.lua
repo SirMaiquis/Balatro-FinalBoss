@@ -1,4 +1,5 @@
---- Screen effects for full-tier encounters. Respects config.fx and the game's reduced-motion
+--- Screen effects for full-tier encounters, plus the fear scale's shake and flash on any boss's
+--- winning hand (1.3). Respects config.fx and the game's reduced-motion
 --- setting (screen-shake strength is already scaled by vanilla from G.SETTINGS.screenshake).
 local F = {}
 F.PEAK = 1.0   -- vignette intensity during the intro
@@ -63,9 +64,10 @@ function EFFECTS.pulse(blind)
   later(4.0, gen, function() ease_vignette(F.HOLD, 2.0) end)
 end
 
-function EFFECTS.shake(blind)
+-- amount: vanilla's G.ROOM.jiggle kick (default 4; the fear scale's terrified crossing kicks harder).
+function EFFECTS.shake(blind, amount)
   if reduced() then return end
-  G.ROOM.jiggle = G.ROOM.jiggle + 4
+  G.ROOM.jiggle = G.ROOM.jiggle + (amount or 4)
 end
 
 -- `restore_as` is vanilla's blind_override for the colour to go back to ('' = neutral Small Blind

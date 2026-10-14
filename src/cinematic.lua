@@ -196,13 +196,16 @@ function C.retract_bars()
   if C.phase == 'dialogue' then C.phase = nil end
 end
 
-local function explode(blind, calm)
+local function explode(blind, calm, tier)
   local x, y, w, h = FinalBoss.avatar.position()
   FinalBoss.hpbar.remove()
   FinalBoss.avatar.remove()
   if not x then return end
   -- 1.1: the boss's own death (deaths.lua); bosses without one keep the shared explosion below.
-  if FinalBoss.deaths.play(blind, x, y, w, h, calm) then return end
+  -- 1.3: a crushing win amplifies either one (deaths.amplify: 2x more, 10x full, 100x maximum).
+  local own = FinalBoss.deaths.play(blind, x, y, w, h, calm)
+  FinalBoss.deaths.amplify(blind, {x = x, y = y, w = w, h = h}, tier, calm)
+  if own then return end
   local c = (blind.config.blind and blind.config.blind.boss_colour) or G.C.RED
   local p = Particles(x, y, w, h, {timer = 0.005, scale = 0.6, speed = 8, lifespan = 2.0,
     colours = {c, G.C.WHITE, darken(c, 0.3)}, fill = true})
@@ -214,9 +217,32 @@ local function explode(blind, calm)
   later(2.2, function() p:remove() end)
 end
 
+--- Slow motion (FinalBoss.timescale = scale) for duration real seconds. C.tick restores the time once
+--- they are over, every frame, so it comes back even if the event queue is cleared; C.reset and
+--- C.game_over restore it at once.
+C.FINALE_SLOW = 0.8 -- the finale's slow motion (seconds); the explosion comes 0.4 s after it
+C.slow_until = nil  -- REAL time the current slow motion ends (never saved)
+
+function C.slow_motion(duration, scale)
+  FinalBoss.timescale = scale
+  C.slow_until = FinalBoss.util.now() + duration
+end
+
+--- Per frame (Dir.tick): end the slow motion when its time is up.
+function C.tick()
+  if C.slow_until and FinalBoss.util.now() >= C.slow_until then
+    C.slow_until = nil
+    FinalBoss.timescale = 1
+  end
+end
+
 --- Winning hand: slow motion, violent shake + flashes while the defeat line plays, then boom.
+--- tier (1.3, logic.death_tier): any tier stretches the slow motion (logic.slowmo, never shorter than
+--- the finale's own), shakes the avatar harder (avatar.set_tremble) and amplifies the death; 2 also
+--- flashes the screen as it starts. 3 (100x) is the longest freeze: the boss's last words show
+--- (director) and it explodes explode_at seconds in, inside the freeze, at maximum intensity.
 --- Returns true when the finale started (the director then skips its own defeat effect).
-function C.play_finale(blind)
+function C.play_finale(blind, tier)
   if not FinalBoss.avatar.exists() then return false end
   C.token = C.token + 1
   local token = C.token
@@ -224,16 +250,22 @@ function C.play_finale(blind)
   C.retract_bars()
   C.phase = 'finale'
   local calm = reduced()
-  if not calm then FinalBoss.timescale = 0.35 end
-  FinalBoss.avatar.set_tremble(true)
+  local s = FinalBoss.logic.slowmo(tier, false) -- the timing; reduced motion only drops the slowing
+  local slow = math.max(C.FINALE_SLOW, s and s.duration or 0)
+  -- 0.35: phases.lua tells the finale's slow motion from its own freeze by C.phase, not the value
+  if not calm then C.slow_motion(slow, 0.35) end
+  if s and s.flash then FinalBoss.fx.play('flash', blind, '') end
+  local boom = s and s.explode_at or slow + 0.4
+  -- the harder trembles need screen effects; the plain one plays as before
+  FinalBoss.avatar.set_tremble(FinalBoss.config.fx and type(tier) == 'number' and tier >= 2 and tier or 1)
   FinalBoss.avatar.set_dissolve(0.5, 1.0)
   play_sound('explosion_buildup1', 1, 0.6)
-  for i = 0, 6 do
+  for i = 0, math.floor(slow / 0.15) + 1 do
     after(i * 0.15, token, function() FinalBoss.avatar.flash(0.08) end)
   end
-  later(0.8, function() FinalBoss.timescale = 1 end) -- always restored, even if the token moves on
-  after(1.2, token, function() explode(blind, calm) end)
-  later(1.6, function()
+  later(slow, C.tick) -- also restored here, even if the token moves on (C.tick: every frame)
+  after(boom, token, function() explode(blind, calm, tier) end)
+  later(math.max(boom + 0.4, slow), function()
     if C.phase == 'finale' then C.phase = nil end
     FinalBoss.fx.stop() -- vignette and arena revert with the explosion; both are idempotent
     FinalBoss.arena.stop()
@@ -245,7 +277,7 @@ end
 --- panel, laughing once when Jimbo says its catchphrase (avatar.gloat). Run teardown clears it.
 function C.game_over(pitch)
   C.token = C.token + 1
-  FinalBoss.timescale = 1
+  FinalBoss.timescale, C.slow_until = 1, nil
   remove_title()
   C.retract_bars()
   C.phase, C.on_done = nil, nil
@@ -256,7 +288,7 @@ end
 
 function C.reset()
   C.token = C.token + 1
-  FinalBoss.timescale = 1
+  FinalBoss.timescale, C.slow_until = 1, nil
   remove_title()
   if C.bars then for _, b in pairs(C.bars) do b:remove() end; C.bars = nil end
   for _, b in ipairs(C.leaving) do b:remove() end

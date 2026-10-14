@@ -207,15 +207,64 @@ T['every personality has every run moment'] = function()
   assert(#missing == 0, 'missing: ' .. table.concat(missing, ', '))
 end
 
-T['counter and famous lines name the joker (#2#); no other line does'] = function()
+--- The card-specific consumable moments of a key (used_tarot_<group>, used_tarot_wheel_<result>,
+--- used_spectral_<group>, used_planet_main / _waste) and joker_created (it names the joker), or nil.
+--- The fallbacks (used_tarot, used_spectral, used_planet) are not.
+local function card_moment(key)
+  local m = key:match('_(used_tarot_[%a_]+)_%d+$') or key:match('_(used_spectral_%a+)_%d+$')
+    or key:match('_(used_planet_%a+)_%d+$') or key:match('_(joker_created)_%d+$')
+  return m
+end
+
+T['counter, famous and card lines name it (#2#); no other line does'] = function()
   local quips = load()
   local bad = {}
   for key, lines in pairs(quips) do
     local text = type(lines) == 'table' and table.concat(lines, ' ') or tostring(lines)
+    local card = card_moment(key)
     local wants = key:find('_jab_counter_', 1, true) or key:find('_jab_famous_', 1, true)
+      or key:find('_jab_combo_', 1, true) or (card and card ~= 'used_planet_main')
+    local may = wants or card == 'used_planet_main'
     local has = text:find('#2#', 1, true)
     if wants and not has then bad[#bad + 1] = key .. ' needs #2#' end
-    if has and not wants then bad[#bad + 1] = key .. ' must not use #2#' end
+    if has and not may then bad[#bad + 1] = key .. ' must not use #2#' end
+  end
+  table.sort(bad)
+  assert(#bad == 0, table.concat(bad, '; '))
+end
+
+T['card lines: every voice opens each card moment its own way'] = function()
+  local quips = load()
+  local seen, bad = {}, {}
+  for key, lines in pairs(quips) do
+    local card = card_moment(key)
+    if card and key:match('^fb_p_') or (card and key:match('^fb_generic_')) then
+      local norm = lines[1]:lower():gsub('[^%w#]+', ' '):gsub('^%s+', ''):gsub('%s+$', '')
+      local id = card .. '|' .. norm
+      if seen[id] then bad[#bad + 1] = key .. ' = ' .. seen[id] .. ' (' .. lines[1] .. ')' end
+      seen[id] = key
+    end
+  end
+  table.sort(bad)
+  assert(#bad == 0, 'repeated openers: ' .. table.concat(bad, '; '))
+end
+
+T['card lines: #2# fits (at most 9 other characters), #3# only in used_planet_main and required there'] = function()
+  local quips = load()
+  local bad = {}
+  for key, lines in pairs(quips) do
+    local card = card_moment(key)
+    local text = type(lines) == 'table' and table.concat(lines, ' ') or tostring(lines)
+    local has3 = text:find('#3#', 1, true)
+    if card == 'used_planet_main' and not has3 then bad[#bad + 1] = key .. ' needs #3#' end
+    if has3 and card ~= 'used_planet_main' then bad[#bad + 1] = key .. ' must not use #3#' end
+    if card then
+      for _, line in ipairs(lines) do
+        if line:find('#2#', 1, true) and #visible(line) - 3 > 9 then
+          bad[#bad + 1] = key .. ' (#2# string too long: ' .. line .. ')'
+        end
+      end
+    end
   end
   table.sort(bad)
   assert(#bad == 0, table.concat(bad, '; '))
@@ -342,6 +391,27 @@ T['English poke lines: censored swears only on a bully or chaos hard poke, at mo
   end
   table.sort(bad)
   assert(#bad == 0, 'censored poke lines not allowed: ' .. table.concat(bad, ', '))
+end
+
+T['English consumable lines: one censored line at most for bully and chaos, none elsewhere; killer never shouts'] = function()
+  local quips = load()
+  local bad, n = {}, {}
+  for key, v in pairs(quips) do
+    local owner = key:match('^fb_p_(%a+)_used_') or key:match('^fb_(generic)_used_')
+    if owner then
+      if censored(v) then n[owner] = (n[owner] or 0) + 1 end
+      if owner == 'killer' then
+        for _, line in ipairs(lines_of(v)) do
+          if line:find('!', 1, true) then bad[#bad + 1] = key .. ' shouts' end
+        end
+      end
+    end
+  end
+  for owner, c in pairs(n) do
+    if c > ((owner == 'bully' or owner == 'chaos') and 1 or 0) then bad[#bad + 1] = owner .. ' x' .. c end
+  end
+  table.sort(bad)
+  assert(#bad == 0, table.concat(bad, '; '))
 end
 
 T['English killer poke lines never shout'] = function()

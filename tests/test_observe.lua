@@ -140,6 +140,13 @@ T['jab_vars: the boss name, then the joker name'] = function()
   eq(ctx.O.jab_vars({key = 'bl_hook', jab = {moment = 'jab_broke'}}, G.GAME.blind)[2], nil)
 end
 
+T['jab_vars: a combo names both jokers'] = function()
+  local ctx = setup()
+  local v = ctx.O.jab_vars({key = 'bl_hook', jab = {moment = 'jab_combo', combo = {'j_blueprint', 'j_brainstorm'}}},
+    G.GAME.blind)
+  eq(v[2], 'Name of j_blueprint & Name of j_brainstorm')
+end
+
 T['joker_name: falls back to the key when localize fails'] = function()
   local ctx = setup()
   _G.localize = function() return 'ERROR' end
@@ -176,7 +183,7 @@ T['on_blind_set: a Chicot that will act is always the jab'] = function()
   eq(enc3.jab.joker, 'j_luchador', 'a debuffed Chicot never acts')
 end
 
--- In-fight comments and overkill --------------------------------------------------------------------
+-- In-fight comments and the fear scale --------------------------------------------------------------
 
 local function pending(o)
   local p = {total = 5, required = 100, delta = 5, hand_type = 'Flush', streak = 1, discards_left = 1,
@@ -212,20 +219,122 @@ T['comment_for: full tier reads are capped and never on consecutive hands'] = fu
   eq(ctx.O.comment_for(enc, pending{hand = 3}), 'weak', 'weak is outside the cap and the rule')
 end
 
-T['overkill_line: a defeat with twice the requirement, on a passing roll'] = function()
+T['fear_line: only the winning defeat hand, by tier, always'] = function()
   local ctx = setup()
-  local pass = function() return 0 end
-  eq(ctx.O.overkill_line({moment = 'defeat', total = 250, required = 100}, pass), 'overkill')
-  eq(ctx.O.overkill_line({moment = 'defeat', total = 150, required = 100}, pass), nil)
-  eq(ctx.O.overkill_line({moment = 'close', total = 250, required = 100}, pass), nil)
-  eq(ctx.O.overkill_line({moment = 'defeat', total = 0, required = 0}, pass), nil, 'no requirement')
+  eq(ctx.O.fear_line({moment = 'defeat', total = 250, required = 100}), 'fear_1')
+  eq(ctx.O.fear_line({moment = 'defeat', total = 1500, required = 100}), 'fear_2')
+  eq(ctx.O.fear_line({moment = 'defeat', total = 1e6, required = 100}), 'fear_3')
+  eq(ctx.O.fear_line({moment = 'defeat', total = 150, required = 100}), nil)
+  eq(ctx.O.fear_line({moment = 'close', total = 5000, required = 100}), nil)
+  eq(ctx.O.fear_line({moment = 'defeat', total = 0, required = 0}), nil, 'no requirement')
 end
 
-T['overkill_line: a failed roll keeps the boss its own defeat line'] = function()
+T['fear_line: a fear line said live on this hand skips the defeat line; else a fallback, once'] = function()
   local ctx = setup()
-  eq(FinalBoss.logic.OVERKILL_CHANCE, 0.5)
-  eq(ctx.O.overkill_line({moment = 'defeat', total = 250, required = 100}, function() return 0.5 end), nil)
-  eq(ctx.O.overkill_line({moment = 'defeat', total = 250, required = 100}, function() return 0.49 end), 'overkill')
+  local win = {moment = 'defeat', total = 1500, required = 100, hand = 3}
+  eq(ctx.O.fear_line(win, {fear_said = 2, fear_hand = 3}), false, 'said live on this hand')
+  eq(ctx.O.fear_line(win, {fear_said = 2, fear_hand = 2}), nil,
+    'said on the hand before: this hand keeps its defeat line')
+  eq(ctx.O.fear_line(win, {fear_said = 1, fear_hand = 4}), 'fear_2', 'another hand id never skips')
+  local enc = {}
+  eq(ctx.O.fear_line(win, enc), 'fear_2', 'never said live: the fallback')
+  eq(enc.fear_said, 2); eq(enc.fear_hand, 3, 'booked like a live crossing')
+  eq(ctx.O.fear_line(win, {fear_said = 2, fear_hand = 1}), nil, 'this tier was said on an earlier hand')
+  eq(ctx.O.fear_line(win, {fear_said = 1, fear_hand = 1}), 'fear_2', 'a higher tier than an earlier hand')
+  eq(ctx.O.fear_line({moment = 'defeat', total = 150, required = 100, hand = 3}, {}), nil, 'below 2x')
+end
+
+-- The live fear scale -------------------------------------------------------------------------------
+
+--- A boss fight with a hand scoring: round score 100 of a 1000 requirement, displayed chips x mult.
+local function fear_setup(o)
+  o = o or {}
+  local enc = {key = 'bl_hook', boss = true, tier = o.tier or 'full', ended = false, fired = {}}
+  local ctx = setup{enc = enc}
+  ctx.enc = enc
+  ctx.fx = {}
+  G.STATE = G.STATES.HAND_PLAYED
+  G.GAME.chips = 100
+  G.GAME.blind.chips = 1000
+  -- vanilla's +1 runs before the score display: hands_played is one ahead of the hand being scored
+  enc.last_hand_seen = 1
+  G.GAME.current_round = {hands_played = 2, current_hand = {chips = 0, mult = 0}}
+  FinalBoss.director.fear_fx = function(e, b, t) ctx.fx[#ctx.fx + 1] = t end
+  ctx.show = function(chips, mult)
+    G.GAME.current_round.current_hand.chips = chips
+    G.GAME.current_round.current_hand.mult = mult
+    ctx.O.fear_tick()
+  end
+  return ctx
+end
+
+T['fear_tick: the displayed total crosses 2x, 10x, 100x: each line once, forced and free'] = function()
+  local ctx = fear_setup()
+  ctx.show(30, 4)
+  eq(#ctx.fired, 0, 'below 2x')
+  ctx.show(100, 19)
+  eq(#ctx.fired, 1); eq(ctx.fired[1], 'fear_1', '100 + 1900 = 2x')
+  eq(ctx.opts[1].force, true); eq(ctx.opts[1].nobook, true)
+  eq(ctx.opts[1].free, nil, 'a real line: it starts the reaction gap')
+  eq(ctx.enc.fear_said, 1); eq(ctx.enc.fear_hand, 1, 'the id on_hand_after booked, not hands_played')
+  ctx.show(100, 20)
+  eq(#ctx.fired, 1, 'the same tier again says nothing')
+  ctx.show(100, 99)
+  eq(ctx.fired[2], 'fear_2', 'escalation replaces the bubble')
+  ctx.show(1000, 100)
+  eq(ctx.fired[3], 'fear_3'); eq(ctx.enc.fear_said, 3)
+  eq(#ctx.fx, 3); eq(ctx.fx[1], 1); eq(ctx.fx[2], 2); eq(ctx.fx[3], 3)
+  ctx.show(0, 0)
+  eq(#ctx.fired, 3, 'the hand clears: nothing new')
+end
+
+T['fear_tick then the defeat line: the same hand skips it, the next hand does not'] = function()
+  local ctx = fear_setup()
+  ctx.show(100, 99)
+  eq(ctx.fired[1], 'fear_2')
+  eq(ctx.O.fear_line({moment = 'defeat', total = 10000, required = 1000, hand = 1}, ctx.enc), false,
+    'the hand that crossed live')
+  eq(ctx.O.fear_line({moment = 'defeat', total = 10000, required = 1000, hand = 2}, ctx.enc), nil,
+    'a later winning hand at the same tier says its defeat line')
+end
+
+T['fear_tick: a jump straight past a tier announces only the top one'] = function()
+  local ctx = fear_setup()
+  ctx.show(500, 200)
+  eq(#ctx.fired, 1); eq(ctx.fired[1], 'fear_3')
+end
+
+T['fear_tick: only while a hand scores in a live boss fight with no intro'] = function()
+  local ctx = fear_setup()
+  G.STATE = G.STATES.SELECTING_HAND
+  ctx.show(100, 99)
+  eq(#ctx.fired, 0, 'not scoring (choosing cards)')
+  G.STATE = G.STATES.HAND_PLAYED
+  ctx.enc.ended = true
+  ctx.show(100, 99)
+  eq(#ctx.fired, 0, 'the fight is over')
+  ctx.enc.ended = false
+  FinalBoss.dialogue.intro_active = function() return true end
+  ctx.show(100, 99)
+  eq(#ctx.fired, 0, 'the intro is still running')
+  FinalBoss.dialogue.intro_active = function() return false end
+  G.GAME.blind.config.blind.key = 'bl_other'
+  ctx.show(100, 99)
+  eq(#ctx.fired, 0, 'another blind')
+  G.GAME.blind.config.blind.key = 'bl_hook'
+  ctx.enc.tier = 'none'
+  ctx.show(100, 99)
+  eq(#ctx.fired, 0, 'a silent encounter')
+  ctx.enc.tier = 'light'
+  ctx.show(100, 99)
+  eq(#ctx.fired, 1, 'the light tier is watched too')
+end
+
+T['fear_tick: a visual failure is logged and the line is still said'] = function()
+  local ctx = fear_setup()
+  FinalBoss.director.fear_fx = function() error('no chip') end
+  ctx.show(100, 99)
+  eq(ctx.fired[1], 'fear_2'); eq(ctx.enc.fear_said, 2)
 end
 
 -- Idle taunts ------------------------------------------------------------------------------------------
@@ -327,6 +436,10 @@ T['dev_jab: fakes a run and says its jab now'] = function()
   eq(ctx.O.dev_jab({counter = true}), 'jab_counter')
   eq(ctx.opts[2].skip_boss, false); eq(ctx.opts[2].vars[2], 'Name of j_chicot')
   eq(G.GAME.FinalBoss.encounter.jab.joker, 'j_chicot')
+  G.GAME.FinalBoss.last_jab = nil
+  eq(ctx.O.dev_jab({combo = true}), 'jab_combo')
+  eq(G.GAME.FinalBoss.encounter.jab.combo[1], 'j_blueprint')
+  G.GAME.FinalBoss.last_jab = nil
   eq(ctx.O.dev_jab({}), nil, 'the neutral run has no jab')
   local none = setup()
   eq(none.O.dev_jab({dollars = 0}), nil, 'no encounter')

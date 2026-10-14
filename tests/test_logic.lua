@@ -121,4 +121,13 @@ T['intro_sequence: per tier'] = function()
   eq(#logic.intro_sequence('none'), 0)
 end
 
+T['decide_tier: a run that reached the dialogue ante keeps talking below it'] = function()
+  eq(logic.decide_tier{is_boss = true, entry_tier = 'auto', ante = 0, max_ante = 3, min_ante = 1}, 'light')
+  eq(logic.decide_tier{is_boss = true, entry_tier = 'auto', ante = -1, max_ante = 2, min_ante = 2}, 'light')
+  eq(logic.decide_tier{is_boss = true, entry_tier = 'auto', ante = 1, max_ante = 1, min_ante = 2}, 'none',
+    'never reached')
+  eq(logic.decide_tier{is_boss = true, entry_tier = 'auto', ante = 2, min_ante = 2}, 'light', 'no max_ante (old save)')
+  eq(logic.decide_tier{is_boss = true, entry_tier = 'auto', ante = 0, min_ante = 1}, 'none', 'no max_ante, ante 0')
+end
+
 return T

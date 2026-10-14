@@ -121,9 +121,42 @@ T['note_comment: weak is a reaction, not a run comment'] = function()
   eq(enc.last_line_hand, 2, 'weak follows the light tier spacing')
 end
 
-T['is_overkill: at least twice the requirement'] = function()
-  eq(logic.is_overkill(200, 100), true); eq(logic.is_overkill(199, 100), false)
-  eq(logic.is_overkill(10, 0), false); eq(logic.is_overkill(10, nil), false)
+T['fear_tier: 2x sore, 10x scared, 100x terrified'] = function()
+  eq(logic.fear_tier(199, 100), nil); eq(logic.fear_tier(200, 100), 1)
+  eq(logic.fear_tier(999, 100), 1); eq(logic.fear_tier(1000, 100), 2)
+  eq(logic.fear_tier(9999, 100), 2); eq(logic.fear_tier(10000, 100), 3)
+  eq(logic.fear_tier(1e300, 100), 3, 'huge')
+  eq(logic.fear_tier(50, 0), nil, 'no requirement'); eq(logic.fear_tier(nil, 100), nil)
+  eq(logic.fear_tier(math.huge, 100), 3, 'an infinite total over a finite requirement')
+  eq(logic.fear_tier(math.huge, math.huge), nil, 'inf over inf')
+  eq(logic.fear_tier(1e300, math.huge), nil, 'an infinite requirement')
+  eq(logic.fear_tier(1.7e308, 1e306), 3, 'no overflow near the double cap')
+  eq(logic.fear_tier(1.79e308, 1.7e306), 3, 'capped total, 100x+')
+  eq(logic.fear_tier(1.7e308, 1e307), 2, '17x near the cap')
+  eq(logic.fear_tier(1e308, 1e-10), nil, 'an overflowing ratio')
+  eq(logic.fear_tier(0/0, 100), nil, 'nan'); eq(logic.fear_tier(100, 0/0), nil, 'nan requirement')
+end
+T['fear moments replace overkill in every personality'] = function()
+  local has = {}
+  for _, m in ipairs(logic.PERSONALITY_MOMENTS) do has[m] = true end
+  assert(not has.overkill)
+  for t = 1, 3 do assert(has['fear_' .. t]); eq(logic.personality_variants('fear_' .. t), 3) end
+end
+T['fear_reaction: scared trembles, terrified cowers and flashes; reduced motion flashes only'] = function()
+  eq(logic.fear_reaction(1), nil, 'sore keeps the plain defeat'); eq(logic.fear_reaction(nil), nil)
+  local scared, terrified = logic.fear_reaction(2), logic.fear_reaction(3)
+  assert(scared.shake and scared.bounces and not scared.flash)
+  assert(terrified.shake > 0 and terrified.recoil and terrified.flash == 'white')
+  assert(terrified.shake_amp > scared.shake_amp, 'terrified shakes harder')
+  for t = 2, 3 do
+    local r = logic.fear_reaction(t, true)
+    for _, k in ipairs({'juice', 'rot', 'shake', 'shake_amp', 'recoil', 'bounces', 'jiggle'}) do
+      eq(r[k], nil, t .. ' ' .. k)
+    end
+    assert(r.flash, 'reduced motion still flashes')
+  end
+  logic.fear_reaction(2).shake = 99
+  eq(logic.FEAR_REACTIONS[2].shake, 1.2, 'a copy')
 end
 
 T['idle_due: 25 s, then 45 s more, at most two'] = function()
@@ -139,14 +172,90 @@ T['can_fire: idle may repeat and is not spaced; comments have their own gate'] =
   eq(logic.COMMENTS.idle, nil)
 end
 
-T['personality moments: 21 run moments, 1 to 3 variants each'] = function()
-  eq(#logic.PERSONALITY_MOMENTS, 21)
+T['personality moments: 47 run moments, 1 to 3 variants each'] = function()
+  eq(#logic.PERSONALITY_MOMENTS, 47)
   for _, m in ipairs(logic.PERSONALITY_MOMENTS) do
     local n = logic.personality_variants(m)
     assert(n >= 1 and n <= 3, m .. ' variants ' .. tostring(n))
   end
-  eq(logic.personality_variants('idle'), 2); eq(logic.personality_variants('overkill'), 2)
+  eq(logic.personality_variants('idle'), 2); eq(logic.personality_variants('fear_2'), 3)
   eq(logic.personality_variants('read_repeat'), 2); eq(logic.personality_variants('jab_broke'), 1)
+end
+
+T['live_total: the round score plus the displayed chips x mult, missing values count 0'] = function()
+  eq(logic.live_total(100, 30, 4), 220)
+  eq(logic.live_total(nil, 30, 4), 120, 'no round score yet')
+  eq(logic.live_total(100, nil, 4), 100); eq(logic.live_total(100, 30, nil), 100)
+  eq(logic.live_total(100, '?', 4), 100, 'a text value')
+end
+
+T['fear_step: only a higher tier is announced, once'] = function()
+  eq(logic.fear_step(nil, 1), 1, 'first crossing'); eq(logic.fear_step(0, 2), 2)
+  eq(logic.fear_step(1, 2), 2, 'escalation'); eq(logic.fear_step(1, 3), 3, 'a skipped tier')
+  eq(logic.fear_step(2, 2), nil, 'already said'); eq(logic.fear_step(3, 2), nil, 'lower')
+  eq(logic.fear_step(2, nil), nil, 'below 2x'); eq(logic.fear_step(nil, nil), nil)
+  eq(logic.fear_step('x', 1), 1, 'a broken saved value counts as none')
+end
+
+T['death_tier: the higher of the live tier and the final tier, nil-safe'] = function()
+  eq(logic.death_tier(nil, nil), nil); eq(logic.death_tier(0, nil), nil)
+  eq(logic.death_tier(2, nil), 2, 'said live, final below'); eq(logic.death_tier(nil, 3), 3, 'never said live')
+  eq(logic.death_tier(3, 2), 3); eq(logic.death_tier(1, 2), 2)
+end
+
+T['fear_watch: a live boss fight on its blind, a hand scoring, no intro or cinematic'] = function()
+  local function a(o)
+    local t = {boss = true, ended = false, same_blind = true, hand_played = true, tier = 'light'}
+    for k, v in pairs(o or {}) do t[k] = v end
+    return t
+  end
+  eq(logic.fear_watch(a()), true); eq(logic.fear_watch(a{tier = 'full'}), true)
+  eq(logic.fear_watch(a{tier = 'none'}), false, 'silent tier')
+  eq(logic.fear_watch(a{boss = false}), false); eq(logic.fear_watch(a{ended = true}), false)
+  eq(logic.fear_watch(a{same_blind = false}), false); eq(logic.fear_watch(a{hand_played = false}), false)
+  eq(logic.fear_watch(a{intro = true}), false); eq(logic.fear_watch(a{cinematic = true}), false)
+end
+
+T['slowmo: each death tier plays the tier above it: short at 2x, longer with a flash at 10x, longest at 100x'] = function()
+  eq(logic.slowmo(0), nil); eq(logic.slowmo(nil), nil); eq(logic.slowmo(4), nil)
+  local s1, s2, s3 = logic.slowmo(1), logic.slowmo(2), logic.slowmo(3)
+  eq(s1.duration, 0.6, '2x: the former 10x'); eq(s1.flash, nil)
+  eq(s2.duration, 1.2, '10x: the former 100x'); eq(s2.flash, true)
+  assert(s3.duration > s2.duration and s3.duration >= 1.8, '100x: the longest freeze')
+  assert(s3.scale < s2.scale and s2.scale < s1.scale and s1.scale < 1, 'slower for the bigger win')
+  for _, s in ipairs({s1, s2, s3}) do
+    assert(s.scale ~= 0.35, 'never the phase freeze value (phases.lua tells them apart by it)')
+  end
+  for t = 1, 3 do eq(logic.slowmo(t, true), nil, 'reduced motion ' .. t) end
+  s1.duration = 99
+  eq(logic.SLOWMO[1].duration, 0.6, 'a copy')
+end
+
+T['death_boom: 100x explodes inside the freeze once the last words are readable'] = function()
+  eq(logic.death_boom(1), 0.6, 'after the slow motion'); eq(logic.death_boom(2), 1.2)
+  eq(logic.death_boom(1, true), 0, 'reduced motion: no slow motion to wait for')
+  local b = logic.death_boom(3)
+  assert(b >= 1.2 and b <= 1.5, 'readable first: ' .. tostring(b))
+  assert(b < logic.SLOWMO[3].duration, 'inside the freeze')
+  eq(logic.death_boom(3, true), b, 'reduced motion still waits for the line')
+  eq(logic.slowmo(3).explode_at, b)
+  eq(logic.death_boom(nil), nil); eq(logic.death_boom(0), nil)
+end
+
+T['last words: only the 100x death, never a nemesis; the moment has 3 variants'] = function()
+  eq(logic.last_words_due(3), true); eq(logic.last_words_due(3, false), true)
+  eq(logic.last_words_due(3, true), false, 'a nemesis says its own defeat line')
+  eq(logic.last_words_due(2), false); eq(logic.last_words_due(1), false); eq(logic.last_words_due(nil), false)
+  local has = false
+  for _, m in ipairs(logic.PERSONALITY_MOMENTS) do if m == 'last_words' then has = true end end
+  assert(has, 'a personality moment'); eq(logic.personality_variants('last_words'), 3)
+end
+
+T['tremble: the avatar shakes harder with the tier, violent at 100x'] = function()
+  eq(logic.tremble(0), nil); eq(logic.tremble(nil), nil)
+  local t1, t2, t3 = logic.tremble(1), logic.tremble(2), logic.tremble(3)
+  assert(t2.amp >= 2 * t1.amp, '10x: clearly more than the plain tremble')
+  assert(t3.amp >= 2 * t2.amp and t3.rot, '100x: violent, with a twitching tilt')
 end
 
 return T

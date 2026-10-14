@@ -110,12 +110,14 @@ function logic.gloat_rect(panel, room_right, S, min_s, gap)
   return right - size, panel.y - gap - size, size
 end
 
---- args: {is_boss, is_showdown, entry_tier = 'auto'|'light'|'full', ante, min_ante}
+--- args: {is_boss, is_showdown, entry_tier = 'auto'|'light'|'full', ante, max_ante (highest ante this run
+--- reached; nil = ante), min_ante}
 function logic.decide_tier(a)
   if not a.is_boss then return 'none' end
   if a.entry_tier == 'light' or a.entry_tier == 'full' then return a.entry_tier end
   if a.is_showdown then return 'full' end
-  if a.ante >= a.min_ante then return 'light' end
+  local reached = math.max(a.ante or 0, a.max_ante or a.ante or 0)
+  if reached >= a.min_ante then return 'light' end
   return 'none'
 end
 
@@ -974,6 +976,15 @@ logic.JAB = {rerolls = 5, broke = 3, loaded = 50, onesuit = 0.75, tiny = 30, hug
 --- Chance that a non-counter jab replaces the boss's own threat (counter jokers always jab).
 logic.JAB_CHANCE = 1 / 3
 
+--- Famous joker pairs (the jab_combo jab names both as #2#, "A & B"). Each pair counts when both
+--- jokers can act (O.run_state lists only those).
+logic.COMBOS = {
+  {'j_blueprint', 'j_brainstorm'}, {'j_baron', 'j_mime'}, {'j_dna', 'j_blueprint'},
+  {'j_perkeo', 'j_blueprint'}, {'j_triboulet', 'j_sock_and_buskin'}, {'j_blueprint', 'j_baron'},
+  {'j_brainstorm', 'j_baron'}, {'j_mime', 'j_sock_and_buskin'}, {'j_cavendish', 'j_oops'},
+  {'j_hologram', 'j_dna'},
+}
+
 local FAMOUS_SET = {}
 for _, k in ipairs(logic.FAMOUS_JOKERS) do FAMOUS_SET[k] = true end
 
@@ -995,7 +1006,8 @@ end
 --- random owned counter. Every other jab that applies is one candidate in a flat list (no tiers),
 --- minus the last jab said; with JAB_CHANCE (or force) one is picked uniformly. rand has the
 --- math.random signature: rand() the chance roll, rand(n) the pick. Returns {moment, joker} (joker:
---- the center key said as #2# for jab_counter and jab_famous) or nil.
+--- the center key said as #2# for jab_counter and jab_famous), {moment = 'jab_combo', combo = {a, b}}
+--- (both keys said as #2#), or nil. An owned combo drops jab_famous from the candidates.
 function logic.intro_jab(s, rand)
   local J = logic.JAB
   local jokers = s.jokers or {}
@@ -1030,10 +1042,19 @@ function logic.intro_jab(s, rand)
   for _, k in ipairs(jokers) do
     if FAMOUS_SET[k] then famous[#famous + 1] = k end
   end
-  add('jab_famous', #famous > 0)
+  local owned_combos = {}
+  for _, c in ipairs(logic.COMBOS) do
+    if owned[c[1]] and owned[c[2]] then owned_combos[#owned_combos + 1] = c end
+  end
+  add('jab_combo', #owned_combos > 0)
+  add('jab_famous', #famous > 0 and #owned_combos == 0)
   if #list == 0 then return nil end
   if not (s.force or rand() < logic.JAB_CHANCE) then return nil end
   local moment = list[rand(#list)]
+  if moment == 'jab_combo' then
+    local c = owned_combos[rand(#owned_combos)]
+    return {moment = moment, combo = {c[1], c[2]}}
+  end
   if moment == 'jab_famous' then return {moment = moment, joker = famous[rand(#famous)]} end
   return {moment = moment}
 end
@@ -1074,7 +1095,7 @@ function logic.has_censored(text)
   return text:find('[%a\128-\255]%*') ~= nil
 end
 
--- Reading the run: in-fight comments, overkill, idle (1.2) ----------------------------------------
+-- Reading the run: in-fight comments, idle (1.2), the fear scale (1.3) ----------------------------
 
 --- Moments said on a hand that fired nothing else. The reads are run comments (booked by
 --- logic.note_comment, capped per blind). 'weak' is the boss's own line: it follows the light tier's
@@ -1085,8 +1106,6 @@ logic.READ_ORDER = {'read_repeat', 'read_discardspam', 'read_onecard', 'read_wea
 logic.WEAK_HANDS = {['High Card'] = true, ['Pair'] = true} -- vanilla hand keys (game.lua:2012-2013)
 logic.REPEAT_STREAK = 3     -- the same hand type this many hands in a row
 logic.DISCARDSPAM_HANDS = 3 -- no discards left with at least this many hands to play, this one included
-logic.OVERKILL_RATIO = 2    -- a winning total at least twice the requirement
-logic.OVERKILL_CHANCE = 0.5 -- chance the overkill line replaces the boss's own defeat line
 logic.COMMENT_CAP = 3       -- run comments per blind for final bosses (full tier)
 logic.IDLE_FIRST = 25       -- seconds without input before the first idle taunt
 logic.IDLE_SECOND = 45      -- seconds after the first before the second
@@ -1162,10 +1181,99 @@ function logic.note_comment(enc, moment, hand)
   enc.last_comment_hand = hand
 end
 
---- The winning hand scored at least OVERKILL_RATIO times the requirement.
-function logic.is_overkill(total, required)
-  if not required or required <= 0 then return false end
-  return (total or 0) >= logic.OVERKILL_RATIO * required
+--- The fear scale (1.3): how many times the requirement the winning total reached. 1 sore, 2 scared,
+--- 3 terrified. Totals are plain numbers (director.num), capped near 1.8e308 or inf at Talisman scale,
+--- so the ratio is compared (x * required would overflow). A nan or missing value is no tier; an
+--- infinite total over a finite requirement is the top tier; any other non-finite ratio is no tier.
+logic.FEAR_TIERS = {2, 10, 100}
+function logic.fear_tier(total, required)
+  if type(total) ~= 'number' or type(required) ~= 'number' or required <= 0 then return nil end
+  if total ~= total or required ~= required then return nil end
+  if total == math.huge then return required < math.huge and #logic.FEAR_TIERS or nil end
+  local ratio = total / required
+  if ratio ~= ratio or ratio == math.huge then return nil end
+  local tier
+  for i, x in ipairs(logic.FEAR_TIERS) do
+    if ratio >= x then tier = i end
+  end
+  return tier
+end
+
+--- The live fear scale (1.3): the running total the player sees while a hand scores. base is the round
+--- score before this hand (G.GAME.chips), chips and mult the hand's displayed chips and mult (plain
+--- numbers, director.num); a missing value counts as 0.
+function logic.live_total(base, chips, mult)
+  local function n(x) return type(x) == 'number' and x or 0 end
+  return n(base) + n(chips) * n(mult)
+end
+
+--- The tier to announce now: live_tier when it is higher than the highest tier said this blind
+--- (said, nil = none), else nil. Each tier is said at most once per blind, and only ever upwards.
+function logic.fear_step(said, live_tier)
+  if type(live_tier) ~= 'number' then return nil end
+  if live_tier <= (type(said) == 'number' and said or 0) then return nil end
+  return live_tier
+end
+
+--- The death a winning hand earns: the higher of the tier said live this blind and the final total's
+--- tier (fear_tier). nil when neither is a tier.
+function logic.death_tier(said, final_tier)
+  local a = type(said) == 'number' and said or 0
+  local b = type(final_tier) == 'number' and final_tier or 0
+  local t = math.max(a, b)
+  return t > 0 and t or nil
+end
+
+--- Whether the live fear scale watches this frame: a live boss encounter on its own blind (any tier
+--- that talks), a hand being scored, no intro or cinematic running.
+function logic.fear_watch(a)
+  if not (a.boss and not a.ended and a.same_blind and a.hand_played) then return false end
+  if a.tier ~= 'light' and a.tier ~= 'full' then return false end
+  return not (a.intro or a.cinematic)
+end
+
+--- Slow motion before a tiered death (1.3), keyed by logic.death_tier, in real seconds at
+--- FinalBoss.timescale = scale. Each tier plays what the tier above it played before: 2x a short
+--- slow motion, 10x a longer one with a screen flash, 100x the longest freeze, in which the boss says
+--- its last words and explodes explode_at seconds in. Reduced motion: none (the flash is the caller's).
+logic.SLOWMO = {
+  [1] = {scale = 0.3, duration = 0.6},
+  [2] = {scale = 0.2, duration = 1.2, flash = true},
+  [3] = {scale = 0.15, duration = 2.0, explode_at = 1.4},
+}
+function logic.slowmo(tier, reduced)
+  local s = logic.SLOWMO[tier]
+  if not s or reduced then return nil end
+  return {scale = s.scale, duration = s.duration, flash = s.flash, explode_at = s.explode_at}
+end
+
+--- Real seconds from the start of a tiered death to its explosion: the 100x death waits explode_at
+--- so its last words can be read (also under reduced motion, which only drops the slowing); the
+--- others explode as their slow motion ends (at once under reduced motion). nil: no tiered death.
+function logic.death_boom(tier, reduced)
+  local s = logic.SLOWMO[tier]
+  if not s then return nil end
+  if s.explode_at then return s.explode_at end
+  return reduced and 0 or s.duration
+end
+
+--- The 100x death: the boss says its last words as the freeze starts. A nemesis says its own defeat
+--- line instead (memory.defeat_line), so it never gets them.
+logic.LAST_WORDS_TIER = 3
+function logic.last_words_due(tier, nemesis)
+  return type(tier) == 'number' and tier >= logic.LAST_WORDS_TIER and not nemesis
+end
+
+--- The showdown avatar's tremble (1.3), by level: 1 the plain tremble (a final boss's finale,
+--- phase III), 2 the 10x fear (clearly visible), 3 the 100x fear (violent). Amplitude in room
+--- units; rot adds a twitching tilt. Level 0 or unknown: still.
+logic.TREMBLE = {
+  [1] = {amp = 0.03},
+  [2] = {amp = 0.07},
+  [3] = {amp = 0.16, rot = 0.08},
+}
+function logic.tremble(level)
+  return logic.TREMBLE[level]
 end
 
 --- Whether an idle taunt is due after idle_for seconds without input; said = taunts said this blind.
@@ -1297,13 +1405,155 @@ function logic.poke_reaction(personality, kind, reduced)
   return r
 end
 
+-- Tricks: consumables used and jokers created in the fight (1.3) ----------------------------------
+-- At most one trick line per TRICK_GAP seconds (quick spam collapses; a spectral that also creates a
+-- joker gives one line). Every tarot, spectral and planet may get a line; a created joker only once
+-- per blind (ONCE_PER_BLIND). Free lines: never the fight's bookkeeping.
+logic.TRICK_GAP = 4
+logic.TRICK_MOMENTS = {Tarot = 'used_tarot', Spectral = 'used_spectral', Planet = 'used_planet',
+  Joker = 'joker_created'}
+logic.TRICK_ONCE_PER_BLIND = {Joker = true}
+
+--- A trick of kind (a TRICK_MOMENTS key) at time now. state: plain data on the encounter (enc.tricks =
+--- {seen = {Joker = true}, last, turn_keys = {[center_key] = true}}), updated only when a line is due.
+--- key: the consumable's center key, or nil; a key that already got a line this turn (since the last
+--- hand played, logic.trick_new_turn) is refused. Returns the kind's moment or nil (tricks.lua picks the
+--- card's own moment with logic.consumable_moment). The gap uses since (the poke section): a clock that
+--- went back (a loaded save) never blocks.
+function logic.trick_reaction(state, kind, now, key)
+  local moment = logic.TRICK_MOMENTS[kind]
+  if not moment then return nil end
+  state.seen = state.seen or {}
+  if state.seen[kind] then return nil end
+  if key ~= nil and state.turn_keys and state.turn_keys[key] then return nil end
+  if since(now, state.last) < logic.TRICK_GAP then return nil end
+  if logic.TRICK_ONCE_PER_BLIND[kind] then state.seen[kind] = true end
+  if key ~= nil then
+    state.turn_keys = state.turn_keys or {}
+    state.turn_keys[key] = true
+  end
+  state.last = now
+  return moment
+end
+
+--- A hand was played: every consumable may get its line again. state: enc.tricks or nil.
+function logic.trick_new_turn(state)
+  if state then state.turn_keys = nil end
+end
+
+--- What a consumable's line becomes once its own effects have run. joker_arrived: its use created a
+--- joker; joker_said: joker_created was already said this blind. 'Joker' (the joker_created line,
+--- naming the new joker) or 'card' (the card's own line).
+function logic.joker_card_resolution(joker_arrived, joker_said)
+  if joker_arrived and not joker_said then return 'Joker' end
+  return 'card'
+end
+
+--- The Wheel of Fortune's moment. hit: an edition landed on a joker. normal / extra: the live
+--- G.GAME.probabilities.normal and the card's ability.extra (vanilla rolls normal/extra, 1 in 4).
+--- Rigged odds (better than 1 in 4, e.g. Oops! All 6s) win over the result; unknown odds are fair.
+logic.WHEEL_ODDS = 1 / 4
+function logic.wheel_moment(hit, normal, extra)
+  if type(normal) == 'number' and type(extra) == 'number' and extra > 0
+    and normal / extra > logic.WHEEL_ODDS then
+    return 'used_tarot_wheel_rigged'
+  end
+  return hit and 'used_tarot_wheel_hit' or 'used_tarot_wheel_miss'
+end
+
+--- Tarot and spectral effect groups by vanilla center key (game.lua P_CENTERS; note vanilla's
+--- c_heirophant spelling). A key not listed (a modded card) uses the set's fallback moment.
+logic.CONSUMABLE_GROUPS = {
+  Tarot = {
+    c_magician = 'enhance', c_empress = 'enhance', c_heirophant = 'enhance', c_lovers = 'enhance',
+    c_chariot = 'enhance', c_justice = 'enhance', c_devil = 'enhance', c_tower = 'enhance',
+    c_star = 'suit', c_moon = 'suit', c_sun = 'suit', c_world = 'suit',
+    c_strength = 'rank', c_hanged_man = 'destroy', c_death = 'copy',
+    c_hermit = 'money', c_temperance = 'money',
+    c_fool = 'create', c_high_priestess = 'create', c_emperor = 'create', c_judgement = 'create',
+    c_wheel_of_fortune = 'gamble',
+  },
+  Spectral = {
+    c_soul = 'joker', c_wraith = 'joker', c_ankh = 'joker', c_hex = 'joker', c_ectoplasm = 'joker',
+    c_familiar = 'deck', c_grim = 'deck', c_incantation = 'deck', c_immolate = 'deck', c_cryptid = 'deck',
+    c_talisman = 'seal', c_deja_vu = 'seal', c_trance = 'seal', c_medium = 'seal',
+    c_sigil = 'transform', c_ouija = 'transform', c_aura = 'transform',
+    c_black_hole = 'blackhole',
+  },
+}
+logic.TAROT_GROUPS = {'enhance', 'suit', 'rank', 'destroy', 'copy', 'money', 'create', 'gamble'}
+logic.SPECTRAL_GROUPS = {'joker', 'deck', 'seal', 'transform', 'blackhole'}
+logic.PLANET_WASTE_RATIO = 10 -- a hand played less than a tenth as often as your most played one
+
+--- The moment for a consumable of set (Tarot, Spectral, Planet) with center key. planet (Planet only):
+--- {played = the planet's hand's times played, max_played = the most played count over all hands}.
+--- Tarot / Spectral: 'used_<set>_<group>', or the set's fallback for an unknown key. Planet: main when
+--- its hand is your most played (ties too), waste when never played or played under a tenth of the most
+--- played, else the fallback. Nil for any other set.
+function logic.consumable_moment(set, key, planet)
+  local base = logic.TRICK_MOMENTS[set]
+  if not base or set == 'Joker' then return nil end
+  if set == 'Planet' then
+    local played, max_played = planet and planet.played, planet and planet.max_played
+    if type(played) ~= 'number' or type(max_played) ~= 'number' then return base end
+    if played > 0 and played >= max_played then return 'used_planet_main' end
+    if played == 0 or played * logic.PLANET_WASTE_RATIO < max_played then return 'used_planet_waste' end
+    return base
+  end
+  local group = key and logic.CONSUMABLE_GROUPS[set][key]
+  return group and (base .. '_' .. group) or base
+end
+
+--- Whether a trick may get a line now: a live, unbeaten boss encounter on this blind, in play. a: the
+--- fields of logic.poke_allowed (playing: the trick's own states, tricks.lua).
+function logic.trick_allowed(a)
+  if not (a.boss and not a.ended and not a.won and a.same_blind and a.playing) then return false end
+  if a.tier ~= 'light' and a.tier ~= 'full' then return false end
+  return not (a.intro or a.cinematic or a.overlay or a.paused)
+end
+
+--- The fear scale's chip reaction (1.3), a recipe for avatar.poke: scared (2) trembles, a short
+--- repeated jitter; terrified (3) cowers, knocked back with a big shake and a white flash. Tier 1
+--- keeps the plain defeat. reduced (reduced motion): flashes only, like logic.poke_reaction.
+logic.FEAR_REACTIONS = {
+  [2] = {juice = 0.12, rot = 0.06, bounces = 4, shake = 1.2, shake_amp = 0.08},
+  [3] = {juice = 0.6, rot = 0.4, shake = 1.0, shake_amp = 0.16, recoil = 0.4, jiggle = 2,
+    flash = 'white', flash_time = 0.3},
+}
+function logic.fear_reaction(tier, reduced)
+  local recipe = logic.FEAR_REACTIONS[tier]
+  if not recipe then return nil end
+  local r = {}
+  for k, v in pairs(recipe) do r[k] = v end
+  if reduced then
+    for _, k in ipairs(MOTION) do r[k] = nil end
+    if not r.flash then r.flash, r.flash_time = 'white', logic.POKE_FLASH end
+  end
+  return r
+end
+
 --- Every personality has a line for each of these (fb_p_<personality>_<moment>_N; tools/check_loc.py).
 logic.PERSONALITY_MOMENTS = {'jab_counter', 'jab_skipped', 'jab_skipped_both', 'jab_rerolls', 'jab_broke',
   'jab_loaded', 'jab_onesuit', 'jab_tinydeck', 'jab_hugedeck', 'jab_nojokers', 'jab_fulljokers', 'jab_famous',
-  'read_weakhand', 'read_repeat', 'read_discardspam', 'read_onecard', 'idle', 'overkill',
-  'poked', 'poked_hard', 'grabbed'}
-logic.PERSONALITY_VARIANTS = {read_weakhand = 2, read_repeat = 2, read_discardspam = 2, read_onecard = 2,
-  idle = 2, overkill = 2, poked = 3, poked_hard = 3, grabbed = 3}
+  'jab_combo', 'read_weakhand', 'read_repeat', 'read_discardspam', 'read_onecard', 'idle', 'fear_1',
+  'fear_2', 'fear_3', 'poked', 'poked_hard', 'grabbed', 'used_tarot', 'used_spectral', 'used_planet',
+  'joker_created', 'used_planet_main', 'used_planet_waste', 'last_words'}
+logic.PERSONALITY_VARIANTS = {jab_combo = 2, read_weakhand = 2, read_repeat = 2, read_discardspam = 2, read_onecard = 2,
+  idle = 2, fear_1 = 3, fear_2 = 3, fear_3 = 3, poked = 3, poked_hard = 3, grabbed = 3, used_tarot = 2,
+  used_spectral = 2, used_planet = 2, joker_created = 3, used_planet_main = 2, used_planet_waste = 2,
+  last_words = 3}
+-- The card-specific consumable moments (used_tarot_<group>, used_spectral_<group>): 2 variants each.
+for _, set in ipairs({{'used_tarot_', logic.TAROT_GROUPS}, {'used_spectral_', logic.SPECTRAL_GROUPS}}) do
+  for _, g in ipairs(set[2]) do
+    logic.PERSONALITY_MOMENTS[#logic.PERSONALITY_MOMENTS + 1] = set[1] .. g
+    logic.PERSONALITY_VARIANTS[set[1] .. g] = 2
+  end
+end
+-- The Wheel of Fortune by result (logic.wheel_moment): 2 variants each.
+for _, m in ipairs({'used_tarot_wheel_hit', 'used_tarot_wheel_miss', 'used_tarot_wheel_rigged'}) do
+  logic.PERSONALITY_MOMENTS[#logic.PERSONALITY_MOMENTS + 1] = m
+  logic.PERSONALITY_VARIANTS[m] = 2
+end
 
 function logic.personality_variants(moment)
   return logic.PERSONALITY_VARIANTS[moment] or 1
