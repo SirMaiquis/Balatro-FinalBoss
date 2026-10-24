@@ -54,7 +54,16 @@ local function setup(o)
     end},
     cinematic = {active = function() return false end},
     dialogue = {intro_active = function() return o.intro or false end},
+    -- 1.3.1: the profile sets (ctx.mem) and what the achievement rules award (ctx.awarded)
+    memory = {
+      on_poke = function(key) ctx.mem.poked[key] = true; return ctx.mem end,
+      on_grab = function(e) if e.showdown then ctx.mem.grabbed_finals[e.key] = true end; return ctx.mem end,
+    },
+    achievements = {award_from = function(_, rule, ...)
+      for _, id in ipairs(rule(...)) do ctx.awarded[#ctx.awarded + 1] = id end
+    end},
   }
+  ctx.mem, ctx.awarded = {poked = {}, grabbed_finals = {}}, {}
   package.loaded['src.poke'] = nil
   ctx.K = require('src.poke')
   return ctx
@@ -279,6 +288,64 @@ T['the avatar is draggable only while a poke is allowed'] = function()
   ctx.K.tick()
   eq(ctx.avatar.states.drag.can, false)
   eq(G.CONTROLLER.dragging.target, nil, 'a drag in progress is let go')
+end
+
+-- 1.3.1 achievements --------------------------------------------------------------------------------
+
+local function all_vanilla_but(logic, skip)
+  local s = {}
+  for _, k in ipairs(logic.VANILLA_BOSSES) do if k ~= skip then s[k] = true end end
+  return s
+end
+
+T['every accepted poke goes in the poked set, said or not; Boss Collector on the last one'] = function()
+  local ctx = setup()
+  ctx.mem.poked = all_vanilla_but(FinalBoss.logic, 'bl_ox')
+  ctx.K.on_click(ctx.blind)
+  eq(ctx.mem.poked.bl_ox, true); eq(ctx.awarded[1], 'fb_boss_collector')
+  ctx = setup{dialogue = false}
+  ctx.K.on_click(ctx.blind)
+  eq(ctx.mem.poked.bl_ox, true, 'no line, still a poke')
+  eq(#ctx.awarded, 0)
+end
+
+T['a click that is no poke books nothing'] = function()
+  local ctx = setup{intro = true}
+  ctx.K.on_click(ctx.blind)
+  eq(ctx.mem.poked.bl_ox, nil)
+  ctx = setup()
+  ctx.K.on_click({})
+  eq(ctx.mem.poked.bl_ox, nil, 'another node')
+end
+
+T["a hard poke marks a showdown encounter only (Don't Touch Me)"] = function()
+  for _, showdown in ipairs({true, false}) do
+    local ctx = setup{enc = {showdown = showdown}, avatar = showdown}
+    for i = 0, 3 do ctx.now = 100 + i * 0.3; ctx.K.on_click(chip(ctx)) end
+    eq(ctx.fired[#ctx.fired], 'poked_hard')
+    eq(ctx.enc.hard_poked, showdown or nil)
+  end
+  local ctx = setup{enc = {showdown = true}, avatar = true}
+  ctx.K.on_click(chip(ctx))
+  eq(ctx.enc.hard_poked, nil, 'a plain poke is not hard')
+end
+
+T['a grab books the next hand id (Hostage) and a final boss in grabbed_finals (Kidnapper)'] = function()
+  local ctx = setup{enc = {key = 'bl_final_bell', showdown = true, last_hand_seen = 1}, avatar = true}
+  ctx.blind.config.blind.key = 'bl_final_bell'
+  G.GAME.current_round = {hands_played = 2}
+  for _, k in ipairs(FinalBoss.logic.FINAL_BOSSES) do
+    if k ~= 'bl_final_bell' then ctx.mem.grabbed_finals[k] = true end
+  end
+  drag_to(ctx, 3, 1)
+  ctx.K.tick()
+  ctx.now = 101; ctx.K.tick()
+  eq(ctx.fired[1], 'grabbed')
+  eq(ctx.enc.grab_hand, 2, 'between hands: hands_played')
+  eq(ctx.mem.grabbed_finals.bl_final_bell, true); eq(ctx.awarded[1], 'fb_kidnapper')
+  ctx.enc.last_hand_seen = 2 -- hand 2 evaluated, vanilla has not counted it yet
+  ctx.K.grabbed(ctx.enc, ctx.blind)
+  eq(ctx.enc.grab_hand, 3)
 end
 
 return T

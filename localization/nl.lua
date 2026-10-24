@@ -48,6 +48,10 @@ return {
             ach_FinalBoss_fb_comeback = "Comeback",
             ach_FinalBoss_fb_nemesis_slayer = "Nemesisdoder",
             ach_FinalBoss_fb_twisted = "Verdraaid",
+            ach_FinalBoss_fb_boss_collector = "Bazenverzamelaar",
+            ach_FinalBoss_fb_dont_touch_me = "Niet aankomen",
+            ach_FinalBoss_fb_hostage = "Gijzelaar",
+            ach_FinalBoss_fb_kidnapper = "Ontvoerder",
         },
         achievement_descriptions = {
             ach_FinalBoss_fb_showdown_survivor = "Versla een eindbaas",
@@ -60,6 +64,10 @@ return {
             ach_FinalBoss_fb_comeback = "Versla een eindbaas met je laatste hand",
             ach_FinalBoss_fb_nemesis_slayer = "Versla je nemesis",
             ach_FinalBoss_fb_twisted = "Versla alle 5 eindbazen uit het basisspel met faseregels aan",
+            ach_FinalBoss_fb_boss_collector = "Por elke baas uit het basisspel",
+            ach_FinalBoss_fb_dont_touch_me = "Por een eindbaas hard en versla hem toch",
+            ach_FinalBoss_fb_hostage = "Grijp een baas en win met je eerstvolgende hand",
+            ach_FinalBoss_fb_kidnapper = "Grijp elke eindbaas uit het basisspel",
         },
         quips = {
             -- Config menu header card

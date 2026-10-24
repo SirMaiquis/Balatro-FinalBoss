@@ -48,6 +48,10 @@ return {
             ach_FinalBoss_fb_comeback = "Comeback",
             ach_FinalBoss_fb_nemesis_slayer = "Nemesis-Bezwinger",
             ach_FinalBoss_fb_twisted = "Verdreht",
+            ach_FinalBoss_fb_boss_collector = "Bosssammler",
+            ach_FinalBoss_fb_dont_touch_me = "Fass mich nicht an",
+            ach_FinalBoss_fb_hostage = "Geisel",
+            ach_FinalBoss_fb_kidnapper = "Entführer",
         },
         achievement_descriptions = {
             ach_FinalBoss_fb_showdown_survivor = "Besiege einen Endboss",
@@ -60,6 +64,10 @@ return {
             ach_FinalBoss_fb_comeback = "Besiege einen Endboss mit deiner letzten Hand",
             ach_FinalBoss_fb_nemesis_slayer = "Besiege deine Nemesis",
             ach_FinalBoss_fb_twisted = "Besiege alle 5 Endbosse des Grundspiels mit aktiven Phasenregeln",
+            ach_FinalBoss_fb_boss_collector = "Stupse jeden Boss des Grundspiels an",
+            ach_FinalBoss_fb_dont_touch_me = "Stupse einen Endboss kräftig an und besiege ihn trotzdem",
+            ach_FinalBoss_fb_hostage = "Schnapp dir einen Boss und gewinne mit der direkt nächsten Hand",
+            ach_FinalBoss_fb_kidnapper = "Schnapp dir jeden Endboss des Grundspiels",
         },
         quips = {
             -- Config menu header card

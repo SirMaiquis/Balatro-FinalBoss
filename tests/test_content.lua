@@ -158,7 +158,7 @@ T['every achievement has a name and a description'] = function()
   package.loaded['localization.default'] = nil
   local misc = require('localization.default').misc
   local ids = require('src.logic').ACHIEVEMENTS
-  assert(#ids == 10, 'ten achievements')
+  assert(#ids == 14, 'fourteen achievements')
   for _, id in ipairs(ids) do
     local key = 'ach_FinalBoss_' .. id
     assert(misc.achievement_names and type(misc.achievement_names[key]) == 'string', 'name ' .. key)

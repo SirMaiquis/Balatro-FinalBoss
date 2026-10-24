@@ -920,14 +920,20 @@ end
 -- Memory, nemesis, intro plan, achievements (1.1) -------------------------------------------------------
 
 logic.FINAL_BOSSES = {'bl_final_acorn', 'bl_final_leaf', 'bl_final_vessel', 'bl_final_heart', 'bl_final_bell'}
+--- The 28 vanilla bosses (the keys of personality.VANILLA and src/encounters/vanilla.lua): Boss Collector.
+logic.VANILLA_BOSSES = {'bl_ox', 'bl_wall', 'bl_tooth', 'bl_club', 'bl_goad', 'bl_psychic', 'bl_eye', 'bl_mark',
+  'bl_window', 'bl_needle', 'bl_manacle', 'bl_pillar', 'bl_serpent', 'bl_hook', 'bl_plant', 'bl_head', 'bl_wheel',
+  'bl_flint', 'bl_fish', 'bl_house', 'bl_arm', 'bl_mouth', 'bl_water', 'bl_final_acorn', 'bl_final_leaf',
+  'bl_final_vessel', 'bl_final_heart', 'bl_final_bell'}
 logic.NEMESIS_MIN_LOSSES = 3
 logic.REMATCH_CHANCE = 0.5 -- regular bosses: chance the intro becomes the rematch line
 logic.NO_MANNERS_COUNT = 10
 
---- Profile memory (saved with the Balatro profile, plain data).
+--- Profile memory (saved with the Balatro profile, plain data). poked and grabbed_finals (1.3.1):
+--- sets of the bosses poked and the final bosses grabbed (Boss Collector, Kidnapper).
 function logic.new_memory()
   return {bosses = {}, nemesis = nil, broken = {}, interrupted = {}, final_defeated = {},
-    final_defeated_twisted = {}, loss_seq = 0}
+    final_defeated_twisted = {}, loss_seq = 0, poked = {}, grabbed_finals = {}}
 end
 
 local function boss_record(mem, key)
@@ -1005,7 +1011,8 @@ function logic.intro_plan(a)
 end
 
 logic.ACHIEVEMENTS = {'fb_showdown_survivor', 'fb_clean_sweep', 'fb_rude', 'fb_no_manners', 'fb_last_laugh',
-  'fb_overkill', 'fb_phase_skipper', 'fb_comeback', 'fb_nemesis_slayer', 'fb_twisted'}
+  'fb_overkill', 'fb_phase_skipper', 'fb_comeback', 'fb_nemesis_slayer', 'fb_twisted',
+  'fb_boss_collector', 'fb_dont_touch_me', 'fb_hostage', 'fb_kidnapper'} -- (1.3.1: poke and grab)
 
 local function has_all(set, keys)
   for _, k in ipairs(keys) do
@@ -1014,10 +1021,40 @@ local function has_all(set, keys)
   return true
 end
 
+--- Boss Collector: every vanilla boss is in the poked set (modded keys in it do not count).
+function logic.collector_done(poked_set)
+  return has_all(poked_set, logic.VANILLA_BOSSES)
+end
+
+--- Kidnapper: every vanilla final boss is in the grabbed set.
+function logic.kidnapper_done(grabbed_set)
+  return has_all(grabbed_set, logic.FINAL_BOSSES)
+end
+
+--- Achievements for a poke or a grab. poked, grabbed_finals: the profile sets (including this one).
+function logic.poke_achievements(poked, grabbed_finals)
+  local out = {}
+  if logic.collector_done(poked) then out[#out + 1] = 'fb_boss_collector' end
+  if logic.kidnapper_done(grabbed_finals) then out[#out + 1] = 'fb_kidnapper' end
+  return out
+end
+
+--- The id the next hand played will have, in Dir.on_hand_after's convention (hands_played at
+--- context.after, the hands played before it this round). Vanilla counts a hand in an event queued
+--- right after evaluate_play's (functions/state_events.lua:512, :517-524), so between hands the next id is
+--- hands_played; only when this hand was already evaluated (last_hand_seen) but not yet counted is it
+--- one more.
+function logic.next_hand_id(hands_played, last_hand_seen)
+  if type(hands_played) ~= 'number' then return nil end
+  if last_hand_seen == hands_played then return hands_played + 1 end
+  return hands_played
+end
+
 --- Achievements earned by defeating a boss. a: {showdown, start (score before the winning hand),
 --- hands_left (after it), hand (its id), laughed_hand (id of the hand the boss laughed at),
 --- nemesis (it was the profile nemesis), final_defeated, final_defeated_twisted (profile sets,
---- including this win)}.
+--- including this win), hard_poked_showdown (a hard poke on this showdown boss), grab_hand (the
+--- id of the hand right after the last grab: logic.next_hand_id)}.
 function logic.defeat_achievements(a)
   local out = {}
   if a.showdown then
@@ -1029,6 +1066,8 @@ function logic.defeat_achievements(a)
   if a.nemesis then out[#out + 1] = 'fb_nemesis_slayer' end
   if has_all(a.final_defeated, logic.FINAL_BOSSES) then out[#out + 1] = 'fb_clean_sweep' end
   if has_all(a.final_defeated_twisted, logic.FINAL_BOSSES) then out[#out + 1] = 'fb_twisted' end
+  if a.showdown and a.hard_poked_showdown then out[#out + 1] = 'fb_dont_touch_me' end
+  if a.grab_hand ~= nil and a.hand ~= nil and a.hand == a.grab_hand then out[#out + 1] = 'fb_hostage' end
   return out
 end
 

@@ -11,7 +11,8 @@ local RECORD_DEFAULTS = {fights = 0, wins = 0, losses = 0, last_loss = 0}
 --- type (wrong types are replaced, never trusted).
 local function repair(m)
   FinalBoss.util.fill_defaults(m, FinalBoss.logic.new_memory())
-  for _, field in ipairs({'bosses', 'broken', 'interrupted', 'final_defeated', 'final_defeated_twisted'}) do
+  for _, field in ipairs({'bosses', 'broken', 'interrupted', 'final_defeated', 'final_defeated_twisted',
+      'poked', 'grabbed_finals'}) do
     if type(m[field]) ~= 'table' then m[field] = {} end
   end
   if type(m.loss_seq) ~= 'number' then m.loss_seq = 0 end
@@ -125,6 +126,34 @@ function Mem.on_interrupt(key)
     if not m then return nil end
     m.interrupted[key] = true
     Mem.save()
+    return m
+  end)
+end
+
+--- The player poked this boss (1.3.1, Boss Collector). Returns the memory; the profile is written
+--- only when the boss is new to the set (a run of clicks is not a run of saves).
+function Mem.on_poke(key)
+  return safe('on_poke', function()
+    local m = Mem.data()
+    if not m then return nil end
+    if not m.poked[key] then
+      m.poked[key] = true
+      Mem.save()
+    end
+    return m
+  end)
+end
+
+--- The player grabbed the encounter's boss (1.3.1, Kidnapper: showdown bosses only). Returns the
+--- memory; the profile is written only when the boss is new to the set.
+function Mem.on_grab(enc)
+  return safe('on_grab', function()
+    local m = Mem.data()
+    if not m then return nil end
+    if enc.showdown and not m.grabbed_finals[enc.key] then
+      m.grabbed_finals[enc.key] = true
+      Mem.save()
+    end
     return m
   end)
 end

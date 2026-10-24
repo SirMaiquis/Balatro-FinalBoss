@@ -48,6 +48,10 @@ return {
             ach_FinalBoss_fb_comeback = "Камбэк",
             ach_FinalBoss_fb_nemesis_slayer = "Гроза немезиды",
             ach_FinalBoss_fb_twisted = "Наизнанку",
+            ach_FinalBoss_fb_boss_collector = "Коллекционер боссов",
+            ach_FinalBoss_fb_dont_touch_me = "Не трогай меня",
+            ach_FinalBoss_fb_hostage = "Заложник",
+            ach_FinalBoss_fb_kidnapper = "Похититель",
         },
         achievement_descriptions = {
             ach_FinalBoss_fb_showdown_survivor = "Победить финального босса",
@@ -60,6 +64,10 @@ return {
             ach_FinalBoss_fb_comeback = "Победить финального босса последней рукой",
             ach_FinalBoss_fb_nemesis_slayer = "Победить свою немезиду",
             ach_FinalBoss_fb_twisted = "Победить всех 5 финальных боссов базовой игры со сменой правил в фазах",
+            ach_FinalBoss_fb_boss_collector = "Ткнуть каждого босса базовой игры",
+            ach_FinalBoss_fb_dont_touch_me = "Сильно ткнуть финального босса и всё равно победить",
+            ach_FinalBoss_fb_hostage = "Схватить босса и победить следующей же рукой",
+            ach_FinalBoss_fb_kidnapper = "Схватить каждого финального босса базовой игры",
         },
         quips = {
             -- Config menu header card

@@ -48,6 +48,10 @@ return {
             ach_FinalBoss_fb_comeback = "Retour en force",
             ach_FinalBoss_fb_nemesis_slayer = "Tueur de némésis",
             ach_FinalBoss_fb_twisted = "Tordu",
+            ach_FinalBoss_fb_boss_collector = "Collectionneur de boss",
+            ach_FinalBoss_fb_dont_touch_me = "Pas touche !",
+            ach_FinalBoss_fb_hostage = "Otage",
+            ach_FinalBoss_fb_kidnapper = "Kidnappeur",
         },
         achievement_descriptions = {
             ach_FinalBoss_fb_showdown_survivor = "Battez un boss final",
@@ -60,6 +64,10 @@ return {
             ach_FinalBoss_fb_comeback = "Battez un boss final avec votre dernière main",
             ach_FinalBoss_fb_nemesis_slayer = "Battez votre némésis",
             ach_FinalBoss_fb_twisted = "Battez les 5 boss finaux du jeu de base avec les règles de phase activées",
+            ach_FinalBoss_fb_boss_collector = "Tapotez tous les boss du jeu de base",
+            ach_FinalBoss_fb_dont_touch_me = "Tapotez fort un boss final et battez-le quand même",
+            ach_FinalBoss_fb_hostage = "Attrapez un boss, puis gagnez avec la main suivante",
+            ach_FinalBoss_fb_kidnapper = "Attrapez tous les boss finaux du jeu de base",
         },
         quips = {
             -- Config menu header card

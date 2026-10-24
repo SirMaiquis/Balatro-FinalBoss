@@ -2,8 +2,9 @@
 --- hard, dragging it grabs it; the chip reacts by personality and the boss may say a line
 --- (logic.poke / logic.grab decide; Dir.fire with free = true says it without touching the fight's
 --- bookkeeping). The chip is the HUD blind chip, or the showdown avatar while it is out (the HUD chip
---- is dissolved then). Saved state: enc.poke (plain data, logic.poke); the grab being watched is
---- visual and never saved.
+--- is dissolved then). Saved state: enc.poke (plain data, logic.poke), and for the 1.3.1 achievements
+--- enc.hard_poked and enc.grab_hand (read by Dir.on_blind_defeated) plus the profile's poked and
+--- grabbed_finals sets (memory.lua); the grab being watched is visual and never saved.
 ---
 --- Engine notes (vanilla engine/controller.lua): a press on a node with states.click.can makes it
 --- cursor_down.target, and if it also has states.drag.can it becomes dragging.target at once
@@ -45,6 +46,11 @@ end
 
 local function personality(enc) return FinalBoss.personality.of(enc.key) end
 
+--- Boss Collector and Kidnapper (1.3.1) from the profile sets memory just booked (nil: no profile).
+local function award(name, mem)
+  if mem then FinalBoss.achievements.award_from(name, L().poke_achievements, mem.poked, mem.grabbed_finals) end
+end
+
 --- The chip's reaction (kind: 'poked', 'poked_hard' or 'grabbed') and, for a moment, its line.
 --- Dialogue off: the reaction only (Dir.fire says nothing then, so there is no bleep either), and the
 --- line gap and hard cooldown stay booked so the reactions keep their pace. Dialogue on but the line
@@ -69,6 +75,9 @@ function K.on_click(node)
   enc.poke = enc.poke or {}
   local marks = L().poke_marks(enc.poke)
   local moment = L().poke(enc.poke, now())
+  -- 1.3.1 achievements, booked before the reaction: any accepted poke counts, said or not.
+  if moment == 'poked_hard' and enc.showdown then enc.hard_poked = true end -- Don't Touch Me
+  award('poke', FinalBoss.memory.on_poke(enc.key))
   react(enc, blind, moment == 'poked_hard' and 'poked_hard' or 'poked', moment, marks)
 end
 
@@ -134,6 +143,10 @@ end
 
 --- The chip is on its way home after a grab: the grab reaction and, for a moment, its line.
 function K.grabbed(enc, blind)
+  -- 1.3.1 Hostage: the id of the next hand played (logic.next_hand_id); a later grab replaces it.
+  local cr = G.GAME and G.GAME.current_round
+  enc.grab_hand = cr and L().next_hand_id(cr.hands_played, enc.last_hand_seen) or nil
+  award('grab', FinalBoss.memory.on_grab(enc))
   enc.poke = enc.poke or {}
   local marks = L().poke_marks(enc.poke)
   react(enc, blind, 'grabbed', L().grab(enc.poke, now()), marks)

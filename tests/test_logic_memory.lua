@@ -113,10 +113,11 @@ T['intro_plan: the nemesis line takes precedence'] = function()
     'nemesis_intro')
 end
 
-T['ACHIEVEMENTS: ten achievements'] = function()
-  eq(#logic.ACHIEVEMENTS, 10)
+T['ACHIEVEMENTS: fourteen achievements'] = function()
+  eq(#logic.ACHIEVEMENTS, 14)
   for _, id in ipairs({'fb_showdown_survivor', 'fb_clean_sweep', 'fb_rude', 'fb_no_manners', 'fb_last_laugh',
-      'fb_overkill', 'fb_phase_skipper', 'fb_comeback', 'fb_nemesis_slayer', 'fb_twisted'}) do
+      'fb_overkill', 'fb_phase_skipper', 'fb_comeback', 'fb_nemesis_slayer', 'fb_twisted',
+      'fb_boss_collector', 'fb_dont_touch_me', 'fb_hostage', 'fb_kidnapper'}) do
     assert(has(logic.ACHIEVEMENTS, id), 'missing ' .. id)
   end
 end
@@ -233,6 +234,86 @@ T['record_result: works on records with missing fields (or 0 guards)'] = functio
   local r = m.bosses['bl_test']
   eq(r.losses, 3, 'losses incremented from partial record')
   eq(m.nemesis, 'bl_test', 'nemesis computed with or 0 guards on missing fields')
+end
+
+-- 1.3.1 poke and grab achievements ----------------------------------------------------------------
+
+local function set_of(list)
+  local s = {}
+  for _, k in ipairs(list) do s[k] = true end
+  return s
+end
+
+T['new_memory: empty poked and grabbed_finals sets'] = function()
+  local m = logic.new_memory()
+  assert(type(m.poked) == 'table' and next(m.poked) == nil, 'poked')
+  assert(type(m.grabbed_finals) == 'table' and next(m.grabbed_finals) == nil, 'grabbed_finals')
+end
+
+T['VANILLA_BOSSES: 28 distinct keys, the five final bosses among them'] = function()
+  eq(#logic.VANILLA_BOSSES, 28)
+  local s = set_of(logic.VANILLA_BOSSES)
+  local n = 0
+  for _ in pairs(s) do n = n + 1 end
+  eq(n, 28, 'distinct')
+  for _, k in ipairs(logic.FINAL_BOSSES) do assert(s[k], k) end
+end
+
+T['collector_done: 27 of 28 is not done, 28 of 28 is, modded keys are ignored'] = function()
+  local s = set_of(logic.VANILLA_BOSSES)
+  eq(logic.collector_done(s), true, '28 of 28')
+  s.bl_mymod_boss = true
+  eq(logic.collector_done(s), true, 'a modded key changes nothing')
+  s.bl_hook = nil
+  eq(logic.collector_done(s), false, '27 of 28 (plus a modded one) is not done')
+  eq(logic.collector_done({}), false); eq(logic.collector_done(nil), false)
+end
+
+T['kidnapper_done: 4 of 5 is not done, 5 of 5 is'] = function()
+  local s = all_finals()
+  eq(logic.kidnapper_done(s), true)
+  s.bl_final_vessel = nil
+  eq(logic.kidnapper_done(s), false)
+  eq(logic.kidnapper_done(nil), false)
+end
+
+T['poke_achievements: collector and kidnapper from the profile sets'] = function()
+  eq(#logic.poke_achievements({bl_ox = true}, {}), 0)
+  local ids = logic.poke_achievements(set_of(logic.VANILLA_BOSSES), all_finals())
+  assert(has(ids, 'fb_boss_collector') and has(ids, 'fb_kidnapper'))
+  local only = logic.poke_achievements({}, all_finals())
+  assert(has(only, 'fb_kidnapper') and not has(only, 'fb_boss_collector'))
+end
+
+T["defeat_achievements: don't touch me needs the hard poke on a showdown"] = function()
+  local a = {showdown = true, start = 1, hands_left = 1, hand = 2, final_defeated = {}, final_defeated_twisted = {},
+    hard_poked_showdown = true}
+  assert(has(logic.defeat_achievements(a), 'fb_dont_touch_me'), 'showdown with the flag')
+  a.hard_poked_showdown = nil
+  assert(not has(logic.defeat_achievements(a), 'fb_dont_touch_me'), 'no flag')
+  a.hard_poked_showdown, a.showdown = true, false
+  assert(not has(logic.defeat_achievements(a), 'fb_dont_touch_me'), 'not a showdown')
+end
+
+T['defeat_achievements: hostage needs the win on the hand right after the grab'] = function()
+  -- grabbed between hands with 2 played: the next hand's id is 2 (logic.next_hand_id)
+  local grab = logic.next_hand_id(2, 1)
+  eq(grab, 2)
+  local a = {showdown = false, hand = 2, grab_hand = grab, final_defeated = {}, final_defeated_twisted = {}}
+  assert(has(logic.defeat_achievements(a), 'fb_hostage'), 'win on hand N')
+  a.hand = 3
+  assert(not has(logic.defeat_achievements(a), 'fb_hostage'), 'win on hand N+1')
+  a.hand, a.grab_hand = 2, nil
+  assert(not has(logic.defeat_achievements(a), 'fb_hostage'), 'no grab')
+  a.grab_hand, a.showdown = 2, true
+  assert(has(logic.defeat_achievements(a), 'fb_hostage'), 'a showdown counts too')
+end
+
+T['next_hand_id: between hands it is hands_played; after the evaluation, before the count, one more'] = function()
+  eq(logic.next_hand_id(0, nil), 0, 'first hand of the round')
+  eq(logic.next_hand_id(3, 2), 3, 'after hand 2 was counted')
+  eq(logic.next_hand_id(3, 3), 4, 'hand 3 evaluated (context.after), not yet counted')
+  eq(logic.next_hand_id(nil, nil), nil)
 end
 
 return T

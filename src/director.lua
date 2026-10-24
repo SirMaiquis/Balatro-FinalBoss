@@ -556,11 +556,13 @@ function Dir.on_blind_defeated()
     if m then raw.recorded = true end
     -- The nemesis fell (its own defeat line already played): burst, banner; it is now broken.
     if beaten and FinalBoss.config.memory then FinalBoss.memory.celebrate() end
-    if m then -- profile achievements (win_* and laughed_hand: Dir.on_hand_after, Dir.stage_hit)
+    if m then -- profile achievements (win_* and laughed_hand: Dir.on_hand_after, Dir.stage_hit;
+      -- hard_poked and grab_hand: poke.lua)
       FinalBoss.achievements.award_from('defeat', FinalBoss.logic.defeat_achievements, {showdown = raw.showdown,
         start = raw.win_start, hands_left = raw.win_hands_left, hand = raw.win_hand,
         laughed_hand = raw.laughed_hand, nemesis = beaten and not raw.fake_nemesis, -- F9 earns nothing
-        final_defeated = m.final_defeated, final_defeated_twisted = m.final_defeated_twisted})
+        final_defeated = m.final_defeated, final_defeated_twisted = m.final_defeated_twisted,
+        hard_poked_showdown = raw.hard_poked, grab_hand = raw.grab_hand})
     end
   end
   FinalBoss.memory.unpresent()
