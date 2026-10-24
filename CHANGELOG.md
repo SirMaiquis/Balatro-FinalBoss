@@ -4,6 +4,7 @@
 
 ### Fixes
 - Intro jabs read your run as you arrived, so a boss that takes your money when the blind starts no longer calls you broke.
+- Works with big-number and custom scoring mods (like Amulet): winning hands are no longer mistaken for weak ones.
 
 ### For mod authors
 - `register_encounter` accepts `line = function(moment, info)`: return the name of one of your boss's own lines (`fb_<blind>_<name>_<n>`) to say it instead of the usual one, for example a different defeat line on the last hand. `info` carries the live fight (hands and discards left, money, score, requirement, ante, tier and more). Returning nothing, a name with no lines, or an error keeps the usual line. See "Picking lines by situation" in the README.
