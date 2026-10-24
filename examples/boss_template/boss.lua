@@ -11,7 +11,7 @@
 
 SMODS.Blind{
   key = 'my_boss',
-  atlas = 'my_atlas',          -- your blind atlas
+  -- atlas = 'my_atlas',       -- your own blind atlas; left out, the vanilla blind chips are used
   pos = {x = 0, y = 0},
   mult = 2,
   dollars = 5,
