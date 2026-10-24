@@ -144,18 +144,97 @@ function logic.note_line(enc, moment, hand)
   if logic.SPACED[moment] then enc.last_line_hand = hand end
 end
 
+-- Reading scores (1.3.1) ---------------------------------------------------------------------------
+
+local function is_reading(v) return type(v) == 'number' and v == v end -- any number but nan
+
+--- The ways a big-number table is read, in order (logic.read_number). to_number: the big-number
+--- mod's global converter (Talisman), or nil.
+local READERS = {
+  function(x, to_number) if to_number then return to_number(x) end end,
+  function(x)
+    local m = x.to_number
+    if type(m) == 'function' then return m(x) end
+    return m
+  end,
+  function(x) return tonumber(tostring(x)) end, -- big-number objects print as "1.5e300"
+  function(x) -- Talisman's BigNum layout: mantissa m, exponent e
+    if type(x.m) == 'number' and type(x.e) == 'number' then return x.m * 10 ^ x.e end
+  end,
+  function(x) -- OmegaNum's layout: array (array[2] = how many times 10^ applies to array[1]), sign
+    local a, s = x.array, x.sign
+    if type(a) ~= 'table' or type(a[1]) ~= 'number' then return nil end
+    s = (s == -1) and -1 or 1
+    if a[2] == nil then return s * a[1] end
+    if type(a[2]) ~= 'number' then return nil end
+    if a[2] == 0 and a[3] == nil then return s * a[1] end
+    if a[2] == 1 and a[3] == nil then return s * 10 ^ a[1] end
+    return s * math.huge -- 10^10^x with x past 15: far beyond a double
+  end,
+}
+
+--- A score or amount as a plain number. Big-number mods (Talisman, Amulet) keep scores as tables,
+--- and some values are strings. A number is returned as it is; a string through tonumber; a table
+--- through the first reader that gives a number (each under pcall): to_number(x) (the global, passed
+--- in), x:to_number(), tonumber(tostring(x)), then the known layouts. nil when nothing reads it (or
+--- it reads as nan): never 0, so an unreadable score is never taken for a tiny one. An infinity is
+--- a valid reading (fear_tier handles it).
+function logic.read_number(x, to_number)
+  if type(x) == 'number' then return x end
+  if type(x) == 'string' then
+    local v = tonumber(x)
+    return is_reading(v) and v or nil
+  end
+  if type(x) ~= 'table' then return nil end
+  for _, reader in ipairs(READERS) do
+    local ok, v = pcall(reader, x, to_number)
+    if ok and is_reading(v) then return v end
+  end
+  return nil
+end
+
+--- How a scored hand ended, from the safest information the game gives. a: {oneshot (smods'
+--- SMODS.last_hand_oneshot: this hand alone reached the requirement), own (the round score plus the
+--- hand's score >= the requirement, compared in the numbers' own type: true or false, nil when that
+--- compare failed), start (round score before the hand), delta (the hand's score), required (plain
+--- numbers from read_number, nil when unreadable)}. Returns won, unknown, total:
+---   won     oneshot, else own, else start + delta >= required on the plain numbers;
+---   unknown not won, and the hand's score, the round score or the requirement cannot be read: the
+---           hand gets no score-based moment, comment or fear tier (detect_moments, the run comments);
+---   total   start + delta, nil when unreadable. A won hand with no readable total counts as exactly
+---           the requirement: the boss dies, and no fear tier is guessed.
+function logic.hand_outcome(a)
+  local total
+  if is_reading(a.start) and is_reading(a.delta) then total = a.start + a.delta end
+  if not is_reading(total) then total = nil end
+  local readable = total ~= nil and is_reading(a.required)
+  local won
+  if a.oneshot == true or a.own == true then won = true
+  elseif a.own == false then won = false
+  else won = readable and total >= a.required end
+  if won and total == nil and is_reading(a.required) then total = a.required end
+  return won, not won and not readable, total
+end
+
 --- Decide which moment (if any) a just-scored hand triggers. last_hand: this hand leaves the player on
 --- their final hand (hands_left after it is 1), still short, so the boss taunts it before it is played.
---- a: {delta, total, required, hands_left (after this hand), fired, tier, hand, last_line_hand}
+--- a: {delta, total, required, hands_left (after this hand), fired, tier, hand, last_line_hand, won,
+--- unknown}. won and unknown (1.3.1) come from logic.hand_outcome: when won is given it decides the
+--- winning hand instead of the totals; a hand whose score is unknown can only be the last_hand
+--- taunt, never close or big_hand (it has no total to measure).
 function logic.detect_moments(a)
-  if not a.required or a.required <= 0 then return nil end
-  if a.total >= a.required then
+  local scored = not a.unknown and type(a.total) == 'number' and type(a.required) == 'number'
+    and a.required > 0
+  local won = a.won
+  if won == nil then won = scored and a.total >= a.required end
+  if won then
     return logic.can_fire('defeat', a.tier, a.fired, a.hand, a.last_line_hand) and 'defeat' or nil
   end
+  if not (scored or a.unknown) then return nil end -- no requirement to measure against
   local hit = {
     last_hand = a.hands_left == 1,
-    close = a.total >= logic.CLOSE_RATIO * a.required,
-    big_hand = a.delta >= logic.BIG_HAND_RATIO * a.required,
+    close = scored and a.total >= logic.CLOSE_RATIO * a.required,
+    big_hand = scored and type(a.delta) == 'number' and a.delta >= logic.BIG_HAND_RATIO * a.required,
   }
   for _, moment in ipairs(PRIORITY) do
     if hit[moment] and logic.can_fire(moment, a.tier, a.fired, a.hand, a.last_line_hand) then
@@ -220,8 +299,10 @@ function logic.wound_stage(fraction)
   return 0
 end
 
+--- 'weak', 'normal' or 'big' for a hand's score against the requirement; 'normal' when either is
+--- not a number (an unreadable score is never called weak or big).
 function logic.hit_size(delta, required)
-  if not required or required <= 0 then return 'normal' end
+  if type(delta) ~= 'number' or type(required) ~= 'number' or required <= 0 then return 'normal' end
   if delta >= logic.BIG_HAND_RATIO * required then return 'big' end
   if delta < logic.WEAK_HIT_RATIO * required then return 'weak' end
   return 'normal'
@@ -1210,11 +1291,13 @@ function logic.fear_tier(total, required)
 end
 
 --- The live fear scale (1.3): the running total the player sees while a hand scores. base is the round
---- score before this hand (G.GAME.chips), chips and mult the hand's displayed chips and mult (plain
---- numbers, director.num); a missing value counts as 0.
-function logic.live_total(base, chips, mult)
-  local function n(x) return type(x) == 'number' and x or 0 end
-  return n(base) + n(chips) * n(mult)
+--- score before this hand (G.GAME.chips), hand the hand's displayed score under the active scoring
+--- calculation (observe.shown_score); plain numbers (director.read). 1.3.1: nil when either is
+--- missing, so no live tier is ever decided from a guess.
+function logic.live_total(base, hand)
+  if not (is_reading(base) and is_reading(hand)) then return nil end
+  local t = base + hand
+  return is_reading(t) and t or nil
 end
 
 --- The tier to announce now: live_tier when it is higher than the highest tier said this blind

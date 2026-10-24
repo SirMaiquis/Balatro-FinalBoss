@@ -73,7 +73,9 @@ end
 --- A powerless boss gets mad instead (P.mad, also true: its disabled line replaces the moment line);
 --- enc.mad_phase records the threshold at once, so it is mad once per threshold, Continue included.
 function P.check(enc, blind, p, delay)
-  if p.total >= p.required then return false end -- the winning hand: the death plays, never a phase
+  -- The winning hand: the death plays, never a phase. 1.3.1: nor a hand whose score is unknown.
+  if p.won or p.unknown or type(p.total) ~= 'number' or type(p.required) ~= 'number' then return false end
+  if p.total >= p.required then return false end
   if not staged(enc) then return false end
   local L = FinalBoss.logic
   local from = enc.phase or 1
