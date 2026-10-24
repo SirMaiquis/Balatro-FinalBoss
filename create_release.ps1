@@ -43,7 +43,7 @@ $zipFileName = Join-Path $versionDir "FinalBoss-$cleanVersionName.zip"
 $zipFileNameTS = Join-Path $versionDir "FinalBoss-$cleanVersionName-TS.zip"
 
 # What the game loads, plus the docs that travel with the mod
-$modFiles = @("FinalBoss.json", "main.lua", "config.lua", "src", "assets", "localization", "lovely", "README.md", "CHANGELOG.md", "LICENSE")
+$modFiles = @("FinalBoss.json", "main.lua", "config.lua", "src", "assets", "localization", "lovely", "examples", "README.md", "CHANGELOG.md", "LICENSE")
 $tsExtras = @("manifest.json", "icon.png")
 
 foreach ($file in $modFiles + $tsExtras) {

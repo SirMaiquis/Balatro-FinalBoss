@@ -187,6 +187,11 @@ end
 -- localization: misc.quips.fb_bl_mymod_boss_intro_1 = {"My line", "here"}
 ```
 
+**Start from the template.** [`examples/boss_template`](examples/boss_template) is a ready-to-copy boss: `boss.lua` (the blind and its `register_encounter`, with personality, voice and a `line` hook) and `localization/en-us.lua` (every per-boss moment, laid out the way Balatro loads it). Rename `mymod` to your mod's prefix and `my_boss` to your blind's key, and write your own lines. Two things trip people up:
+
+- Line keys use the **full** blind key Steamodded builds: `bl_` + your prefix + your key. `key = 'my_boss'` in a mod with prefix `mymod` is `bl_mymod_my_boss`, so its intro is `fb_bl_mymod_my_boss_intro_1`.
+- `misc` (with `quips` inside) sits next to `descriptions` in your localization file, not inside it.
+
 **Load order.** FinalBoss loads at priority -10, and Steamodded orders mods by priority and then id (dependencies do not change the load order). Keep your mod's priority above -10 (the default 0 is fine) so that `FinalBoss` exists when your main file runs, or register at runtime (for example from your own `calculate` or `setting_blind`) after checking that `FinalBoss` exists.
 
 Always check that `FinalBoss` exists first so your mod still works without it. Registering the same `blind` again overwrites the earlier entry (and logs it).
