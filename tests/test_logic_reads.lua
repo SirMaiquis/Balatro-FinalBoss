@@ -203,6 +203,25 @@ T['read_number: numbers, numeric strings, nil and other types'] = function()
   eq(logic.read_number('1500'), 1500); eq(logic.read_number('1.5e3'), 1500)
   eq(logic.read_number('?'), nil, 'a text value'); eq(logic.read_number(''), nil)
   eq(logic.read_number(nil), nil); eq(logic.read_number(true), nil)
+  eq(logic.read_number(0 / 0), nil, 'a nan number is unreadable')
+  eq(logic.read_number('nan'), nil)
+end
+
+T['late_win: an unknown last hand takes the win when no winning hand is on record'] = function()
+  local enc = {unknown_hand = 4, unknown_hands_left = 0}
+  eq(logic.late_win(enc), true)
+  eq(enc.win_hand, 4); eq(enc.win_hands_left, 0); eq(enc.win_start, nil, 'the start stays unknown')
+  eq(logic.late_win(enc), false, 'once')
+  local won = {win_hand = 3, win_hands_left = 1, win_start = 50, unknown_hand = 4}
+  eq(logic.late_win(won), false, 'a recorded win stands'); eq(won.win_hand, 3)
+  eq(logic.late_win({}), false, 'no unknown hand'); eq(logic.late_win(nil), false)
+end
+
+T['defeat_achievements: a win with an unknown start never earns overkill'] = function()
+  local out = logic.defeat_achievements{showdown = true, start = nil, hands_left = 0, hand = 4}
+  local got = {}
+  for _, k in ipairs(out) do got[k] = true end
+  eq(got.fb_showdown_survivor, true); eq(got.fb_comeback, true); eq(got.fb_overkill, nil)
 end
 
 T['read_number: big-number tables, in reader order'] = function()

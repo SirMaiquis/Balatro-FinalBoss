@@ -331,6 +331,13 @@ function Dir.on_hand_after(context)
   if won then -- the winning hand (achievements read these at blind_defeated; start may be nil)
     enc.win_start, enc.win_hand, enc.win_hands_left = chips, hands_played, hands_left
   end
+  -- The last hand's score was unknown (plain saved data): if the blind is defeated right after it,
+  -- that hand won after all (logic.late_win, Dir.on_blind_defeated).
+  if unknown then
+    enc.unknown_hand, enc.unknown_hands_left = hands_played, hands_left
+  else
+    enc.unknown_hand, enc.unknown_hands_left = nil, nil
+  end
   local moment = FinalBoss.logic.detect_moments{delta = delta, total = total, required = required,
     hands_left = hands_left, fired = enc.fired, tier = enc.tier, hand = hands_played,
     last_line_hand = enc.last_line_hand, won = won, unknown = unknown}
@@ -491,7 +498,7 @@ function Dir.stage_hit(enc, blind, delta, total, required, moment, hand)
   FinalBoss.arena.on_hit(stage)
   if not enc.cinematic then return 0 end
   local size = FinalBoss.logic.hit_size(delta, required)
-  FinalBoss.hpbar.update(total, required)
+  if required ~= nil then FinalBoss.hpbar.update(total, required) end -- unreadable: the bar keeps its last value
   FinalBoss.hpbar.damage(delta, size)
   FinalBoss.avatar.set_wound(stage)
   if moment == 'defeat' then
@@ -531,9 +538,16 @@ end
 function Dir.on_blind_defeated()
   FinalBoss.curse.clear() -- the curse marks go with the blind (any tier)
   Dir.flush_pending() -- (the twist clean-up runs ungated in hooks.lua's mod.calculate)
-  -- 1.1 memory: the win, for any boss encounter (also below the dialogue ante, tier 'none').
   local raw = FinalBoss.util.state().encounter
   local gb = G.GAME.blind
+  -- 1.3.1: the winning hand's score was unknown, so on_hand_after could not call it a win: it takes
+  -- the win data now (win_start stays nil) and the boss says its defeat line (forced; a nemesis its
+  -- own), unless a defeat line already played this blind.
+  if raw and gb and gb.config.blind and gb.config.blind.key == raw.key and FinalBoss.logic.late_win(raw)
+      and not (raw.fired and raw.fired.defeat) then
+    Dir.fire('defeat', {force = true, line = FinalBoss.memory.defeat_line(raw, 'defeat')})
+  end
+  -- 1.1 memory: the win, for any boss encounter (also below the dialogue ante, tier 'none').
   if raw and raw.boss and not raw.recorded and gb and gb.config.blind and gb.config.blind.key == raw.key then
     -- A disabled blind stays disabled until the next one is set (Blind:defeat keeps the flag), so a
     -- boss disabled at any point of the fight (Chicot, Luchador) is still disabled here.

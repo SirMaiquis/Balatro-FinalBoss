@@ -174,13 +174,13 @@ local READERS = {
 }
 
 --- A score or amount as a plain number. Big-number mods (Talisman, Amulet) keep scores as tables,
---- and some values are strings. A number is returned as it is; a string through tonumber; a table
+--- and some values are strings. A number is returned as it is (nan: nil); a string through tonumber; a table
 --- through the first reader that gives a number (each under pcall): to_number(x) (the global, passed
 --- in), x:to_number(), tonumber(tostring(x)), then the known layouts. nil when nothing reads it (or
 --- it reads as nan): never 0, so an unreadable score is never taken for a tiny one. An infinity is
 --- a valid reading (fear_tier handles it).
 function logic.read_number(x, to_number)
-  if type(x) == 'number' then return x end
+  if type(x) == 'number' then return is_reading(x) and x or nil end
   if type(x) == 'string' then
     local v = tonumber(x)
     return is_reading(v) and v or nil
@@ -214,6 +214,16 @@ function logic.hand_outcome(a)
   else won = readable and total >= a.required end
   if won and total == nil and is_reading(a.required) then total = a.required end
   return won, not won and not readable, total
+end
+
+--- The blind was defeated with no winning hand on record (enc.win_hand nil): the last hand, whose
+--- score was unknown (enc.unknown_hand, enc.unknown_hands_left: plain saved data), won after all.
+--- Its id and hands left become the win data (enc.win_start stays nil: the score before it is not
+--- known). Returns true when it did.
+function logic.late_win(enc)
+  if not enc or enc.win_hand ~= nil or enc.unknown_hand == nil then return false end
+  enc.win_hand, enc.win_hands_left = enc.unknown_hand, enc.unknown_hands_left
+  return true
 end
 
 --- Decide which moment (if any) a just-scored hand triggers. last_hand: this hand leaves the player on
