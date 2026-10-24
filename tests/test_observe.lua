@@ -118,6 +118,44 @@ T['on_blind_set: the last jab said this run is skipped'] = function()
   eq(enc.jab.moment, 'jab_broke')
 end
 
+T['on_blind_set: the jab reads the arrival snapshot, not a run a boss emptied'] = function()
+  local ctx = setup{dollars = 0, jokers = {'j_joker'}}
+  local snap = ctx.O.run_state('bl_hook')
+  snap.dollars = 2000
+  ctx.O.arrival = {key = 'bl_hook', state = snap, rerolled = 0}
+  local enc = {key = 'bl_hook'}
+  ctx.O.on_blind_set(enc, lucky)
+  assert(not (enc.jab and enc.jab.moment == 'jab_broke'), 'no broke jab')
+  eq(enc.jab.moment, 'jab_loaded')
+end
+
+T['on_blind_set: with no snapshot the jab reads the live run'] = function()
+  local ctx = setup{dollars = 0, jokers = {'j_joker'}}
+  local enc = {key = 'bl_hook'}
+  ctx.O.on_blind_set(enc, lucky)
+  eq(enc.jab.moment, 'jab_broke')
+end
+
+T['on_blind_set: a snapshot for another blind is ignored'] = function()
+  local ctx = setup{dollars = 0, jokers = {'j_joker'}}
+  local snap = ctx.O.run_state('bl_hook')
+  snap.dollars = 2000
+  ctx.O.arrival = {key = 'bl_other', state = snap, rerolled = 0}
+  local enc = {key = 'bl_hook'}
+  ctx.O.on_blind_set(enc, lucky)
+  eq(enc.jab.moment, 'jab_broke')
+end
+
+T['on_blind_set: the arrival snapshot is cleared after use'] = function()
+  local ctx = setup{jokers = {'j_joker'}}
+  ctx.O.arrival = {key = 'bl_hook', state = ctx.O.run_state('bl_hook'), rerolled = 0}
+  ctx.O.on_blind_set({key = 'bl_hook'}, lucky)
+  eq(ctx.O.arrival, nil)
+  ctx.O.arrival = {key = 'bl_other', state = ctx.O.run_state('bl_hook'), rerolled = 0}
+  ctx.O.on_blind_set({key = 'bl_hook'}, lucky)
+  eq(ctx.O.arrival, nil, 'cleared on a mismatch too')
+end
+
 T['mark_said: the jab is said once and becomes the last jab'] = function()
   local ctx = setup()
   local enc = {key = 'bl_hook', jab = {moment = 'jab_broke'}}

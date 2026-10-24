@@ -640,6 +640,7 @@ local resetting = false -- re-entrancy guard: a failing step must not recurse vi
 
 function Dir.reset_stage()
   Dir.pending = nil -- dropped, never run
+  FinalBoss.observe.arrival = nil
   if resetting then return end
   resetting = true
   local ok, err = pcall(function()

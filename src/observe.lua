@@ -5,6 +5,7 @@
 --- st.last_jab; the idle clock is never saved.
 local O = {}
 O.idle_since = nil  -- REAL time the idle clock started (last input, or the last frame idling could not count)
+O.arrival = nil     -- {key, state, rerolled}: the run as the boss blind was set, before its own effect (plain data, never saved)
 O.highlighted = nil -- #G.hand.highlighted on the last frame (a change counts as input)
 
 local function L() return FinalBoss.logic end
@@ -62,9 +63,14 @@ end
 --- Dir.on_blind_set, boss encounters (any tier): the intro jab as plain data on the encounter, the
 --- reroll mark for the next boss, and a fresh idle count and clock. A Chicot that will disable the
 --- boss is always the jab: no intro plays, so its disabled line (O.disabled_jab) is the only one said.
+--- The run is the arrival snapshot (O.arrival, taken in Blind:set_blind before the boss's own effect)
+--- when it is for this blind, else read now; the snapshot is used once.
 --- rand: math.random unless given (tests).
 function O.on_blind_set(enc, rand)
-  local s, rerolled = O.run_state(enc.key)
+  local s, rerolled
+  local a = O.arrival
+  O.arrival = nil
+  if a and a.key == enc.key then s, rerolled = a.state, a.rerolled else s, rerolled = O.run_state(enc.key) end
   FinalBoss.util.state().reroll_mark = rerolled
   enc.jab = L().intro_jab(s, rand or math.random)
   if chicot_acts() then enc.jab = {moment = 'jab_counter', joker = 'j_chicot'} end
