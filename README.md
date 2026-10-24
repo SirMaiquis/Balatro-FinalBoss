@@ -203,6 +203,7 @@ Always check that `FinalBoss` exists first so your mod still works without it. R
 | `fx` | `{intro = name, defeat = name}` with names from `pulse`, `shake`, `flash`, `shatter`, `phase_shift`. An unknown name is ignored with a warning. They only run in full-tier encounters | `{intro = 'pulse', defeat = 'shatter'}` |
 | `moves` | Boss moves: a table of trigger kind to recipe (see "Boss moves for your boss"). Unknown kinds, effects or targets are dropped with a warning. A boss without `moves` bursts on the `generic` trigger | `nil` |
 | `death` | What plays instead of the explosion when your showdown boss dies: the name of a built-in death (`'hearts'`, `'leaves'`, `'acorn'`, `'flood'`, `'bell'`) or a recipe of `burst`, `ring`, `crack` and `sweep` steps, played from the boss's last position. Needs `fx` | `nil` |
+| `line` | `function(moment, info)` that may return the name of one of your boss's own lines to say instead of the usual one (see "Picking lines by situation"). Anything other than a function is ignored with a warning | `nil` |
 | `phases` | Reserved, ignored. Phases are automatic for every showdown boss with cinematics on (lines `phase2` and `phase3`, the `signature` move); rule twists exist only for the 5 vanilla final bosses | `nil` |
 
 ### Boss moves for your boss
@@ -322,6 +323,44 @@ All text lives in `misc.quips` in your mod's localization. Each moment can have 
 `<blind>` is the full blind key, for example `bl_hook`. For each moment FinalBoss tries the boss-specific key first, then the boss's personality (`fb_p_<personality>_<moment>_<n>`), then `fb_generic_<moment>_<n>`, and otherwise skips the moment. The shared nemesis lines have no generic fallback: if none exist, they are skipped. A rematch or nemesis line replaces the name line of a showdown (in light tier it replaces the boss's threat line, and a rematch line does so only about half the time). A raw key is never shown to the player. Generic lines receive the boss name as `#1#`. `#2#` and `#3#` are filled only for the moments noted above (jokers, cards, hands and levels); names can run long, so keep the rest of a `#2#` line short.
 
 Writing tips: each quip is 1 or 2 lines, and each line should stay under about 24 visible characters so it fits the speech bubble. A gloat line is spoken by Jimbo on the game-over screen, mocking you with the boss's catchphrase: write only the line itself (no "Name:" header, no quotation marks) and no placeholders. A line with a censored word (a letter followed by `*`, for example `sh*t`) plays a short bleep, so do not use asterisks for actions.
+
+### Picking lines by situation
+
+`line` lets your boss say a different line depending on what is happening. FinalBoss calls it every time it is about to pick a line for your boss, with the moment (the name from the table above, for example `'defeat'`, `'intro'`, `'jab_skipped_both'` or `'fear_2'`) and an `info` table. Return the name of a line and your boss says `fb_<blind>_<name>_<n>` instead; return nothing to keep the usual line.
+
+```lua
+FinalBoss.register_encounter{
+  blind = 'bl_mymod_boss',
+  personality = 'smug',
+  line = function(moment, info)
+    if moment == 'defeat' and info.hands_left == 0 then
+      return 'defeat_lasthand'   -- uses fb_bl_mymod_boss_defeat_lasthand_1, _2, ...
+    end
+  end,
+}
+```
+
+`info` is a fresh table for each call, read when the line is chosen. Any field may be `nil`:
+
+| Field | Value |
+|---|---|
+| `blind` | your boss's blind key |
+| `tier` | the encounter tier (`'light'` or `'full'`) |
+| `showdown` | whether the blind is a showdown |
+| `ante` | the current ante |
+| `hands_left`, `discards_left`, `hands_played` | from the current round |
+| `dollars` | your money |
+| `chips` | the score so far |
+| `required` | the blind's requirement |
+| `hand_type` | the last hand played, for example `'Flush'` |
+| `won` | the winning hand has been played |
+| `lost` | your boss beat the player (true at the gloat) |
+
+Rules:
+- A returned name only looks up your boss's own keys. There is no personality or generic fallback for it.
+- If you return `nil`, something that is not a string, or a name with no lines, the moment resolves as usual (boss, personality, generic). Variants of a custom name rotate like any other line.
+- It is called for every moment except the shared nemesis lines, and except a `counter` jab about a joker that is not your boss's main counter (that jab never uses your boss's own keys).
+- If the function errors, FinalBoss logs one warning for your boss and resolves the line as usual. It never disables FinalBoss.
 
 ## Compatibility
 

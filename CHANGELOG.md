@@ -1,5 +1,10 @@
 # Changelog
 
+## 1.3.1
+
+### For mod authors
+- `register_encounter` accepts `line = function(moment, info)`: return the name of one of your boss's own lines (`fb_<blind>_<name>_<n>`) to say it instead of the usual one, for example a different defeat line on the last hand. `info` carries the live fight (hands and discards left, money, score, requirement, ante, tier and more). Returning nothing, a name with no lines, or an error keeps the usual line. See "Picking lines by situation" in the README.
+
 ## 1.3.0
 
 Bosses react to your tricks.

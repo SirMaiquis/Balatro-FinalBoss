@@ -130,4 +130,18 @@ T['decide_tier: a run that reached the dialogue ante keeps talking below it'] = 
   eq(logic.decide_tier{is_boss = true, entry_tier = 'auto', ante = 0, min_ante = 1}, 'none', 'no max_ante, ante 0')
 end
 
+T['custom_prefix: a name with boss lines gives the boss prefix'] = function()
+  local count = function(p) return p == 'fb_bl_mod_defeat_lasthand' and 2 or 0 end
+  eq(logic.custom_prefix('bl_mod', 'defeat_lasthand', count), 'fb_bl_mod_defeat_lasthand')
+end
+
+T['custom_prefix: no lines, a non-string or an empty name gives nil'] = function()
+  local count = function(p) return p == 'fb_generic_defeat_lasthand' and 1 or 0 end
+  eq(logic.custom_prefix('bl_mod', 'defeat_lasthand', count), nil, 'no boss lines, no generic fallback')
+  eq(logic.custom_prefix('bl_mod', nil, count), nil)
+  eq(logic.custom_prefix('bl_mod', 3, count), nil)
+  eq(logic.custom_prefix('bl_mod', '', count), nil)
+  eq(logic.custom_prefix(nil, 'x', count), nil)
+end
+
 return T

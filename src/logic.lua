@@ -191,6 +191,16 @@ function logic.resolve_prefix(blind_key, moment, count_of, personality, skip_bos
   return nil
 end
 
+--- The `line` hook's answer (1.3.1): a custom line name for the boss's own keys
+--- (fb_<blind>_<name>_N, no personality or generic fallback). Returns the prefix, or nil when name is
+--- not a non-empty string or the boss has no such lines (the moment then resolves as usual).
+function logic.custom_prefix(blind_key, name, count_of)
+  if type(blind_key) ~= 'string' or type(name) ~= 'string' or name == '' then return nil end
+  local prefix = 'fb_' .. blind_key .. '_' .. name
+  if count_of(prefix) > 0 then return prefix end
+  return nil
+end
+
 -- Showdown stage maths.
 logic.WEAK_HIT_RATIO = 0.10 -- a hand under 10% of the boss's max HP is shrugged off: a flinch, then a laugh
 

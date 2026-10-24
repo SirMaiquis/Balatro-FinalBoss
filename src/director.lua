@@ -29,6 +29,31 @@ function Dir.vars(blind)
   return {blind.loc_name or (blind.config.blind and blind.config.blind.name) or '?'}
 end
 
+--- The `line` hook's info (1.3.1): a fresh plain table of live values, read as the line is chosen
+--- (registry.resolve). Every field is nil-safe; tier, showdown and won need this boss's encounter.
+function Dir.line_info(blind_key)
+  local game = G and G.GAME or {}
+  local st = game.FinalBoss or {}
+  local enc = st.encounter
+  if not (enc and enc.key == blind_key) then enc = nil end
+  local cr = game.current_round or {}
+  return {
+    blind = blind_key,
+    tier = enc and enc.tier,
+    showdown = enc and enc.showdown,
+    ante = game.round_resets and game.round_resets.ante,
+    hands_left = cr.hands_left,
+    discards_left = cr.discards_left,
+    hands_played = cr.hands_played,
+    dollars = num(game.dollars),
+    chips = num(game.chips),
+    required = num(game.blind and game.blind.chips),
+    hand_type = game.last_hand_played,
+    won = enc ~= nil and enc.win_hand ~= nil,
+    lost = st.lost_to ~= nil and st.lost_to == blind_key,
+  }
+end
+
 local function current(blind_key)
   local st = FinalBoss.util.state()
   local enc = st.encounter
