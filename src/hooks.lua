@@ -140,10 +140,9 @@ local orig_set_blind = Blind.set_blind
 function Blind:set_blind(blind, reset, ...)
   local before
   if blind and not reset and live() and blind.boss then
-    U.guard('arrival', function()
-      local s, rerolled = FinalBoss.observe.run_state(blind.key)
-      FinalBoss.observe.arrival = {key = blind.key, state = s, rerolled = rerolled}
-    end)
+    -- bookkeeping: a failure only loses the snapshot (the jab then reads the run live), never the run
+    local ok, s, rerolled = pcall(FinalBoss.observe.run_state, blind.key)
+    if ok then FinalBoss.observe.arrival = {key = blind.key, state = s, rerolled = rerolled} end
   end
   if blind and not reset and live() then
     U.guard('move_capture', function() before = moves().capture() end)
