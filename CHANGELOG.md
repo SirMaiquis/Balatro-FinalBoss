@@ -2,6 +2,9 @@
 
 ## 1.3.1
 
+### New
+- Four new achievements for poking and grabbing bosses: Boss Collector, Don't Touch Me, Hostage and Kidnapper.
+
 ### Fixes
 - Intro jabs read your run as you arrived, so a boss that takes your money when the blind starts no longer calls you broke.
 - Works with big-number and custom scoring mods (like Amulet): winning hands are no longer mistaken for weak ones.

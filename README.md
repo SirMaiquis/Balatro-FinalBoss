@@ -2,7 +2,7 @@
 
 ![Final Boss](https://raw.githubusercontent.com/SirMaiquis/Balatro-FinalBoss/main/thumbnail.jpg)
 
-Bosses talk back, and they are savage about it: every boss trash-talks in its own personality and reads your run. Every boss blind gets a short line of dialogue when it starts, reacts to your big hands, close calls and your last hand (before you play it), and gloats if you lose to it. Bosses react to your tricks too: the tarot, spectral or planet you just used, the joker you just made, the famous combo you brought. Crush them and they panic: the more you overkill the requirement, the more scared they get and the harder they die. Showdown bosses go further: a roaming boss avatar with an HP bar, a cinematic intro, their own music, screen effects and a slow-motion explosive finale. You also decide when showdowns appear, so you can have a final boss every 8 antes like vanilla or much sooner. Every boss also performs a visible move when its effect hits, final bosses transform at 50% and 25% HP and die their own way, and bosses remember you across runs: rematch lines, a nemesis and ten achievements.
+Bosses talk back, and they are savage about it: every boss trash-talks in its own personality and reads your run. Every boss blind gets a short line of dialogue when it starts, reacts to your big hands, close calls and your last hand (before you play it), and gloats if you lose to it. Bosses react to your tricks too: the tarot, spectral or planet you just used, the joker you just made, the famous combo you brought. Crush them and they panic: the more you overkill the requirement, the more scared they get and the harder they die. Showdown bosses go further: a roaming boss avatar with an HP bar, a cinematic intro, their own music, screen effects and a slow-motion explosive finale. You also decide when showdowns appear, so you can have a final boss every 8 antes like vanilla or much sooner. Every boss also performs a visible move when its effect hits, final bosses transform at 50% and 25% HP and die their own way, and bosses remember you across runs: rematch lines, a nemesis and fourteen achievements.
 
 ## Requirements
 
@@ -134,7 +134,7 @@ Continue mid-showdown restores the phase, stance, marker and twists without repl
 
 - **Memory.** Bosses remember your results across runs, per Balatro profile (fights, wins and losses per boss). Seeded and challenge runs count too. A final boss you have met before opens with a rematch line instead of its name line (sore if you won last time, smug if you lost); a regular boss says its rematch line instead of its threat about half the time.
 - **Nemesis.** The boss that has beaten you most, at least 3 times, becomes your nemesis (a tie goes to the more recent loss). A nemesis always greets you with a nemesis line. In a showdown the title card reads **NEMESIS** instead of SHOWDOWN and the avatar glows crimson; a regular nemesis gets a red NEMESIS tag over its chip and a faint crimson aura. When you beat it, it says its own defeat line while a gold "NEMESIS DEFEATED" banner, a gong and a gold burst play. A defeated nemesis loses the title until it beats you again.
-- **Achievements.** Ten Steamodded achievements (Mods menu, Final Boss, Achievements tab):
+- **Achievements.** Fourteen Steamodded achievements (Mods menu, Final Boss, Achievements tab):
   - Showdown Survivor: defeat a final boss
   - Clean Sweep: defeat all 5 vanilla final bosses
   - Rude!: interrupt a boss while it is talking
@@ -145,6 +145,10 @@ Continue mid-showdown restores the phase, stance, marker and twists without repl
   - Comeback: defeat a final boss on your last hand
   - Nemesis Slayer: defeat your nemesis
   - Twisted: defeat all 5 vanilla final bosses with phase twists on (a win over a boss disabled by Chicot or Luchador does not count)
+  - Boss Collector: poke every vanilla boss (all 28, across runs; a poke counts even when the boss says nothing)
+  - Don't Touch Me: hard-poke a final boss and still beat it
+  - Hostage: grab a boss, then win with your very next hand
+  - Kidnapper: grab every vanilla final boss (all 5, across runs)
 
   They follow Steamodded's achievement settings: with an Unlock All profile, or in seeded and challenge runs, Steamodded decides whether they unlock (its "Bypass Restrictions" setting).
 
@@ -156,7 +160,7 @@ By default, showdowns appear exactly like vanilla (ante 8, 16, ...). Turn on the
 
 ### Configuration
 
-Set in the Mods menu (Final Boss). The Config tab groups the boss dialogue settings (with Boss memory) and the showdown stage toggles (with Boss moves and Boss phases change the rules, which grey out while Screen effects or Showdown cinematics are off), with the developer keys at the bottom; the Showdowns tab holds the schedule; the Credits tab has the links (GitHub, the showdown music, Ko-fi); Steamodded adds an Achievements tab listing the ten achievements. Steamodded saves your choices; `config.lua` only holds the defaults.
+Set in the Mods menu (Final Boss). The Config tab groups the boss dialogue settings (with Boss memory) and the showdown stage toggles (with Boss moves and Boss phases change the rules, which grey out while Screen effects or Showdown cinematics are off), with the developer keys at the bottom; the Showdowns tab holds the schedule; the Credits tab has the links (GitHub, the showdown music, Ko-fi); Steamodded adds an Achievements tab listing the fourteen achievements. Steamodded saves your choices; `config.lua` only holds the defaults.
 
 | Key | What it does | Default |
 |---|---|---|
