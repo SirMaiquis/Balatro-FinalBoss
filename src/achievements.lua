@@ -1,4 +1,4 @@
---- Achievements (1.1): ten Steamodded achievements (Mods -> Final Boss -> Achievements), profile-level.
+--- Achievements (1.1, four more for poke and grab in 1.3.1): fourteen Steamodded achievements (Mods -> Final Boss -> Achievements), profile-level.
 --- SMODS.Achievement (smods src/game_object.lua:3845-3873) registers each as 'ach_FinalBoss_<id>'
 --- and puts it in G.ACHIEVEMENTS. A.award(id) goes through vanilla check_for_unlock, whose smods
 --- patch (lovely/achievements.toml:23-35) calls every unearned achievement's unlock_condition and

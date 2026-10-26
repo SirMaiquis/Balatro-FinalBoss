@@ -48,6 +48,10 @@ return {
             ach_FinalBoss_fb_comeback = "Comeback",
             ach_FinalBoss_fb_nemesis_slayer = "Nemesis Slayer",
             ach_FinalBoss_fb_twisted = "Twisted",
+            ach_FinalBoss_fb_boss_collector = "Boss Collector",
+            ach_FinalBoss_fb_dont_touch_me = "Don't Touch Me",
+            ach_FinalBoss_fb_hostage = "Hostage",
+            ach_FinalBoss_fb_kidnapper = "Kidnapper",
         },
         achievement_descriptions = {
             ach_FinalBoss_fb_showdown_survivor = "Defeat a final boss",
@@ -60,6 +64,10 @@ return {
             ach_FinalBoss_fb_comeback = "Defeat a final boss on your last hand",
             ach_FinalBoss_fb_nemesis_slayer = "Defeat your nemesis",
             ach_FinalBoss_fb_twisted = "Defeat all 5 vanilla final bosses with phase twists on",
+            ach_FinalBoss_fb_boss_collector = "Poke every vanilla boss",
+            ach_FinalBoss_fb_dont_touch_me = "Hard-poke a final boss and still beat it",
+            ach_FinalBoss_fb_hostage = "Grab a boss, then win with your very next hand",
+            ach_FinalBoss_fb_kidnapper = "Grab every vanilla final boss",
         },
         quips = {
             -- Config menu header card

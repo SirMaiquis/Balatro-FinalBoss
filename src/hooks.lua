@@ -133,10 +133,17 @@ local function live() return G.GAME and director().enabled() end
 -- card_limits.mod, lovely/card_limit.toml:84-100). new_round calls it (state_events.lua:333) right
 -- after resetting hands and discards (:296-297), so the counters read before the call are the ones the
 -- player sees; the 'set' move plays right after it with both snapshots. Resets (reset = true) apply
--- nothing and are ignored.
+-- nothing and are ignored. A boss blind also snapshots the run first (observe.arrival): the boss's own
+-- setting_blind calculate runs before FinalBoss's (calculate above), so a boss that changes the run
+-- there (a modded one that empties the wallet) must not change which intro jab is picked.
 local orig_set_blind = Blind.set_blind
 function Blind:set_blind(blind, reset, ...)
   local before
+  if blind and not reset and live() and blind.boss then
+    -- bookkeeping: a failure only loses the snapshot (the jab then reads the run live), never the run
+    local ok, s, rerolled = pcall(FinalBoss.observe.run_state, blind.key)
+    if ok then FinalBoss.observe.arrival = {key = blind.key, state = s, rerolled = rerolled} end
+  end
   if blind and not reset and live() then
     U.guard('move_capture', function() before = moves().capture() end)
   end

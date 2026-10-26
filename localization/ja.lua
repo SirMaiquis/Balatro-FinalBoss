@@ -50,6 +50,10 @@ return {
             ach_FinalBoss_fb_comeback = "大逆転",
             ach_FinalBoss_fb_nemesis_slayer = "宿敵討ち",
             ach_FinalBoss_fb_twisted = "ひねくれ者",
+            ach_FinalBoss_fb_boss_collector = "ボスコレクター",
+            ach_FinalBoss_fb_dont_touch_me = "さわるな",
+            ach_FinalBoss_fb_hostage = "人質",
+            ach_FinalBoss_fb_kidnapper = "誘拐犯",
         },
         achievement_descriptions = {
             ach_FinalBoss_fb_showdown_survivor = "ラスボスを倒す",
@@ -62,6 +66,10 @@ return {
             ach_FinalBoss_fb_comeback = "最後のハンドで ラスボスを倒す",
             ach_FinalBoss_fb_nemesis_slayer = "宿敵を倒す",
             ach_FinalBoss_fb_twisted = "ルール変化ありで 基本ゲームのラスボス5体を倒す",
+            ach_FinalBoss_fb_boss_collector = "基本ゲームの ボスを全員つつく",
+            ach_FinalBoss_fb_dont_touch_me = "ラスボスを強くつついて それでも倒す",
+            ach_FinalBoss_fb_hostage = "ボスをつかんで 直後のハンドで勝つ",
+            ach_FinalBoss_fb_kidnapper = "基本ゲームの ラスボスを全員つかむ",
         },
         quips = {
             -- Config menu header card

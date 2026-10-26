@@ -182,11 +182,129 @@ T['personality moments: 47 run moments, 1 to 3 variants each'] = function()
   eq(logic.personality_variants('read_repeat'), 2); eq(logic.personality_variants('jab_broke'), 1)
 end
 
-T['live_total: the round score plus the displayed chips x mult, missing values count 0'] = function()
-  eq(logic.live_total(100, 30, 4), 220)
-  eq(logic.live_total(nil, 30, 4), 120, 'no round score yet')
-  eq(logic.live_total(100, nil, 4), 100); eq(logic.live_total(100, 30, nil), 100)
-  eq(logic.live_total(100, '?', 4), 100, 'a text value')
+T['live_total: the round score plus the displayed hand score; nil when either is missing'] = function()
+  eq(logic.live_total(100, 120), 220)
+  eq(logic.live_total(0, 120), 120)
+  eq(logic.live_total(nil, 120), nil, 'an unreadable round score is no total')
+  eq(logic.live_total(100, nil), nil, 'an unreadable hand score is no total')
+  eq(logic.live_total(100, '?'), nil, 'a text value')
+  eq(logic.live_total(100, 0 / 0), nil, 'nan')
+  eq(logic.live_total(100, math.huge), math.huge, 'an infinite hand is a reading')
+end
+
+-- Reading scores (1.3.1) ---------------------------------------------------------------------------
+
+--- A big-number object that only prints itself (Amulet-like).
+local function printed(s) return setmetatable({}, {__tostring = function() return s end}) end
+
+T['read_number: numbers, numeric strings, nil and other types'] = function()
+  eq(logic.read_number(42), 42); eq(logic.read_number(-1.5), -1.5); eq(logic.read_number(0), 0)
+  eq(logic.read_number(math.huge), math.huge, 'an infinity is a reading')
+  eq(logic.read_number('1500'), 1500); eq(logic.read_number('1.5e3'), 1500)
+  eq(logic.read_number('?'), nil, 'a text value'); eq(logic.read_number(''), nil)
+  eq(logic.read_number(nil), nil); eq(logic.read_number(true), nil)
+  eq(logic.read_number(0 / 0), nil, 'a nan number is unreadable')
+  eq(logic.read_number('nan'), nil)
+end
+
+T['late_win: an unknown last hand takes the win when no winning hand is on record'] = function()
+  local enc = {unknown_hand = 4, unknown_hands_left = 0}
+  eq(logic.late_win(enc), true)
+  eq(enc.win_hand, 4); eq(enc.win_hands_left, 0); eq(enc.win_start, nil, 'the start stays unknown')
+  eq(logic.late_win(enc), false, 'once')
+  local won = {win_hand = 3, win_hands_left = 1, win_start = 50, unknown_hand = 4}
+  eq(logic.late_win(won), false, 'a recorded win stands'); eq(won.win_hand, 3)
+  eq(logic.late_win({}), false, 'no unknown hand'); eq(logic.late_win(nil), false)
+end
+
+T['defeat_achievements: a win with an unknown start never earns overkill'] = function()
+  local out = logic.defeat_achievements{showdown = true, start = nil, hands_left = 0, hand = 4}
+  local got = {}
+  for _, k in ipairs(out) do got[k] = true end
+  eq(got.fb_showdown_survivor, true); eq(got.fb_comeback, true); eq(got.fb_overkill, nil)
+end
+
+T['read_number: big-number tables, in reader order'] = function()
+  eq(logic.read_number(printed('1.5e300')), 1.5e300, '__tostring')
+  eq(logic.read_number(printed('1e400')), math.huge, 'past a double: infinity')
+  eq(logic.read_number({to_number = function(self) return self.v end, v = 7}), 7, 'a to_number method')
+  eq(logic.read_number({to_number = 8}), 8, 'a to_number field')
+  eq(logic.read_number({}, function() return 9 end), 9, 'the global converter')
+  eq(logic.read_number({to_number = function() return 7 end}, function() return 9 end), 9,
+    'the global converter first')
+  eq(logic.read_number({to_number = function() return 7 end}, function() error('not mine') end), 7,
+    'a failing converter falls through')
+  eq(logic.read_number({m = 1.5, e = 300}), 1.5e300, 'Talisman BigNum layout')
+  eq(logic.read_number({array = {1234}, sign = 1}), 1234, 'OmegaNum, small')
+  eq(logic.read_number({array = {20, 1}, sign = -1}), -1e20, 'OmegaNum, one 10^')
+  eq(logic.read_number({array = {20, 2}, sign = 1}), math.huge, 'OmegaNum, past a double')
+end
+
+T['read_number: an unreadable table is nil, never 0'] = function()
+  eq(logic.read_number({}), nil)
+  eq(logic.read_number(printed('lots')), nil)
+  eq(logic.read_number({to_number = function() error('broken') end}), nil, 'a failing method')
+  eq(logic.read_number({to_number = function() return 0 / 0 end}), nil, 'nan')
+  eq(logic.read_number({}, function(x) return x end), nil, 'a converter that gives a table back')
+  local trap = setmetatable({}, {__index = function() error('no fields') end})
+  eq(logic.read_number(trap), nil, 'a table that errors on every read')
+end
+
+T['hand_outcome: the plain numbers decide when nothing else does'] = function()
+  local won, unknown, total = logic.hand_outcome{start = 400, delta = 700, required = 1000}
+  eq(won, true); eq(unknown, false); eq(total, 1100)
+  won, unknown, total = logic.hand_outcome{start = 100, delta = 5, required = 1000}
+  eq(won, false); eq(unknown, false); eq(total, 105)
+end
+
+T['hand_outcome: a big-number win counts even when the plain numbers say otherwise'] = function()
+  -- the bug: an unreadable score read as 0, so a 2x win looked like a near-0 hand
+  local won, unknown = logic.hand_outcome{own = true, start = 0, delta = 0, required = 1000}
+  eq(won, true, 'the own-type compare'); eq(unknown, false)
+  won = logic.hand_outcome{oneshot = true, own = false, start = 0, delta = 0, required = 1000}
+  eq(won, true, 'oneshot first')
+  won = logic.hand_outcome{own = false, start = 900, delta = 200, required = 1000}
+  eq(won, false, 'a compare that ran decides')
+end
+
+T['hand_outcome: unreadable numbers are unknown unless something proves the win'] = function()
+  local won, unknown, total = logic.hand_outcome{start = 100, delta = nil, required = 1000}
+  eq(won, false); eq(unknown, true); eq(total, nil)
+  won, unknown = logic.hand_outcome{start = nil, delta = 50, required = 1000}
+  eq(unknown, true, 'an unreadable round score')
+  won, unknown = logic.hand_outcome{start = 100, delta = 50, required = nil}
+  eq(unknown, true, 'an unreadable requirement')
+  won, unknown = logic.hand_outcome{own = false, start = 100, delta = nil, required = 1000}
+  eq(won, false); eq(unknown, true, 'short by the compare, but no score to measure')
+  won, unknown, total = logic.hand_outcome{oneshot = true, delta = nil, start = nil, required = 1000}
+  eq(won, true); eq(unknown, false)
+  eq(total, 1000, 'a won hand with no readable total counts as the requirement')
+  eq(logic.fear_tier(total, 1000), nil, 'so no fear tier is guessed')
+  won, unknown, total = logic.hand_outcome{own = true}
+  eq(won, true); eq(unknown, false); eq(total, nil)
+end
+
+--- A scored hand through the director's rules: outcome, moment, then the comment gate's inputs.
+local function score(o)
+  local won, unknown, total = logic.hand_outcome(o)
+  local moment = logic.detect_moments{delta = o.delta, total = total, required = o.required,
+    hands_left = o.hands_left or 3, fired = {}, tier = 'full', hand = 2, won = won, unknown = unknown}
+  return moment, won, unknown, total
+end
+
+T['scored hand: a big-number winning hand is the defeat, never weak'] = function()
+  local moment, won = score{own = true, start = nil, delta = nil, required = 1000}
+  eq(moment, 'defeat'); eq(won, true)
+  eq(logic.hit_size(nil, 1000), 'normal', 'an unreadable hand is never weak')
+  moment = score{oneshot = true, start = 0, delta = 0, required = 1000}
+  eq(moment, 'defeat', 'oneshot with numbers read as 0')
+end
+
+T['scored hand: an unknown score fires only last_hand'] = function()
+  local moment, won, unknown = score{start = 100, delta = nil, required = 1000}
+  eq(moment, nil); eq(won, false); eq(unknown, true)
+  eq(score{start = 100, delta = nil, required = 1000, hands_left = 1}, 'last_hand')
+  eq(score{start = nil, delta = 900, required = 1000}, nil, 'never big_hand or close')
 end
 
 T['fear_step: only a higher tier is announced, once'] = function()

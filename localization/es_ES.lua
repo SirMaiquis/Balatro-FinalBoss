@@ -48,6 +48,10 @@ return {
             ach_FinalBoss_fb_comeback = "Remontada",
             ach_FinalBoss_fb_nemesis_slayer = "Verdugo de némesis",
             ach_FinalBoss_fb_twisted = "Retorcido",
+            ach_FinalBoss_fb_boss_collector = "Coleccionista de jefes",
+            ach_FinalBoss_fb_dont_touch_me = "No me toques",
+            ach_FinalBoss_fb_hostage = "Rehén",
+            ach_FinalBoss_fb_kidnapper = "Secuestrador",
         },
         achievement_descriptions = {
             ach_FinalBoss_fb_showdown_survivor = "Derrota a un jefe final",
@@ -60,6 +64,10 @@ return {
             ach_FinalBoss_fb_comeback = "Derrota a un jefe final en tu última mano",
             ach_FinalBoss_fb_nemesis_slayer = "Derrota a tu némesis",
             ach_FinalBoss_fb_twisted = "Derrota a los 5 jefes finales del juego base con las reglas de fase activadas",
+            ach_FinalBoss_fb_boss_collector = "Pincha a todos los jefes del juego base",
+            ach_FinalBoss_fb_dont_touch_me = "Pincha fuerte a un jefe final y derrótalo de todos modos",
+            ach_FinalBoss_fb_hostage = "Agarra a un jefe y gana con tu siguiente mano",
+            ach_FinalBoss_fb_kidnapper = "Agarra a todos los jefes finales del juego base",
         },
         quips = {
             -- Config menu header card

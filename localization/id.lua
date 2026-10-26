@@ -48,6 +48,10 @@ return {
             ach_FinalBoss_fb_comeback = "Bangkit Kembali",
             ach_FinalBoss_fb_nemesis_slayer = "Penakluk Nemesis",
             ach_FinalBoss_fb_twisted = "Terpelintir",
+            ach_FinalBoss_fb_boss_collector = "Kolektor Boss",
+            ach_FinalBoss_fb_dont_touch_me = "Jangan Sentuh Aku",
+            ach_FinalBoss_fb_hostage = "Sandera",
+            ach_FinalBoss_fb_kidnapper = "Penculik",
         },
         achievement_descriptions = {
             ach_FinalBoss_fb_showdown_survivor = "Kalahkan boss final",
@@ -60,6 +64,10 @@ return {
             ach_FinalBoss_fb_comeback = "Kalahkan boss final dengan hand terakhirmu",
             ach_FinalBoss_fb_nemesis_slayer = "Kalahkan nemesismu",
             ach_FinalBoss_fb_twisted = "Kalahkan kelima boss final dari game dasar dengan aturan fase aktif",
+            ach_FinalBoss_fb_boss_collector = "Colek semua boss dari game dasar",
+            ach_FinalBoss_fb_dont_touch_me = "Colek keras boss final dan tetap kalahkan dia",
+            ach_FinalBoss_fb_hostage = "Tangkap boss, lalu menang dengan hand berikutnya",
+            ach_FinalBoss_fb_kidnapper = "Tangkap semua boss final dari game dasar",
         },
         quips = {
             -- Config menu header card

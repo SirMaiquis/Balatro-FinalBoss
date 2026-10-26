@@ -2,7 +2,7 @@
 
 ![Final Boss](https://raw.githubusercontent.com/SirMaiquis/Balatro-FinalBoss/main/thumbnail.jpg)
 
-Bosses talk back, and they are savage about it: every boss trash-talks in its own personality and reads your run. Every boss blind gets a short line of dialogue when it starts, reacts to your big hands, close calls and your last hand (before you play it), and gloats if you lose to it. Bosses react to your tricks too: the tarot, spectral or planet you just used, the joker you just made, the famous combo you brought. Crush them and they panic: the more you overkill the requirement, the more scared they get and the harder they die. Showdown bosses go further: a roaming boss avatar with an HP bar, a cinematic intro, their own music, screen effects and a slow-motion explosive finale. You also decide when showdowns appear, so you can have a final boss every 8 antes like vanilla or much sooner. Every boss also performs a visible move when its effect hits, final bosses transform at 50% and 25% HP and die their own way, and bosses remember you across runs: rematch lines, a nemesis and ten achievements.
+Bosses talk back, and they are savage about it: every boss trash-talks in its own personality and reads your run. Every boss blind gets a short line of dialogue when it starts, reacts to your big hands, close calls and your last hand (before you play it), and gloats if you lose to it. Bosses react to your tricks too: the tarot, spectral or planet you just used, the joker you just made, the famous combo you brought. Crush them and they panic: the more you overkill the requirement, the more scared they get and the harder they die. Showdown bosses go further: a roaming boss avatar with an HP bar, a cinematic intro, their own music, screen effects and a slow-motion explosive finale. You also decide when showdowns appear, so you can have a final boss every 8 antes like vanilla or much sooner. Every boss also performs a visible move when its effect hits, final bosses transform at 50% and 25% HP and die their own way, and bosses remember you across runs: rematch lines, a nemesis and fourteen achievements.
 
 ## Requirements
 
@@ -134,7 +134,7 @@ Continue mid-showdown restores the phase, stance, marker and twists without repl
 
 - **Memory.** Bosses remember your results across runs, per Balatro profile (fights, wins and losses per boss). Seeded and challenge runs count too. A final boss you have met before opens with a rematch line instead of its name line (sore if you won last time, smug if you lost); a regular boss says its rematch line instead of its threat about half the time.
 - **Nemesis.** The boss that has beaten you most, at least 3 times, becomes your nemesis (a tie goes to the more recent loss). A nemesis always greets you with a nemesis line. In a showdown the title card reads **NEMESIS** instead of SHOWDOWN and the avatar glows crimson; a regular nemesis gets a red NEMESIS tag over its chip and a faint crimson aura. When you beat it, it says its own defeat line while a gold "NEMESIS DEFEATED" banner, a gong and a gold burst play. A defeated nemesis loses the title until it beats you again.
-- **Achievements.** Ten Steamodded achievements (Mods menu, Final Boss, Achievements tab):
+- **Achievements.** Fourteen Steamodded achievements (Mods menu, Final Boss, Achievements tab):
   - Showdown Survivor: defeat a final boss
   - Clean Sweep: defeat all 5 vanilla final bosses
   - Rude!: interrupt a boss while it is talking
@@ -145,6 +145,10 @@ Continue mid-showdown restores the phase, stance, marker and twists without repl
   - Comeback: defeat a final boss on your last hand
   - Nemesis Slayer: defeat your nemesis
   - Twisted: defeat all 5 vanilla final bosses with phase twists on (a win over a boss disabled by Chicot or Luchador does not count)
+  - Boss Collector: poke every vanilla boss (all 28, across runs; a poke counts even when the boss says nothing)
+  - Don't Touch Me: hard-poke a final boss and still beat it
+  - Hostage: grab a boss, then win with your very next hand
+  - Kidnapper: grab every vanilla final boss (all 5, across runs)
 
   They follow Steamodded's achievement settings: with an Unlock All profile, or in seeded and challenge runs, Steamodded decides whether they unlock (its "Bypass Restrictions" setting).
 
@@ -156,7 +160,7 @@ By default, showdowns appear exactly like vanilla (ante 8, 16, ...). Turn on the
 
 ### Configuration
 
-Set in the Mods menu (Final Boss). The Config tab groups the boss dialogue settings (with Boss memory) and the showdown stage toggles (with Boss moves and Boss phases change the rules, which grey out while Screen effects or Showdown cinematics are off), with the developer keys at the bottom; the Showdowns tab holds the schedule; the Credits tab has the links (GitHub, the showdown music, Ko-fi); Steamodded adds an Achievements tab listing the ten achievements. Steamodded saves your choices; `config.lua` only holds the defaults.
+Set in the Mods menu (Final Boss). The Config tab groups the boss dialogue settings (with Boss memory) and the showdown stage toggles (with Boss moves and Boss phases change the rules, which grey out while Screen effects or Showdown cinematics are off), with the developer keys at the bottom; the Showdowns tab holds the schedule; the Credits tab has the links (GitHub, the showdown music, Ko-fi); Steamodded adds an Achievements tab listing the fourteen achievements. Steamodded saves your choices; `config.lua` only holds the defaults.
 
 | Key | What it does | Default |
 |---|---|---|
@@ -187,6 +191,11 @@ end
 -- localization: misc.quips.fb_bl_mymod_boss_intro_1 = {"My line", "here"}
 ```
 
+**Start from the template.** [`examples/boss_template`](examples/boss_template) is a ready-to-copy boss: `boss.lua` (the blind and its `register_encounter`, with personality, voice and a `line` hook) and `localization/en-us.lua` (every per-boss moment, laid out the way Balatro loads it). Rename `mymod` to your mod's prefix and `my_boss` to your blind's key, and write your own lines. Two things trip people up:
+
+- Line keys use the **full** blind key Steamodded builds: `bl_` + your prefix + your key. `key = 'my_boss'` in a mod with prefix `mymod` is `bl_mymod_my_boss`, so its intro is `fb_bl_mymod_my_boss_intro_1`.
+- `misc` (with `quips` inside) sits next to `descriptions` in your localization file, not inside it.
+
 **Load order.** FinalBoss loads at priority -10, and Steamodded orders mods by priority and then id (dependencies do not change the load order). Keep your mod's priority above -10 (the default 0 is fine) so that `FinalBoss` exists when your main file runs, or register at runtime (for example from your own `calculate` or `setting_blind`) after checking that `FinalBoss` exists.
 
 Always check that `FinalBoss` exists first so your mod still works without it. Registering the same `blind` again overwrites the earlier entry (and logs it).
@@ -203,6 +212,7 @@ Always check that `FinalBoss` exists first so your mod still works without it. R
 | `fx` | `{intro = name, defeat = name}` with names from `pulse`, `shake`, `flash`, `shatter`, `phase_shift`. An unknown name is ignored with a warning. They only run in full-tier encounters | `{intro = 'pulse', defeat = 'shatter'}` |
 | `moves` | Boss moves: a table of trigger kind to recipe (see "Boss moves for your boss"). Unknown kinds, effects or targets are dropped with a warning. A boss without `moves` bursts on the `generic` trigger | `nil` |
 | `death` | What plays instead of the explosion when your showdown boss dies: the name of a built-in death (`'hearts'`, `'leaves'`, `'acorn'`, `'flood'`, `'bell'`) or a recipe of `burst`, `ring`, `crack` and `sweep` steps, played from the boss's last position. Needs `fx` | `nil` |
+| `line` | `function(moment, info)` that may return the name of one of your boss's own lines to say instead of the usual one (see "Picking lines by situation"). Anything other than a function is ignored with a warning | `nil` |
 | `phases` | Reserved, ignored. Phases are automatic for every showdown boss with cinematics on (lines `phase2` and `phase3`, the `signature` move); rule twists exist only for the 5 vanilla final bosses | `nil` |
 
 ### Boss moves for your boss
@@ -323,9 +333,47 @@ All text lives in `misc.quips` in your mod's localization. Each moment can have 
 
 Writing tips: each quip is 1 or 2 lines, and each line should stay under about 24 visible characters so it fits the speech bubble. A gloat line is spoken by Jimbo on the game-over screen, mocking you with the boss's catchphrase: write only the line itself (no "Name:" header, no quotation marks) and no placeholders. A line with a censored word (a letter followed by `*`, for example `sh*t`) plays a short bleep, so do not use asterisks for actions.
 
+### Picking lines by situation
+
+`line` lets your boss say a different line depending on what is happening. FinalBoss calls it every time it is about to pick a line for your boss, with the moment (the name from the table above, for example `'defeat'`, `'intro'`, `'jab_skipped_both'` or `'fear_2'`) and an `info` table. Return the name of a line and your boss says `fb_<blind>_<name>_<n>` instead; return nothing to keep the usual line.
+
+```lua
+FinalBoss.register_encounter{
+  blind = 'bl_mymod_boss',
+  personality = 'smug',
+  line = function(moment, info)
+    if moment == 'defeat' and info.hands_left == 0 then
+      return 'defeat_lasthand'   -- uses fb_bl_mymod_boss_defeat_lasthand_1, _2, ...
+    end
+  end,
+}
+```
+
+`info` is a fresh table for each call, read when the line is chosen. Any field may be `nil`:
+
+| Field | Value |
+|---|---|
+| `blind` | your boss's blind key |
+| `tier` | the encounter tier (`'light'` or `'full'`) |
+| `showdown` | whether the blind is a showdown |
+| `ante` | the current ante |
+| `hands_left`, `discards_left`, `hands_played` | from the current round |
+| `dollars` | your money |
+| `chips` | the score so far |
+| `required` | the blind's requirement |
+| `hand_type` | the last hand played, for example `'Flush'` |
+| `won` | the winning hand has been played |
+| `lost` | your boss beat the player (true at the gloat) |
+
+Rules:
+- A returned name only looks up your boss's own keys. There is no personality or generic fallback for it.
+- If you return `nil`, something that is not a string, or a name with no lines, the moment resolves as usual (boss, personality, generic). Variants of a custom name rotate like any other line.
+- It is called for every moment except the shared nemesis lines, and except a `counter` jab about a joker that is not your boss's main counter (that jab never uses your boss's own keys).
+- If the function errors, FinalBoss logs one warning for your boss and resolves the line as usual. It never disables FinalBoss.
+
 ## Compatibility
 
-- Big-number scores (Talisman) are converted to plain numbers before FinalBoss compares them, but this path has not been tested with Talisman installed.
+- Big-number scores (Talisman, Amulet) are converted to plain numbers before FinalBoss compares them, and whether a hand won is checked with the game's own numbers. A score FinalBoss cannot read gets no weak, big-hand or fear line. Custom scoring formulas (Steamodded's scoring calculations) are followed for the live fear scale. These paths have not been tested with those mods installed.
 - FinalBoss ships one Lovely patch (`lovely/timescale.toml`) for the finale's slow motion; if a game update changes its target line, the finale simply runs at normal speed.
 - Boss moves observe `Blind:set_blind`, `press_play`, `modify_hand`, `debuff_hand`, `stay_flipped`, `drawn_to_hand`, `disable` and `wiggle`, and `G.FUNCS.draw_from_deck_to_hand`, by wrapping them: the original always runs first and its results are returned unchanged. A mod that replaces one of these instead of wrapping it loses the moves tied to it.
 - Boss memory is stored in your Balatro profile (`profile.jkr`); resetting the profile resets it.

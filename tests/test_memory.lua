@@ -122,6 +122,36 @@ T['memory: damaged saved data is repaired, not trusted'] = function()
   eq(ctx.mem.on_interrupt('bl_z'), m)
 end
 
+T['memory: a profile from before 1.3.1 loads without the poke and grab sets'] = function()
+  local ctx = setup({FinalBoss = {bosses = {bl_x = {fights = 1}}, interrupted = {bl_x = true}}})
+  local m = ctx.mem.data()
+  eq(type(m.poked), 'table'); eq(type(m.grabbed_finals), 'table')
+  eq(m.interrupted.bl_x, true, 'older data kept')
+  local damaged = setup({FinalBoss = {poked = 'junk', grabbed_finals = 3}}).mem.data()
+  eq(type(damaged.poked), 'table'); eq(type(damaged.grabbed_finals), 'table')
+end
+
+T['memory: pokes and grabs fill the profile sets, saving only what is new'] = function()
+  local ctx = setup({})
+  ctx.G.FILE_HANDLER = nil
+  local m = ctx.mem.on_poke('bl_ox')
+  eq(m.poked.bl_ox, true); eq(ctx.saves, 1)
+  eq(ctx.G.FILE_HANDLER and ctx.G.FILE_HANDLER.force, true, 'the profile write must be forced')
+  eq(ctx.mem.on_poke('bl_ox'), m, 'a repeat poke still reports the memory')
+  eq(ctx.saves, 1, 'no save for a boss already in the set')
+  ctx.mem.on_grab({key = 'bl_ox'})
+  eq(m.grabbed_finals.bl_ox, nil, 'a regular boss is no final boss'); eq(ctx.saves, 1)
+  ctx.mem.on_grab({key = 'bl_final_bell', showdown = true})
+  eq(m.grabbed_finals.bl_final_bell, true); eq(ctx.saves, 2)
+  ctx.mem.on_grab({key = 'bl_final_bell', showdown = true})
+  eq(ctx.saves, 2)
+end
+
+T['memory: no profile, no poke or grab record'] = function()
+  local ctx = setup(nil)
+  eq(ctx.mem.on_poke('bl_ox'), nil); eq(ctx.mem.on_grab({key = 'bl_final_bell', showdown = true}), nil)
+end
+
 T['memory: a non-table FinalBoss value is replaced'] = function()
   local ctx = setup({FinalBoss = 'junk'})
   eq(type(ctx.mem.data()), 'table')

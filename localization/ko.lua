@@ -48,6 +48,10 @@ return {
             ach_FinalBoss_fb_comeback = "역전승",
             ach_FinalBoss_fb_nemesis_slayer = "숙적 처단자",
             ach_FinalBoss_fb_twisted = "뒤틀림",
+            ach_FinalBoss_fb_boss_collector = "보스 수집가",
+            ach_FinalBoss_fb_dont_touch_me = "만지지 마",
+            ach_FinalBoss_fb_hostage = "인질",
+            ach_FinalBoss_fb_kidnapper = "납치범",
         },
         achievement_descriptions = {
             ach_FinalBoss_fb_showdown_survivor = "최종 보스 처치하기",
@@ -60,6 +64,10 @@ return {
             ach_FinalBoss_fb_comeback = "마지막 핸드로 최종 보스 처치하기",
             ach_FinalBoss_fb_nemesis_slayer = "숙적 처치하기",
             ach_FinalBoss_fb_twisted = "페이즈 규칙 변화를 켜고 기본 게임의 최종 보스 5명 모두 처치하기",
+            ach_FinalBoss_fb_boss_collector = "기본 게임의 모든 보스 찌르기",
+            ach_FinalBoss_fb_dont_touch_me = "최종 보스를 세게 찌르고도 처치하기",
+            ach_FinalBoss_fb_hostage = "보스를 붙잡은 뒤 바로 다음 핸드로 승리하기",
+            ach_FinalBoss_fb_kidnapper = "기본 게임의 모든 최종 보스 붙잡기",
         },
         quips = {
             -- Config menu header card

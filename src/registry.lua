@@ -35,6 +35,11 @@ function R.register(def)
     else FinalBoss.util.log('warn', ('register_encounter %s: unknown fx %s ignored'):format(def.blind, tostring(name))) end
   end
   e.phases = def.phases
+  -- 1.3.1: the line hook lives on the entry only (never saved).
+  if def.line ~= nil then
+    if type(def.line) == 'function' then e.line = def.line
+    else FinalBoss.util.log('warn', ('register_encounter %s: line must be a function, ignored'):format(def.blind)) end
+  end
   if def.moves ~= nil then
     local moves, warnings = FinalBoss.logic.clean_moves(def.moves)
     for _, w in ipairs(warnings) do
@@ -72,11 +77,37 @@ function R.count(prefix)
   return n
 end
 
+--- The boss's line hook (1.3.1): the prefix of the custom line it picked, or nil. The hook and the
+--- info it reads run under a local pcall: an error logs one warning per blind and the moment resolves
+--- as usual (never util.guard, so a bad hook never disables FinalBoss for the run).
+R.line_warned = {}
+
+local function custom_line(blind_key, moment)
+  local e = R.entries[blind_key]
+  if not (e and e.line) then return nil end
+  local ok, name = pcall(function()
+    local D = FinalBoss.director
+    return e.line(moment, (D and D.line_info) and D.line_info(blind_key) or {})
+  end)
+  if not ok then
+    if not R.line_warned[blind_key] then
+      R.line_warned[blind_key] = true
+      FinalBoss.util.log('warn', ('%s line hook failed: %s'):format(blind_key, tostring(name)))
+    end
+    return nil
+  end
+  return FinalBoss.logic.custom_prefix(blind_key, name, R.count)
+end
+
 --- Resolve a moment to a concrete quip key, avoiding the last variant used for that prefix.
---- Order: boss-specific (unless opts.skip_boss), the boss's personality, generic (logic.resolve_prefix).
+--- Order: the boss's line hook (not for shared moments nor opts.skip_boss), boss-specific (unless
+--- opts.skip_boss), the boss's personality, generic (logic.resolve_prefix).
 function R.resolve(blind_key, moment, last_variant, opts)
-  local prefix = FinalBoss.logic.resolve_prefix(blind_key, moment, R.count, FinalBoss.personality.of(blind_key),
-    opts and opts.skip_boss)
+  local skip_boss = opts and opts.skip_boss
+  local prefix
+  if not skip_boss and not FinalBoss.logic.SHARED_MOMENTS[moment] then prefix = custom_line(blind_key, moment) end
+  prefix = prefix or FinalBoss.logic.resolve_prefix(blind_key, moment, R.count, FinalBoss.personality.of(blind_key),
+    skip_boss)
   if not prefix then return nil end
   local idx = FinalBoss.logic.pick_variant(R.count(prefix), last_variant and last_variant[prefix], math.random)
   if last_variant then last_variant[prefix] = idx end

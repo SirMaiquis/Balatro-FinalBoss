@@ -39,6 +39,7 @@ local function setup(o)
     util = {now = function() return ctx.now end, log = function() end,
       state = function() G.GAME.FinalBoss = G.GAME.FinalBoss or {}; return G.GAME.FinalBoss end},
     director = {num = function(x) return tonumber(x) or 0 end, vars = function() return {'The Boss'} end,
+      read = function(x) return FinalBoss.logic.read_number(x) end,
       pending = nil,
       fire = function(m, opts) ctx.fired[#ctx.fired + 1] = m; ctx.opts[#ctx.opts + 1] = opts or {}; return true end},
     cinematic = {active = function() return false end},
@@ -116,6 +117,44 @@ T['on_blind_set: the last jab said this run is skipped'] = function()
   local enc = {key = 'bl_hook'}
   ctx.O.on_blind_set(enc, lucky)
   eq(enc.jab.moment, 'jab_broke')
+end
+
+T['on_blind_set: the jab reads the arrival snapshot, not a run a boss emptied'] = function()
+  local ctx = setup{dollars = 0, jokers = {'j_joker'}}
+  local snap = ctx.O.run_state('bl_hook')
+  snap.dollars = 2000
+  ctx.O.arrival = {key = 'bl_hook', state = snap, rerolled = 0}
+  local enc = {key = 'bl_hook'}
+  ctx.O.on_blind_set(enc, lucky)
+  assert(not (enc.jab and enc.jab.moment == 'jab_broke'), 'no broke jab')
+  eq(enc.jab.moment, 'jab_loaded')
+end
+
+T['on_blind_set: with no snapshot the jab reads the live run'] = function()
+  local ctx = setup{dollars = 0, jokers = {'j_joker'}}
+  local enc = {key = 'bl_hook'}
+  ctx.O.on_blind_set(enc, lucky)
+  eq(enc.jab.moment, 'jab_broke')
+end
+
+T['on_blind_set: a snapshot for another blind is ignored'] = function()
+  local ctx = setup{dollars = 0, jokers = {'j_joker'}}
+  local snap = ctx.O.run_state('bl_hook')
+  snap.dollars = 2000
+  ctx.O.arrival = {key = 'bl_other', state = snap, rerolled = 0}
+  local enc = {key = 'bl_hook'}
+  ctx.O.on_blind_set(enc, lucky)
+  eq(enc.jab.moment, 'jab_broke')
+end
+
+T['on_blind_set: the arrival snapshot is cleared after use'] = function()
+  local ctx = setup{jokers = {'j_joker'}}
+  ctx.O.arrival = {key = 'bl_hook', state = ctx.O.run_state('bl_hook'), rerolled = 0}
+  ctx.O.on_blind_set({key = 'bl_hook'}, lucky)
+  eq(ctx.O.arrival, nil)
+  ctx.O.arrival = {key = 'bl_other', state = ctx.O.run_state('bl_hook'), rerolled = 0}
+  ctx.O.on_blind_set({key = 'bl_hook'}, lucky)
+  eq(ctx.O.arrival, nil, 'cleared on a mismatch too')
 end
 
 T['mark_said: the jab is said once and becomes the last jab'] = function()
@@ -217,6 +256,26 @@ T['comment_for: full tier reads are capped and never on consecutive hands'] = fu
   enc.comments = 3
   eq(ctx.O.comment_for(enc, pending(pair)), nil, 'cap reached')
   eq(ctx.O.comment_for(enc, pending{hand = 3}), 'weak', 'weak is outside the cap and the rule')
+end
+
+T['comment_for: no weak line or read on a won or unknown hand (1.3.1)'] = function()
+  local ctx = setup()
+  local enc = {tier = 'full', fired = {}}
+  -- a big-number win whose numbers read as 0: the outcome says won
+  eq(ctx.O.comment_for(enc, pending{delta = 0, total = 0, won = true}), nil, 'won')
+  local function unread(o) local p = pending(o); p.delta, p.total = nil, nil; return p end
+  eq(ctx.O.comment_for(enc, unread{unknown = true}), nil, 'unknown')
+  eq(ctx.O.comment_for(enc, unread{hand_type = 'Pair', unknown = true}), nil, 'no read either')
+  eq(ctx.O.comment_for(enc, unread()), nil, 'missing numbers')
+  eq(ctx.O.comment_for(enc, pending{unknown = true}), nil, 'unknown even with numbers left over')
+  eq(ctx.O.comment_for(enc, pending{won = false, unknown = false}), 'weak', 'a known weak hand still is')
+end
+
+T['fear_line: a won hand with unreadable numbers says the plain defeat line'] = function()
+  local ctx = setup()
+  eq(ctx.O.fear_line({moment = 'defeat', won = true, total = nil, required = nil, hand = 1}, {}), nil)
+  eq(ctx.O.fear_line({moment = 'defeat', won = true, total = 2500, required = 1000, hand = 1}, {}), 'fear_1')
+  eq(ctx.O.fear_line({moment = 'defeat', won = false, total = 2500, required = 1000, hand = 1}, {}), nil)
 end
 
 T['fear_line: only the winning defeat hand, by tier, always'] = function()
@@ -328,6 +387,66 @@ T['fear_tick: only while a hand scores in a live boss fight with no intro'] = fu
   ctx.enc.tier = 'light'
   ctx.show(100, 99)
   eq(#ctx.fired, 1, 'the light tier is watched too')
+end
+
+T['fear_tick: no live tier when the displayed score cannot be read (1.3.1)'] = function()
+  local ctx = fear_setup()
+  ctx.show('?', '?')
+  eq(#ctx.fired, 0, "vanilla's face-down '?'")
+  ctx.show(setmetatable({}, {}), 1e9)
+  eq(#ctx.fired, 0, 'an unreadable big number')
+  G.GAME.chips = {}
+  ctx.show(100, 99)
+  eq(#ctx.fired, 0, 'an unreadable round score')
+  G.GAME.chips = 100
+  G.GAME.blind.chips = {}
+  ctx.show(100, 99)
+  eq(#ctx.fired, 0, 'an unreadable requirement')
+end
+
+T['fear_tick: big-number displayed values are read (1.3.1)'] = function()
+  local ctx = fear_setup()
+  local big = function(s) return setmetatable({}, {__tostring = function() return s end}) end
+  G.GAME.chips = big('100')
+  G.GAME.blind.chips = big('1000')
+  ctx.show(big('100'), big('19'))
+  eq(ctx.fired[1], 'fear_1', '100 + 1900 = 2x')
+end
+
+--- smods' scoring calculation API: SMODS.calculate_round_score(true) applies the active calculation
+--- to the displayed parameters (G.GAME.current_round.current_hand).
+local function with_calc(calc)
+  G.GAME.current_scoring_calculation = calc
+  _G.SMODS = {calculate_round_score = function(flames)
+    assert(flames == true, 'the displayed values, not the precomputed ones')
+    local h = G.GAME.current_round.current_hand
+    return calc:func(h.chips, h.mult, flames)
+  end}
+end
+
+T['fear_tick: a custom scoring calculation decides the live total (1.3.1)'] = function()
+  local ctx = fear_setup()
+  -- mult-only: chips are shown but do not count
+  with_calc({parameters = {'mult'}, func = function(self, chips, mult) return mult end})
+  ctx.show(1000, 50)
+  eq(#ctx.fired, 0, 'chips x mult would be 50000 (100x); mult-only is 150 of 1000')
+  ctx.show(1000, 1900)
+  eq(ctx.fired[1], 'fear_1', '100 + 1900 = 2x')
+  _G.SMODS = nil
+end
+
+T['fear_tick: a failing or unreadable calculation fires nothing (1.3.1)'] = function()
+  local ctx = fear_setup()
+  with_calc({func = function() error('mod bug') end})
+  ctx.show(1000, 1000)
+  eq(#ctx.fired, 0, 'the calculation errors')
+  with_calc({func = function() return {} end})
+  ctx.show(1000, 1000)
+  eq(#ctx.fired, 0, 'the calculation gives an unreadable value')
+  with_calc({parameters = {'chips', 'mult', 'xchips'}, func = function(self, c, m) return c * m end})
+  ctx.show(1000, 1000)
+  eq(#ctx.fired, 0, 'a parameter it uses is not shown')
+  _G.SMODS = nil
 end
 
 T['fear_tick: a visual failure is logged and the line is still said'] = function()

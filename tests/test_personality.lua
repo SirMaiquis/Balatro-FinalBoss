@@ -74,6 +74,16 @@ T['resolve_prefix: shared moments ignore the personality'] = function()
     'killer'), 'fb_nemesis_intro')
 end
 
+T['logic.VANILLA_BOSSES (Boss Collector) is exactly the vanilla personality table'] = function()
+  local logic, P = fresh()
+  local listed = {}
+  for _, k in ipairs(logic.VANILLA_BOSSES) do
+    assert(P.VANILLA[k], k .. ' is not a vanilla boss')
+    listed[k] = true
+  end
+  for k in pairs(P.VANILLA) do assert(listed[k], k .. ' missing from logic.VANILLA_BOSSES') end
+end
+
 T['resolve_prefix: without a personality it keeps the 1.1 order'] = function()
   local logic = fresh()
   eq(logic.resolve_prefix('bl_hook', 'close', counts{fb_generic_close = 3}), 'fb_generic_close')

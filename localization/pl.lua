@@ -48,6 +48,10 @@ return {
             ach_FinalBoss_fb_comeback = "Wielki powrót",
             ach_FinalBoss_fb_nemesis_slayer = "Pogromca nemezis",
             ach_FinalBoss_fb_twisted = "Pokręcone",
+            ach_FinalBoss_fb_boss_collector = "Kolekcjoner bossów",
+            ach_FinalBoss_fb_dont_touch_me = "Nie dotykaj mnie",
+            ach_FinalBoss_fb_hostage = "Zakładnik",
+            ach_FinalBoss_fb_kidnapper = "Porywacz",
         },
         achievement_descriptions = {
             ach_FinalBoss_fb_showdown_survivor = "Pokonaj finałowego bossa",
@@ -60,6 +64,10 @@ return {
             ach_FinalBoss_fb_comeback = "Pokonaj finałowego bossa ostatnią ręką",
             ach_FinalBoss_fb_nemesis_slayer = "Pokonaj swoją nemezis",
             ach_FinalBoss_fb_twisted = "Pokonaj wszystkich 5 finałowych bossów z podstawowej gry ze zmianą zasad w fazach",
+            ach_FinalBoss_fb_boss_collector = "Szturchnij każdego bossa z podstawowej gry",
+            ach_FinalBoss_fb_dont_touch_me = "Mocno szturchnij finałowego bossa i mimo to go pokonaj",
+            ach_FinalBoss_fb_hostage = "Złap bossa, a potem wygraj zaraz następną ręką",
+            ach_FinalBoss_fb_kidnapper = "Złap każdego finałowego bossa z podstawowej gry",
         },
         quips = {
             -- Config menu header card

@@ -50,6 +50,10 @@ return {
             ach_FinalBoss_fb_comeback = "逆轉勝",
             ach_FinalBoss_fb_nemesis_slayer = "宿敵剋星",
             ach_FinalBoss_fb_twisted = "扭曲",
+            ach_FinalBoss_fb_boss_collector = "Boss收藏家",
+            ach_FinalBoss_fb_dont_touch_me = "別碰我",
+            ach_FinalBoss_fb_hostage = "人質",
+            ach_FinalBoss_fb_kidnapper = "綁匪",
         },
         achievement_descriptions = {
             ach_FinalBoss_fb_showdown_survivor = "擊敗一個最終Boss",
@@ -62,6 +66,10 @@ return {
             ach_FinalBoss_fb_comeback = "用最後一手牌 擊敗最終Boss",
             ach_FinalBoss_fb_nemesis_slayer = "擊敗你的宿敵",
             ach_FinalBoss_fb_twisted = "開啟階段規則變化時 擊敗原版全部5個最終Boss",
+            ach_FinalBoss_fb_boss_collector = "戳遍原版遊戲的 全部Boss",
+            ach_FinalBoss_fb_dont_touch_me = "狠戳最終Boss， 並依然擊敗它",
+            ach_FinalBoss_fb_hostage = "抓起Boss後， 用下一手牌獲勝",
+            ach_FinalBoss_fb_kidnapper = "抓起原版遊戲的 全部最終Boss",
         },
         quips = {
             -- Config menu header card

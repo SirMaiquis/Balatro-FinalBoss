@@ -5,6 +5,7 @@
 --- st.last_jab; the idle clock is never saved.
 local O = {}
 O.idle_since = nil  -- REAL time the idle clock started (last input, or the last frame idling could not count)
+O.arrival = nil     -- {key, state, rerolled}: the run as the boss blind was set, before its own effect (plain data, never saved)
 O.highlighted = nil -- #G.hand.highlighted on the last frame (a change counts as input)
 
 local function L() return FinalBoss.logic end
@@ -62,9 +63,14 @@ end
 --- Dir.on_blind_set, boss encounters (any tier): the intro jab as plain data on the encounter, the
 --- reroll mark for the next boss, and a fresh idle count and clock. A Chicot that will disable the
 --- boss is always the jab: no intro plays, so its disabled line (O.disabled_jab) is the only one said.
+--- The run is the arrival snapshot (O.arrival, taken in Blind:set_blind before the boss's own effect)
+--- when it is for this blind, else read now; the snapshot is used once.
 --- rand: math.random unless given (tests).
 function O.on_blind_set(enc, rand)
-  local s, rerolled = O.run_state(enc.key)
+  local s, rerolled
+  local a = O.arrival
+  O.arrival = nil
+  if a and a.key == enc.key then s, rerolled = a.state, a.rerolled else s, rerolled = O.run_state(enc.key) end
   FinalBoss.util.state().reroll_mark = rerolled
   enc.jab = L().intro_jab(s, rand or math.random)
   if chicot_acts() then enc.jab = {moment = 'jab_counter', joker = 'j_chicot'} end
@@ -120,10 +126,11 @@ end
 
 --- The run comment for a scored hand that fired nothing else (Dir react): the weak-hit line or a read
 --- (logic.pick_comment: the light tier's spacing and single read, the full tier's cap, never on
---- consecutive hands). p: the director's pending reaction (plain numbers, Dir.num). Never on the
---- winning hand.
+--- consecutive hands). p: the director's pending reaction (plain numbers, Dir.read). Never on the
+--- winning hand, nor (1.3.1) on a hand whose score is unknown: no weak line or read from a guess.
 function O.comment_for(enc, p)
-  if not p or p.total >= p.required then return nil end
+  if not p or p.won or p.unknown then return nil end
+  if type(p.total) ~= 'number' or type(p.required) ~= 'number' or p.total >= p.required then return nil end
   local size = L().hit_size(p.delta, p.required)
   return L().pick_comment{weak = size == 'weak', big = size == 'big', hand_type = p.hand_type,
     streak = p.streak, discards_left = p.discards_left, discards_used = p.discards_used,
@@ -139,9 +146,15 @@ end
 ---   'fear_N' the final total reached a tier the live scale never announced (a fallback, booked like a
 ---           live crossing): it replaces the defeat line;
 ---   nil     the boss says its own defeat line (below 2x, or the tier was said on an earlier hand).
---- Not the winning defeat hand: nil.
+--- Not the winning defeat hand: nil. 1.3.1: p.won (logic.hand_outcome) decides the win when set;
+--- a total that cannot be read gives no tier (fear_tier), so the plain defeat line.
 function O.fear_line(p, enc)
-  if not (p and p.moment == 'defeat' and p.total >= p.required) then return nil end
+  if not (p and p.moment == 'defeat') then return nil end
+  local won = p.won
+  if won == nil then
+    won = type(p.total) == 'number' and type(p.required) == 'number' and p.total >= p.required
+  end
+  if not won then return nil end
   enc = enc or {}
   -- enc.fear_hand is the id Dir.on_hand_after booked (enc.last_hand_seen), the same as p.hand.
   if enc.fear_hand ~= nil and enc.fear_hand == p.hand then return false end
@@ -170,13 +183,40 @@ local function fear_encounter()
   return enc, blind
 end
 
+--- The hand's score as the player sees it while it scores (1.3.1): smods' active scoring calculation
+--- (G.GAME.current_scoring_calculation, which a mod may swap for another formula, mult-only say)
+--- applied to the displayed parameters. SMODS.calculate_round_score(true) reads them from
+--- G.GAME.current_round.current_hand, as smods' own flames do (smods src/utils.lua,
+--- lovely/scoring_calculation.toml); without smods' calculation API, vanilla's chips x mult. nil when
+--- a parameter the calculation uses is not a readable number (vanilla shows '?' for face-down cards)
+--- or the calculation fails: the live scale never fires from a guess.
+function O.shown_score(shown)
+  local read = FinalBoss.director.read
+  local calc = G.GAME.current_scoring_calculation
+  if calc and SMODS and type(SMODS.calculate_round_score) == 'function' then
+    local ok, v = pcall(function()
+      for _, name in ipairs(calc.parameters or {'chips', 'mult'}) do
+        if read(shown[name]) == nil then return nil end
+      end
+      return SMODS.calculate_round_score(true)
+    end)
+    return ok and read(v) or nil
+  end
+  local chips, mult = read(shown.chips), read(shown.mult)
+  if not (chips and mult) then return nil end
+  return chips * mult
+end
+
 --- Per frame (Dir.tick): while a hand scores, the boss watches the running total the player sees, the
---- round score before this hand plus the hand's displayed chips x mult (G.GAME.current_round.current_hand:
---- update_hand_text writes it card by card as the score animation reaches each card, and vanilla's
---- flames and organ read the same pair, functions/misc_functions.lua). The global hand_chips / mult
---- are computed ahead of the animation, so they would cross before the player sees it. At the end of
---- the hand vanilla zeroes the pair as it eases G.GAME.chips up to the new total, so the sum never
---- counts the hand twice. Crossing 2x, 10x or 100x the requirement says that tier's line at once,
+--- round score before this hand plus the hand's displayed score (O.shown_score:
+--- G.GAME.current_round.current_hand, which update_hand_text writes card by card as the score
+--- animation reaches each card; vanilla's flames and organ read the same values,
+--- functions/misc_functions.lua). The global hand_chips / mult (and smods' parameter .current) are
+--- computed ahead of the animation, so they would cross before the player sees it. At the end of the
+--- hand vanilla zeroes the pair as it eases G.GAME.chips up to the new total, so the sum never counts
+--- the hand twice. No readable total (logic.live_total nil): no live tier on this frame, and the
+--- winning hand's tier comes from the defeat fallback (O.fear_line). Crossing 2x, 10x or 100x the
+--- requirement says that tier's line at once,
 --- forced over the current bubble (and starting the reaction gap, so a minor line cannot cut it)
 --- but free of the fight's bookkeeping (Dir.fire nobook), and plays its visuals
 --- (Dir.fear_fx; they also play with dialogue off). Each tier at most once per blind, only upwards
@@ -187,11 +227,11 @@ function O.fear_tick()
   local cr = G.GAME.current_round
   local shown = cr and cr.current_hand
   if not shown then return end
-  local num = FinalBoss.director.num
+  local read = FinalBoss.director.read
   -- With Talisman's score animation off the pair may never show the climb: no live crossing, and
   -- the defeat fallback (O.fear_line) says the line instead.
-  local total = L().live_total(num(G.GAME.chips), num(shown.chips), num(shown.mult))
-  local t = L().fear_step(enc.fear_said, L().fear_tier(total, num(blind.chips)))
+  local total = L().live_total(read(G.GAME.chips), O.shown_score(shown))
+  local t = L().fear_step(enc.fear_said, L().fear_tier(total, read(blind.chips)))
   if not t then return end
   -- The hand id Dir.on_hand_after booked for this hand: vanilla's hands_played +1 event is queued
   -- before evaluate_play queues the score display, so during the animation hands_played is already

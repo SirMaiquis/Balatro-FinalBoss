@@ -4,12 +4,19 @@ Dir.INTRO_DELAY = 1.5 -- seconds after the blind is set, so the chip has landed
 Dir.WEAK_LAUGH_DELAY = 0.5 -- seconds between the flinch of a weak hit and the laugh
 Dir.pending = nil     -- reaction to the last scored hand, waiting for the score to land (never saved)
 
---- Scores may be Talisman big numbers (tables); logic.lua only ever sees plain numbers.
-local function num(x)
-  if type(x) == 'table' and type(to_number) == 'function' then return to_number(x) end
-  return tonumber(x) or 0
+--- Scores may be big numbers (tables: Talisman, Amulet) or strings; logic.lua only ever sees plain
+--- numbers. Dir.read: the plain number, or nil when it cannot be read (logic.read_number), for the
+--- score-sensitive paths (the hand's outcome, the live fear scale). Dir.num: the same, 0 when unreadable,
+--- for the call sites that just need a number.
+local function read(x)
+  return FinalBoss.logic.read_number(x, type(to_number) == 'function' and to_number or nil)
 end
 
+local function num(x)
+  return read(x) or 0
+end
+
+Dir.read = read
 Dir.num = num
 
 local function fight_numbers(blind)
@@ -27,6 +34,31 @@ end
 
 function Dir.vars(blind)
   return {blind.loc_name or (blind.config.blind and blind.config.blind.name) or '?'}
+end
+
+--- The `line` hook's info (1.3.1): a fresh plain table of live values, read as the line is chosen
+--- (registry.resolve). Every field is nil-safe; tier, showdown and won need this boss's encounter.
+function Dir.line_info(blind_key)
+  local game = G and G.GAME or {}
+  local st = game.FinalBoss or {}
+  local enc = st.encounter
+  if not (enc and enc.key == blind_key) then enc = nil end
+  local cr = game.current_round or {}
+  return {
+    blind = blind_key,
+    tier = enc and enc.tier,
+    showdown = enc and enc.showdown,
+    ante = game.round_resets and game.round_resets.ante,
+    hands_left = cr.hands_left,
+    discards_left = cr.discards_left,
+    hands_played = cr.hands_played,
+    dollars = num(game.dollars),
+    chips = num(game.chips),
+    required = num(game.blind and game.blind.chips),
+    hand_type = game.last_hand_played,
+    won = enc ~= nil and enc.win_hand ~= nil,
+    lost = st.lost_to ~= nil and st.lost_to == blind_key,
+  }
 end
 
 local function current(blind_key)
@@ -262,6 +294,16 @@ function Dir.fire(moment, opts)
   return true, shown == true
 end
 
+--- Whether the round score plus this hand's score reaches the requirement, compared in the numbers'
+--- own type (smods' big-number metamethods make + and >= work on them). nil when the compare fails
+--- (a missing value, or mixed types Lua cannot compare): logic.hand_outcome falls back to the plain
+--- numbers.
+local function own_win(blind)
+  local ok, res = pcall(function() return G.GAME.chips + SMODS.last_hand_score >= blind.chips end)
+  if ok and type(res) == 'boolean' then return res end
+  return nil
+end
+
 --- context: smods' context.after (scoring_name, full_hand: smods lovely/better_calc.toml:810).
 function Dir.on_hand_after(context)
   local enc, blind, st = current()
@@ -274,21 +316,31 @@ function Dir.on_hand_after(context)
   FinalBoss.logic.trick_new_turn(enc.tricks) -- 1.3 tricks: each card may get its line again
   Dir.flush_pending() -- a previous hand's reaction updates enc.fired / last_line_hand, read below
   enc.last_hand_seen = hands_played
-  local delta = num(SMODS.last_hand_score)
-  local chips = num(G.GAME.chips)
-  -- G.GAME.chips does not include this hand yet: evaluate_play queues the chip ease, and
-  -- context.after runs before it.
-  local total = chips + delta
-  local required = num(blind.chips)
+  -- smods sets the hand's score (under the active scoring calculation) and whether it alone beat the
+  -- requirement just before context.after (lovely/scoring_calculation.toml). G.GAME.chips does not
+  -- include this hand yet: evaluate_play queues the chip ease, and context.after runs before it.
+  -- 1.3.1: plain numbers or nil (unreadable); the win is decided by logic.hand_outcome.
+  local delta = read(SMODS.last_hand_score)
+  local chips = read(G.GAME.chips)
+  local required = read(blind.chips)
+  local won, unknown, total = FinalBoss.logic.hand_outcome{oneshot = SMODS.last_hand_oneshot,
+    own = own_win(blind), start = chips, delta = delta, required = required}
   local hands_left = cr.hands_left
   -- Set before the game-over screen picks its quip; cleared in on_round_end if the run continues.
-  if hands_left == 0 and total < required then st.lost_to = enc.key end
-  if total >= required then -- the winning hand (achievements read these at blind_defeated)
+  if hands_left == 0 and not won then st.lost_to = enc.key end
+  if won then -- the winning hand (achievements read these at blind_defeated; start may be nil)
     enc.win_start, enc.win_hand, enc.win_hands_left = chips, hands_played, hands_left
+  end
+  -- The last hand's score was unknown (plain saved data): if the blind is defeated right after it,
+  -- that hand won after all (logic.late_win, Dir.on_blind_defeated).
+  if unknown then
+    enc.unknown_hand, enc.unknown_hands_left = hands_played, hands_left
+  else
+    enc.unknown_hand, enc.unknown_hands_left = nil, nil
   end
   local moment = FinalBoss.logic.detect_moments{delta = delta, total = total, required = required,
     hands_left = hands_left, fired = enc.fired, tier = enc.tier, hand = hands_played,
-    last_line_hand = enc.last_line_hand}
+    last_line_hand = enc.last_line_hand, won = won, unknown = unknown}
   -- 1.2 run comments: the hand type (vanilla also sets G.GAME.last_hand_played,
   -- functions/state_events.lua:576), how many hands in a row used it, and the cards played.
   local hand_type = (context and context.scoring_name) or G.GAME.last_hand_played
@@ -297,8 +349,9 @@ function Dir.on_hand_after(context)
   local played = context and context.full_hand
   -- The reaction waits until the game shows the score (Dir.tick -> logic.score_landed), or the
   -- boss would spoil it. Everything above is decided now.
+  -- delta, total and required may be nil (unknown: logic.hand_outcome); every reader checks.
   local p = {start = chips, delta = delta, total = total, required = required, moment = moment,
-    enc = enc, blind = blind, t0 = FinalBoss.util.now(), queued_done = false, hand = hands_played,
+    won = won, unknown = unknown, enc = enc, blind = blind, t0 = FinalBoss.util.now(), queued_done = false, hand = hands_played,
     hands_left = hands_left, hand_type = hand_type, streak = enc.type_streak,
     cards_played = played and #played or (G.play and #G.play.cards or 0),
     discards_left = cr.discards_left, discards_used = cr.discards_used}
@@ -365,7 +418,9 @@ local function react(p)
       tostring(G.GAME.chips), FinalBoss.util.now() - p.t0))
   end
   local wait = 0 -- a laugh is coming: the line must not overlap it
-  if enc.tier == 'full' and enc.showdown then
+  -- 1.3.1: a hand whose score could not be read (p.unknown) moves nothing on stage: no hit, no
+  -- laugh, no phase; the next readable hand catches up.
+  if enc.tier == 'full' and enc.showdown and not p.unknown then
     wait = Dir.stage_hit(enc, blind, p.delta, p.total, p.required, p.moment, p.hand)
     -- 1.1: crossing 50% / 25% transforms the boss. Its phase line replaces this hand's moment line
     -- (the moment stays unfired); the hit, damage number and laugh above still play, and a weak
@@ -443,7 +498,7 @@ function Dir.stage_hit(enc, blind, delta, total, required, moment, hand)
   FinalBoss.arena.on_hit(stage)
   if not enc.cinematic then return 0 end
   local size = FinalBoss.logic.hit_size(delta, required)
-  FinalBoss.hpbar.update(total, required)
+  if required ~= nil then FinalBoss.hpbar.update(total, required) end -- unreadable: the bar keeps its last value
   FinalBoss.hpbar.damage(delta, size)
   FinalBoss.avatar.set_wound(stage)
   if moment == 'defeat' then
@@ -483,9 +538,16 @@ end
 function Dir.on_blind_defeated()
   FinalBoss.curse.clear() -- the curse marks go with the blind (any tier)
   Dir.flush_pending() -- (the twist clean-up runs ungated in hooks.lua's mod.calculate)
-  -- 1.1 memory: the win, for any boss encounter (also below the dialogue ante, tier 'none').
   local raw = FinalBoss.util.state().encounter
   local gb = G.GAME.blind
+  -- 1.3.1: the winning hand's score was unknown, so on_hand_after could not call it a win: it takes
+  -- the win data now (win_start stays nil) and the boss says its defeat line (forced; a nemesis its
+  -- own), unless a defeat line already played this blind.
+  if raw and gb and gb.config.blind and gb.config.blind.key == raw.key and FinalBoss.logic.late_win(raw)
+      and not (raw.fired and raw.fired.defeat) then
+    Dir.fire('defeat', {force = true, line = FinalBoss.memory.defeat_line(raw, 'defeat')})
+  end
+  -- 1.1 memory: the win, for any boss encounter (also below the dialogue ante, tier 'none').
   if raw and raw.boss and not raw.recorded and gb and gb.config.blind and gb.config.blind.key == raw.key then
     -- A disabled blind stays disabled until the next one is set (Blind:defeat keeps the flag), so a
     -- boss disabled at any point of the fight (Chicot, Luchador) is still disabled here.
@@ -494,11 +556,13 @@ function Dir.on_blind_defeated()
     if m then raw.recorded = true end
     -- The nemesis fell (its own defeat line already played): burst, banner; it is now broken.
     if beaten and FinalBoss.config.memory then FinalBoss.memory.celebrate() end
-    if m then -- profile achievements (win_* and laughed_hand: Dir.on_hand_after, Dir.stage_hit)
+    if m then -- profile achievements (win_* and laughed_hand: Dir.on_hand_after, Dir.stage_hit;
+      -- hard_poked and grab_hand: poke.lua)
       FinalBoss.achievements.award_from('defeat', FinalBoss.logic.defeat_achievements, {showdown = raw.showdown,
         start = raw.win_start, hands_left = raw.win_hands_left, hand = raw.win_hand,
         laughed_hand = raw.laughed_hand, nemesis = beaten and not raw.fake_nemesis, -- F9 earns nothing
-        final_defeated = m.final_defeated, final_defeated_twisted = m.final_defeated_twisted})
+        final_defeated = m.final_defeated, final_defeated_twisted = m.final_defeated_twisted,
+        hard_poked_showdown = raw.hard_poked, grab_hand = raw.grab_hand})
     end
   end
   FinalBoss.memory.unpresent()
@@ -615,6 +679,7 @@ local resetting = false -- re-entrancy guard: a failing step must not recurse vi
 
 function Dir.reset_stage()
   Dir.pending = nil -- dropped, never run
+  FinalBoss.observe.arrival = nil
   if resetting then return end
   resetting = true
   local ok, err = pcall(function()
