@@ -1,6 +1,8 @@
 # Final Boss
 
-![Final Boss](https://raw.githubusercontent.com/SirMaiquis/Balatro-FinalBoss/main/thumbnail.jpg)
+[![Final Boss trailer](https://raw.githubusercontent.com/SirMaiquis/Balatro-FinalBoss/main/thumbnail.jpg)](https://www.youtube.com/watch?v=OmVs05XpAgM)
+
+▶️ **[Watch the trailer](https://www.youtube.com/watch?v=OmVs05XpAgM)**
 
 Bosses talk back, and they are savage about it: every boss trash-talks in its own personality and reads your run. Every boss blind gets a short line of dialogue when it starts, reacts to your big hands, close calls and your last hand (before you play it), and gloats if you lose to it. Bosses react to your tricks too: the tarot, spectral or planet you just used, the joker you just made, the famous combo you brought. Crush them and they panic: the more you overkill the requirement, the more scared they get and the harder they die. Showdown bosses go further: a roaming boss avatar with an HP bar, a cinematic intro, their own music, screen effects and a slow-motion explosive finale. You also decide when showdowns appear, so you can have a final boss every 8 antes like vanilla or much sooner. Every boss also performs a visible move when its effect hits, final bosses transform at 50% and 25% HP and die their own way, and bosses remember you across runs: rematch lines, a nemesis and fourteen achievements.
 
