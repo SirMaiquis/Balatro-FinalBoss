@@ -1374,6 +1374,115 @@ function logic.fear_watch(a)
   return not (a.intro or a.cinematic)
 end
 
+-- Win situations, luck and hype (1.4) -----------------------------------------------------------------
+
+--- A win that clears the requirement by at most this fraction counts as a photo finish.
+logic.PHOTO_FINISH = 0.05
+--- A comeback: the score before the winning hand was under this fraction of the requirement.
+logic.COMEBACK_RATIO = 0.25
+--- Clutch and comeback need at least this many hands played this blind (the winning hand included).
+logic.SITUATION_MIN_HANDS = 2
+
+--- The situation a winning hand ended in, or nil. a = {start, total, required, hands_left,
+--- hands_played}: start the round score before the hand, total the score after it, required the blind's
+--- requirement, hands_left the hands remaining after the winning hand, hands_played the hands played
+--- this blind including it. All plain numbers; when any is missing or nan the answer is nil.
+--- Priority when several hold: comeback > clutch > photo_finish. Photo finish has no hand floor.
+function logic.win_situation(a)
+  if type(a) ~= 'table' then return nil end
+  local start, total, required = a.start, a.total, a.required
+  local left, played = a.hands_left, a.hands_played
+  if not (is_reading(start) and is_reading(total) and is_reading(required)
+      and is_reading(left) and is_reading(played)) then
+    return nil
+  end
+  if required <= 0 then return nil end
+  local enough = played >= logic.SITUATION_MIN_HANDS
+  if enough and start < logic.COMEBACK_RATIO * required then return 'comeback' end
+  if enough and left == 0 then return 'clutch' end
+  if total >= required and total - required <= logic.PHOTO_FINISH * required then return 'photo_finish' end
+  return nil
+end
+
+--- Before scoring: could this hand become a clutch or a comeback if it wins? Used to hold back the live
+--- fear 1 and 2 lines so they never spoil the moment. a = {start, required, hands_left, hands_played} as
+--- in win_situation (hands_played counts this hand). False when any is missing.
+function logic.situation_candidate(a)
+  if type(a) ~= 'table' then return false end
+  local start, required, left, played = a.start, a.required, a.hands_left, a.hands_played
+  if not (is_reading(start) and is_reading(required) and is_reading(left) and is_reading(played)) then
+    return false
+  end
+  if required <= 0 or played < logic.SITUATION_MIN_HANDS then return false end
+  return left == 0 or start < logic.COMEBACK_RATIO * required
+end
+
+--- The defeat moment a winning hand earns. a = {situation, fear_tier}: situation from win_situation (or
+--- nil), fear_tier the final total's tier from logic.fear_tier (1 to 3; nil or 0 is below 2x, no tier).
+--- Priority: fear 3 (100x) > comeback > clutch > photo finish > fear 2 > fear 1 > plain defeat.
+function logic.defeat_choice(a)
+  local situation = type(a) == 'table' and a.situation or nil
+  local tier = type(a) == 'table' and a.fear_tier or nil
+  if type(tier) ~= 'number' then tier = 0 end
+  if tier >= 3 then return 'fear_3' end
+  if situation == 'comeback' or situation == 'clutch' or situation == 'photo_finish' then return situation end
+  if tier >= 2 then return 'fear_2' end
+  if tier >= 1 then return 'fear_1' end
+  return 'defeat'
+end
+
+--- A fresh Lucky tally for one hand: cards Lucky mult payouts, dollars Lucky $20 payouts, joker the
+--- center key of a chance Joker that hit (nil when none did).
+function logic.new_luck()
+  return {cards = 0, dollars = 0, joker = nil}
+end
+
+--- Records one lucky event on a tally t. kind 'card' (a Lucky mult payout), 'dollars' (a Lucky $20
+--- payout) or 'joker' (key = the Joker's center key). Unknown kinds are ignored.
+function logic.note_luck(t, kind, key)
+  if type(t) ~= 'table' then return end
+  if kind == 'card' then t.cards = (t.cards or 0) + 1
+  elseif kind == 'dollars' then t.dollars = (t.dollars or 0) + 1
+  elseif kind == 'joker' then t.joker = key or true end
+end
+
+--- The luck moment a tally earns, or nil: 'lucky_cards' when cards + dollars >= 2 or any $20 payout;
+--- else 'lucky_joker' when a chance Joker hit.
+function logic.luck_moment(t)
+  if type(t) ~= 'table' then return nil end
+  local cards, dollars = t.cards or 0, t.dollars or 0
+  if cards + dollars >= 2 or dollars >= 1 then return 'lucky_cards' end
+  if t.joker ~= nil then return 'lucky_joker' end
+  return nil
+end
+
+--- Whether the tally is stacked enough for a hype: 3+ Lucky payouts, or a $20 payout together with a
+--- chance Joker hit in the same hand.
+function logic.luck_stacked(t)
+  if type(t) ~= 'table' then return false end
+  local cards, dollars = t.cards or 0, t.dollars or 0
+  return cards + dollars >= 3 or (dollars >= 1 and t.joker ~= nil)
+end
+
+--- English fallbacks of the hype screen text; the dictionary keys fb_hype_<kind> carry the translations.
+logic.HYPE_TEXT = {clutch = 'CLUTCH!', comeback = 'COMEBACK!', photo_finish = 'PHOTO FINISH!',
+  lucky = 'LUCKY!', overkill = 'OVERKILL!'}
+
+--- The hype for a winning hand: {kind, meltdown} or nil. At most one per blind. a = {said, defeat_moment,
+--- stacked}: said true when this blind already had one; defeat_moment from defeat_choice (nil when the
+--- hand did not kill); stacked from luck_stacked. fear_3 is an overkill and the last words stand as the
+--- meltdown; comeback and clutch melt down; a photo finish is screen text only; stacked luck melts down
+--- on a non-killing hand and is text only on a kill whose defeat has no hype of its own.
+function logic.hype_for(a)
+  if type(a) ~= 'table' or a.said then return nil end
+  local m = a.defeat_moment
+  if m == 'fear_3' then return {kind = 'overkill', meltdown = false} end
+  if m == 'comeback' or m == 'clutch' then return {kind = m, meltdown = true} end
+  if m == 'photo_finish' then return {kind = 'photo_finish', meltdown = false} end
+  if a.stacked then return {kind = 'lucky', meltdown = m == nil} end
+  return nil
+end
+
 --- Slow motion before a tiered death (1.3), keyed by logic.death_tier, in real seconds at
 --- FinalBoss.timescale = scale. Each tier plays what the tier above it played before: 2x a short
 --- slow motion, 10x a longer one with a screen flash, 100x the longest freeze, in which the boss says
