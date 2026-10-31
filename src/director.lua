@@ -38,6 +38,10 @@ end
 
 --- The `line` hook's info (1.3.1): a fresh plain table of live values, read as the line is chosen
 --- (registry.resolve). Every field is nil-safe; tier, showdown and won need this boss's encounter.
+--- 1.4: chips_before, the round score before the hand being resolved (booked at context.after, so it
+--- holds while the hand scores and while its reaction is said, which runs after Dir.pending is taken;
+--- nil before the first hand or when unreadable); lucky (the hand's Lucky tally, filled by the luck
+--- reactions; nil for now).
 function Dir.line_info(blind_key)
   local game = G and G.GAME or {}
   local st = game.FinalBoss or {}
@@ -58,6 +62,8 @@ function Dir.line_info(blind_key)
     hand_type = game.last_hand_played,
     won = enc ~= nil and enc.win_hand ~= nil,
     lost = st.lost_to ~= nil and st.lost_to == blind_key,
+    chips_before = enc and enc.chips_before,
+    lucky = nil,
   }
 end
 
@@ -326,6 +332,18 @@ function Dir.on_hand_after(context)
   local won, unknown, total = FinalBoss.logic.hand_outcome{oneshot = SMODS.last_hand_oneshot,
     own = own_win(blind), start = chips, delta = delta, required = required}
   local hands_left = cr.hands_left
+  -- 1.4 situations. hands_played above is the id, NOT a count of this blind's hands: vanilla queues its
+  -- +1 after evaluate_play (functions/state_events.lua:512, :524), so at context.after it does not yet
+  -- count this hand; the count with it is hands_played + 1. hands_left is already this hand's -1
+  -- (ease_hands_played at play time). A hand that could end as a clutch or comeback holds back the
+  -- live fear 1 and 2 lines (observe.fear_tick), so they never spoil its defeat line. Booked here, by
+  -- the id fear_tick reads (enc.last_hand_seen): context.after runs inside evaluate_play, before the
+  -- score animation events it queued, which is when fear_tick watches the climb.
+  local played = hands_played + 1
+  local candidate = FinalBoss.logic.situation_candidate{start = chips, required = required,
+    hands_left = hands_left, hands_played = played}
+  enc.candidate_hand = candidate and hands_played or nil
+  enc.chips_before = chips -- the line hook's chips_before (Dir.line_info) until the next hand
   -- Set before the game-over screen picks its quip; cleared in on_round_end if the run continues.
   if hands_left == 0 and not won then st.lost_to = enc.key end
   if won then -- the winning hand (achievements read these at blind_defeated; start may be nil)
@@ -346,14 +364,20 @@ function Dir.on_hand_after(context)
   local hand_type = (context and context.scoring_name) or G.GAME.last_hand_played
   enc.type_streak = FinalBoss.logic.next_streak(enc.last_type, enc.type_streak, hand_type)
   enc.last_type = hand_type
-  local played = context and context.full_hand
+  local cards = context and context.full_hand
+  -- 1.4: the situation the winning hand ended in (logic.win_situation assumes a win: only a known one).
+  local situation = nil
+  if won and not unknown then
+    situation = FinalBoss.logic.win_situation{start = chips, total = total, required = required,
+      hands_left = hands_left, hands_played = played}
+  end
   -- The reaction waits until the game shows the score (Dir.tick -> logic.score_landed), or the
   -- boss would spoil it. Everything above is decided now.
   -- delta, total and required may be nil (unknown: logic.hand_outcome); every reader checks.
   local p = {start = chips, delta = delta, total = total, required = required, moment = moment,
     won = won, unknown = unknown, enc = enc, blind = blind, t0 = FinalBoss.util.now(), queued_done = false, hand = hands_played,
-    hands_left = hands_left, hand_type = hand_type, streak = enc.type_streak,
-    cards_played = played and #played or (G.play and #G.play.cards or 0),
+    hands_left = hands_left, hand_type = hand_type, streak = enc.type_streak, situation = situation,
+    cards_played = cards and #cards or (G.play and #G.play.cards or 0),
     discards_left = cr.discards_left, discards_used = cr.discards_used}
   Dir.pending = p
   -- Completion signal in queue order: context.after runs inside evaluate_play (state_events.lua)
@@ -441,16 +465,17 @@ local function react(p)
     return
   end
   -- The nemesis's own defeat line (1.1) always replaces the defeat line, even a fear line said live.
-  -- Else the live fear scale (1.3, observe.fear_tick) decides: a fear line already said on this hand
-  -- stands and the defeat line is skipped (the death follows); a tier the live scale never announced
-  -- gets its fear line now, with its visuals (Dir.fear_fx); otherwise the plain defeat line. Any of
+  -- Else observe.fear_line picks it (logic.defeat_choice): a fear line already said on this hand
+  -- stands and the defeat line is skipped (the death follows); 1.4: a comeback, clutch or photo
+  -- finish (p.situation) beats fear 1 and 2; a tier the live scale never announced gets its fear line
+  -- now, with its visuals (Dir.fear_fx, fear lines only); otherwise the plain defeat line. Any of
   -- them is said as the defeat moment, forced like the defeat line.
   -- The 100x death (logic.last_words_due) replaces any of them with the boss's last words, said as
   -- the freeze starts: here with the finale (started by stage_hit above), else by Dir.chip_death.
   local line = FinalBoss.memory.defeat_line(enc, p.moment)
   if not line then
     line = FinalBoss.observe.fear_line(p, enc)
-    if line then FinalBoss.util.guard('fear_fx', Dir.fear_fx, enc, blind, enc.fear_said) end
+    if line and line:find('^fear_') then FinalBoss.util.guard('fear_fx', Dir.fear_fx, enc, blind, enc.fear_said) end
     if p.moment == 'defeat' and FinalBoss.logic.last_words_due(Dir.death_tier(enc, p.total, p.required)) then
       if enc.finale then Dir.last_words(enc) end
       return

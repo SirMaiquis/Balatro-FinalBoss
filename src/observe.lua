@@ -139,13 +139,17 @@ function O.comment_for(enc, p)
     last_line_hand = enc.last_line_hand, hand = p.hand}
 end
 
---- The winning hand's defeat line after the live fear scale (1.3, O.fear_tick). p: the director's
---- pending reaction; enc: its encounter (enc.fear_said, enc.fear_hand: plain saved data).
----   false   a fear line was already said live on this hand: the defeat line is skipped (the fear
----           line stands, the death follows);
+--- The winning hand's defeat line after the live fear scale (1.3, O.fear_tick) and the hand's
+--- situation (1.4, p.situation from logic.win_situation), chosen by logic.defeat_choice. p: the
+--- director's pending reaction; enc: its encounter (enc.fear_said, enc.fear_hand: plain saved data).
+---   false   a fear line was already said live on this hand and the choice is a fear tier: the
+---           defeat line is skipped (the fear line stands, the death follows);
 ---   'fear_N' the final total reached a tier the live scale never announced (a fallback, booked like a
 ---           live crossing): it replaces the defeat line;
----   nil     the boss says its own defeat line (below 2x, or the tier was said on an earlier hand).
+---   'comeback' | 'clutch' | 'photo_finish' the situation beats fear 1 and 2 (not fear 3); no fear
+---           tier is booked;
+---   nil     the boss says its own defeat line (no situation and below 2x, or the tier was said on an
+---           earlier hand; or a win whose score is unknown, a late win).
 --- Not the winning defeat hand: nil. 1.3.1: p.won (logic.hand_outcome) decides the win when set;
 --- a total that cannot be read gives no tier (fear_tier), so the plain defeat line.
 function O.fear_line(p, enc)
@@ -156,12 +160,18 @@ function O.fear_line(p, enc)
   end
   if not won then return nil end
   enc = enc or {}
-  -- enc.fear_hand is the id Dir.on_hand_after booked (enc.last_hand_seen), the same as p.hand.
-  if enc.fear_hand ~= nil and enc.fear_hand == p.hand then return false end
-  local t = L().fear_step(enc.fear_said, L().fear_tier(p.total, p.required))
-  if not t then return nil end
+  -- enc.fear_hand is the id Dir.on_hand_after booked (enc.last_hand_seen), the same as p.hand. A tier
+  -- said live on this hand is its fear tier; a candidate hand (enc.candidate_hand) can only say 3.
+  local live = enc.fear_hand ~= nil and enc.fear_hand == p.hand
+  if p.unknown and not live then return nil end
+  local t
+  if live then t = enc.fear_said else t = L().fear_step(enc.fear_said, L().fear_tier(p.total, p.required)) end
+  local choice = L().defeat_choice{situation = not p.unknown and p.situation or nil, fear_tier = t}
+  if choice == 'defeat' then return nil end
+  if not choice:find('^fear_') then return choice end
+  if live then return false end
   enc.fear_said, enc.fear_hand = t, p.hand
-  return 'fear_' .. t
+  return choice
 end
 
 -- The live fear scale (1.3) ----------------------------------------------------------------------
@@ -236,6 +246,10 @@ function O.fear_tick()
   -- The hand id Dir.on_hand_after booked for this hand: vanilla's hands_played +1 event is queued
   -- before evaluate_play queues the score display, so during the animation hands_played is already
   -- one ahead (functions/state_events.lua, G.FUNCS.play_cards_from_highlighted).
+  -- 1.4: on a hand that could end as a clutch or comeback (enc.candidate_hand, booked by
+  -- Dir.on_hand_after at context.after, which runs before this animation), fear 1 and 2 stay silent and
+  -- unbooked: its defeat line beats them (logic.defeat_choice). Fear 3 still fires.
+  if t < 3 and enc.candidate_hand ~= nil and enc.candidate_hand == enc.last_hand_seen then return end
   enc.fear_said, enc.fear_hand = t, enc.last_hand_seen
   -- Visual only: a failure is logged, and the line is still said.
   local ok, err = pcall(FinalBoss.director.fear_fx, enc, blind, t)

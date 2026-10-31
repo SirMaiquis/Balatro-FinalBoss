@@ -303,6 +303,35 @@ T['fear_line: a fear line said live on this hand skips the defeat line; else a f
   eq(ctx.O.fear_line({moment = 'defeat', total = 150, required = 100, hand = 3}, {}), nil, 'below 2x')
 end
 
+T['fear_line: a situation beats fear 1 and 2, never fear 3 (1.4)'] = function()
+  local ctx = setup()
+  local function win(o)
+    local p = {moment = 'defeat', won = true, total = 1500, required = 100, hand = 3}
+    for k, v in pairs(o) do p[k] = v end
+    return p
+  end
+  local enc = {}
+  eq(ctx.O.fear_line(win{situation = 'comeback'}, enc), 'comeback', 'final tier 2')
+  eq(enc.fear_said, nil, 'no fear tier booked'); eq(enc.fear_hand, nil)
+  eq(ctx.O.fear_line(win{situation = 'clutch', total = 250}, {}), 'clutch', 'final tier 1')
+  eq(ctx.O.fear_line(win{situation = 'photo_finish', total = 104}, {}), 'photo_finish')
+  enc = {}
+  eq(ctx.O.fear_line(win{situation = 'comeback', total = 1e6}, enc), 'fear_3', 'final tier 3')
+  eq(enc.fear_said, 3); eq(enc.fear_hand, 3)
+  eq(ctx.O.fear_line(win{situation = nil}, {}), 'fear_2', 'no situation: as before')
+  eq(ctx.O.fear_line(win{situation = nil, total = 150}, {}), nil, 'no situation, no tier: the plain line')
+  eq(ctx.O.fear_line(win{situation = 'comeback', total = 1e6}, {fear_said = 3, fear_hand = 3}), false,
+    'a live fear 3 on this hand stands')
+  eq(ctx.O.fear_line(win{situation = 'clutch'}, {fear_said = 2, fear_hand = 1}), 'clutch',
+    'a tier said on an earlier hand')
+end
+
+T['fear_line: a late win (unknown score) says the plain defeat line (1.4)'] = function()
+  local ctx = setup()
+  eq(ctx.O.fear_line({moment = 'defeat', won = true, unknown = true, total = 2500, required = 1000,
+    hand = 2, situation = 'comeback'}, {}), nil)
+end
+
 -- The live fear scale -------------------------------------------------------------------------------
 
 --- A boss fight with a hand scoring: round score 100 of a 1000 requirement, displayed chips x mult.
@@ -355,6 +384,21 @@ T['fear_tick then the defeat line: the same hand skips it, the next hand does no
     'the hand that crossed live')
   eq(ctx.O.fear_line({moment = 'defeat', total = 10000, required = 1000, hand = 2}, ctx.enc), nil,
     'a later winning hand at the same tier says its defeat line')
+end
+
+T['fear_tick: a clutch or comeback candidate holds back fear 1 and 2, never fear 3 (1.4)'] = function()
+  local ctx = fear_setup()
+  ctx.enc.candidate_hand = 1 -- the hand on_hand_after booked (enc.last_hand_seen)
+  ctx.show(100, 19)
+  ctx.show(100, 99)
+  eq(#ctx.fired, 0, 'fear 1 and 2 held back'); eq(#ctx.fx, 0)
+  eq(ctx.enc.fear_said, nil, 'nothing booked'); eq(ctx.enc.fear_hand, nil)
+  ctx.show(1000, 100)
+  eq(#ctx.fired, 1); eq(ctx.fired[1], 'fear_3'); eq(ctx.enc.fear_said, 3); eq(ctx.enc.fear_hand, 1)
+  local other = fear_setup()
+  other.enc.candidate_hand = 0 -- an earlier hand was the candidate
+  other.show(100, 19)
+  eq(other.fired[1], 'fear_1')
 end
 
 T['fear_tick: a jump straight past a tier announces only the top one'] = function()
