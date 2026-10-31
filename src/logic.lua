@@ -1643,6 +1643,15 @@ logic.POKE_REACTIONS = {
 logic.POKE_FLASH = 0.08 -- reduced motion: a recipe without a flash gets a short white one instead
 local MOTION = {'juice', 'rot', 'shake', 'shake_amp', 'recoil', 'bounces', 'jiggle'}
 
+--- Reduced motion: strips the movement from recipe r (in place) and makes sure it still flashes.
+local function reduce_reaction(r, reduced)
+  if reduced then
+    for _, k in ipairs(MOTION) do r[k] = nil end
+    if not r.flash then r.flash, r.flash_time = 'white', logic.POKE_FLASH end
+  end
+  return r
+end
+
 --- The physical reaction (a copy of a POKE_REACTIONS recipe) of a personality's chip to kind ('poked',
 --- 'poked_hard' or 'grabbed': the poked recipe without the recoil, since the chip is in the hand).
 --- Unknown personalities react as DEFAULT_PERSONALITY. reduced (reduced motion): flashes and sounds only.
@@ -1651,11 +1660,19 @@ function logic.poke_reaction(personality, kind, reduced)
   local r = {}
   for k, v in pairs(set[kind == 'poked_hard' and 'poked_hard' or 'poked']) do r[k] = v end
   if kind == 'grabbed' then r.recoil = nil end
-  if reduced then
-    for _, k in ipairs(MOTION) do r[k] = nil end
-    if not r.flash then r.flash, r.flash_time = 'white', logic.POKE_FLASH end
-  end
-  return r
+  return reduce_reaction(r, reduced)
+end
+
+--- The boss's meltdown on a clutch, comeback or overkill (1.4): a long jolt, a hard shake and a red flash,
+--- in the shape of a POKE_REACTIONS recipe. Reduced motion: flash only, like poke_reaction.
+logic.MELTDOWN_REACTION = {juice = 0.9, rot = 0.5, shake = 1.4, shake_amp = 0.18, flash = 'red', flash_time = 0.6,
+  jiggle = 2}
+
+--- A copy of MELTDOWN_REACTION (flash only under reduced motion).
+function logic.meltdown_reaction(reduced)
+  local r = {}
+  for k, v in pairs(logic.MELTDOWN_REACTION) do r[k] = v end
+  return reduce_reaction(r, reduced)
 end
 
 -- Tricks: consumables used and jokers created in the fight (1.3) ----------------------------------
