@@ -1,5 +1,10 @@
 # Changelog
 
+## Unreleased
+
+### Fixes
+- No more crash on some Android devices when a showdown starts ("Shader uniform 'fb_intensity' does not exist"). If the device's graphics driver can't run the screen vignette, it now turns itself off and everything else keeps working.
+
 ## 1.3.1
 
 ### New
