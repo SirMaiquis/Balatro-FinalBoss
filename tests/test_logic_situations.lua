@@ -112,4 +112,55 @@ function T.hype_for_rules()
   eq(h(true, nil, true), nil)
 end
 
+function T.new_moments_are_personality_moments()
+  eq(#logic.NEW_MOMENTS_1_4, 10, 'ten new moments')
+  local listed = {}
+  for _, m in ipairs(logic.PERSONALITY_MOMENTS) do listed[m] = true end
+  for _, m in ipairs(logic.NEW_MOMENTS_1_4) do
+    eq(listed[m], true, m .. ' in PERSONALITY_MOMENTS')
+    eq(logic.personality_variants(m), 3, m .. ' variants')
+  end
+end
+
+function T.new_moment_groups()
+  local seen = {}
+  for _, list in ipairs({logic.SITUATION_MOMENTS, logic.OUTSIDE_MOMENTS}) do
+    for _, m in ipairs(list) do
+      eq(seen[m], nil, m .. ' in one group only')
+      seen[m] = true
+    end
+  end
+  for _, m in ipairs(logic.NEW_MOMENTS_1_4) do eq(seen[m], true, m .. ' grouped') end
+  eq(#logic.SITUATION_MOMENTS + #logic.OUTSIDE_MOMENTS, #logic.NEW_MOMENTS_1_4, 'no extras')
+  for _, m in ipairs({'rerolled_out', 'rerolled_in', 'preview', 'early_loss'}) do
+    local found = false
+    for _, o in ipairs(logic.OUTSIDE_MOMENTS) do found = found or o == m end
+    eq(found, true, m .. ' is outside the fight')
+  end
+end
+
+function T.defeat_situations_are_forced()
+  for _, m in ipairs({'clutch', 'photo_finish', 'comeback', 'meltdown'}) do
+    eq(logic.FORCED_MOMENTS[m], true, m)
+  end
+  for _, m in ipairs({'lucky_cards', 'lucky_joker', 'rerolled_out', 'rerolled_in', 'preview', 'early_loss'}) do
+    eq(logic.FORCED_MOMENTS[m], nil, m .. ' not forced')
+  end
+  eq(logic.FORCED_MOMENTS.defeat, true, 'defeat still forced')
+end
+
+-- A registered boss with no lines of its own and no personality falls back to the generic lines
+-- for every new moment (Review Focus 5).
+function T.new_moments_fall_back_to_generic()
+  for _, m in ipairs(logic.NEW_MOMENTS_1_4) do
+    local generic = 'fb_generic_' .. m
+    local prefix, is_generic = logic.resolve_prefix('bl_mymod_x', m, function(p)
+      return p == generic and 2 or 0
+    end)
+    eq(prefix, generic, m)
+    eq(is_generic, true, m .. ' is generic')
+    eq(logic.resolve_prefix('bl_mymod_x', m, function() return 0 end), nil, m .. ' with no lines')
+  end
+end
+
 return T

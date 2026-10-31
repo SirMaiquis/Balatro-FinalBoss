@@ -13,6 +13,8 @@ Every personality (src/logic.lua PERSONALITIES) has a line for every run moment 
 Card lines: used_tarot_<group> (wheel_hit / _miss / _rigged too), used_spectral_<group>,
 used_planet_waste and joker_created need #2#; used_planet_main needs #3#, and no other quip may use
 #3#. In all card lines a string holding #2# has at most 9 other characters.
+1.4 moments (NEW_MOMENTS_1_4): default.lua has fb_generic_<m>_1..2 and fb_<final>_<m>_1..2 for
+every final boss (FINAL_BOSSES); the moments said outside the fight (OUTSIDE_MOMENTS) use no #2#/#3#.
 """
 import pathlib
 import re
@@ -115,6 +117,28 @@ def personality_problems(lua, data):
     return out
 
 
+NEW_MOMENT_VARIANTS = 2  # generic and final-boss lines per 1.4 moment
+
+
+def new_moment_problems(logic, data):
+    """default.lua: every 1.4 moment has generic lines and lines for each vanilla final boss."""
+    out = []
+    finals = list(logic['FINAL_BOSSES'].values())
+    for m in logic['NEW_MOMENTS_1_4'].values():
+        for prefix in [f'fb_generic_{m}'] + [f'fb_{b}_{m}' for b in finals]:
+            for i in range(1, NEW_MOMENT_VARIANTS + 1):
+                key = f'quips.{prefix}_{i}'
+                if key not in data:
+                    out.append(f'missing 1.4 line {key}')
+    return out
+
+
+def outside_key(logic):
+    """Regex for the lines said outside the fight (no card, hand or level to name)."""
+    names = '|'.join(re.escape(m) for m in logic['OUTSIDE_MOMENTS'].values())
+    return re.compile(rf'^quips\.fb_\w+_(?:{names})_\d+$')
+
+
 def main(names):
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8')
@@ -126,6 +150,8 @@ def main(names):
         return 1
     paths = ([pathlib.Path(n) if n.endswith('.lua') else LOC / f'{n}.lua' for n in names]
              if names else sorted(LOC.glob('*.lua')))
+    logic = lua.execute((ROOT / 'src' / 'logic.lua').read_text(encoding='utf-8'))
+    outside = outside_key(logic)
     errors = []
     for path in paths:
         try:
@@ -135,6 +161,8 @@ def main(names):
             continue
         errors.extend(f'{path.name}: {p}' for p in problems)
         errors.extend(f'{path.name}: {p}' for p in personality_problems(lua, data))
+        if path.name == 'default.lua':
+            errors.extend(f'{path.name}: {p}' for p in new_moment_problems(logic, data))
         for key, lines in data.items():
             for line in lines:
                 why = tag_problem(line)
@@ -153,6 +181,8 @@ def main(names):
                 errors.append(f'{path.name}: {key}: planet main line needs #3#')
             if '#3#' in ' '.join(lines) and key.startswith('quips.') and not LEVEL_KEY.search(key):
                 errors.append(f'{path.name}: {key}: #3# is only for used_planet_main')
+            if outside.match(key) and re.search(r'#[23]#', ' '.join(lines)):
+                errors.append(f'{path.name}: {key}: lines said outside the fight take no #2#/#3#')
             if GLOAT_KEY.match(key):
                 why = gloat_problem(lines)
                 if why:

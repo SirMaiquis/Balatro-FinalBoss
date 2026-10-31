@@ -73,7 +73,9 @@ local PRIORITY = {'last_hand', 'close', 'big_hand'}
 
 -- Moments whose line always shows (no cooldown, cuts the current line). 'interrupted' is said
 -- when the player plays a hand while the boss's intro is still running (once per encounter).
-logic.FORCED_MOMENTS = {defeat = true, interrupted = true}
+-- clutch, photo_finish, comeback and meltdown (1.4) are defeat lines, said in place of 'defeat'.
+logic.FORCED_MOMENTS = {defeat = true, interrupted = true, clutch = true, photo_finish = true,
+  comeback = true, meltdown = true}
 
 -- Moments that may fire more than once per blind (their own caps live elsewhere: idle, logic.IDLE_MAX).
 logic.REPEATABLE = {idle = true}
@@ -1804,6 +1806,19 @@ end
 for _, m in ipairs({'used_tarot_wheel_hit', 'used_tarot_wheel_miss', 'used_tarot_wheel_rigged'}) do
   logic.PERSONALITY_MOMENTS[#logic.PERSONALITY_MOMENTS + 1] = m
   logic.PERSONALITY_VARIANTS[m] = 2
+end
+
+-- The 1.4 moments: said in the fight (win situations, luck, the hype meltdown) or outside it, from
+-- the blind-select chip or the game-over screen (no #2#/#3#: no card or hand to name there).
+-- Every personality has 3 variants of each; tools/check_loc.py also wants 2 generic lines and 2
+-- lines for each of logic.FINAL_BOSSES.
+logic.SITUATION_MOMENTS = {'clutch', 'photo_finish', 'comeback', 'lucky_cards', 'lucky_joker', 'meltdown'}
+logic.OUTSIDE_MOMENTS = {'rerolled_out', 'rerolled_in', 'preview', 'early_loss'}
+logic.NEW_MOMENTS_1_4 = {'clutch', 'photo_finish', 'comeback', 'lucky_cards', 'lucky_joker', 'rerolled_out',
+  'rerolled_in', 'preview', 'early_loss', 'meltdown'}
+for _, m in ipairs(logic.NEW_MOMENTS_1_4) do
+  logic.PERSONALITY_MOMENTS[#logic.PERSONALITY_MOMENTS + 1] = m
+  logic.PERSONALITY_VARIANTS[m] = 3
 end
 
 function logic.personality_variants(moment)
