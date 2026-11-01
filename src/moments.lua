@@ -12,13 +12,16 @@ M.PREVIEW_DELAY = 0.8 -- seconds after the blind-select screen is built (it slid
 M.FIRST_PREVIEW_DELAY = 1.6
 -- Reroll (M.on_reroll_click): a copy of the outgoing boss's chip protests where its chip was, then is
 -- yanked off the nearest screen edge; the new boss sneers when it is gone. REAL seconds from the click.
-M.YANK_HOLD = 0.15    -- the copy sits with its line (vanilla's panel drops away under it)
-M.YANK_SHAKE = 0.25   -- then shakes (amplitude M.YANK_SHAKE_AMP, room units)
+M.YANK_HOLD = 2.0     -- the copy holds in place while its line is read (two short lines need ~2 s);
+                      -- vanilla's panel drops away under it
+M.YANK_SHAKE = 0.3    -- the last part of the hold it shakes (amplitude M.YANK_SHAKE_AMP, room units)
 M.YANK_SHAKE_AMP = 0.06
-M.YANK_SLIDE = 1.2    -- then slides out, accelerating
+M.YANK_SLIDE = 0.9    -- then its bubble goes and it slides out, accelerating
 M.YANK_MARGIN = 1     -- room units past the edge the copy ends at
-M.YANK_FADE = 0.4     -- reduced motion or fx off: no shake or slide, the copy dissolves over this, ending
-M.PROTEST_TIME = M.YANK_HOLD + M.YANK_SHAKE + M.YANK_SLIDE -- the protest's length: the sneer follows
+M.YANK_FADE = 0.4     -- reduced motion or fx off: no shake or slide; after the hold the bubble goes and the
+                      -- copy dissolves over this
+M.PROTEST_TIME = M.YANK_HOLD + M.YANK_SLIDE -- the yanked protest's length: the sneer follows
+M.STILL_TIME = M.YANK_HOLD + M.YANK_FADE    -- the still (dissolving) protest's length
 M.LINE_DURATION = 3.5 -- seconds a line stays up
 M.copy = nil          -- the flying copy {box, sprite, key} while it is up
 M.reroll = nil        -- the click's pending pair {token, old, ends}: M.on_reroll sneers at REAL time ends
@@ -234,24 +237,38 @@ local function place(c, x, y)
   if VT then VT.x, VT.y = x, y end -- a yank, not a glide: the spring would lag behind
 end
 
+--- The protest is over (read): its bubble goes before the copy moves or dissolves, so it never trails
+--- the slide or vanishes halfway off screen.
+local function hide_bubble(c)
+  if c.bubble_hidden then return end
+  c.bubble_hidden = true
+  local D = FinalBoss.dialogue
+  if D and D.host == c.sprite and D.hide then D.hide() end
+end
+
 --- One frame of the copy's exit; true when it is over. Still (reduced motion, fx off): it holds with its
---- line, then dissolves. Else it holds, shakes, then slides off the nearest edge, accelerating.
+--- line for M.YANK_HOLD, then the bubble goes and it dissolves. Else it holds (shaking at the end of the
+--- hold), then the bubble goes and it slides off the nearest edge, accelerating.
 local function yank_frame(c)
   local t = real_now() - c.t0
-  if t >= M.PROTEST_TIME then return true end
-  if c.still then
-    local f = t - (M.PROTEST_TIME - M.YANK_FADE)
-    if f > 0 then c.sprite.dissolve = math.min(1, f / M.YANK_FADE) end
-    return false
-  end
+  if t >= c.duration then return true end
   local s = t - M.YANK_HOLD
-  if s <= 0 then return false end
-  if s < M.YANK_SHAKE then
-    local a = M.YANK_SHAKE_AMP
-    place(c, c.x0 + (math.random() - 0.5) * 2 * a, c.y0 + (math.random() - 0.5) * 2 * a)
+  if c.still then
+    if s > 0 then
+      hide_bubble(c)
+      c.sprite.dissolve = math.min(1, s / M.YANK_FADE)
+    end
     return false
   end
-  local p = math.min(1, (s - M.YANK_SHAKE) / M.YANK_SLIDE)
+  if s < 0 then
+    if s > -M.YANK_SHAKE then
+      local a = M.YANK_SHAKE_AMP
+      place(c, c.x0 + (math.random() - 0.5) * 2 * a, c.y0 + (math.random() - 0.5) * 2 * a)
+    end
+    return false
+  end
+  hide_bubble(c)
+  local p = math.min(1, s / M.YANK_SLIDE)
   local e = p * p * p
   place(c, c.x0 + (c.tx - c.x0) * e, c.y0 + (c.ty - c.y0) * e)
   return false
@@ -261,6 +278,7 @@ end
 local function start_yank(c)
   c.t0 = real_now()
   c.still = (G.SETTINGS and G.SETTINGS.reduced_motion) or not cfg().fx
+  c.duration = c.still and M.STILL_TIME or M.PROTEST_TIME
   if not c.still then
     c.edge, c.tx, c.ty = M.yank_target(c.x0, c.y0, c.w, c.h, {screen_bounds()})
   end
@@ -292,12 +310,13 @@ function M.on_reroll_click(old_key)
   if not (ok and c) then return end
   M.copy = c
   if not speak(old_key, 'rerolled_out', c.sprite) then M.remove_copy(); return end
-  M.reroll.ends = real_now() + M.PROTEST_TIME
   local sok, err = pcall(start_yank, c)
   if not sok then
     FinalBoss.util.log('error', 'reroll yank failed: ' .. tostring(err))
     M.remove_copy()
+    return
   end
+  M.reroll.ends = c.t0 + c.duration -- the sneer comes right after the copy is gone
 end
 
 --- The boss was rerolled (old_key -> new_key, the new chip already built): the new one sneers once

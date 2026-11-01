@@ -202,14 +202,22 @@ T['on_reroll: a copy of the OLD chip protests at the click, the NEW boss sneers 
   G.GAME.round_resets.blind_choices.Boss = 'bl_wall' -- vanilla's swap, ~0.3 game-seconds later
   ctx.M.on_reroll('bl_hook', 'bl_wall')
   eq(#ctx.said, 1, 'no sneer during the protest')
+  eq(ctx.M.YANK_HOLD, 2.0, 'two short lines need ~2 s'); eq(ctx.M.PROTEST_TIME, 2.9, '~3 s in all')
   ctx.run(0.1)
-  eq(box.T.x, 14, 'holds first')
-  ctx.run(1.0)
-  eq(box.T.x > 14, true, 'yanked toward the nearest edge (right)')
-  eq(#ctx.said, 1)
+  eq(box.T.x, 14, 'holds while the line is read')
+  ctx.run(1.5)
+  eq(box.T.x, 14, 'still holding at 1.5 s'); eq(ctx.hidden, nil, 'line still up')
+  ctx.run(1.9)
+  eq(math.abs(box.T.x - 14) <= ctx.M.YANK_SHAKE_AMP, true, 'shaking at the end of the hold, in place')
+  eq(ctx.hidden, nil, 'line still up while it shakes')
+  ctx.run(2.05)
+  eq(ctx.hidden, 1, 'the bubble goes as the slide starts')
+  ctx.run(2.6)
+  eq(box.T.x > 14 + ctx.M.YANK_SHAKE_AMP, true, 'yanked toward the nearest edge (right)')
+  eq(#ctx.said, 1, 'no sneer during the slide')
   ctx.run(ctx.M.PROTEST_TIME + 0.01)
   eq(box.removed, 1, 'the copy is gone'); eq(ctx.M.copy, nil)
-  eq(ctx.hidden, 1, 'its bubble with it')
+  eq(ctx.hidden, 1, 'hidden once only')
   ctx.run(ctx.M.PROTEST_TIME + 0.02)
   eq(ctx.keys(), 'fb_bl_hook_rerolled_out,fb_bl_wall_rerolled_in', 'then the sneer')
   eq(ctx.said[2].host, ctx.chip, 'from the real (new) chip')
@@ -236,13 +244,15 @@ T['on_reroll: reduced motion or fx off, the copy stays put and dissolves after i
     local ctx = setup(o)
     reroll(ctx, 'bl_hook', 'bl_wall')
     local box = ctx.copies[1]
-    ctx.run(0.5); ctx.run(1.0)
+    ctx.run(0.5); ctx.run(1.9)
     eq(box.T.x, 14, 'no slide'); eq(box.T.y, 5, 'no shake')
-    eq(box.sprite.dissolve, 0, 'not yet')
-    ctx.run(ctx.M.PROTEST_TIME - 0.1)
+    eq(box.sprite.dissolve, 0, 'holds ~2 s'); eq(ctx.hidden, nil, 'line still up')
+    ctx.run(ctx.M.YANK_HOLD + 0.2)
+    eq(ctx.hidden, 1, 'the bubble goes as it dissolves')
     eq(box.sprite.dissolve > 0 and box.sprite.dissolve < 1, true, 'dissolving')
-    ctx.run(ctx.M.PROTEST_TIME + 0.01); ctx.run(ctx.M.PROTEST_TIME + 0.02)
-    eq(box.removed, 1); eq(ctx.keys(), 'fb_bl_hook_rerolled_out,fb_bl_wall_rerolled_in')
+    eq(#ctx.said, 1, 'no sneer yet')
+    ctx.run(ctx.M.STILL_TIME + 0.01); ctx.run(ctx.M.STILL_TIME + 0.02)
+    eq(box.removed, 1); eq(ctx.keys(), 'fb_bl_hook_rerolled_out,fb_bl_wall_rerolled_in', 'then the sneer')
   end
 end
 
@@ -250,7 +260,7 @@ T['on_reroll: a pending preview gives way to the reroll'] = function()
   local ctx = setup()
   ctx.M.on_blind_select()
   reroll(ctx, 'bl_hook', 'bl_wall')
-  for t = 1, 4 do ctx.run(t) end
+  for t = 1, 5 do ctx.run(t) end
   eq(ctx.keys(), 'fb_bl_hook_rerolled_out,fb_bl_wall_rerolled_in')
 end
 
@@ -262,7 +272,7 @@ T['on_reroll: two quick rerolls, only the latest sneer plays; the first copy goe
   reroll(ctx, 'bl_wall', 'bl_ox')
   eq(ctx.copies[1].removed, 1, 'the first copy removed')
   eq(ctx.copies[2].sprite.pos.y, 9, 'the second copy is the Wall')
-  for t = 1, 6 do ctx.run(t) end
+  for t = 1, 7 do ctx.run(t) end
   eq(ctx.keys(), 'fb_bl_hook_rerolled_out,fb_bl_wall_rerolled_out,fb_bl_ox_rerolled_in')
   eq(ctx.copies[2].removed, 1)
 end
@@ -312,7 +322,7 @@ T['teardown: a pending sneer never plays and the flying copy is removed'] = func
   ctx.M.teardown()
   eq(ctx.copies[1].removed, 1, 'copy removed'); eq(ctx.M.copy, nil)
   eq(ctx.hidden, nil, 'the bubble is left to dialogue.drop_on_teardown')
-  for t = 1, 4 do ctx.run(t) end
+  for t = 1, 5 do ctx.run(t) end
   eq(ctx.keys(), 'fb_bl_hook_rerolled_out')
   eq(ctx.copies[1].removed, 1, 'never touched again')
   G.GAME.round_resets.ante = 3
