@@ -3,10 +3,16 @@
 --- needs config.dialogue, never config.fx (no visuals here). hooks.lua calls in.
 local M = {}
 M.PREVIEW_DELAY = 0.8 -- seconds after the blind-select screen is built (it slides up from below)
+-- The first screen after a run starts or loads also waits out the screen wipe: G.FUNCS.start_run queues
+-- G.FUNCS.wipe_off (button_callbacks.lua:3014-3035, 3186-3230): a 0.3 s delay, then 0.3 s fades of the
+-- wipe and, from 0.55 s, its card dissolving; the blind-select UIBox is queued behind those events and
+-- slides up from below the room (game.lua:3466-3470). 1.6 s clears the wipe plus the slide-in.
+M.FIRST_PREVIEW_DELAY = 1.6
 M.SNEER_DELAY = 2     -- seconds between the outgoing boss's protest and the new boss's sneer
 M.LINE_DURATION = 3.5 -- seconds a line stays up
 M.token = 0           -- bumped to cancel pending lines (a newer line, teardown)
 M.last_variant = {}   -- per-prefix last variant (registry.resolve), session only
+M.fresh = true        -- no blind-select screen yet since the run started or loaded (teardown resets it)
 
 local function cfg() return FinalBoss.config end
 
@@ -109,15 +115,15 @@ end
 function M.on_blind_select()
   if not G.GAME then return end
   local st = FinalBoss.util.state()
-  local first = not st.select_seen
-  st.select_seen = true
+  local first = M.fresh
+  M.fresh = false
   if not active() then return end
   local key = boss_key()
   local ante = G.GAME.round_resets.ante
-  if not FinalBoss.logic.preview_due{ante = ante, previewed_ante = st.previewed_ante, tier = tier_of(key, st),
-    first_select = first} then return end
+  if not FinalBoss.logic.preview_due{ante = ante, previewed_ante = st.previewed_ante, tier = tier_of(key, st)}
+    then return end
   local token = bump()
-  after(M.PREVIEW_DELAY, function()
+  after(first and M.FIRST_PREVIEW_DELAY or M.PREVIEW_DELAY, function()
     if M.token ~= token or boss_key() ~= key or st.previewed_ante == ante then return end
     -- Counted only once seen, so a blind picked or a quit before it shows leaves it for next time.
     if speak(key, 'preview') then st.previewed_ante = ante end
@@ -143,6 +149,7 @@ end
 --- pending lines. dialogue.drop_on_teardown forgets the bubble itself.
 function M.teardown()
   bump()
+  M.fresh = true -- the next run's first screen comes in behind the screen wipe
 end
 
 return M

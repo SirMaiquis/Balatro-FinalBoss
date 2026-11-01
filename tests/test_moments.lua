@@ -21,11 +21,8 @@ T['preview_due: once per ante, never for a silent boss'] = function()
   eq(L.preview_due{ante = 2, previewed_ante = nil, tier = nil}, false, 'unreadable boss')
 end
 
-T['preview_due: not over the first blind-select screen of ante 1'] = function()
-  local L = logic()
-  eq(L.preview_due{ante = 1, tier = 'light', first_select = true}, false)
-  eq(L.preview_due{ante = 1, tier = 'light', first_select = false}, true)
-  eq(L.preview_due{ante = 2, tier = 'light', first_select = true}, true, 'a loaded run past ante 1')
+T['preview_due: ante 1 is due like any other'] = function()
+  eq(logic().preview_due{ante = 1, previewed_ante = nil, tier = 'light'}, true)
 end
 
 --- A blind-select boss UIBox stub: blind_desc holds the chip sprite before the stake sprite.
@@ -123,12 +120,22 @@ T['on_blind_select: a light boss below min_ante says nothing; showdowns always s
   eq(ctx.keys(), 'fb_bl_final_leaf_preview')
 end
 
-T['on_blind_select: ante 1 waits until the second blind-select screen'] = function()
+T['on_blind_select: ante 1 previews on its first screen, after the run-start wipe'] = function()
   local ctx = setup{ante = 1}
-  ctx.M.on_blind_select(); ctx.fire_timers()
-  eq(#ctx.said, 0, 'not over the deck-select transition')
-  ctx.M.on_blind_select(); ctx.fire_timers()
+  ctx.M.on_blind_select()
+  eq(#ctx.timers, 1)
+  eq(ctx.timers[1].delay, ctx.M.FIRST_PREVIEW_DELAY, 'the longer wait')
+  ctx.fire_timers()
   eq(ctx.keys(), 'fb_bl_hook_preview')
+  eq(G.GAME.FinalBoss.previewed_ante, 1)
+  ctx.M.on_blind_select(); ctx.fire_timers() -- back from the small blind's shop
+  eq(#ctx.said, 1, 'once per ante')
+  G.GAME.round_resets.ante = 2
+  ctx.M.on_blind_select()
+  eq(ctx.timers[1].delay, ctx.M.PREVIEW_DELAY, 'later screens wait the short delay')
+  ctx.M.teardown(); G.GAME.round_resets.ante = 3
+  ctx.M.on_blind_select()
+  eq(ctx.timers[#ctx.timers].delay, ctx.M.FIRST_PREVIEW_DELAY, 'a new or loaded run waits for its wipe again')
 end
 
 T['on_blind_select: a blind picked before the line is due drops it'] = function()
