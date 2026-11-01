@@ -180,6 +180,16 @@ T['has_censored: a letter followed by a star'] = function()
   eq(logic.has_censored(nil), false)
 end
 
+T['has_censored: the grawlix tag'] = function()
+  for _, s in ipairs({'Oh {E:fb_grawlix}shit{}!', 'you {C:mult,E:fb_grawlix}fool{}', '{E:fb_grawlix}x{} and sh*t'}) do
+    eq(logic.has_censored(s), true, s)
+  end
+  for _, s in ipairs({'{C:mult}Mult{}', '{E:fb_rage}shit{}', 'a {C:attention,u:attention}word{}', '#1# {E:fb_grawlixy}x{}',
+      '{E:fb_swell}hand #2#{}'}) do
+    eq(logic.has_censored(s), false, s)
+  end
+end
+
 T['bleep: a vanilla sound, pitched high'] = function()
   eq(type(logic.BLEEP.sound), 'string')
   assert(logic.BLEEP.pitch > 1.5, 'high pitch')

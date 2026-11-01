@@ -68,7 +68,7 @@ Bosses trash-talk. Each one has a personality that sets its voice:
 | Chaos gremlin | manic, giggling | The Wheel, The Flint, The Fish, Amber Acorn |
 | Royal snob | aristocratic disdain | The House, The Arm, The Mouth, The Water, Violet Vessel, Cerulean Bell |
 
-Every boss speaks in its own lines: its threat, its reactions, its defeat line. The personality adds the rest: run jabs, comments on your play, idle taunts, reactions to your tricks, the fear lines, last words and poke reactions. They roast your play, your build and your luck. Swearing is censored with asterisks and a short bleep; there are no slurs and nothing about real people or groups. Turning Boss dialogue off silences everything below.
+Every boss speaks in its own lines: its threat, its reactions, its defeat line. The personality adds the rest: run jabs, comments on your play, idle taunts, reactions to your tricks, the fear lines, last words and poke reactions. They roast your play, your build and your luck. Swearing is censored as a comic grawlix (cycling symbols) and a short bleep; there are no slurs and nothing about real people or groups. Turning Boss dialogue off silences everything below.
 
 - **Intro threat.** The intro line is a threat that hints at the boss's effect (the game already explains it).
 - **Intro jabs.** About one intro in three, when your run gives the boss something to say, a jab replaces the threat: you skipped blinds this ante, rerolled the shop 5+ times since the last boss, have $3 or less or $50 or more, a deck with 75% of one suit, 30 cards or fewer or 70 or more, no jokers or a full joker row, a famous joker (Blueprint, Brainstorm, Baron, DNA, Mime, Cavendish, Triboulet, Perkeo, Yorick, Canio, Sock and Buskin, Hologram), or a famous combo of two jokers you own (about ten pairs, such as Blueprint & Brainstorm, Baron & Mime, Perkeo & Blueprint or Cavendish & Oops! All 6s; when you own a combo, the boss calls out the combo instead of a single famous joker). Any jab that applies may be picked, but never the one you got last. Counter jokers are always called out: Chicot, Luchador, Matador, Mr. Bones. Each vanilla boss has its own line for its main counter (Chicot for final bosses, Luchador for the rest), and since Chicot disables the boss before its intro, that line comes as the boss is disabled. A nemesis line is never replaced by a jab.
@@ -355,7 +355,57 @@ All text lives in `misc.quips` in your mod's localization. Each moment can have 
 
 `<blind>` is the full blind key, for example `bl_hook`. For each moment FinalBoss tries the boss-specific key first, then the boss's personality (`fb_p_<personality>_<moment>_<n>`), then `fb_generic_<moment>_<n>`, and otherwise skips the moment. The shared nemesis lines have no generic fallback: if none exist, they are skipped. A rematch or nemesis line replaces the name line of a showdown (in light tier it replaces the boss's threat line, and a rematch line does so only about half the time). A raw key is never shown to the player. Generic lines receive the boss name as `#1#`. `#2#` and `#3#` are filled only for the moments noted above (jokers, cards, hands and levels); names can run long, so keep the rest of a `#2#` line short.
 
-Writing tips: each quip is 1 or 2 lines, and each line should stay under about 24 visible characters so it fits the speech bubble. A gloat line is spoken by Jimbo on the game-over screen, mocking you with the boss's catchphrase: write only the line itself (no "Name:" header, no quotation marks) and no placeholders. A line with a censored word (a letter followed by `*`, for example `sh*t`) plays a short bleep, so do not use asterisks for actions.
+Writing tips: each quip is 1 or 2 lines, and each line should stay under about 24 visible characters so it fits the speech bubble. A gloat line is spoken by Jimbo on the game-over screen, mocking you with the boss's catchphrase: write only the line itself (no "Name:" header, no quotation marks) and no placeholders. A line with a censored swear plays a short bleep: write the swear in full inside the grawlix tag (see "Text effects" below). The old form, a letter followed by `*` such as `sh*t`, still bleeps for compatibility, so do not use asterisks for actions.
+
+### Text effects
+
+A line can emphasise one word (the punchline) with Balatro's own text tags, so a viewer catches the joke at a glance. Wrap the word like this, with no mod prefix:
+
+```lua
+"You call that a {E:fb_rage}hand{}?"
+```
+
+Stock tags work too and combine: `{C:mult}Mult{}`, `{C:attention,u:attention}word{}` (underlined orange), `{C:dark_edition}CLUTCH{}` (animated rainbow). A tagged word with no `C:` keeps the bubble's normal colour. Tags are invisible to the line-length rule, never change the layout, and keep colour but drop the motion with Balatro's reduced motion setting. Use at most one punchline tag per line.
+
+| Key | Effect |
+|---|---|
+| `fb_rage` | hard, fast shake |
+| `fb_fall` | letters drop away one by one |
+| `fb_sweet` | slow pink wave |
+| `fb_glitch` | letters scramble briefly, then settle |
+| `fb_royal` | gold shimmer |
+| `fb_flip` | letters flip over |
+| `fb_drift` | letters sway down like leaves |
+| `fb_swell` | big slow wave |
+| `fb_heartbeat` | the word thumps |
+| `fb_toll` | letters swing like a bell |
+| `fb_tremble` | small nervous shiver (fear lines) |
+| `fb_grawlix` | comic swear: cycling `#@$%!` symbols that shake in red |
+
+FinalBoss's own roster, by speaker:
+
+| Speaker | Effect on the punchline word |
+|---|---|
+| Bully | Rage |
+| Smug | Lecture (`{C:attention,u:attention}`) |
+| Killer | Fall |
+| Venom | Sweet |
+| Chaos | Glitch |
+| Royal | Royal |
+| Amber Acorn | Flip |
+| Verdant Leaf | Drift |
+| Violet Vessel | Swell |
+| Crimson Heart | Heartbeat |
+| Cerulean Bell | Toll |
+| Generic and modded bosses | colour only (attention orange) |
+
+Precedence, whoever speaks:
+- **Game terms** use Balatro's own colours: Mult red (`mult`), Chips blue (`chips`), money gold (`money`), Lucky green (`green`), Tarot / Planet / Spectral their set colours, hand names attention orange.
+- **Fear lines** (`fear_1..3`, `last_words`) use Tremble.
+- **Hype words** (CLUTCH, OVERKILL, JACKPOT) use the animated rainbow (`dark_edition`).
+- **Swears** always use the grawlix, in addition to (not counted as) the line's punchline.
+
+**Swears.** Write the swear in full inside the grawlix tag, around a single word: `{E:fb_grawlix}shit{}`. It shows as one symbol per letter and plays the bleep. The old `sh*t` form still bleeps for compatibility. Check your file with `uv run --with lupa tools/check_loc.py` (add `--effects` for the strict swear rules).
 
 ### Picking lines by situation
 

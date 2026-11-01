@@ -1231,10 +1231,17 @@ end
 --- The bleep over a line with a censored swear: vanilla's short generic1 blip, high and quiet.
 logic.BLEEP = {sound = 'generic1', pitch = 2.4, volume = 0.45}
 
---- Whether a line holds a censored swear: a letter followed by one or more '*' ("f***", "sh*t",
---- "a**"). Any byte of a multi-byte UTF-8 character counts as a letter, so "ク*" and "г*вно" match.
+--- Whether a line holds a censored swear: a word wrapped in the grawlix tag ({E:fb_grawlix}, also
+--- inside a multi-control tag such as {C:mult,E:fb_grawlix}) or the old form, a letter followed by one
+--- or more '*' ("f***", "sh*t", "a**"), kept for mod authors' lines. Any byte of a multi-byte UTF-8
+--- character counts as a letter, so "ク*" and "г*вно" match.
 function logic.has_censored(text)
   if type(text) ~= 'string' then return false end
+  for tag in text:gmatch('%{([^{}]*)%}') do
+    for control in tag:gmatch('[^,]+') do
+      if control:gsub('%s', '') == 'E:fb_grawlix' then return true end
+    end
+  end
   return text:find('[%a\128-\255]%*') ~= nil
 end
 

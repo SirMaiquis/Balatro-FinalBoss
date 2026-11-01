@@ -3,6 +3,7 @@
 Usage (repo root):
   uv run --with lupa tools/check_loc.py              # all files
   uv run --with lupa tools/check_loc.py es_419 es_ES # only these
+  uv run --with lupa tools/check_loc.py --effects    # also the strict grawlix rules (4 and 5)
 Checks: every misc.quips / misc.dictionary / misc.achievement_names / misc.achievement_descriptions
 key of default.lua exists, no extra keys,
 colour tags {X:..}...{} balanced (scanned in order), no empty values, #n# placeholders
@@ -15,6 +16,13 @@ used_planet_waste and joker_created need #2#; used_planet_main needs #3#, and no
 #3#. In all card lines a string holding #2# has at most 9 other characters.
 1.4 moments (NEW_MOMENTS_1_4): default.lua has fb_generic_<m>_1..2 and fb_<final>_<m>_1..2 for
 every final boss (FINAL_BOSSES); the moments said outside the fight (OUTSIDE_MOMENTS) use no #2#/#3#.
+Text effects (1.4), tags like {E:fb_rage}word{}, in every language and quip line:
+  1. every {E:<key>} is in logic.TEXT_EFFECTS (or the built-ins 1 and 2);
+  2. at most one punchline tag ({C:}, {E:} other than fb_grawlix, {u:}) per line;
+  3. a fb_grawlix tag wraps a single word (no spaces).
+Only with --effects (it fails until the content pass has tagged the lines; Task 13 makes it the default):
+  4. no FinalBoss quip keeps the old x* censor form;
+  5. every key whose English line has fb_grawlix has the same number of grawlix tags in each language.
 """
 import pathlib
 import re
@@ -139,7 +147,63 @@ def outside_key(logic):
     return re.compile(rf'^quips\.fb_\w+_(?:{names})_\d+$')
 
 
-def main(names):
+EFFECT_KEY = re.compile(r'^E:(.*)$')
+BUILTIN_EFFECTS = ('1', '2')
+GRAWLIX = 'fb_grawlix'
+OLD_CENSOR = re.compile(r'[^\W\d_]\*')  # a letter then a star: the pre-1.4 "sh*t" form
+
+
+def controls(tag):
+    """The comma-separated controls of one tag body ('C:attention,u:attention')."""
+    return [c.strip() for c in tag.split(',') if c.strip()]
+
+
+def effect_problems(effects, line):
+    """Rules 1-3 for one line. effects: the allowed {E:} keys."""
+    out, punchlines = [], 0
+    matches = list(TAG.finditer(line))
+    for i, m in enumerate(matches):
+        cs = controls(m.group(1))
+        keys = [EFFECT_KEY.match(c).group(1).strip() for c in cs if EFFECT_KEY.match(c)]
+        for k in keys:
+            if k not in effects and k not in BUILTIN_EFFECTS:
+                out.append(f'unknown text effect {k!r}')
+        if GRAWLIX in keys:
+            end = matches[i + 1].start() if i + 1 < len(matches) else len(line)
+            word = line[m.end():end]
+            if not word.strip() or re.search(r'\s', word.strip()):
+                out.append(f'{GRAWLIX} must wrap a single word, got {word!r}')
+        elif any(c.startswith(('C:', 'u:')) for c in cs) or keys:
+            punchlines += 1
+    if punchlines > 1:
+        out.append(f'{punchlines} punchline tags in one line (at most 1)')
+    return out
+
+
+def grawlix_count(lines):
+    """Number of fb_grawlix tags in a key's lines."""
+    return sum(GRAWLIX in [c[2:].strip() for c in controls(m.group(1)) if c.startswith('E:')]
+               for line in lines for m in TAG.finditer(line))
+
+
+def old_censor_problems(key, lines):
+    """Rule 4: FinalBoss's own quips no longer use x* (the tag is the censor)."""
+    if key.startswith('quips.') and any(OLD_CENSOR.search(line) for line in lines):
+        return ['old x* censor form (write the swear in full inside {E:fb_grawlix}...{})']
+    return []
+
+
+def grawlix_parity_problems(base, data):
+    """Rule 5: every key whose English line has fb_grawlix has as many grawlix tags in this language."""
+    out = []
+    for key, lines in base.items():
+        want = grawlix_count(lines)
+        if want and key in data and grawlix_count(data[key]) != want:
+            out.append(f'{key}: {grawlix_count(data[key])} {GRAWLIX} tags, English has {want}')
+    return out
+
+
+def main(names, strict=False):
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8')
     lua = lupa.LuaRuntime(unpack_returned_tuples=True)
@@ -152,6 +216,7 @@ def main(names):
              if names else sorted(LOC.glob('*.lua')))
     logic = lua.execute((ROOT / 'src' / 'logic.lua').read_text(encoding='utf-8'))
     outside = outside_key(logic)
+    effects = {str(v) for v in logic['TEXT_EFFECTS'].values()}
     errors = []
     for path in paths:
         try:
@@ -168,6 +233,9 @@ def main(names):
                 why = tag_problem(line)
                 if why:
                     errors.append(f'{path.name}: {key}: {why} in {ascii(line)}')
+                errors.extend(f'{path.name}: {key}: {p} in {ascii(line)}' for p in effect_problems(effects, line))
+            if strict:
+                errors.extend(f'{path.name}: {key}: {p}' for p in old_censor_problems(key, lines))
             if JOKER_KEY.search(key) and '#2#' not in ' '.join(lines):
                 errors.append(f'{path.name}: {key}: joker jab line needs #2#')
             if CARD_KEY.search(key) and '#2#' not in ' '.join(lines):
@@ -189,6 +257,8 @@ def main(names):
                     errors.append(f'{path.name}: {key}: {why}')
         if path.name == 'default.lua':
             continue
+        if strict:
+            errors.extend(f'{path.name}: {p}' for p in grawlix_parity_problems(base, data))
         for key, base_lines in base.items():
             if key not in data:
                 errors.append(f'{path.name}: missing {key}')
@@ -207,4 +277,6 @@ def main(names):
 
 
 if __name__ == '__main__':
-    sys.exit(main(sys.argv[1:]))
+    args = sys.argv[1:]
+    strict = '--effects' in args
+    sys.exit(main([a for a in args if a != '--effects'], strict))
