@@ -18,7 +18,7 @@ local function load_file(path)
 end
 
 -- Order matters: util and logic first; hooks last (it wires everything together).
-local MODULES = {'util', 'logic', 'personality', 'registry', 'music', 'fx', 'hype', 'effects', 'curse', 'arena', 'avatar',
+local MODULES = {'util', 'logic', 'textfx', 'personality', 'registry', 'music', 'fx', 'hype', 'effects', 'curse', 'arena', 'avatar',
   'hpbar', 'cinematic', 'moves', 'deaths', 'phases', 'memory', 'observe', 'poke', 'tricks', 'achievements', 'ui', 'dialogue',
   'director', 'moments', 'quips', 'devtools', 'hooks'}
 

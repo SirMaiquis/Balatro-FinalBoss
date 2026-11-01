@@ -1853,4 +1853,178 @@ function logic.personality_variants(moment)
   return logic.PERSONALITY_VARIANTS[moment] or 1
 end
 
+------------------------------------------------------------------------------------------------
+-- Punchline text effects (1.4, spec addendum 2026-11-01). src/textfx.lua registers each key as an
+-- SMODS.DynaTextEffect, used in lines as {E:fb_rage}. Per-letter motion is in letter heights:
+-- dx > 0 is right, dy > 0 is down (textfx converts to DynaText offsets), r in radians, scale a factor.
+
+logic.TEXT_EFFECTS = {'fb_rage', 'fb_fall', 'fb_sweet', 'fb_glitch', 'fb_royal', 'fb_flip', 'fb_drift',
+  'fb_swell', 'fb_heartbeat', 'fb_toll', 'fb_tremble', 'fb_grawlix'}
+
+--- Comic swear symbols, one per letter of the censored word.
+logic.GRAWLIX = {'#', '@', '$', '%', '!', '&', '*'}
+--- Glyphs fb_glitch flashes in place of a letter during a burst.
+logic.GLITCH_GLYPHS = {'#', '%', '/', '?', '0', '1', '7', 'X', '=', '<', '>'}
+
+--- Deterministic noise in [-1, 1] from a time step, a letter index and a channel.
+local function noise(step, index, ch)
+  local v = math.sin(step * 12.9898 + index * 78.233 + ch * 37.719) * 43758.5453
+  return (v - math.floor(v)) * 2 - 1
+end
+
+--- 1 at c, falling to 0 at c +- w (smooth parabola bump).
+local function bump(u, c, w)
+  local x = (u - c) / w
+  return math.max(0, 1 - x * x)
+end
+
+local GLITCH_PERIOD, GLITCH_BURST = 2.3, 0.2 -- seconds: a short scramble once per period
+
+local function glitch_burst(t)
+  return (t % GLITCH_PERIOD) < GLITCH_BURST
+end
+
+local MOTION = {}
+
+-- Bully: hard fast jitter, a new random pose 30 times a second.
+function MOTION.fb_rage(m, t, i)
+  local s = math.floor(t * 30)
+  m.dx, m.dy, m.r = 0.1 * noise(s, i, 1), 0.08 * noise(s, i, 2), 0.1 * noise(s, i, 3)
+end
+
+-- Fear lines: a small nervous shiver.
+function MOTION.fb_tremble(m, t, i)
+  m.dx = 0.035 * math.sin(t * 47 + i * 1.7)
+  m.dy = 0.025 * math.sin(t * 53 + i * 2.3)
+  m.r = 0.03 * math.sin(t * 41 + i)
+end
+
+-- Killer: the letters sag down one after the other, tip a little, then climb back.
+function MOTION.fb_fall(m, t, i)
+  local u = ((t - i * 0.12) % 3) / 3
+  local sag
+  if u < 0.2 then sag = u / 0.2
+  elseif u < 0.55 then sag = 1
+  elseif u < 0.75 then sag = 1 - (u - 0.55) / 0.2
+  else sag = 0 end
+  sag = sag * sag * (3 - 2 * sag) -- smoothstep
+  m.dy = 0.25 * sag
+  m.r = 0.15 * sag * (i % 2 == 0 and 1 or -1)
+end
+
+-- Venom: slow sweet wave.
+function MOTION.fb_sweet(m, t, i)
+  local a = t * 3 + i * 0.6
+  m.dy = 0.1 * math.sin(a)
+  m.r = 0.04 * math.cos(a)
+end
+
+-- Chaos: still most of the time; a short scramble burst with small offsets.
+function MOTION.fb_glitch(m, t, i)
+  if not glitch_burst(t) then return end
+  local s = math.floor(t * 40)
+  m.dx, m.dy = 0.08 * noise(s, i, 4), 0.04 * noise(s, i, 5)
+end
+
+-- Royal: the colour does the work (effect_colour); the letters only breathe with the glint.
+function MOTION.fb_royal(m, t, i)
+  m.scale = 1 + 0.04 * math.max(0, math.sin(2 * t - i * 0.6)) ^ 4
+end
+
+-- Amber Acorn: every 2.5 s the letters do a quick full spin with a hop, one after another.
+function MOTION.fb_flip(m, t, i)
+  local u = ((t - i * 0.08) % 2.5) / 0.35
+  if u >= 1 then return end
+  local e = u * u * (3 - 2 * u)
+  m.r = 2 * math.pi * e
+  m.dy = -0.15 * math.sin(math.pi * u)
+end
+
+-- Verdant Leaf: a slow leaf sway, down and up, tilting as it goes.
+function MOTION.fb_drift(m, t, i)
+  local a = t * 1.6 + i * 0.7
+  m.dy = 0.12 * math.sin(a)
+  m.dx = 0.06 * math.sin(t * 0.8 + i * 0.7 + 1)
+  m.r = 0.15 * math.cos(a)
+end
+
+-- Violet Vessel: a big slow wave rolling across the word, letters swelling at the crest.
+function MOTION.fb_swell(m, t, i)
+  local w = math.sin(t * 2.2 - i * 0.55)
+  m.dy = -0.18 * w
+  m.scale = 1 + 0.12 * math.max(0, w)
+end
+
+-- Crimson Heart: lub-dub, the whole word at once, then rest.
+function MOTION.fb_heartbeat(m, t)
+  local u = t % 1.1
+  m.scale = 1 + 0.22 * (bump(u, 0.08, 0.08) + 0.75 * bump(u, 0.3, 0.08))
+end
+
+-- Cerulean Bell: the word swings like a bell from its middle (count = letters in the word).
+function MOTION.fb_toll(m, t, i, count)
+  local theta = 0.12 * math.sin(t * 2.2)
+  local from_mid = i - ((count or i) + 1) / 2
+  m.r = theta
+  m.dy = 0.55 * from_mid * math.sin(theta) -- letters ~0.55 heights wide: the line tilts as one
+end
+
+-- Swears: red cycling symbols that shake.
+function MOTION.fb_grawlix(m, t, i)
+  local s = math.floor(t * 25)
+  m.dx, m.dy, m.r = 0.06 * noise(s, i, 6), 0.05 * noise(s, i, 7), 0.08 * noise(s, i, 8)
+end
+
+--- Per-letter motion of `effect` at time t (G.TIMERS.REAL) for letter `index` of `count`.
+--- reduced (reduced motion / fx off): no motion. Fills `out` when given (no per-frame tables).
+--- Returns {dx, dy, r, scale} as named fields; unknown effects do not move.
+function logic.letter_motion(effect, t, index, reduced, count, out)
+  local m = out or {}
+  m.dx, m.dy, m.r, m.scale = 0, 0, 0, 1
+  local f = MOTION[effect]
+  if f and not reduced then f(m, t or 0, index or 1, count) end
+  return m
+end
+
+local GOLD, GLINT = {0.918, 0.753, 0.345}, {1, 0.96, 0.78}
+
+--- Colour override for `effect` at time t for letter `index` (optional), or nil to keep the
+--- line's colour. Pink for fb_sweet, gold with a travelling glint for fb_royal, red for
+--- fb_grawlix. Callers pass t = 0 under reduced motion for a still colour. Fills `out` when given.
+function logic.effect_colour(effect, t, index, out)
+  local c = out or {}
+  if effect == 'fb_sweet' then
+    c[1], c[2], c[3] = 1, 0.45, 0.72
+  elseif effect == 'fb_grawlix' then
+    c[1], c[2], c[3] = 0.996, 0.373, 0.333 -- G.C.RED
+  elseif effect == 'fb_royal' then
+    local w = (0.5 + 0.5 * math.sin(2 * (t or 0) - (index or 1) * 0.6)) ^ 4 * 0.6
+    for k = 1, 3 do c[k] = GOLD[k] + (GLINT[k] - GOLD[k]) * w end
+  else
+    return nil
+  end
+  c[4] = 1
+  return c
+end
+
+--- The grawlix symbol for letter `index`: cycles 8 times a second; neighbours always differ
+--- (index * 3 steps through all 7 symbols). reduced: a fixed symbol per letter.
+function logic.grawlix_symbol(index, t, reduced)
+  local n = #logic.GRAWLIX
+  local step = reduced and 0 or math.floor((t or 0) * 8)
+  return logic.GRAWLIX[((index or 1) * 3 + step) % n + 1]
+end
+
+--- fb_glitch: the glyph to show instead of letter `index` at time t, or nil for the real letter.
+--- Only during a burst (GLITCH_BURST of every GLITCH_PERIOD seconds), about half the letters at a
+--- time, reshuffled 20 times a second. Never under reduced motion.
+function logic.glitch_glyph(index, t, reduced)
+  if reduced or not glitch_burst(t or 0) then return nil end
+  local s = math.floor(t * 20)
+  if noise(s, index or 1, 9) < 0 then return nil end
+  local n = #logic.GLITCH_GLYPHS
+  local k = math.floor((noise(s, index or 1, 10) + 1) * 0.5 * n) % n + 1
+  return logic.GLITCH_GLYPHS[k]
+end
+
 return logic
