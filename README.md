@@ -399,10 +399,11 @@ FinalBoss's own roster, by speaker:
 | Cerulean Bell | Toll |
 | Generic and modded bosses | colour only (attention orange) |
 
-Precedence, whoever speaks:
+Precedence, whoever speaks (the first that applies):
+- **Hype words** (CLUTCH, OVERKILL, JACKPOT) use the animated rainbow (`dark_edition`).
 - **Game terms** use Balatro's own colours: Mult red (`mult`), Chips blue (`chips`), money gold (`money`), Lucky green (`green`), Tarot / Planet / Spectral their set colours, hand names attention orange.
 - **Fear lines** (`fear_1..3`, `last_words`) use Tremble.
-- **Hype words** (CLUTCH, OVERKILL, JACKPOT) use the animated rainbow (`dark_edition`).
+- Otherwise the speaker's roster effect.
 - **Swears** always use the grawlix, in addition to (not counted as) the line's punchline.
 
 **Swears.** Write the swear in full inside the grawlix tag, around a single word: `{E:fb_grawlix}shit{}`. It shows as one symbol per letter and plays the bleep. The old `sh*t` form still bleeps for compatibility. Check your file with `uv run --with lupa tools/check_loc.py` (add `--effects` for the strict swear rules).

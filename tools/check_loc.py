@@ -20,6 +20,7 @@ Text effects (1.4), tags like {E:fb_rage}word{}, in every language and quip line
   1. every {E:<key>} is in logic.TEXT_EFFECTS (or the built-ins 1 and 2);
   2. at most one punchline tag ({C:}, {E:} other than fb_grawlix, {u:}) per line;
   3. a fb_grawlix tag wraps a single word (no spaces).
+Rule 2 applies to quips keys only. A tag holding only s: or X: controls is not a punchline.
 Only with --effects (it fails until the content pass has tagged the lines; Task 13 makes it the default):
   4. no FinalBoss quip keeps the old x* censor form;
   5. every key whose English line has fb_grawlix has the same number of grawlix tags in each language.
@@ -158,8 +159,9 @@ def controls(tag):
     return [c.strip() for c in tag.split(',') if c.strip()]
 
 
-def effect_problems(effects, line):
-    """Rules 1-3 for one line. effects: the allowed {E:} keys."""
+def effect_problems(effects, line, quip=True):
+    """Rules 1-3 for one line. effects: the allowed {E:} keys. Rule 2 (one punchline) only applies
+    to quips (quip=True), not dictionary or achievement strings."""
     out, punchlines = [], 0
     matches = list(TAG.finditer(line))
     for i, m in enumerate(matches):
@@ -175,7 +177,7 @@ def effect_problems(effects, line):
                 out.append(f'{GRAWLIX} must wrap a single word, got {word!r}')
         elif any(c.startswith(('C:', 'u:')) for c in cs) or keys:
             punchlines += 1
-    if punchlines > 1:
+    if quip and punchlines > 1:
         out.append(f'{punchlines} punchline tags in one line (at most 1)')
     return out
 
@@ -233,7 +235,7 @@ def main(names, strict=False):
                 why = tag_problem(line)
                 if why:
                     errors.append(f'{path.name}: {key}: {why} in {ascii(line)}')
-                errors.extend(f'{path.name}: {key}: {p} in {ascii(line)}' for p in effect_problems(effects, line))
+                errors.extend(f'{path.name}: {key}: {p} in {ascii(line)}' for p in effect_problems(effects, line, key.startswith('quips.')))
             if strict:
                 errors.extend(f'{path.name}: {key}: {p}' for p in old_censor_problems(key, lines))
             if JOKER_KEY.search(key) and '#2#' not in ' '.join(lines):

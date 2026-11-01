@@ -67,3 +67,23 @@ def test_rule5_language_missing_a_grawlix():
     out = check_loc.grawlix_parity_problems(base, lang)
     assert len(out) == 1 and out[0].startswith('quips.a')
     assert check_loc.grawlix_parity_problems(base, base) == []
+
+
+def test_cjk_line_with_grawlix():
+    assert problems('你这个{E:fb_grawlix}混蛋{}！') == []
+    assert any('single word' in p for p in problems('你这个{E:fb_grawlix}混 蛋{}'))
+
+
+def test_tag_around_placeholder():
+    assert problems('Nice {C:attention}#2#{}') == []
+    assert problems('Nice {E:fb_swell}#2#{}') == []
+
+
+def test_size_and_background_tags_are_not_punchlines():
+    assert problems('{s:1.2}big{} {E:fb_rage}one{}') == []
+
+
+def test_rule2_only_for_quips():
+    line = '{E:fb_rage}one{} {E:fb_fall}two{}'
+    assert check_loc.effect_problems(EFFECTS, line, quip=False) == []
+    assert check_loc.effect_problems(EFFECTS, line, quip=True)
