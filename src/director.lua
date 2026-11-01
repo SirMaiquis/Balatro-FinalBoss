@@ -778,7 +778,7 @@ function Dir.reset_stage()
     for _, step in ipairs({FinalBoss.cinematic.reset, FinalBoss.hpbar.remove, FinalBoss.avatar.remove,
         FinalBoss.arena.reset, FinalBoss.fx.reset, FinalBoss.effects.reset, FinalBoss.moves.reset,
         FinalBoss.phases.reset, FinalBoss.phases.clear_twists, FinalBoss.music.unduck,
-        FinalBoss.memory.unpresent, FinalBoss.poke.reset,
+        FinalBoss.memory.unpresent, FinalBoss.poke.reset, FinalBoss.hype.remove,
         function() FinalBoss.avatar.set_hud_tremble(false) end}) do
       local sok, serr = pcall(step)
       if not sok then FinalBoss.util.log('error', 'reset_stage step failed: ' .. tostring(serr)) end
