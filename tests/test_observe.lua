@@ -608,4 +608,62 @@ T['dev_jab: fakes a run and says its jab now'] = function()
   eq(none.O.dev_jab({dollars = 0}), nil, 'no encounter')
 end
 
+-- Luck (1.4) ---------------------------------------------------------------------------------------
+
+local function luck_fight(o)
+  o = o or {}
+  local ctx = setup{enc = {key = 'bl_hook', boss = true, tier = o.tier or 'light', ended = o.ended or false,
+    fired = {}, last_hand_seen = o.last_hand_seen}}
+  G.STATE = o.state or G.STATES.HAND_PLAYED
+  G.GAME.current_round = {hands_played = 2}
+  ctx.enc = G.GAME.FinalBoss.encounter
+  return ctx
+end
+
+T['on_luck: tallies the hand being scored'] = function()
+  local ctx = luck_fight()
+  ctx.O.on_luck('card'); ctx.O.on_luck('card'); ctx.O.on_luck('dollars'); ctx.O.on_luck('joker', 'j_bloodstone')
+  eq(ctx.enc.luck.cards, 2); eq(ctx.enc.luck.dollars, 1); eq(ctx.enc.luck.joker, 'j_bloodstone')
+  ctx.O.on_luck('nonsense')
+  eq(ctx.enc.luck.cards, 2, 'unknown kinds are ignored')
+end
+
+T['on_luck: ignored outside HAND_PLAYED or with no live encounter for this blind'] = function()
+  local ctx = luck_fight{state = 1}
+  ctx.O.on_luck('card')
+  eq(ctx.enc.luck, nil, 'not while a hand is played')
+  ctx = luck_fight{ended = true}
+  ctx.O.on_luck('card')
+  eq(ctx.enc.luck, nil, 'the fight is over')
+  ctx = luck_fight{tier = 'none'}
+  ctx.O.on_luck('card')
+  eq(ctx.enc.luck, nil, 'no dialogue tier')
+  ctx = luck_fight()
+  G.GAME.blind.config.blind.key = 'bl_other'
+  ctx.O.on_luck('card')
+  eq(ctx.enc.luck, nil, 'another blind')
+  ctx = luck_fight{last_hand_seen = 2}
+  ctx.O.on_luck('card')
+  eq(ctx.enc.luck, nil, 'this hand was already evaluated (context.after ran)')
+  ctx = setup()
+  G.STATE = G.STATES.HAND_PLAYED
+  ctx.O.on_luck('card') -- no encounter: nothing, no error
+end
+
+T['fear_line: also returns the defeat moment chosen; defeat_moment books nothing (1.4)'] = function()
+  local ctx = setup()
+  local win = {moment = 'defeat', total = 15000, required = 1000, hand = 3}
+  local enc = {}
+  eq(ctx.O.defeat_moment(win, enc), 'fear_2'); eq(enc.fear_said, nil, 'nothing booked')
+  local line, choice = ctx.O.fear_line(win, enc)
+  eq(line, 'fear_2'); eq(choice, 'fear_2'); eq(enc.fear_said, 2)
+  line, choice = ctx.O.fear_line({moment = 'defeat', total = 1500, required = 1000, hand = 3}, {})
+  eq(line, nil); eq(choice, 'defeat')
+  line, choice = ctx.O.fear_line(win, {fear_said = 3, fear_hand = 3})
+  eq(line, false); eq(choice, 'fear_3', 'a live fear 3 stands')
+  line, choice = ctx.O.fear_line({moment = 'defeat', total = 1040, required = 1000, situation = 'photo_finish'}, {})
+  eq(line, 'photo_finish'); eq(choice, 'photo_finish')
+  eq(ctx.O.defeat_moment({moment = 'close', total = 500, required = 1000}, {}), nil, 'not a win')
+end
+
 return T

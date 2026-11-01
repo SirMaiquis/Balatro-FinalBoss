@@ -66,8 +66,9 @@ logic.CLOSE_RATIO = 0.75    -- running total >= 75% of the requirement (not yet 
 
 -- Mid-fight reactions (big_hand, close, last_hand, disabled): once each per blind. Light tier: an
 -- in-fight line (the spaced reactions below, 'weak' and the reads) at most once per hand and never on
--- two consecutive hands (logic.line_spaced); last_hand, disabled and defeat are not spaced.
-logic.SPACED = {big_hand = true, close = true}
+-- two consecutive hands (logic.line_spaced); last_hand, disabled and defeat are not spaced. 1.4: the
+-- luck lines (lucky_cards, lucky_joker: once each per blind) are spaced like big_hand.
+logic.SPACED = {big_hand = true, close = true, lucky_cards = true, lucky_joker = true}
 
 local PRIORITY = {'last_hand', 'close', 'big_hand'}
 

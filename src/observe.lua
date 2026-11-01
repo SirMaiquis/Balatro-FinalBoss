@@ -152,7 +152,22 @@ end
 ---           earlier hand; or a win whose score is unknown, a late win).
 --- Not the winning defeat hand: nil. 1.3.1: p.won (logic.hand_outcome) decides the win when set;
 --- a total that cannot be read gives no tier (fear_tier), so the plain defeat line.
+--- 1.4: a second value, the defeat moment chosen (logic.defeat_choice, 'defeat' included; nil when not
+--- a known win), which the hype reads (Dir.hype).
 function O.fear_line(p, enc)
+  enc = enc or {}
+  local choice, t, live = O.defeat_moment(p, enc)
+  if not choice or choice == 'defeat' then return nil, choice end
+  if not choice:find('^fear_') then return choice, choice end
+  if live then return false, choice end
+  enc.fear_said, enc.fear_hand = t, p.hand
+  return choice, choice
+end
+
+--- The winning hand's defeat moment as O.fear_line chooses it, booking nothing: the choice, the fear tier
+--- it used and whether that tier was said live on this hand. nil when p is not a known winning
+--- defeat hand. Used directly for a nemesis, whose own line replaces the choice (Dir react).
+function O.defeat_moment(p, enc)
   if not (p and p.moment == 'defeat') then return nil end
   local won = p.won
   if won == nil then
@@ -166,12 +181,28 @@ function O.fear_line(p, enc)
   if p.unknown and not live then return nil end
   local t
   if live then t = enc.fear_said else t = L().fear_step(enc.fear_said, L().fear_tier(p.total, p.required)) end
-  local choice = L().defeat_choice{situation = not p.unknown and p.situation or nil, fear_tier = t}
-  if choice == 'defeat' then return nil end
-  if not choice:find('^fear_') then return choice end
-  if live then return false end
-  enc.fear_said, enc.fear_hand = t, p.hand
-  return choice
+  return L().defeat_choice{situation = not p.unknown and p.situation or nil, fear_tier = t}, t, live
+end
+
+-- Luck (1.4) -------------------------------------------------------------------------------------
+
+--- One lucky event seen by hooks.lua (FinalBoss.mod.calculate, from smods' pseudorandom_result
+--- contexts): kind 'card' (a Lucky card's mult payout), 'dollars' (its $20 payout) or 'joker' (a chance
+--- Joker hit, key its center key). Tallied on enc.luck (logic.note_luck, plain saved data), which
+--- Dir.on_hand_after reads and resets at context.after. Counted only while a hand is played
+--- (G.STATE == HAND_PLAYED) in a live boss encounter with a dialogue tier on this blind, and before
+--- that hand's context.after (enc.last_hand_seen is not yet this hand's id): anything else is ignored.
+function O.on_luck(kind, key)
+  if not (G.STATES and G.STATE == G.STATES.HAND_PLAYED) then return end
+  local st = G.GAME and G.GAME.FinalBoss
+  local enc = st and st.encounter
+  if not (enc and enc.boss and not enc.ended and (enc.tier == 'light' or enc.tier == 'full')) then return end
+  local blind = G.GAME.blind
+  if not (blind and blind.config and blind.config.blind and blind.config.blind.key == enc.key) then return end
+  local cr = G.GAME.current_round
+  if cr and enc.last_hand_seen ~= nil and enc.last_hand_seen == cr.hands_played then return end
+  enc.luck = enc.luck or L().new_luck()
+  L().note_luck(enc.luck, kind, key)
 end
 
 -- The live fear scale (1.3) ----------------------------------------------------------------------

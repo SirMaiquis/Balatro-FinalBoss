@@ -12,7 +12,7 @@ end
 --- before this one (vanilla's count at context.after), o.hands_left after it, this hand scoring o.delta.
 local function setup(o)
   o = o or {}
-  local ctx = {fired = {}, fx = {}, defeat_line = o.defeat_line}
+  local ctx = {fired = {}, fx = {}, hype = {}, defeat_line = o.defeat_line}
   local enc = {key = 'bl_hook', boss = true, tier = 'light', ended = false, fired = {}}
   ctx.enc = enc
   _G.Event = function(t) return t end
@@ -39,6 +39,7 @@ local function setup(o)
     memory = {defeat_line = function() return ctx.defeat_line end},
     cinematic = {active = function() return false end},
     dialogue = {intro_active = function() return false end},
+    hype = {play = function(kind, opts) ctx.hype[#ctx.hype + 1] = {kind = kind, opts = opts} end},
   }
   FinalBoss.observe = require('src.observe')
   ctx.D = require('src.director')
@@ -110,6 +111,7 @@ end
 
 T['react: a comeback says its line as the defeat moment, with no fear visuals'] = function()
   local ctx = setup{chips = 100, delta = 2900, hands_played = 1, hands_left = 2} -- 3000: 3x, fear 1
+  ctx.enc.hype_said = true -- (1.4: else its meltdown line replaces it)
   ctx.play()
   eq(#ctx.fired, 1); eq(ctx.fired[1].moment, 'defeat'); eq(ctx.fired[1].opts.line, 'comeback')
   eq(#ctx.fx, 0); eq(ctx.enc.fear_said, nil, 'no fear tier booked')
@@ -148,8 +150,154 @@ T['line_info: chips_before is the score before the hand being resolved'] = funct
   ctx.D.flush_pending()
   eq(ctx.D.pending, nil)
   eq(seen, 100, 'the defeat line is resolved after the pending reaction is taken')
-  eq(ctx.D.line_info('bl_hook').lucky, nil, 'Task 4 fills it')
   eq(ctx.D.line_info('bl_other').chips_before, nil, 'another boss: not its fight')
+end
+
+-- Luck and hype (1.4) ------------------------------------------------------------------------------------
+
+--- A hand that does not win (no moment: 50 of 1000, three hands left) with luck l tallied while it scored.
+local function lucky_hand(ctx, l, hands_played)
+  G.GAME.current_round.hands_played = hands_played or G.GAME.current_round.hands_played
+  ctx.enc.luck = l
+  ctx.play()
+end
+
+T['on_hand_after: the hand takes the luck tally, the next hand starts a fresh one'] = function()
+  local ctx = setup{chips = 0, delta = 50, hands_played = 0, hands_left = 3}
+  eq(ctx.D.line_info('bl_hook').lucky, nil, 'no hand yet')
+  ctx.enc.luck = {cards = 1, dollars = 1, joker = 'j_bloodstone'}
+  ctx.D.on_hand_after({})
+  eq(ctx.D.pending.luck.cards, 1); eq(ctx.D.pending.luck.joker, 'j_bloodstone')
+  eq(ctx.enc.luck.cards, 0); eq(ctx.enc.luck.joker, nil, 'reset after it is read')
+  local info = ctx.D.line_info('bl_hook').lucky
+  eq(info.cards, 1); eq(info.dollars, 1); eq(info.joker, 'j_bloodstone')
+  info.cards = 99
+  eq(ctx.D.line_info('bl_hook').lucky.cards, 1, 'a fresh table each time')
+  ctx.D.flush_pending()
+  G.GAME.current_round.hands_played = 1
+  ctx.D.on_hand_after({})
+  eq(ctx.D.pending.luck.cards, 0, 'no luck seen: an empty tally')
+  eq(ctx.D.line_info('bl_hook').lucky.cards, 0)
+end
+
+T['react: two Lucky payouts say lucky_cards as the hand line; a chance Joker lucky_joker'] = function()
+  local ctx = setup{chips = 0, delta = 50, hands_played = 0, hands_left = 3}
+  lucky_hand(ctx, {cards = 2, dollars = 0})
+  eq(#ctx.fired, 1); eq(ctx.fired[1].moment, 'lucky_cards'); eq(ctx.fired[1].opts.hand, 0)
+  eq(#ctx.hype, 0, 'not stacked: no hype')
+  ctx = setup{chips = 0, delta = 50, hands_played = 0, hands_left = 3}
+  lucky_hand(ctx, {cards = 0, dollars = 0, joker = 'j_space'})
+  eq(ctx.fired[1].moment, 'lucky_joker')
+  ctx = setup{chips = 0, delta = 50, hands_played = 0, hands_left = 3}
+  lucky_hand(ctx, {cards = 0, dollars = 1})
+  eq(ctx.fired[1].moment, 'lucky_cards', 'a $20 payout alone')
+end
+
+T['react: the luck line follows the normal gate, else the hand may still get its comment'] = function()
+  local ctx = setup{chips = 0, delta = 50, hands_played = 0, hands_left = 3}
+  ctx.enc.fired.lucky_cards = true -- once per blind
+  lucky_hand(ctx, {cards = 2, dollars = 0})
+  for _, f in ipairs(ctx.fired) do assert(f.moment ~= 'lucky_cards', 'lucky_cards said twice') end
+  ctx = setup{chips = 0, delta = 50, hands_played = 4, hands_left = 3}
+  ctx.enc.last_line_hand = 3 -- light tier: a line on the previous hand
+  lucky_hand(ctx, {cards = 2, dollars = 0})
+  for _, f in ipairs(ctx.fired) do assert(f.moment ~= 'lucky_cards', 'two hands in a row') end
+end
+
+T['react: stacked luck on a hand that does not win: LUCKY! with the meltdown visuals, the luck line'] = function()
+  local ctx = setup{chips = 0, delta = 50, hands_played = 0, hands_left = 3}
+  lucky_hand(ctx, {cards = 3, dollars = 0})
+  eq(#ctx.hype, 1); eq(ctx.hype[1].kind, 'lucky'); eq(ctx.hype[1].opts.meltdown, true)
+  eq(ctx.hype[1].opts.enc, ctx.enc); eq(ctx.hype[1].opts.blind, G.GAME.blind)
+  eq(ctx.fired[1].moment, 'lucky_cards'); eq(ctx.fired[1].opts.line, nil, 'not the meltdown line')
+  eq(ctx.enc.hype_said, true)
+end
+
+T['react: at most one hype per blind'] = function()
+  local ctx = setup{chips = 0, delta = 50, hands_played = 0, hands_left = 3}
+  lucky_hand(ctx, {cards = 1, dollars = 1, joker = 'j_8_ball'})
+  eq(#ctx.hype, 1, '$20 with a chance Joker: stacked')
+  lucky_hand(ctx, {cards = 3, dollars = 0}, 2)
+  eq(#ctx.hype, 1, 'the second stacked hand plays none')
+  G.GAME.chips, G.GAME.current_round.hands_played, G.GAME.current_round.hands_left = 100, 3, 1
+  SMODS.last_hand_score = 2900 -- a comeback kill
+  ctx.play()
+  eq(#ctx.hype, 1, 'nor the comeback')
+  local last = ctx.fired[#ctx.fired]
+  eq(last.moment, 'defeat'); eq(last.opts.line, 'comeback', 'no meltdown: its own defeat line')
+end
+
+T['react: a comeback or clutch kill melts down: the meltdown line replaces the defeat line'] = function()
+  local ctx = setup{chips = 100, delta = 2900, hands_played = 1, hands_left = 2}
+  ctx.play()
+  eq(#ctx.hype, 1); eq(ctx.hype[1].kind, 'comeback'); eq(ctx.hype[1].opts.meltdown, true)
+  eq(#ctx.fired, 1); eq(ctx.fired[1].moment, 'defeat'); eq(ctx.fired[1].opts.line, 'meltdown')
+  ctx = setup{chips = 600, delta = 900, hands_played = 3, hands_left = 0}
+  ctx.play()
+  eq(ctx.hype[1].kind, 'clutch'); eq(ctx.fired[1].opts.line, 'meltdown')
+end
+
+T['react: a photo finish shows its text, no meltdown, with its own defeat line'] = function()
+  local ctx = setup{chips = 600, delta = 440, hands_played = 0, hands_left = 3}
+  ctx.play()
+  eq(ctx.hype[1].kind, 'photo_finish'); eq(ctx.hype[1].opts.meltdown, false)
+  eq(ctx.fired[1].opts.line, 'photo_finish')
+end
+
+T['react: a killing hand drops its luck line; stacked luck shows LUCKY! with the defeat line'] = function()
+  local ctx = setup{chips = 0, delta = 1500, hands_played = 0, hands_left = 3} -- 1.5x, one-hand kill
+  ctx.enc.luck = {cards = 2, dollars = 0}
+  ctx.play()
+  eq(#ctx.fired, 1); eq(ctx.fired[1].moment, 'defeat'); eq(ctx.fired[1].opts.line, nil)
+  eq(#ctx.hype, 0, 'not stacked, no situation')
+  ctx = setup{chips = 0, delta = 1500, hands_played = 0, hands_left = 3}
+  ctx.enc.luck = {cards = 3, dollars = 0}
+  ctx.play()
+  eq(ctx.hype[1].kind, 'lucky'); eq(ctx.hype[1].opts.meltdown, false, 'text only on a kill')
+  eq(ctx.fired[1].moment, 'defeat'); eq(ctx.fired[1].opts.line, nil)
+end
+
+T['react: a 100x kill is an overkill: the hype plays, the last words path is unchanged'] = function()
+  local ctx = setup{chips = 0, delta = 200000, hands_played = 0, hands_left = 3} -- 200x, fallback tier
+  ctx.play()
+  eq(#ctx.hype, 1); eq(ctx.hype[1].kind, 'overkill'); eq(ctx.hype[1].opts.meltdown, false)
+  eq(#ctx.fired, 0, 'no defeat line: the last words come with the death')
+  ctx = setup{chips = 100, delta = 200000, hands_played = 1, hands_left = 2}
+  ctx.D.on_hand_after({})
+  ctx.enc.fear_said, ctx.enc.fear_hand = 3, ctx.enc.last_hand_seen -- said live while scoring
+  ctx.D.flush_pending()
+  eq(#ctx.hype, 1); eq(ctx.hype[1].kind, 'overkill', 'a live fear 3 crossing beats the comeback')
+  eq(#ctx.fired, 0)
+end
+
+T['react: a live fear 2 that stands still gets the hype of the kill'] = function()
+  local ctx = setup{chips = 0, delta = 15000, hands_played = 0, hands_left = 3} -- 15x
+  ctx.enc.luck = {cards = 3, dollars = 0}
+  ctx.D.on_hand_after({})
+  ctx.enc.fear_said, ctx.enc.fear_hand = 2, ctx.enc.last_hand_seen
+  ctx.D.flush_pending()
+  eq(#ctx.fired, 0, 'the live fear line stands')
+  eq(ctx.hype[1].kind, 'lucky'); eq(ctx.hype[1].opts.meltdown, false)
+end
+
+T['react: a nemesis comeback keeps its own line; the hype visuals still play'] = function()
+  local ctx = setup{chips = 100, delta = 2900, hands_played = 1, hands_left = 2, defeat_line = 'nemesis_defeat'}
+  ctx.play()
+  eq(ctx.fired[1].opts.line, 'nemesis_defeat')
+  eq(ctx.hype[1].kind, 'comeback'); eq(ctx.hype[1].opts.meltdown, true)
+  eq(ctx.enc.fear_said, nil, 'nothing booked for the nemesis')
+end
+
+T['react: an interrupted hand that does not win gets neither its luck line nor a hype'] = function()
+  local ctx = setup{chips = 0, delta = 50, hands_played = 0, hands_left = 3}
+  ctx.enc.interrupt_hand = 0
+  lucky_hand(ctx, {cards = 3, dollars = 0})
+  eq(#ctx.fired, 0); eq(#ctx.hype, 0); eq(ctx.enc.hype_said, nil)
+  ctx = setup{chips = 100, delta = 2900, hands_played = 1, hands_left = 2}
+  ctx.enc.interrupt_hand = 1
+  ctx.play()
+  eq(ctx.hype[1].kind, 'comeback', 'a killing hand still plays it')
+  eq(ctx.fired[1].opts.line, 'meltdown')
 end
 
 return T

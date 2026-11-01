@@ -7,6 +7,34 @@ local function director() return FinalBoss.director end
 
 local showdown_error_logged = false
 
+--- The luck a smods pseudorandom_result context reports (1.4): kind, key for observe.on_luck, or nil.
+--- Verified against smods 26.829.0 (src/utils.lua): SMODS.pseudorandom_probability queues
+--- {pseudorandom_result, result, trigger_obj, numerator, denominator, identifier} on SMODS.post_prob, and
+--- SMODS.trigger_effects (each scored card, inside SMODS.score_card; each card area's calculation)
+--- flushes it through SMODS.calculate_context, whose 'individual' areas include every mod with a
+--- calculate (SMODS.get_mods_scoring_targets): this function gets one context per roll, right after it.
+--- Lucky cards: smods' card.lua patch (lovely/perma_bonus.toml) rolls Card:get_chip_mult through
+--- pseudorandom_probability(card, 'lucky_mult', 1, 5) and Card:get_p_dollars through
+--- pseudorandom_probability(card, 'lucky_money', 1, 15); the identifier (seed) tells the mult payout
+--- from the $20 one. card.lucky_trigger is set by either roll (and cleared after each scoring pass,
+--- utils.lua SMODS.score_card), so the context.individual that follows cannot tell them apart and is
+--- not read. Each retrigger rolls again, so each payout counts. Chance Jokers: any roll whose
+--- trigger_obj is a Joker (vanilla: 8 Ball, Bloodstone, Business Card, Reserved Parking, Space Joker,
+--- Hallucination...); a Lucky card is a playing card, never a Joker. Other rolls (Wheel of Fortune,
+--- Glass cards) are not luck.
+local function luck_of(context)
+  if not context.result then return nil end
+  local obj = context.trigger_obj
+  local ability = type(obj) == 'table' and obj.ability
+  if type(ability) ~= 'table' then return nil end
+  if ability.set == 'Joker' then
+    return 'joker', obj.config and obj.config.center and obj.config.center.key
+  end
+  if context.identifier == 'lucky_mult' then return 'card' end
+  if context.identifier == 'lucky_money' then return 'dollars' end
+  return nil
+end
+
 FinalBoss.mod.calculate = function(self, context)
   if not G.GAME then return end
   -- Game-state cleanup, not a visual: the Leaf twist's saved debuffs go with the blind even when
@@ -21,6 +49,10 @@ FinalBoss.mod.calculate = function(self, context)
     U.guard('blind_disabled', director().on_blind_disabled)
   elseif context.blind_defeated then
     U.guard('blind_defeated', director().on_blind_defeated)
+  elseif context.pseudorandom_result then
+    -- 1.4 luck (luck_of): observe.on_luck keeps only what a played hand rolls in a live fight.
+    local kind, key = luck_of(context)
+    if kind then U.guard('luck', FinalBoss.observe.on_luck, kind, key) end
   end
 end
 

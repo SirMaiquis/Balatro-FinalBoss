@@ -40,8 +40,13 @@ end
 --- (registry.resolve). Every field is nil-safe; tier, showdown and won need this boss's encounter.
 --- 1.4: chips_before, the round score before the hand being resolved (booked at context.after, so it
 --- holds while the hand scores and while its reaction is said, which runs after Dir.pending is taken;
---- nil before the first hand or when unreadable); lucky (the hand's Lucky tally, filled by the luck
---- reactions; nil for now).
+--- nil before the first hand or when unreadable); lucky ({cards, dollars, joker}: the Lucky tally of
+--- the same hand, observe.on_luck, a fresh copy; nil before the first hand).
+local function lucky_copy(l)
+  if type(l) ~= 'table' then return nil end
+  return {cards = l.cards or 0, dollars = l.dollars or 0, joker = l.joker}
+end
+
 function Dir.line_info(blind_key)
   local game = G and G.GAME or {}
   local st = game.FinalBoss or {}
@@ -63,7 +68,7 @@ function Dir.line_info(blind_key)
     won = enc ~= nil and enc.win_hand ~= nil,
     lost = st.lost_to ~= nil and st.lost_to == blind_key,
     chips_before = enc and enc.chips_before,
-    lucky = nil,
+    lucky = enc and lucky_copy(enc.hand_luck),
   }
 end
 
@@ -344,6 +349,11 @@ function Dir.on_hand_after(context)
     hands_left = hands_left, hands_played = played}
   enc.candidate_hand = candidate and hands_played or nil
   enc.chips_before = chips -- the line hook's chips_before (Dir.line_info) until the next hand
+  -- 1.4 luck: what this hand rolled while it scored (observe.on_luck, before context.after); the next
+  -- hand starts a fresh tally. hand_luck is the line hook's lucky until the next hand.
+  local luck = enc.luck or FinalBoss.logic.new_luck()
+  enc.luck = FinalBoss.logic.new_luck()
+  enc.hand_luck = luck
   -- Set before the game-over screen picks its quip; cleared in on_round_end if the run continues.
   if hands_left == 0 and not won then st.lost_to = enc.key end
   if won then -- the winning hand (achievements read these at blind_defeated; start may be nil)
@@ -377,6 +387,7 @@ function Dir.on_hand_after(context)
   local p = {start = chips, delta = delta, total = total, required = required, moment = moment,
     won = won, unknown = unknown, enc = enc, blind = blind, t0 = FinalBoss.util.now(), queued_done = false, hand = hands_played,
     hands_left = hands_left, hand_type = hand_type, streak = enc.type_streak, situation = situation,
+    luck = luck,
     cards_played = cards and #cards or (G.play and #G.play.cards or 0),
     discards_left = cr.discards_left, discards_used = cr.discards_used}
   Dir.pending = p
@@ -455,8 +466,24 @@ local function react(p)
   -- This hand interrupted the intro: its interrupted line replaces the moment line (the moment
   -- stays unfired, so a later hand can still trigger it), except the defeat line, which always
   -- plays (and may replace the interrupted bubble). The stage hit above still played.
+  -- 1.4: an interrupted hand that does not win gets no hype either (its luck line is replaced too, and
+  -- the blind's one hype stays for a later hand); a phase change above returned before it, as it is
+  -- never a kill. A killing hand is never replaced, so its hype plays below.
   if FinalBoss.logic.moment_replaced(enc.interrupt_hand, p.hand, p.moment) then return end
+  local L = FinalBoss.logic
+  local kill = p.moment == 'defeat'
+  -- 1.4: stacked luck on a hand that does not win: LUCKY! with the meltdown visuals; the hand's own
+  -- line (its luck line, or its moment's) is said, not the meltdown line.
+  if not kill then Dir.hype(enc, blind, nil, p.luck) end
   if not p.moment then
+    -- 1.4: Lucky card payouts or a chance Joker hit: the luck line is this hand's one line, under the
+    -- normal gate (logic.can_fire: once per blind, spaced like big_hand). Gated out, the hand may
+    -- still get its comment.
+    local luck = L.luck_moment(p.luck)
+    if luck and L.can_fire(luck, enc.tier, enc.fired, p.hand, enc.last_line_hand) then
+      fire_after(enc, wait, luck, {hand = p.hand})
+      return
+    end
     -- 1.2: a hand that fired nothing else may get a run comment: the weak-hit line (after the
     -- laugh, like a phase line) or a read of how you play. Dir.fire checks the comment gate again
     -- when the line is said.
@@ -472,17 +499,45 @@ local function react(p)
   -- them is said as the defeat moment, forced like the defeat line.
   -- The 100x death (logic.last_words_due) replaces any of them with the boss's last words, said as
   -- the freeze starts: here with the finale (started by stage_hit above), else by Dir.chip_death.
+  -- 1.4 hype (Dir.hype) on a killing hand, from the defeat moment chosen (a luck line is dropped
+  -- there): a comeback or clutch melts down and the meltdown line replaces its defeat line; a photo
+  -- finish and stacked luck show their text with the defeat line; a 100x kill (fear 3, live or
+  -- fallback) is an overkill and the last words stand. A nemesis keeps its own line, but its kill still
+  -- plays the hype.
+  local O = FinalBoss.observe
   local line = FinalBoss.memory.defeat_line(enc, p.moment)
-  if not line then
-    line = FinalBoss.observe.fear_line(p, enc)
+  local nemesis = line ~= nil
+  local choice
+  if nemesis then
+    if kill then choice = O.defeat_moment(p, enc) end
+  else
+    line, choice = O.fear_line(p, enc)
     if line and line:find('^fear_') then FinalBoss.util.guard('fear_fx', Dir.fear_fx, enc, blind, enc.fear_said) end
-    if p.moment == 'defeat' and FinalBoss.logic.last_words_due(Dir.death_tier(enc, p.total, p.required)) then
+  end
+  local h = kill and Dir.hype(enc, blind, choice or 'defeat', p.luck)
+  if h and h.meltdown and not nemesis then line = 'meltdown' end
+  if not nemesis then
+    if kill and L.last_words_due(Dir.death_tier(enc, p.total, p.required)) then
       if enc.finale then Dir.last_words(enc) end
       return
     end
     if line == false then return end
   end
   fire_after(enc, wait, p.moment, {line = line, hand = p.hand})
+end
+
+--- The hype (1.4) of a scored hand: logic.hype_for, at most one per blind (enc.hype_said, plain saved
+--- data). defeat_moment: the killing hand's defeat moment (O.fear_line's choice, 'defeat' for the plain
+--- line), nil when the hand does not win; luck: the hand's tally (logic.luck_stacked). Plays the text,
+--- sting and meltdown visuals (FinalBoss.hype.play, which never says a line). Returns the hype
+--- ({kind, meltdown}) or nil.
+function Dir.hype(enc, blind, defeat_moment, luck)
+  local L = FinalBoss.logic
+  local h = L.hype_for{said = enc.hype_said, defeat_moment = defeat_moment, stacked = L.luck_stacked(luck)}
+  if not h then return nil end
+  enc.hype_said = true
+  FinalBoss.hype.play(h.kind, {meltdown = h.meltdown, blind = blind, enc = enc})
+  return h
 end
 
 --- The death a winning hand earns (1.3, logic.death_tier): the fear tier said live this blind, or
