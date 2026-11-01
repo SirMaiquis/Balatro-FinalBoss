@@ -385,7 +385,7 @@ FinalBoss.register_encounter{
 | `dollars` | your money |
 | `chips` | the score so far |
 | `chips_before` | the score before the hand being resolved (so a defeat line can tell a comeback from a close call) |
-| `lucky` | `{cards, dollars, joker}`: the Lucky payouts of the hand just played (Lucky mult payouts, Lucky $20 payouts, and the key of a chance Joker that hit, or `nil`) |
+| `lucky` | `{cards, dollars, joker}`: the Lucky payouts of the hand just played (Lucky mult payouts, Lucky $20 payouts, and `joker`: the key of a chance Joker that hit, `true` when its key couldn't be read, `nil` when none hit) |
 | `required` | the blind's requirement |
 | `hand_type` | the last hand played, for example `'Flush'` |
 | `won` | the winning hand has been played |

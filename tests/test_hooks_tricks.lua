@@ -121,6 +121,17 @@ T['calculate: a Lucky card mult and $20 payout, and a chance Joker hit, are luck
   end)
 end
 
+T['calculate: a guaranteed roll is not luck, a 1-in-2 roll is'] = function()
+  with_hooks(function(ctx)
+    local function odds(r, n, d) r.numerator = n; r.denominator = d; return r end
+    FinalBoss.mod.calculate(FinalBoss.mod, odds(roll('j', true, BLOODSTONE), 2, 2))
+    FinalBoss.mod.calculate(FinalBoss.mod, odds(roll('lucky_mult', true, LUCKY), 8, 5))
+    eq(#ctx.luck, 0)
+    FinalBoss.mod.calculate(FinalBoss.mod, odds(roll('j', true, BLOODSTONE), 1, 2))
+    eq(#ctx.luck, 1)
+  end)
+end
+
 T['calculate: a failed roll, a non-Joker roll or the Lucky card scoring context is not luck'] = function()
   with_hooks(function(ctx)
     FinalBoss.mod.calculate(FinalBoss.mod, roll('lucky_mult', false, LUCKY))

@@ -24,6 +24,9 @@ local showdown_error_logged = false
 --- Glass cards) are not luck.
 local function luck_of(context)
   if not context.result then return nil end
+  -- A guaranteed roll is not luck: Oops! All 6s makes Bloodstone 2 in 2 and a Lucky card up to 8 in 5.
+  local num, den = context.numerator, context.denominator
+  if type(num) == 'number' and type(den) == 'number' and num >= den then return nil end
   local obj = context.trigger_obj
   local ability = type(obj) == 'table' and obj.ability
   if type(ability) ~= 'table' then return nil end
@@ -51,8 +54,10 @@ FinalBoss.mod.calculate = function(self, context)
     U.guard('blind_defeated', director().on_blind_defeated)
   elseif context.pseudorandom_result then
     -- 1.4 luck (luck_of): observe.on_luck keeps only what a played hand rolls in a live fight.
-    local kind, key = luck_of(context)
-    if kind then U.guard('luck', FinalBoss.observe.on_luck, kind, key) end
+    U.guard('luck', function()
+      local kind, key = luck_of(context)
+      if kind then FinalBoss.observe.on_luck(kind, key) end
+    end)
   end
 end
 

@@ -6,8 +6,8 @@ Bosses react to the moment.
 
 ### New
 - Situational defeat lines: win on your last hand and the boss says a clutch line; win from under 25% of the requirement (a comeback) or by 5% or less (a photo finish) and it says those instead. Clutch and comeback need at least 2 hands played. A 100x overkill still wins over all of them.
-- Luck reactions: Lucky cards that pay out and chance Jokers that hit get a line, once per blind each.
-- Hype: a clutch, a comeback, stacked luck (3+ Lucky payouts, or a Lucky $20 with a chance Joker hit) or a 100x overkill gets big screen text and a sting. A clutch or comeback also makes the boss melt down (a jolt, a screen shake and a meltdown line instead of its defeat line). Stacked luck on a hand that doesn't win gets the jolt and shake too; on a winning hand it is the text and sting only. A photo finish gets the text only. At most one per blind.
+- Luck reactions: a line when Lucky cards pay out 2+ times in one hand or the $20 payout hits; a chance Joker paying off gets its own line. Guaranteed rolls (such as with Oops! All 6s) don't count. Once per blind each.
+- Hype: a clutch, a comeback, stacked luck (3+ Lucky payouts, or a Lucky $20 with a chance Joker hit) or a 100x overkill gets big screen text and a sting. A clutch or comeback also makes the boss melt down (a jolt, a screen shake and a meltdown line instead of its defeat line; a nemesis keeps its own defeat line, but the visuals still play). Stacked luck on a hand that doesn't win gets the jolt and shake too; on a winning hand it is the text and sting only. A photo finish gets the text only. At most one per blind.
 - Boss preview: on the blind-select screen the upcoming boss talks about you, once per ante.
 - Boss reroll: the old boss protests and the new one sneers (the sneer counts as that ante's preview).
 - Early loss: lose on a small or big blind and the boss you never reached mocks you from the game-over screen. It never counts as a loss to that boss.

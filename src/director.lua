@@ -357,6 +357,7 @@ function Dir.on_hand_after(context)
   local played = hands_played + 1
   local candidate = FinalBoss.logic.situation_candidate{start = chips, required = required,
     hands_left = hands_left, hands_played = played}
+  -- A candidate hand whose score turns out unknown loses its live fear 1/2 line (cosmetic; no tier is knowable).
   enc.candidate_hand = candidate and hands_played or nil
   enc.chips_before = chips -- the line hook's chips_before (Dir.line_info) until the next hand
   -- 1.4 luck: what this hand rolled while it scored (observe.on_luck, before context.after); the next
@@ -471,6 +472,7 @@ local function react(p)
     -- (the moment stays unfired); the hit, damage number and laugh above still play, and a weak
     -- hit's transformation waits for the laugh (wait) so laugh, roar and line never overlap.
     -- A powerless (disabled) boss gets mad there instead: anger and its disabled line, same rules.
+    -- A phase-change hand returns before Dir.hype: its stacked luck gets no LUCKY! (the blind's hype stays free).
     if FinalBoss.phases.check(enc, blind, p, wait) then return end
   end
   -- This hand interrupted the intro: its interrupted line replaces the moment line (the moment
