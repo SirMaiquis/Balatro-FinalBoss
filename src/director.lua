@@ -436,15 +436,17 @@ Dir.FEAR_JOLT = 0.35 -- the terrified crossing's jolt on the showdown avatar (an
 --- at 2, violent at 3, logic.tremble), and at 3 it also gets a long white flash and a hard jolt.
 --- Reduced motion: flashes only (fx.shake is a no-op there,
 --- the trembles stay still, fear_reaction strips the motion). Screen effects follow config.fx (fx.play).
---- The flash restores to the neutral colour ('') on the winning hand, like the finale. Sore (1):
---- nothing. They play with dialogue off too.
+--- The flash always restores to the boss's own colour (nil), even on the winning hand: the hand is
+--- still scoring and the boss still alive, so restoring to the neutral green here would flash the
+--- background boss colour -> green -> boss colour again before the death. Only the death and
+--- finale flashes restore to the neutral colour (''). Sore (1): nothing. They play with dialogue off too.
 function Dir.fear_fx(enc, blind, tier)
   if type(tier) ~= 'number' or tier < 2 then return end
   local V = FinalBoss.avatar
   local reduced = G.SETTINGS.reduced_motion
   if tier >= 3 then
     FinalBoss.fx.play('shake', blind, Dir.FEAR_SHAKE)
-    FinalBoss.fx.play('flash', blind, enc.win_hand and '' or nil)
+    FinalBoss.fx.play('flash', blind)
   end
   local fx = FinalBoss.config.fx -- screen effects off: the plain tremble, no flash or jolt
   if V.exists() then V.set_tremble(fx and tier or 1) else V.set_hud_tremble(true) end

@@ -334,4 +334,22 @@ T['react: a fear 1 crossed before on_hand_after on a candidate hand is held back
   eq(#ctx.fired, 1); eq(ctx.fired[1].opts.line, 'meltdown', 'the comeback meltdown line, no fear line')
 end
 
+T['fear_fx: the tier 3 flash on the winning hand keeps the boss colour (no neutral restore)'] = function()
+  local ctx = setup{}
+  ctx.enc.win_hand = true
+  local plays = {}
+  FinalBoss.fx = {play = function(kind, _, arg) plays[#plays + 1] = {kind = kind, arg = arg} end}
+  FinalBoss.avatar = {exists = function() return false end, set_hud_tremble = function() end,
+    poke = function() end}
+  FinalBoss.registry = {get = function() return {voice = {pitch = 1}} end}
+  FinalBoss.logic.fear_reaction = function() return nil end
+  package.loaded['src.director'] = nil
+  local D = require('src.director')
+  D.fear_fx(ctx.enc, {}, 3)
+  local flash
+  for _, p in ipairs(plays) do if p.kind == 'flash' then flash = p end end
+  eq(flash ~= nil, true, 'a flash plays')
+  eq(flash.arg, nil, 'no restore_as: the boss colour, not the neutral green')
+end
+
 return T
