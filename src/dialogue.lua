@@ -50,6 +50,9 @@ end
 
 --- opts.late (1.4, the blind-select boss chip): blind is the host itself, never the avatar, and the
 --- bubble is drawn late like the avatar's, above the UIBox the chip sits in.
+--- opts.popup (1.4, the early-loss chip on the game-over screen): a late bubble registered in
+--- G.I.POPUP instead of G.I.UIBOX, which vanilla draws after G.OVERLAY_MENU (the attention_text pass
+--- comes before it, under the dim), like the gloating chip itself (avatar.gloat).
 function D.show(blind, key, vars, pitch, opts)
   D.hide(blind)
   local late_host = opts and opts.late
@@ -57,6 +60,7 @@ function D.show(blind, key, vars, pitch, opts)
   local on_avatar = (not late_host) and host ~= blind
   local late = on_avatar or (late_host and true or false)
   local align = on_avatar and ((FinalBoss.avatar.side() == 'right') and 'cl' or 'cr') or 'bm'
+  if on_avatar and opts and opts.popup and FinalBoss.avatar.gloat_align then align = FinalBoss.avatar.gloat_align() end
   local loc_vars = {quip = true}
   for i, v in ipairs(vars or {}) do loc_vars[i] = v end
   -- Late bubbles (avatar, blind-select chip) have no parent and are attention_text: vanilla's late
@@ -65,7 +69,7 @@ function D.show(blind, key, vars, pitch, opts)
     -- can_collide = false: clicks go through the bubble to the chip under it (a run of pokes, the
     -- intro's chip skip); its UIElements only collide when their UIBox does (engine/ui.lua:957-962).
     config = {align = align, offset = {x = 0, y = 0}, parent = (not late) and host or nil,
-      can_collide = false}}
+      can_collide = false, instance_type = (late and opts and opts.popup) and 'POPUP' or nil}}
   bubble:set_role{role_type = 'Minor', xy_bond = 'Weak', r_bond = 'Strong', major = host}
   bubble.states.visible = false -- shown once aligned (timer below)
   if late then

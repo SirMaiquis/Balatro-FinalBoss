@@ -138,4 +138,28 @@ T['show late (1.4 blind-select chip): hosted on the chip, drawn late, even with 
   eq(b.removed, true); eq(ctx.D.avatar_bubble, nil)
 end
 
+T['show popup (1.4 early loss): on the avatar chip, registered in G.I.POPUP above the game-over dim'] = function()
+  local ctx = setup()
+  local boxes = {}
+  G.UIDEF = {speech_bubble = function() return {} end}
+  G.E_MANAGER = {add_event = function() end}
+  _G.Event = function(def) return def end
+  _G.UIBox = function(args)
+    local b = {args = args, states = {}}
+    function b:set_role(r) self.role = r end
+    function b:remove() end
+    boxes[#boxes + 1] = b
+    return b
+  end
+  local avatar = {children = {}}
+  FinalBoss.avatar = {anchor = function() return avatar end, side = function() return 'right' end,
+    set_talking = function() end, talk_bump = function() end, gloat_align = function() return 'tm' end}
+  ctx.D.show(ctx.blind, 'fb_x', {}, 1, {popup = true})
+  eq(boxes[1].args.config.instance_type, 'POPUP')
+  eq(boxes[1].args.config.align, 'tm', 'placed clear of the panel (avatar.gloat_align)')
+  eq(boxes[1].role.major, avatar, 'hangs from the chip'); eq(ctx.D.host, avatar)
+  ctx.D.show(ctx.blind, 'fb_y', {}, 1, {})
+  eq(boxes[2].args.config.instance_type, nil, 'other lines stay in G.I.UIBOX')
+end
+
 return T

@@ -240,21 +240,27 @@ local function go_to(i, instant)
   if FinalBoss.dialogue and FinalBoss.dialogue.follow_avatar then FinalBoss.dialogue.follow_avatar() end
 end
 
+--- The chip for a blind prototype (G.P_BLINDS entry) at x, y: V.obj, VT hard-set.
+local function build(proto, x, y, size)
+  local c = proto.boss_colour or G.C.RED
+  local sprite_pos = copy_table(proto.pos or {x = 0, y = 0})
+  -- SMODS.create_sprite: exact art, frames and sprite class, also for modded bosses.
+  local sprite = SMODS.create_sprite(x, y, size, size, proto.atlas or 'blind_chips', sprite_pos,
+    proto.sprite_args)
+  V.obj = Avatar(x, y, size, size, sprite, {c[1], c[2], c[3], 1})
+  V.obj:hard_set_VT()
+  return V.obj, c
+end
+
 function V.spawn(blind, opts)
   opts = opts or {}
   V.hud_blind = nil -- a respawn keeps the chip dissolved: no restore ease to fight the new one
   V.remove()
   local proto = blind and blind.config and blind.config.blind
   if not proto then return end
-  local c = proto.boss_colour or G.C.RED
   local x, y = perch_xy(V.RINGSIDE)
   local start_y = opts.fall and (y - G.ROOM.T.h - V.SIZE) or y
-  local sprite_pos = copy_table(proto.pos or {x = 0, y = 0})
-  -- SMODS.create_sprite: exact art, frames and sprite class, also for modded bosses.
-  local sprite = SMODS.create_sprite(x, start_y, V.SIZE, V.SIZE, proto.atlas or 'blind_chips', sprite_pos,
-    proto.sprite_args)
-  V.obj = Avatar(x, start_y, V.SIZE, V.SIZE, sprite, {c[1], c[2], c[3], 1})
-  V.obj:hard_set_VT()
+  local _, c = build(proto, x, start_y, V.SIZE)
   -- The boss "steps out": dissolve its HUD chip while the avatar is on the table. The blind's own
   -- dissolve field is what Blind:draw reads; states.visible is re-shown every frame by the HUD.
   V.hud_blind = blind
@@ -352,6 +358,36 @@ function V.gloat(pitch)
   place_gloat(o, gloat_spot(V.gloating.menu))
 end
 
+--- 1.4: where a line on the gloating chip hangs: above it when the chip sits right of the panel (to
+--- its left would cover the panel), to its left when gloat_rect put it above the panel (near the top
+--- edge, no room above).
+function V.gloat_align()
+  local o, g = V.obj, V.gloating
+  local T = o and g and game_over_panel(g.menu)
+  if T and o.T.x < T.x + T.w then return 'cl' end
+  return 'tm'
+end
+
+--- 1.4: vanilla's game-over overlay is up.
+function V.on_game_over_screen()
+  return is_game_over_menu(G.OVERLAY_MENU)
+end
+
+--- 1.4 early loss: a chip for blind_key (no live encounter, no HUD chip to dissolve) slides in from
+--- the right edge to its gloat spot beside the game-over panel, then gloats like the showdown's
+--- (V.gloat: pause-proof, above the dim, leaves with the screen). True when it was built.
+function V.spawn_gloat(blind_key, pitch)
+  local proto = G.P_BLINDS and G.P_BLINDS[blind_key]
+  if not proto then return false end
+  V.hud_blind = nil
+  V.remove()
+  local x, y, size = gloat_spot(V.on_game_over_screen() and G.OVERLAY_MENU or nil)
+  local start_x = reduced() and x or (G.ROOM.T.w + V.ROOM_MARGIN + size)
+  build(proto, start_x, y, size)
+  V.gloat(pitch)
+  return true
+end
+
 local function gloat_tick()
   local o, g = V.obj, V.gloating
   if g.leaving then return end
@@ -359,6 +395,9 @@ local function gloat_tick()
   if not g.menu and is_game_over_menu(m) then g.menu = m end
   if g.menu and m ~= g.menu then -- the game-over screen is gone: dissolve away (REAL timer, runs paused)
     g.leaving = true
+    -- 1.4 early loss: a line still up on the chip goes with it.
+    local D = FinalBoss.dialogue
+    if D and D.host == o then D.hide() end
     V.fade_out(V.GLOAT_LEAVE)
     return
   end

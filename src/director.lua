@@ -234,6 +234,12 @@ function Dir.on_round_end()
     end
   end
   FinalBoss.memory.unpresent() -- after the loss is recorded (memory's safe: a visual error is only logged)
+  -- 1.4: died to a small or big blind (vanilla's have no config.blind.boss): the upcoming boss mocks
+  -- it from the game-over screen. Not a loss to anyone: nothing above was recorded for it.
+  local proto = G.GAME.blind and G.GAME.blind.config and G.GAME.blind.config.blind
+  if over and proto and not proto.boss then
+    FinalBoss.util.guard('early_loss', FinalBoss.moments.on_early_loss)
+  end
   if not enc then return end
   if over then
     FinalBoss.avatar.set_hud_tremble(false)
