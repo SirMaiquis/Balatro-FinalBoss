@@ -317,6 +317,12 @@ local function words(line)
   return out
 end
 
+--- A line without its text tags: a {E:fb_grawlix}word{} is censored, so it is dropped with its word;
+--- every other tag is dropped and its word kept.
+local function bare(line)
+  return (line:gsub('{[^}]*E:fb_grawlix[^}]*}[^{]*{}', ' '):gsub('{[^}]*}', ''))
+end
+
 local function swear_hit(word, entry)
   if entry:sub(-1) == '$' then return word == entry:sub(1, -2) end
   return word:sub(1, #entry) == entry
@@ -332,7 +338,7 @@ T['English lines: no swear spelled out, only f***, sh*t and a** censored'] = fun
   local bad = {}
   for key, v in pairs(quips) do
     for _, line in ipairs(lines_of(v)) do
-      for _, w in ipairs(words(line)) do
+      for _, w in ipairs(words(bare(line))) do
         for _, s in ipairs(EN_SWEARS) do
           if swear_hit(w, s) then bad[#bad + 1] = key .. ' (spelled out): ' .. line end
         end
@@ -350,9 +356,10 @@ T['English lines: no swear spelled out, only f***, sh*t and a** censored'] = fun
   assert(#bad == 0, table.concat(bad, '; '))
 end
 
---- True when any line of a quip carries a censored word (a letter next to '*').
+--- True when any line of a quip carries a censored word (a grawlix tag, or a letter next to '*').
 local function censored(v)
   for _, line in ipairs(lines_of(v)) do
+    if line:find('E:fb_grawlix', 1, true) then return true end
     for _, w in ipairs(words(line)) do
       if w:find('*', 1, true) then return true end
     end
@@ -492,13 +499,13 @@ T['every language: no swear of its list spelled out'] = function()
   for lang, list in pairs(SWEARS) do
     for key, v in pairs(lang_quips(lang)) do
       for _, line in ipairs(lines_of(v)) do
-        for _, w in ipairs(list.words and words(line) or {}) do
+        for _, w in ipairs(list.words and words(bare(line)) or {}) do
           for _, s in ipairs(list.words) do
             if swear_hit(w, s) then bad[#bad + 1] = lang .. ' ' .. key .. ': ' .. line end
           end
         end
         for _, s in ipairs(list.text or {}) do
-          if line:find(s, 1, true) then bad[#bad + 1] = lang .. ' ' .. key .. ': ' .. line end
+          if bare(line):find(s, 1, true) then bad[#bad + 1] = lang .. ' ' .. key .. ': ' .. line end
         end
       end
     end
