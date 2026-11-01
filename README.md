@@ -18,7 +18,7 @@ Bosses talk back, and they are savage about it: every boss trash-talks in its ow
 
 **By hand:**
 
-1. Download `FinalBoss-v1.3.0.zip` from the [releases page](https://github.com/SirMaiquis/Balatro-FinalBoss/releases).
+1. Download `FinalBoss-v1.4.0.zip` from the [releases page](https://github.com/SirMaiquis/Balatro-FinalBoss/releases).
 2. Extract it into `%AppData%\Balatro\Mods\` so the files end up in `%AppData%\Balatro\Mods\FinalBoss\`.
 3. Start Balatro. The mod appears in the Mods menu as "Final Boss" with its own config tabs.
 
@@ -86,6 +86,22 @@ Every boss speaks in its own lines: its threat, its reactions, its defeat line. 
 
   The deaths need Screen effects (`fx`). Reduced motion keeps only the flashes (no slow motion, no flying pieces), and with screen effects off there is no shake or flash, though the last words still come.
 - **Idle taunts.** Choosing cards and touching nothing for 25 seconds makes the boss impatient; a second taunt comes 45 seconds later, never a third. Any key, click, controller button or card selection restarts the clock; menus, pauses and intros stop it.
+
+### Bosses react to the moment
+
+Bosses notice how the fight ended, and a few things around it.
+
+- **Situational defeat lines.** The boss's defeat line depends on how you won. Priority: 100× overkill > comeback > clutch > photo finish > 10× > 2× > plain defeat.
+  - **Comeback:** the score before the winning hand was under 25% of the requirement. Needs at least 2 hands played this blind.
+  - **Clutch:** you won with your last hand. Needs at least 2 hands played this blind.
+  - **Photo finish:** you cleared the requirement by 5% or less.
+- **Luck reactions.** Lucky cards and chance Jokers get a line. Two Lucky card payouts in one hand, or any Lucky $20 payout, gets the card line; a chance Joker hit (a Joker whose odds roll came up) gets the Joker line. Each once per blind, spaced like a big hand.
+- **Hype.** A clutch, a comeback, stacked luck (3 or more Lucky payouts in one hand, or a Lucky $20 payout together with a chance Joker hit) or a 100× overkill gets big screen text and a sting. A clutch, comeback or stacked luck also makes the boss melt down: its chip jolts, the screen shakes and the boss says a meltdown line (a clutch or comeback replaces its defeat line with it). A photo finish gets the screen text only. At most one per blind. The text and the shake need Screen effects (`fx`); the sting plays without it. Reduced motion keeps the text and the sting and drops the movement.
+- **Boss preview.** On the blind-select screen the upcoming boss says something about you, once per ante (ante 1 included, a moment after the screen comes up).
+- **Boss reroll.** Reroll the boss (Retcon, Director's Cut) and the old boss protests, then the new one sneers. The sneer counts as that ante's preview.
+- **Early loss.** Lose a run on a small or big blind and the boss you never reached comes out beside the game-over panel and mocks you. It is not a loss to that boss: nothing goes into memory, nemesis, achievements or stats, and Jimbo's quip stays vanilla.
+
+These follow the usual rules: they need Boss dialogue, never fire for a silent boss, and a line comes at most once per hand in the light tier and never on two hands in a row (the defeat-line moments excepted). Every personality has its own lines, and the five final bosses have lines of their own.
 
 ### Poke the boss
 
@@ -329,6 +345,12 @@ All text lives in `misc.quips` in your mod's localization. Each moment can have 
 | joker created | `fb_<blind>_joker_created_<n>` | per boss, usually left to the personality (`#2#` is the new joker; once per blind) |
 | reads | `fb_<blind>_read_<trigger>_<n>`, triggers `weakhand`, `repeat`, `discardspam`, `onecard` | per boss, usually left to the personality |
 | poke, hard poke, grab | `fb_<blind>_poked_<n>`, `fb_<blind>_poked_hard_<n>`, `fb_<blind>_grabbed_<n>` | per boss, usually left to the personality |
+| clutch, comeback, photo finish | `fb_<blind>_clutch_<n>`, `fb_<blind>_comeback_<n>`, `fb_<blind>_photo_finish_<n>` | per boss, usually left to the personality (defeat lines: said instead of `defeat` when you won on your last hand, from under 25% of the requirement, or by 5% or less; they use the defeat line's gate and a fear line of 100× still wins) |
+| meltdown | `fb_<blind>_meltdown_<n>` | per boss, usually left to the personality (said instead of the defeat line on a clutch or a comeback) |
+| luck | `fb_<blind>_lucky_cards_<n>`, `fb_<blind>_lucky_joker_<n>` | per boss, usually left to the personality (Lucky card payouts; a chance Joker hit; once per blind each) |
+| preview | `fb_<blind>_preview_<n>` | per boss, usually left to the personality (blind-select screen, once per ante) |
+| boss reroll | `fb_<blind>_rerolled_out_<n>`, `fb_<blind>_rerolled_in_<n>` | per boss, usually left to the personality (the outgoing boss's protest; the new boss's sneer) |
+| early loss | `fb_<blind>_early_loss_<n>` | per boss, usually left to the personality (the boss you never reached, after you lose on a small or big blind) |
 | personality | `fb_p_<personality>_<moment>_<n>` | shared by every boss of that personality |
 
 `<blind>` is the full blind key, for example `bl_hook`. For each moment FinalBoss tries the boss-specific key first, then the boss's personality (`fb_p_<personality>_<moment>_<n>`), then `fb_generic_<moment>_<n>`, and otherwise skips the moment. The shared nemesis lines have no generic fallback: if none exist, they are skipped. A rematch or nemesis line replaces the name line of a showdown (in light tier it replaces the boss's threat line, and a rematch line does so only about half the time). A raw key is never shown to the player. Generic lines receive the boss name as `#1#`. `#2#` and `#3#` are filled only for the moments noted above (jokers, cards, hands and levels); names can run long, so keep the rest of a `#2#` line short.
@@ -362,6 +384,8 @@ FinalBoss.register_encounter{
 | `hands_left`, `discards_left`, `hands_played` | from the current round |
 | `dollars` | your money |
 | `chips` | the score so far |
+| `chips_before` | the score before the hand being resolved (so a defeat line can tell a comeback from a close call) |
+| `lucky` | `{cards, dollars, joker}`: the Lucky payouts of the hand just played (Lucky mult payouts, Lucky $20 payouts, and the key of a chance Joker that hit, or `nil`) |
 | `required` | the blind's requirement |
 | `hand_type` | the last hand played, for example `'Flush'` |
 | `won` | the winning hand has been played |

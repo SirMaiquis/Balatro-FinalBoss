@@ -1,9 +1,24 @@
 # Changelog
 
-## Unreleased
+## 1.4.0
+
+Bosses react to the moment.
+
+### New
+- Situational defeat lines: win on your last hand and the boss says a clutch line; win from under 25% of the requirement (a comeback) or by 5% or less (a photo finish) and it says those instead. Clutch and comeback need at least 2 hands played. A 100x overkill still wins over all of them.
+- Luck reactions: Lucky cards that pay out and chance Jokers that hit get a line, once per blind each.
+- Hype: a clutch, a comeback, stacked luck (3+ Lucky payouts, or a Lucky $20 with a chance Joker hit) or a 100x overkill gets big screen text and a sting. A clutch, comeback or stacked luck also makes the boss melt down (a jolt, a screen shake and a meltdown line). A photo finish gets the text only. At most one per blind.
+- Boss preview: on the blind-select screen the upcoming boss talks about you, once per ante.
+- Boss reroll: the old boss protests and the new one sneers (the sneer counts as that ante's preview).
+- Early loss: lose on a small or big blind and the boss you never reached mocks you from the game-over screen. It never counts as a loss to that boss.
+- New lines for every personality, the five final bosses and the generic boss, in all 15 languages.
 
 ### Fixes
 - No more crash on some Android devices when a showdown starts ("Shader uniform 'fb_intensity' does not exist"). If the device's graphics driver can't run the screen vignette, it now turns itself off and everything else keeps working.
+
+### For mod authors
+- New line keys: `clutch`, `comeback`, `photo_finish`, `meltdown`, `lucky_cards`, `lucky_joker`, `preview`, `rerolled_out`, `rerolled_in` and `early_loss` (`fb_<blind>_<moment>_<n>`, with personality and generic fallbacks). See "Line keys" in the README.
+- The `line` hook's `info` has two new fields: `chips_before` (the score before the hand being resolved) and `lucky` (`{cards, dollars, joker}` of the hand just played).
 
 ## 1.3.1
 
