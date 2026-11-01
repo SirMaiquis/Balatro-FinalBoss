@@ -210,8 +210,11 @@ end
 
 -- Hook and Tooth act in press_play (blind.lua:464-505). The played cards are still
 -- G.hand.highlighted here: vanilla moves them with queued draw events (state_events.lua:479-486).
+-- 1.4: it runs once per Play click, so it also marks the hand being played (observe.on_play: the
+-- live fear scale can cross before that hand's context.after).
 local orig_press_play = Blind.press_play
 function Blind:press_play(...)
+  U.guard('play_mark', FinalBoss.observe.on_play)
   local played
   if live() then
     played = {}

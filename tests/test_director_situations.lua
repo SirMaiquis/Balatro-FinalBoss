@@ -300,4 +300,38 @@ T['react: an interrupted hand that does not win gets neither its luck line nor a
   eq(ctx.fired[1].opts.line, 'meltdown')
 end
 
+-- 1.4 playtest: the live crossing came before this hand's context.after ---------------------------------
+
+--- Play is clicked on hand id 1 (hands_left 3 before it; observe.on_play), the base preview shows
+--- (current_hand chips x mult) and fear_tick runs before on_hand_after; then context.after and react.
+local function gap_hand(ctx, chips, mult)
+  ctx.enc.last_hand_seen = 0 -- the previous hand
+  G.GAME.current_round.hands_played, G.GAME.current_round.hands_left = 1, 3
+  FinalBoss.observe.on_play()
+  G.GAME.current_round.hands_left = 2 -- vanilla's queued -1
+  G.GAME.current_round.current_hand = {chips = chips, mult = mult}
+  FinalBoss.observe.fear_tick()
+end
+
+T['react: a fear 3 crossed before on_hand_after plays the overkill, no defeat line (playtest)'] = function()
+  local ctx = setup{chips = 0, delta = 2909110, hands_played = 1, hands_left = 2}
+  G.GAME.blind.chips = 22000
+  gap_hand(ctx, 6910, 421) -- 2.9M of 22,000: past 100x at the click
+  eq(#ctx.fired, 1); eq(ctx.fired[1].moment, 'fear_3', 'said live')
+  ctx.play()
+  eq(#ctx.hype, 1, 'a hype'); eq(ctx.hype[1].kind, 'overkill', 'the overkill')
+  eq(#ctx.fired, 1, 'no defeat line: the last words come with the death')
+  eq(ctx.D.death_tier(ctx.enc, ctx.p.total, ctx.p.required), 3, 'the 100x death')
+end
+
+T['react: a fear 1 crossed before on_hand_after on a candidate hand is held back (playtest)'] = function()
+  local ctx = setup{chips = 100, delta = 2900, hands_played = 1, hands_left = 2}
+  gap_hand(ctx, 100, 25) -- 100 + 2500: 2.6x on a comeback candidate (100 < 25% of 1000)
+  eq(#ctx.fired, 0, 'held back'); eq(ctx.enc.fear_said, nil)
+  ctx.play()
+  eq(ctx.p.situation, 'comeback')
+  eq(#ctx.hype, 1); eq(ctx.hype[1].kind, 'comeback'); eq(ctx.hype[1].opts.meltdown, true)
+  eq(#ctx.fired, 1); eq(ctx.fired[1].opts.line, 'meltdown', 'the comeback meltdown line, no fear line')
+end
+
 return T

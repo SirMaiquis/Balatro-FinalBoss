@@ -175,7 +175,7 @@ function O.defeat_moment(p, enc)
   end
   if not won then return nil end
   enc = enc or {}
-  -- enc.fear_hand is the id Dir.on_hand_after booked (enc.last_hand_seen), the same as p.hand. A tier
+  -- enc.fear_hand is the id Dir.on_hand_after books (enc.last_hand_seen; scoring_hand), the same as p.hand. A tier
   -- said live on this hand is its fear tier; a candidate hand (enc.candidate_hand) can only say 3.
   local live = enc.fear_hand ~= nil and enc.fear_hand == p.hand
   if p.unknown and not live then return nil end
@@ -248,6 +248,43 @@ function O.shown_score(shown)
   return chips * mult
 end
 
+--- The hand the Play button just played (hooks.lua: Blind:press_play, called at the click, from
+--- functions/state_events.lua G.FUNCS.play_cards_from_highlighted): {id, left} = its id (hands_played:
+--- vanilla's +1 is queued after evaluate_play, so at the click it is this hand's, the id
+--- Dir.on_hand_after books at context.after) and hands_left before this hand (ease_hands_played(-1)
+--- is queued, not instant). Session only: no save happens while a hand is played.
+O.play_mark = nil
+
+function O.on_play()
+  local cr = G.GAME and G.GAME.current_round
+  if not cr then return end
+  O.play_mark = {id = cr.hands_played, left = cr.hands_left}
+end
+
+--- The id fear_tick books a crossing under, and whether that hand is a clutch/comeback candidate.
+--- G.STATE turns HAND_PLAYED at once, but smods' context.after (Dir.on_hand_after) only runs inside
+--- evaluate_play, after the cards are drawn to the play area; meanwhile the displayed score already
+--- shows the hand's base preview (update_hand_text when the cards were highlighted), so a big hand
+--- can cross a tier in that gap. Then (the play mark is this hand: hands_played is still its id and
+--- on_hand_after has not booked it) the id is the mark's and the candidate is computed here as
+--- on_hand_after would (same +1 count; hands_left is this hand's -1, whether or not vanilla's queued
+--- decrement has run yet). Otherwise (the score animation, after context.after) on_hand_after booked
+--- both: enc.last_hand_seen and enc.candidate_hand.
+local function scoring_hand(enc, blind)
+  local cr = G.GAME.current_round
+  local m = O.play_mark
+  if m and m.id ~= nil and cr.hands_played == m.id and enc.last_hand_seen ~= m.id then
+    local read = FinalBoss.director.read
+    local left, before = read(cr.hands_left), read(m.left)
+    if before then left = math.min(left or before, before - 1) end
+    local played = read(m.id)
+    local candidate = L().situation_candidate{start = read(G.GAME.chips), required = read(blind.chips),
+      hands_left = left, hands_played = played and played + 1}
+    return m.id, candidate
+  end
+  return enc.last_hand_seen, enc.candidate_hand ~= nil and enc.candidate_hand == enc.last_hand_seen
+end
+
 --- Per frame (Dir.tick): while a hand scores, the boss watches the running total the player sees, the
 --- round score before this hand plus the hand's displayed score (O.shown_score:
 --- G.GAME.current_round.current_hand, which update_hand_text writes card by card as the score
@@ -274,14 +311,15 @@ function O.fear_tick()
   local total = L().live_total(read(G.GAME.chips), O.shown_score(shown))
   local t = L().fear_step(enc.fear_said, L().fear_tier(total, read(blind.chips)))
   if not t then return end
-  -- The hand id Dir.on_hand_after booked for this hand: vanilla's hands_played +1 event is queued
-  -- before evaluate_play queues the score display, so during the animation hands_played is already
-  -- one ahead (functions/state_events.lua, G.FUNCS.play_cards_from_highlighted).
-  -- 1.4: on a hand that could end as a clutch or comeback (enc.candidate_hand, booked by
-  -- Dir.on_hand_after at context.after, which runs before this animation), fear 1 and 2 stay silent and
-  -- unbooked: its defeat line beats them (logic.defeat_choice). Fear 3 still fires.
-  if t < 3 and enc.candidate_hand ~= nil and enc.candidate_hand == enc.last_hand_seen then return end
-  enc.fear_said, enc.fear_hand = t, enc.last_hand_seen
+  -- The hand id Dir.on_hand_after books for this hand (scoring_hand): during the animation it is
+  -- enc.last_hand_seen, as vanilla's hands_played +1 event is queued before evaluate_play queues the
+  -- score display, so hands_played is already one ahead (functions/state_events.lua,
+  -- G.FUNCS.play_cards_from_highlighted); before context.after it is the play mark's id.
+  -- 1.4: on a hand that could end as a clutch or comeback, fear 1 and 2 stay silent and unbooked: its
+  -- defeat line beats them (logic.defeat_choice). Fear 3 still fires.
+  local hand, candidate = scoring_hand(enc, blind)
+  if t < 3 and candidate then return end
+  enc.fear_said, enc.fear_hand = t, hand
   -- Visual only: a failure is logged, and the line is still said.
   local ok, err = pcall(FinalBoss.director.fear_fx, enc, blind, t)
   if not ok then FinalBoss.util.log('warn', 'fear visuals failed: ' .. tostring(err)) end
