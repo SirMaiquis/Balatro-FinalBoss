@@ -190,14 +190,33 @@ function M.yank_target(x, y, w, h, bounds)
   return edge, x, t - h - m
 end
 
+--- Where node (a sprite or UIElement) is drawn, in room units: x, y, w, h, or nil. Every Moveable's T and
+--- VT are already in room coordinates (a Minor's are its major's plus its role offset, moveable.lua:370-375;
+--- the role offset is the relative part). VT is where it is drawn this frame, T where it is headed: VT for
+--- the place (the chip may still be settling), T for the size (VT.w/h can carry a juice scale).
+function M.room_rect(node)
+  local T = type(node) == 'table' and node.T
+  if type(T) ~= 'table' then return nil end
+  local VT = type(node.VT) == 'table' and node.VT or T
+  local x, y = VT.x or T.x, VT.y or T.y
+  if not (type(x) == 'number' and type(y) == 'number' and type(T.w) == 'number' and type(T.h) == 'number') then
+    return nil
+  end
+  return x, y, T.w, T.h
+end
+
 --- A copy of key's blind chip over chip (the Boss choice's sprite), built like vanilla's
 --- (create_UIBox_blind_choice: SMODS.create_sprite from the blind's atlas and pos, dissolve draw steps),
 --- in a late-drawn UIBox so it sits above the blind-select panel. nil for an unknown key.
+--- Placed like vanilla places screen UI (G.HUD, the round-eval box): aligned to G.ROOM_ATTACH, here
+--- 'tli' (its top-left inside, at an offset), Strong bond. UIBox:init ignores a T argument (ui.lua:20
+--- passes {args.T} to Moveable.init, so T starts at 0,0) and a box with no major aligns to itself: the
+--- first copy sat in the room's top-left corner.
 local function build_copy(key, chip)
   local proto = G.P_BLINDS and G.P_BLINDS[key]
-  local T = chip and chip.T
-  if not (proto and T) then return nil end
-  local x, y, w, h = T.x, T.y, T.w, T.h
+  local RA = G.ROOM_ATTACH
+  local x, y, w, h = M.room_rect(chip)
+  if not (proto and x and RA and RA.T) then return nil end
   local atlas = (SMODS.get_atlas and proto.atlas and SMODS.get_atlas(proto.atlas)) or 'blind_chips'
   local pos = proto.pos or {x = 0, y = 0}
   local sprite = SMODS.create_sprite(x, y, w, h, atlas, {x = pos.x, y = pos.y})
@@ -205,7 +224,8 @@ local function build_copy(key, chip)
   local box = UIBox{T = {x, y, w, h},
     definition = {n = G.UIT.ROOT, config = {align = 'cm', padding = 0, colour = G.C.CLEAR},
       nodes = {{n = G.UIT.O, config = {object = sprite}}}},
-    config = {align = 'cm', offset = {x = 0, y = 0}, can_collide = false}}
+    config = {align = 'tli', offset = {x = x - RA.T.x, y = y - RA.T.y}, major = RA, bond = 'Strong',
+      can_collide = false}}
   box.attention_text = true -- vanilla's late pass: above the panel; its bubble (made after) above it
   sprite.role.draw_major = sprite -- the dissolve shader reads sprite.dissolve / dissolve_colours
   sprite.dissolve = 0
@@ -231,10 +251,14 @@ function M.remove_copy(teardown)
   end
 end
 
+--- Move the copy to room (x, y): its alignment offset (align_to_major resets T from it every frame),
+--- and T / VT now, so this frame already draws it there (a yank, not a glide).
 local function place(c, x, y)
-  local T, VT = c.box.T, c.box.VT
-  T.x, T.y = x, y
-  if VT then VT.x, VT.y = x, y end -- a yank, not a glide: the spring would lag behind
+  local box, RA = c.box, G.ROOM_ATTACH
+  local off = box.alignment and box.alignment.offset
+  if off and RA and RA.T then off.x, off.y = x - RA.T.x, y - RA.T.y end
+  box.T.x, box.T.y = x, y
+  if box.VT then box.VT.x, box.VT.y = x, y end
 end
 
 --- The protest is over (read): its bubble goes before the copy moves or dissolves, so it never trails

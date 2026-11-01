@@ -53,9 +53,25 @@ local function setup(opts)
     return {T = {x = x, y = y, w = w, h = h}, atlas = atlas, pos = pos, role = {},
       define_draw_steps = function(self, steps) self.steps = steps end}
   end}
+  -- Like vanilla's UIBox:init: args.T is ignored (ui.lua:20 passes {args.T} to Moveable.init, so T starts
+  -- at 0,0) and the box sits where its alignment to config.major puts it (none: itself, so it stays at
+  -- 0,0). Only 'tli' (top-left inside + offset) is modelled. box:frame() is align_to_major, run every frame.
   _G.UIBox = function(args)
-    local box = {T = {x = args.T[1], y = args.T[2], w = args.T[3], h = args.T[4]},
-      VT = {x = args.T[1], y = args.T[2]}, args = args, sprite = args.definition.nodes[1].config.object}
+    local sprite = args.definition.nodes[1].config.object
+    local box = {T = {x = 0, y = 0, w = sprite.T.w, h = sprite.T.h}, VT = {x = 0, y = 0}, args = args,
+      sprite = sprite}
+    local cfg = args.config or {}
+    if cfg.major then
+      assert(cfg.align == 'tli', 'the stub models tli alignment only, got ' .. tostring(cfg.align))
+      box.alignment = {offset = {x = cfg.offset.x, y = cfg.offset.y}}
+    end
+    function box.frame(self)
+      if not cfg.major then return end
+      self.T.x = cfg.major.T.x + self.alignment.offset.x
+      self.T.y = cfg.major.T.y + self.alignment.offset.y
+      self.VT.x, self.VT.y = self.T.x, self.T.y
+    end
+    box:frame()
     box.remove = function(self) self.removed = (self.removed or 0) + 1; self.REMOVED = true end
     ctx.copies[#ctx.copies + 1] = box
     return box
@@ -65,6 +81,7 @@ local function setup(opts)
     STATE = 7, STATES = {BLIND_SELECT = 7},
     TIMERS = {REAL = 0}, SETTINGS = {reduced_motion = opts.reduced or false},
     ROOM = {T = {x = 0, y = 0, w = 20, h = 11.5}}, UIT = {ROOT = 'ROOT', O = 'O'},
+    ROOM_ATTACH = {T = {x = 0, y = 0, w = 20, h = 11.5}},
     C = {CLEAR = {0, 0, 0, 0}, BLACK = {0, 0, 0, 1}, RED = {1, 0, 0, 1}},
     E_MANAGER = {add_event = function(_, e)
       e.queued_at = G.TIMERS.REAL
@@ -109,6 +126,7 @@ local function setup(opts)
       local due = e.trigger ~= 'after' or (e.queued_at or 0) + (e.delay or 0) <= t
       if not (due and e.func() ~= false) then ctx.timers[#ctx.timers + 1] = e end
     end
+    for _, box in ipairs(ctx.copies) do if not box.REMOVED then box:frame() end end -- then moveables move
   end
   function ctx.keys()
     local out = {}
@@ -224,6 +242,51 @@ T['on_reroll: a copy of the OLD chip protests at the click, the NEW boss sneers 
   eq(ctx.said[2].pitch, 0.7, 'the new boss voice'); eq(ctx.said[2].vars[1], 'Loc bl_wall')
   ctx.M.on_blind_select(); ctx.run(10); ctx.run(20)
   eq(#ctx.said, 2, 'no second preview this ante')
+end
+
+T['room_rect: where a node is drawn, in room units'] = function()
+  local M = setup().M
+  local x, y, w, h = M.room_rect({T = {x = 14, y = 5, w = 1.4, h = 1.4}})
+  eq(x, 14); eq(y, 5); eq(w, 1.4); eq(h, 1.4, 'T alone')
+  x, y, w, h = M.room_rect({T = {x = 14, y = 5, w = 1.4, h = 1.4}, VT = {x = 14, y = 5.6, w = 1.5, h = 1.5}})
+  eq(x, 14); eq(y, 5.6, 'VT: where it is drawn this frame (still settling)'); eq(w, 1.4, 'T size, not a juiced VT')
+  eq(M.room_rect(nil), nil); eq(M.room_rect({}), nil, 'no transform')
+  eq(M.room_rect({T = {x = 1}}), nil, 'incomplete transform')
+end
+
+T['on_reroll: the copy starts exactly over a chip nested in the boss UIBox, not at the room origin'] = function()
+  local ctx = setup()
+  -- The boss UIBox at (12, 4); the chip's UIElement 2, 1 inside it; the sprite 0.3, 0.2 inside that.
+  -- Role offsets are relative; T / VT are room positions (moveable.lua:370-375).
+  local boss = {T = {x = 12, y = 4, w = 5, h = 6}}
+  local uie = {T = {x = 14, y = 5, w = 2, h = 2}, role = {role_type = 'Minor', major = boss, offset = {x = 2, y = 1}}}
+  local chip = {atlas = 'blind_chips', sprite_pos = {x = 0, y = 7},
+    T = {x = 14.3, y = 5.2, w = 1.4, h = 1.4}, VT = {x = 14.3, y = 5.2, w = 1.4, h = 1.4},
+    role = {role_type = 'Minor', major = uie, offset = {x = 0.3, y = 0.2}}}
+  G.blind_select_opts.boss = boss_box(chip)
+  ctx.M.on_reroll_click('bl_hook')
+  local box = ctx.copies[1]
+  eq(box.T.x, 14.3, 'copy x = the chip room x'); eq(box.T.y, 5.2, 'copy y = the chip room y')
+  eq(box.VT.x, 14.3); eq(box.VT.y, 5.2, 'drawn there from the first frame')
+  eq(box.T.w, 1.4); eq(box.T.h, 1.4, 'same size')
+  eq(ctx.said[1].host, box.sprite, 'the line is anchored on the copy')
+  ctx.run(0.1); ctx.run(1.5)
+  eq(box.T.x, 14.3); eq(box.T.y, 5.2, 'stays over the chip through the hold (frames re-align it)')
+  local c = ctx.M.copy
+  eq(c.x0, 14.3); eq(c.y0, 5.2, 'the yank starts from the chip')
+  eq(c.edge, 'right', 'off the nearest edge, away from the boss slot'); eq(c.ty, 5.2, 'level with the chip')
+  ctx.run(2.6)
+  eq(box.T.x > 14.3 + ctx.M.YANK_SHAKE_AMP, true, 'sliding right'); eq(box.T.y, 5.2, 'no drift up or down')
+  ctx.run(ctx.M.PROTEST_TIME - 0.01)
+  eq(box.T.x > 15, true, 'still going right at the end of the slide')
+end
+
+T['on_reroll: no room attach point, no copy (the sneer still comes)'] = function()
+  local ctx = setup()
+  G.ROOM_ATTACH = nil
+  reroll(ctx, 'bl_hook', 'bl_wall')
+  eq(#ctx.copies, 0, 'no copy'); ctx.run(0.1)
+  eq(ctx.keys(), 'fb_bl_wall_rerolled_in', 'the sneer at once')
 end
 
 T['yank_target: the nearest window edge and a spot past it'] = function()
