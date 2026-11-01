@@ -144,15 +144,22 @@ T['hype: reduced motion shows static text, same hold, and a flash-only meltdown'
   eq(r.flash ~= nil, true, 'flash kept')
 end
 
-T['hype: white text on a dark boss-colour panel, popping in'] = function()
+T['hype: vanilla look: popping boss-colour text with a thin dark outline, no panel'] = function()
   local c = setup()
   c.H.play('overkill', {})
   local t, box = c.texts[1], c.boxes[1]
-  eq(t.colours[1][1] == 1 and t.colours[1][2] == 1 and t.colours[1][3] == 1, true, 'white text')
-  eq(t.scale, 2.2, 'big'); eq(t.shadow, true, 'shadow'); eq(t.pop_in, 0, 'pops in'); eq(t.pulsed, 0.5, 'pulse')
-  local panel = box.definition.config.colour
-  eq(math.abs(panel[2] - 0.2 * (1 - c.H.PANEL_DARKEN)) < 1e-9, true, 'darkened boss colour')
-  eq(box.definition.config.emboss ~= nil, true, 'embossed')
+  local bc = G.GAME.blind.config.blind.boss_colour
+  eq(t.colours[1][1] == 0.1 and t.colours[1][2] == 0.2 and t.colours[1][3] == 0.3, true, 'boss colour')
+  eq(t.colours[1] ~= bc, true, 'a copy: the fade never touches the blind colour')
+  eq(t.scale, 2.4, 'bigger than the first version'); eq(t.shadow, true, 'shadow')
+  eq(t.float, true, 'floats'); eq(t.pop_in, 0, 'pops in'); eq(t.pop_in_rate, 6, 'pop rate'); eq(t.pulsed, 0.5, 'pulse')
+  eq(type(t.text_outline), 'table', 'outlined')
+  eq(t.text_outline[1] + t.text_outline[2] + t.text_outline[3] < 0.5, true, 'dark outline')
+  eq(type(t.text_outline_scale), 'number', 'outline scale')
+  eq(t.text_outline_scale > 0 and t.text_outline_scale <= 2, true, 'thin')
+  local root = box.definition.config
+  eq(root.colour == nil or root.colour[4] == 0, true, 'no panel colour')
+  eq(root.emboss, nil, 'no emboss'); eq(root.outline, nil, 'no box outline')
   eq(box.attention_text, true, 'drawn above the cards')
 end
 
@@ -163,7 +170,7 @@ T['hype: the text lives on REAL time, also while paused, and never blocks'] = fu
   local e = c.events[1]
   eq(e.timer, 'REAL', 'REAL timer'); eq(e.pause_force, true, 'runs while paused')
   eq(e.blocking, false, 'not blocking'); eq(e.blockable, false, 'not blockable')
-  eq(e.delay, 2.4, 'hold'); eq(c.H.HOLD, 2.4, 'H.HOLD')
+  eq(e.delay, 2.0, 'hold'); eq(c.H.HOLD, 2.0, 'H.HOLD')
 end
 
 T['hype: holds for H.HOLD real seconds whatever the game speed, then pops out and goes'] = function()
@@ -172,14 +179,16 @@ T['hype: holds for H.HOLD real seconds whatever the game speed, then pops out an
   local box, t = c.boxes[1], c.texts[1]
   tick(c)
   G.TIMERS.TOTAL = G.TIMERS.TOTAL + 1000 -- game speed / slow motion: irrelevant
-  G.TIMERS.REAL = G.TIMERS.REAL + 2.3; tick(c)
-  eq(box.removed, nil, 'still up at 2.3 s')
+  G.TIMERS.REAL = G.TIMERS.REAL + 1.9; tick(c)
+  eq(box.removed, nil, 'still up at 1.9 s')
+  eq(t.popped, nil, 'no pop out during the hold')
   eq(c.H.box, box, 'tracked')
   G.TIMERS.REAL = G.TIMERS.REAL + 0.15; tick(c)
   eq(t.popped ~= nil, true, 'pop out started')
   eq(box.removed, nil, 'fading')
   G.TIMERS.REAL = G.TIMERS.REAL + 0.2; tick(c)
   eq(t.colours[1][4] < 1 and t.colours[1][4] > 0, true, 'half faded')
+  eq(t.text_outline[4] < 0.95 and t.text_outline[4] > 0, true, 'outline fades with it')
   G.TIMERS.REAL = G.TIMERS.REAL + 0.2; tick(c)
   eq(box.removed, 1, 'removed'); eq(c.H.box, nil, 'forgotten'); eq(#c.events, 0, 'timer done')
 end

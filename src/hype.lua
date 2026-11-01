@@ -3,16 +3,17 @@
 --- shake are screen effects (config.fx); the sting is sound and plays without it. hype.play never says a line:
 --- the director decides that. Every piece runs on its own, so a failing draw or sound is logged and skipped
 --- (not util.guard: that disables the mod for the run, too harsh for a cosmetic).
---- The text is its own UIBox, not vanilla's attention_text: that one times its hold and fade on the
---- TOTAL timer, which runs at game speed (and FinalBoss.timescale), so at a high speed it was gone in a
---- quarter second. This one lives on REAL time and sits on a dark panel in the boss colour, readable on
---- any background (a boss colour alone can match the felt: The Club on green).
+--- The text looks like vanilla's attention_text (floating, popping letters in the boss colour, a pulse, no box)
+--- but is built here: attention_text times its hold and fade on the TOTAL timer, which runs at game speed
+--- (and FinalBoss.timescale), so at a high speed it was gone in a quarter second. This one lives on REAL
+--- time. A thin dark outline keeps it readable when the boss colour matches the felt (The Club on green).
 local H = {}
-H.HOLD = 2.4        -- REAL seconds the text stays fully up
+H.HOLD = 2.0        -- REAL seconds the text stays fully up
 H.FADE = 0.35       -- REAL seconds of the pop-out / fade, then it is removed
-H.SCALE = 2.2       -- big text
+H.SCALE = 2.4       -- big text (the first version's attention_text was 1.8)
 H.MAXW = 12         -- long translations shrink to fit
-H.PANEL_DARKEN = 0.45 -- the panel is the boss colour darkened this much
+H.OUTLINE = {0.06, 0.06, 0.09, 0.9} -- DynaText text_outline colour (copied per text)
+H.OUTLINE_SCALE = 1.4 -- text_outline_scale: ~0.07 room units, about a third of a letter pixel at H.SCALE
 H.SHAKE = 10        -- fx.play('shake') amount of a meltdown
 H.STING = {{'gong', 0.9}, {'multhit2', 0.7}} -- layered vanilla sounds
 H.VOLUME = 0.6
@@ -26,6 +27,11 @@ local function safe(name, fn, ...)
 end
 
 local function reduced() return G.SETTINGS and G.SETTINGS.reduced_motion end
+
+--- A fresh {r, g, b, a}: the fade writes its alpha, never the blind's own colour.
+local function copy_colour(c)
+  return {c[1], c[2], c[3], c[4] or 1}
+end
 
 local function boss_colour(blind)
   return (blind and blind.config and blind.config.blind and blind.config.blind.boss_colour) or G.C.RED
@@ -72,21 +78,19 @@ end
 local function show_text(kind, blind)
   H.remove()
   local still = reduced()
-  local white = {1, 1, 1, 1}
-  local panel = darken(boss_colour(blind), H.PANEL_DARKEN)
-  panel[4] = 0.95
-  local edge = {1, 1, 1, 0.9}
-  local fading = {white, panel, edge}
+  local colour = copy_colour(boss_colour(blind))
+  local outline = copy_colour(H.OUTLINE)
+  local fading = {colour, outline}
   local base = {}
   for i, c in ipairs(fading) do base[i] = c[4] end
-  -- Reduced motion: no pop in, float or pulse; same hold, then removed at once (no fade).
-  local text = DynaText({string = text_of(kind), scale = H.SCALE, maxw = H.MAXW, colours = {white},
-    shadow = true, silent = true, float = (not still) or nil, pop_in = (not still) and 0 or nil,
-    pop_in_rate = (not still) and 6 or nil})
+  -- As attention_text builds its DynaText; reduced motion: no pop in, float or pulse; same hold, then
+  -- removed at once (no fade).
+  local text = DynaText({string = text_of(kind), scale = H.SCALE, maxw = H.MAXW, colours = {colour},
+    shadow = true, silent = true, text_outline = outline, text_outline_scale = H.OUTLINE_SCALE,
+    float = (not still) or nil, pop_in = (not still) and 0 or nil, pop_in_rate = (not still) and 6 or nil})
   local box = UIBox{
-    definition = {n = G.UIT.ROOT, config = {align = 'cm', padding = 0.25, r = 0.15, colour = panel, emboss = 0.08,
-      outline = 1.5, outline_colour = edge},
-      nodes = {{n = G.UIT.O, config = {object = text}}}},
+    definition = {n = G.UIT.ROOT, config = {align = 'cm', padding = 0.03, r = 0.1, colour = {0, 0, 0, 0}},
+      nodes = {{n = G.UIT.O, config = {draw_layer = 1, object = text}}}},
     config = {major = G.play, align = 'cm', offset = {x = 0, y = 0}, can_collide = false},
   }
   box.attention_text = true -- drawn in vanilla's late pass, above the cards
@@ -95,12 +99,12 @@ local function show_text(kind, blind)
   local token = H.token
   local start
   every_frame(token, function()
-    -- Reduced motion: removed at the end of the hold. An alpha fade would leave the DynaText shadow and
-    -- the panel's emboss (drawn without the panel colour's alpha) at full strength until removal.
+    -- Reduced motion: removed at the end of the hold. An alpha fade would leave the DynaText shadow
+    -- at full strength until removal.
     if still then H.remove(); return true end
     if not start then
       start = G.TIMERS.REAL
-      if not still and text.pop_out then text:pop_out(1 / H.FADE) end
+      if text.pop_out then text:pop_out(1 / H.FADE) end
     end
     local a = math.max(0, 1 - (G.TIMERS.REAL - start) / H.FADE)
     for i, c in ipairs(fading) do c[4] = base[i] * a end
