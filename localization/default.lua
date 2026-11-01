@@ -111,7 +111,7 @@ return {
             fb_generic_interrupted_3 = {"Not even a hello?", "Fine. No {C:attention}mercy{}."},
             fb_generic_phase2_1 = {"Enough games!", "Gloves {C:attention}OFF{}."},
             fb_generic_phase3_1 = {"That's it! Now", "I'm {E:fb_grawlix}fucking{} {C:attention}ANGRY{}!"},
-            fb_generic_rematch_won_1 = {"You again?", "Last win was {C:attention}luck{}."},
+            fb_generic_rematch_won_1 = {"You again?", "Last win was {C:green}luck{}."},
             fb_generic_rematch_won_2 = {"Remember beating me?", "Enjoy the {C:attention}memory{}."},
             fb_generic_rematch_won_3 = {"Rematch, punk.", "I've been {C:attention}training{}."},
             fb_generic_rematch_lost_1 = {"Back for another", "beating, {C:attention}loser{}?"},
