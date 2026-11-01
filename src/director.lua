@@ -237,7 +237,8 @@ function Dir.on_round_end()
   -- 1.4: died to a small or big blind (vanilla's have no config.blind.boss): the upcoming boss mocks
   -- it from the game-over screen. Not a loss to anyone: nothing above was recorded for it.
   local proto = G.GAME.blind and G.GAME.blind.config and G.GAME.blind.config.blind
-  if over and proto and not proto.boss then
+  local early = over and proto and not proto.boss
+  if early then
     FinalBoss.util.guard('early_loss', FinalBoss.moments.on_early_loss)
   end
   if not enc then return end
@@ -254,6 +255,9 @@ function Dir.on_round_end()
     st.lost_to = nil
   end
   FinalBoss.dialogue.end_intro()
+  -- An early loss's line is on the gloat chip and hides itself (moments.on_early_loss); a small or
+  -- big blind has no bubble of its own, and this hide would cut that line.
+  if early then return end
   local blind = G.GAME.blind
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = 3, timer = 'REAL', blocking = false, blockable = false,
     func = function() FinalBoss.util.guard('hide_bubble', FinalBoss.dialogue.hide, blind); return true end}))

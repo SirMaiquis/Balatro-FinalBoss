@@ -344,12 +344,12 @@ end
 
 --- director.lua's on_round_end under stubs: which round ends call the early loss.
 local function round_end_setup(o)
-  local ctx = {early = 0, forbidden = {}}
+  local ctx = {early = 0, forbidden = {}, events = {}, bubble = false, hides = 0}
   _G.Event = function(t) return t end
   local blind_proto = o.boss and {key = 'bl_hook', boss = {min = 1}} or {key = 'bl_small'}
   _G.G = {
     GAME = {FinalBoss = {encounter = o.enc}, blind = {config = {blind = blind_proto}}},
-    E_MANAGER = {add_event = function() end},
+    E_MANAGER = {add_event = function(_, e) ctx.events[#ctx.events + 1] = e end},
     STATES = {GAME_OVER = 4, ROUND_EVAL = 5}, STATE = o.over and 4 or 5,
   }
   local noop = function() end
@@ -361,11 +361,20 @@ local function round_end_setup(o)
     util = {now = function() return 0 end, log = noop, state = function() return G.GAME.FinalBoss end,
       guard = function(_, f, ...) return pcall(f, ...) end},
     phases = {reset = noop},
-    memory = {on_loss = function() return true end, unpresent = noop},
+    memory = {unpresent = noop, on_loss = o.boss and function() return true end
+      or function() ctx.forbidden[#ctx.forbidden + 1] = 'memory.on_loss' end},
     avatar = {set_hud_tremble = noop}, fx = {stop = noop}, arena = {stop = noop},
-    dialogue = {end_intro = noop, hide = noop},
-    moments = {on_early_loss = function() ctx.early = ctx.early + 1 end},
+    -- The bubble: the early-loss line shows it; any hide removes it (dialogue.hide drops the late
+    -- bubble whatever its host).
+    dialogue = {end_intro = noop, hide = function() ctx.hides = ctx.hides + 1; ctx.bubble = false end},
+    moments = {on_early_loss = function() ctx.early = ctx.early + 1; ctx.bubble = true end},
   }
+  -- Every queued event, timers included (created on the paused game-over screen, they do run).
+  function ctx.run_events()
+    local queued = ctx.events
+    ctx.events = {}
+    for _, e in ipairs(queued) do e.func() end
+  end
   ctx.D = require('src.director')
   FinalBoss.director = ctx.D
   return ctx
@@ -375,6 +384,7 @@ T['on_round_end: a game over on a small or big blind calls the early loss once']
   local ctx = round_end_setup{over = true, enc = {key = 'bl_small', boss = false, tier = 'none', fired = {}}}
   ctx.D.on_round_end()
   eq(ctx.early, 1, 'with its (silent) encounter')
+  eq(#ctx.forbidden, 0, 'not a loss to anyone')
   ctx = round_end_setup{over = true, enc = nil}
   ctx.D.on_round_end()
   eq(ctx.early, 1, 'no encounter at all')
@@ -387,6 +397,25 @@ T['on_round_end: a boss loss or a won round is not an early loss'] = function()
   ctx = round_end_setup{over = false, enc = {key = 'bl_small', boss = false, tier = 'none', fired = {}}}
   ctx.D.on_round_end()
   eq(ctx.early, 0, 'round won')
+end
+
+T['on_round_end: the early-loss line survives the director queued events until its own hide'] = function()
+  local ctx = round_end_setup{over = true, enc = {key = 'bl_small', boss = false, tier = 'none', fired = {}}}
+  ctx.D.on_round_end()
+  eq(ctx.bubble, true)
+  ctx.run_events()
+  eq(ctx.hides, 0, 'no tail hide queued on an early loss')
+  eq(ctx.bubble, true, 'the line stays for its LINE_DURATION')
+  -- A boss loss still clears its own bubble after 3 s.
+  ctx = round_end_setup{over = true, boss = true, enc = {key = 'bl_hook', boss = true, tier = 'light', fired = {}}}
+  ctx.D.on_round_end()
+  ctx.run_events()
+  eq(ctx.hides, 1, 'boss loss: the tail hide runs')
+  -- So does a won small blind.
+  ctx = round_end_setup{over = false, enc = {key = 'bl_small', boss = false, tier = 'none', fired = {}}}
+  ctx.D.on_round_end()
+  ctx.run_events()
+  eq(ctx.hides, 1, 'won round: the tail hide runs')
 end
 
 return T
