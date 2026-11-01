@@ -79,7 +79,7 @@ local function show_text(kind, blind)
   local fading = {white, panel, edge}
   local base = {}
   for i, c in ipairs(fading) do base[i] = c[4] end
-  -- Reduced motion: no pop in, float or pulse; same hold, then a plain fade.
+  -- Reduced motion: no pop in, float or pulse; same hold, then removed at once (no fade).
   local text = DynaText({string = text_of(kind), scale = H.SCALE, maxw = H.MAXW, colours = {white},
     shadow = true, silent = true, float = (not still) or nil, pop_in = (not still) and 0 or nil,
     pop_in_rate = (not still) and 6 or nil})
@@ -95,6 +95,9 @@ local function show_text(kind, blind)
   local token = H.token
   local start
   every_frame(token, function()
+    -- Reduced motion: removed at the end of the hold. An alpha fade would leave the DynaText shadow and
+    -- the panel's emboss (drawn without the panel colour's alpha) at full strength until removal.
+    if still then H.remove(); return true end
     if not start then
       start = G.TIMERS.REAL
       if not still and text.pop_out then text:pop_out(1 / H.FADE) end
