@@ -1839,6 +1839,17 @@ for _, m in ipairs(logic.NEW_MOMENTS_1_4) do
   logic.PERSONALITY_VARIANTS[m] = 3
 end
 
+--- args: {ante, previewed_ante (the ante whose preview, or reroll sneer, was said; nil = none),
+--- tier (logic.decide_tier for the upcoming boss, as at its intro; nil = unreadable boss),
+--- first_select (the run's first blind-select screen)}. Once per ante, never for a silent boss, and
+--- not over ante 1's first screen (the deck-select transition).
+function logic.preview_due(a)
+  if a.tier == nil or a.tier == 'none' then return false end
+  if a.ante == a.previewed_ante then return false end
+  if a.first_select and a.ante == 1 then return false end
+  return true
+end
+
 function logic.personality_variants(moment)
   return logic.PERSONALITY_VARIANTS[moment] or 1
 end

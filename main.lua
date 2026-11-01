@@ -20,7 +20,7 @@ end
 -- Order matters: util and logic first; hooks last (it wires everything together).
 local MODULES = {'util', 'logic', 'personality', 'registry', 'music', 'fx', 'hype', 'effects', 'curse', 'arena', 'avatar',
   'hpbar', 'cinematic', 'moves', 'deaths', 'phases', 'memory', 'observe', 'poke', 'tricks', 'achievements', 'ui', 'dialogue',
-  'director', 'quips', 'devtools', 'hooks'}
+  'director', 'moments', 'quips', 'devtools', 'hooks'}
 
 for _, name in ipairs(MODULES) do
   FinalBoss[name] = load_file('src/' .. name .. '.lua')

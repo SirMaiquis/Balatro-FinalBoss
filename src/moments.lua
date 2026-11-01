@@ -1,0 +1,148 @@
+--- Lines said outside the fight (1.4, logic.OUTSIDE_MOMENTS): the boss preview and the reroll
+--- protest/sneer from the blind-select boss chip. Gated like the boss's intro (logic.decide_tier);
+--- needs config.dialogue, never config.fx (no visuals here). hooks.lua calls in.
+local M = {}
+M.PREVIEW_DELAY = 0.8 -- seconds after the blind-select screen is built (it slides up from below)
+M.SNEER_DELAY = 2     -- seconds between the outgoing boss's protest and the new boss's sneer
+M.LINE_DURATION = 3.5 -- seconds a line stays up
+M.token = 0           -- bumped to cancel pending lines (a newer line, teardown)
+M.last_variant = {}   -- per-prefix last variant (registry.resolve), session only
+
+local function cfg() return FinalBoss.config end
+
+--- Lines are on: a live run, FinalBoss not disabled for it, dialogue on.
+local function active()
+  return G.GAME and FinalBoss.director.enabled() and cfg().dialogue and true or false
+end
+
+local function bump()
+  M.token = M.token + 1
+  return M.token
+end
+
+local function after(delay, fn)
+  G.E_MANAGER:add_event(Event({trigger = 'after', delay = delay, timer = 'REAL',
+    blocking = false, blockable = false,
+    func = function() FinalBoss.util.guard('moments_timer', fn); return true end}))
+end
+
+local function boss_key()
+  local rr = G.GAME and G.GAME.round_resets
+  return rr and rr.blind_choices and rr.blind_choices.Boss
+end
+
+--- The tier this boss would get at its intro (Dir.on_blind_set's inputs); nil for an unknown key.
+local function tier_of(key, st)
+  local proto = key and G.P_BLINDS and G.P_BLINDS[key]
+  if not proto then return nil end
+  local entry = FinalBoss.registry.get(key)
+  return FinalBoss.logic.decide_tier{
+    is_boss = true,
+    is_showdown = (proto.boss and proto.boss.showdown) and true or false,
+    entry_tier = entry and entry.tier,
+    ante = G.GAME.round_resets.ante,
+    max_ante = st.max_ante,
+    min_ante = cfg().min_ante,
+  }
+end
+
+local function speaks(key, st)
+  local t = tier_of(key, st)
+  return t ~= nil and t ~= 'none'
+end
+
+--- The boss's localized name (Dir.vars style), so generic #1# lines fill in.
+local function name_of(key)
+  local ok, name = pcall(localize, {type = 'name_text', key = key, set = 'Blind'})
+  if ok and type(name) == 'string' and name ~= '' and name ~= 'ERROR' then return name end
+  local proto = G.P_BLINDS and G.P_BLINDS[key]
+  return (proto and proto.name) or key
+end
+
+local function is_sprite(o)
+  return type(o) == 'table' and o.atlas ~= nil and o.sprite_pos ~= nil
+end
+
+--- First sprite under a UIElement, in definition order.
+local function first_sprite(node)
+  if type(node) ~= 'table' then return nil end
+  local obj = node.config and node.config.object
+  if is_sprite(obj) then return obj end
+  for _, child in ipairs(node.children or {}) do
+    local found = first_sprite(child)
+    if found then return found end
+  end
+  return nil
+end
+
+--- The Boss choice's blind chip sprite on the blind-select screen (create_UIBox_blind_choice: the
+--- blind_choice.animation object inside the 'blind_desc' row; the stake sprite comes after it), or nil.
+function M.chip()
+  local box = G.blind_select_opts and G.blind_select_opts.boss
+  if type(box) ~= 'table' then return nil end
+  local desc = box.get_UIE_by_ID and box:get_UIE_by_ID('blind_desc')
+  return first_sprite(desc) or first_sprite(box.UIRoot)
+end
+
+--- The blind-select screen is up (selecting a blind clears G.blind_select, button_callbacks.lua).
+local function on_screen()
+  if not G.blind_select then return false end
+  return not (G.STATES and G.STATE ~= G.STATES.BLIND_SELECT)
+end
+
+--- Say one outside line from the boss chip. True when it showed.
+local function speak(key, moment)
+  if not (active() and on_screen()) then return false end
+  local chip = M.chip()
+  if not chip then return false end
+  local line = FinalBoss.registry.resolve(key, moment, M.last_variant)
+  if not line then return false end
+  local entry = FinalBoss.registry.get(key)
+  local pitch = (entry and entry.voice and entry.voice.pitch) or 1.0
+  -- force: no in-fight cooldown here; free: never delays the next fight's lines; late: drawn above
+  -- the blind-select UI (dialogue.show).
+  return FinalBoss.dialogue.say(chip, line, {name_of(key)}, pitch,
+    {force = true, free = true, late = true, duration = M.LINE_DURATION}) and true or false
+end
+
+--- The blind-select screen was built: the upcoming boss previews, once per ante.
+function M.on_blind_select()
+  if not G.GAME then return end
+  local st = FinalBoss.util.state()
+  local first = not st.select_seen
+  st.select_seen = true
+  if not active() then return end
+  local key = boss_key()
+  local ante = G.GAME.round_resets.ante
+  if not FinalBoss.logic.preview_due{ante = ante, previewed_ante = st.previewed_ante, tier = tier_of(key, st),
+    first_select = first} then return end
+  local token = bump()
+  after(M.PREVIEW_DELAY, function()
+    if M.token ~= token or boss_key() ~= key or st.previewed_ante == ante then return end
+    -- Counted only once seen, so a blind picked or a quit before it shows leaves it for next time.
+    if speak(key, 'preview') then st.previewed_ante = ante end
+  end)
+end
+
+--- The boss was rerolled (old_key -> new_key, the new chip already built): the old boss protests,
+--- then the new one sneers. The sneer is this ante's preview. A newer reroll cancels a pending sneer.
+function M.on_reroll(old_key, new_key)
+  if not (G.GAME and active()) then return end
+  local st = FinalBoss.util.state()
+  st.previewed_ante = G.GAME.round_resets.ante
+  local token = bump()
+  local protested = speaks(old_key, st) and speak(old_key, 'rerolled_out')
+  local function sneer()
+    if M.token ~= token or boss_key() ~= new_key then return end
+    if speaks(new_key, st) then speak(new_key, 'rerolled_in') end
+  end
+  if protested then after(M.SNEER_DELAY, sneer) else sneer() end
+end
+
+--- Leaving a run (Game:delete_run, which removes every UIBox and clears the event queue): drop
+--- pending lines. dialogue.drop_on_teardown forgets the bubble itself.
+function M.teardown()
+  bump()
+end
+
+return M

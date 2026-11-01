@@ -9,15 +9,24 @@ local function eq(actual, expected, msg)
 end
 
 local NAMES = {'G', 'FinalBoss', 'Blind', 'Card', 'Game', 'love', 'SMODS', 'end_round',
-  'ease_background_colour_blind'}
+  'ease_background_colour_blind', 'Event', 'create_UIBox_blind_select'}
 
 --- Load hooks.lua over stub engine tables; run f(ctx); put the globals back.
 local function with_hooks(f)
   local saved = {}
   for _, k in ipairs(NAMES) do saved[k] = _G[k] end
-  local ctx = {joker_calls = {}, seen_restoring = {}, order = {}, luck = {}}
+  local ctx = {joker_calls = {}, seen_restoring = {}, order = {}, luck = {}, events = {}, rerolls = {}, selects = 0}
   local ok, err = pcall(function()
-    _G.G = {GAME = {}, jokers = {}}
+    _G.G = {GAME = {round_resets = {blind_choices = {Boss = 'bl_hook'}}}, jokers = {},
+      E_MANAGER = {add_event = function(_, e) ctx.events[#ctx.events + 1] = e end},
+      -- Vanilla on the blind-select screen: the new boss is picked in a queued event.
+      FUNCS = {reroll_boss = function()
+        ctx.events[#ctx.events + 1] = {func = function()
+          G.GAME.round_resets.blind_choices.Boss = ctx.next_boss; return true end}
+        return 'rerolled'
+      end}}
+    _G.Event = function(def) return def end
+    _G.create_UIBox_blind_select = function() return 'select_ui' end
     _G.Blind, _G.love, _G.SMODS = {}, {}, {}
     _G.end_round = function() end
     _G.ease_background_colour_blind = function() end
@@ -38,6 +47,8 @@ local function with_hooks(f)
       end,
       snapshot = function(card) ctx.order[#ctx.order + 1] = 'snapshot'; return {of = card} end,
       on_consumable = function(card, before) ctx.order[#ctx.order + 1] = 'use'; ctx.use = {card, before} end},
+      moments = {on_blind_select = function() ctx.selects = ctx.selects + 1 end,
+        on_reroll = function(old, new) ctx.rerolls[#ctx.rerolls + 1] = old .. '>' .. new end},
       observe = {on_luck = function(kind, key) ctx.luck[#ctx.luck + 1] = {kind = kind, key = key} end},
     }
     package.loaded['src.hooks'] = nil
@@ -138,6 +149,40 @@ T['start_run: an error is passed on unchanged'] = function()
   with_hooks(function()
     local ok, err = pcall(Game.start_run, {}, {savetext = {}, boom = true})
     eq(ok, false); eq(err, 'boom')
+  end)
+end
+
+--- Run the queued events in order, like the base queue (each blocking event before the next).
+local function run_events(ctx)
+  local i = 1
+  while ctx.events[i] do ctx.events[i].func(); i = i + 1 end
+  ctx.events = {}
+end
+
+T['reroll_boss: on the blind-select screen, moments hears old and new once the swap ran'] = function()
+  with_hooks(function(ctx)
+    G.blind_select_opts = {boss = {}}
+    ctx.next_boss = 'bl_wall'
+    eq(G.FUNCS.reroll_boss(), 'rerolled', 'the original result')
+    eq(#ctx.rerolls, 0, 'not before the swap')
+    run_events(ctx)
+    eq(table.concat(ctx.rerolls, ','), 'bl_hook>bl_wall')
+  end)
+end
+
+T['reroll_boss: off the blind-select screen, no lines'] = function()
+  with_hooks(function(ctx)
+    ctx.next_boss = 'bl_wall'
+    G.FUNCS.reroll_boss()
+    run_events(ctx)
+    eq(#ctx.rerolls, 0)
+  end)
+end
+
+T['create_UIBox_blind_select: the screen tells moments, result unchanged'] = function()
+  with_hooks(function(ctx)
+    eq(create_UIBox_blind_select(), 'select_ui')
+    eq(ctx.selects, 1)
   end)
 end
 

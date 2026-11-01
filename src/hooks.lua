@@ -120,6 +120,7 @@ function Game:delete_run(...)
   local ret = orig_delete_run(self, ...)
   U.guard('delete_run', function()
     director().reset_stage()
+    FinalBoss.moments.teardown() -- 1.4: pending preview/reroll lines go with the run
     FinalBoss.dialogue.drop_on_teardown()
   end)
   return ret
@@ -364,6 +365,49 @@ if orig_gamepadpressed then
   function love.gamepadpressed(...)
     local r = pack(orig_gamepadpressed(...))
     U.guard('input', FinalBoss.observe.on_input)
+    return unpack(r, 1, r.n)
+  end
+end
+
+-- Outside the fight (1.4, moments.lua) ------------------------------------------------------------
+-- The blind-select screen: Game:update_blind_select builds G.blind_select from
+-- create_UIBox_blind_select (game.lua:3466-3469), which fills G.blind_select_opts (the boss chip lives in
+-- G.blind_select_opts.boss, UI_definitions.lua:1631). It runs once per visit (each ante's return from
+-- the shop, a loaded run); moments decides whether the boss previews.
+local orig_blind_select_ui = create_UIBox_blind_select
+if orig_blind_select_ui then
+  function create_UIBox_blind_select(...)
+    local r = pack(orig_blind_select_ui(...))
+    U.guard('blind_select', FinalBoss.moments.on_blind_select)
+    return unpack(r, 1, r.n)
+  end
+end
+
+-- Boss rerolls (Director's Cut, Retcon, the Boss Tag, button_callbacks.lua:2845-2905). On the
+-- blind-select screen the new boss is picked and its chip rebuilt in a blocking 'after' 0.3 event;
+-- the event queued here runs after it (blockable), with the new key and chip in place. Off that
+-- screen (no G.blind_select_opts) the swap is immediate and nobody is on screen to speak: the
+-- preview plays for the new boss when the screen opens.
+local orig_reroll_boss = G.FUNCS and G.FUNCS.reroll_boss
+if orig_reroll_boss then
+  G.FUNCS.reroll_boss = function(...)
+    local old, on_screen
+    U.guard('reroll_read', function()
+      old = G.GAME and G.GAME.round_resets.blind_choices.Boss
+      on_screen = G.blind_select_opts and true or false
+    end)
+    local r = pack(orig_reroll_boss(...))
+    if old and on_screen then
+      U.guard('reroll_queue', function()
+        G.E_MANAGER:add_event(Event({func = function()
+          U.guard('reroll_lines', function()
+            local new = G.GAME and G.GAME.round_resets.blind_choices.Boss
+            if new and new ~= old then FinalBoss.moments.on_reroll(old, new) end
+          end)
+          return true
+        end}))
+      end)
+    end
     return unpack(r, 1, r.n)
   end
 end

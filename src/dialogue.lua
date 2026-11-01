@@ -8,7 +8,7 @@ D.intro = nil        -- {blind, steps, index, duration, pitch, token}
 D.last_line_at = -1e9 -- when the last real line showed (intro steps, reactions); free lines never stamp it
 D.last_skip_at = -1e9
 D.saved_click_can = nil
-D.avatar_bubble = nil -- avatar-hosted bubble (late-drawn attention_text UIBox, not a child)
+D.avatar_bubble = nil -- late-drawn bubble (attention_text UIBox, not a child): avatar or blind-select chip
 D.host = nil         -- the object the current bubble hangs from (blind chip or avatar)
 
 --- Bubbles come from the showdown avatar when it exists, otherwise from the HUD blind chip.
@@ -48,23 +48,27 @@ function D.hide(blind)
   if FinalBoss.avatar then FinalBoss.avatar.set_talking(false) end
 end
 
-function D.show(blind, key, vars, pitch)
+--- opts.late (1.4, the blind-select boss chip): blind is the host itself, never the avatar, and the
+--- bubble is drawn late like the avatar's, above the UIBox the chip sits in.
+function D.show(blind, key, vars, pitch, opts)
   D.hide(blind)
-  local host = host_for(blind)
-  local on_avatar = host ~= blind
+  local late_host = opts and opts.late
+  local host = late_host and blind or host_for(blind)
+  local on_avatar = (not late_host) and host ~= blind
+  local late = on_avatar or (late_host and true or false)
   local align = on_avatar and ((FinalBoss.avatar.side() == 'right') and 'cl' or 'cr') or 'bm'
   local loc_vars = {quip = true}
   for i, v in ipairs(vars or {}) do loc_vars[i] = v end
-  -- Avatar bubbles have no parent and are attention_text: vanilla's late draw pass draws them above
-  -- cards, and they outlive the avatar's fade until their own hide timer.
+  -- Late bubbles (avatar, blind-select chip) have no parent and are attention_text: vanilla's late
+  -- draw pass draws them above cards and UI, and they outlive their host's fade until their own hide timer.
   local bubble = UIBox{definition = G.UIDEF.speech_bubble(key, loc_vars),
     -- can_collide = false: clicks go through the bubble to the chip under it (a run of pokes, the
     -- intro's chip skip); its UIElements only collide when their UIBox does (engine/ui.lua:957-962).
-    config = {align = align, offset = {x = 0, y = 0}, parent = (not on_avatar) and host or nil,
+    config = {align = align, offset = {x = 0, y = 0}, parent = (not late) and host or nil,
       can_collide = false}}
   bubble:set_role{role_type = 'Minor', xy_bond = 'Weak', r_bond = 'Strong', major = host}
   bubble.states.visible = false -- shown once aligned (timer below)
-  if on_avatar then
+  if late then
     bubble.attention_text = true
     D.avatar_bubble = bubble
   else
@@ -73,7 +77,7 @@ function D.show(blind, key, vars, pitch)
   D.host = host
   if on_avatar then FinalBoss.avatar.set_talking(true) end
   after(0.1, function()
-    local current = on_avatar and D.avatar_bubble or host.children.fb_bubble
+    local current = late and D.avatar_bubble or host.children.fb_bubble
     if current == bubble then
       bubble.states.visible = true
       D.bleep(key) -- 1.2: a censored swear gets its bleep as the bubble appears
@@ -192,7 +196,7 @@ function D.say(blind, key, vars, pitch, opts)
   D.end_intro()
   D.token = D.token + 1
   local token = D.token
-  D.show(blind, key, vars, pitch)
+  D.show(blind, key, vars, pitch, opts)
   if not opts.free then D.last_line_at = FinalBoss.util.now() end
   after(opts.duration or 4, function() if D.token == token then D.hide(blind) end end)
   return true
