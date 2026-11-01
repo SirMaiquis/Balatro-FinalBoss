@@ -43,22 +43,43 @@ local function setup(opts)
   opts = opts or {}
   local ctx = {said = {}, timers = {}}
   local L = logic()
-  ctx.chip = {atlas = 'blind_chips', sprite_pos = {x = 0, y = 7}}
+  ctx.chip = {atlas = 'blind_chips', sprite_pos = {x = 0, y = 7}, T = {x = 14, y = 5, w = 1.4, h = 1.4}}
+  ctx.copies, ctx.logs = {}, 0
   _G.Event = function(def) return def end
   _G.localize = function(args) return 'Loc ' .. args.key end
+  -- The reroll's copy: SMODS.create_sprite and a UIBox wrapping it (the sprite is its O node's object).
+  _G.SMODS = {create_sprite = function(x, y, w, h, atlas, pos)
+    if opts.fail_sprite then error('boom') end
+    return {T = {x = x, y = y, w = w, h = h}, atlas = atlas, pos = pos, role = {},
+      define_draw_steps = function(self, steps) self.steps = steps end}
+  end}
+  _G.UIBox = function(args)
+    local box = {T = {x = args.T[1], y = args.T[2], w = args.T[3], h = args.T[4]},
+      VT = {x = args.T[1], y = args.T[2]}, args = args, sprite = args.definition.nodes[1].config.object}
+    box.remove = function(self) self.removed = (self.removed or 0) + 1; self.REMOVED = true end
+    ctx.copies[#ctx.copies + 1] = box
+    return box
+  end
   _G.G = {
     GAME = {round_resets = {ante = opts.ante or 2, blind_choices = {Boss = 'bl_hook'}}, FinalBoss = {}},
     STATE = 7, STATES = {BLIND_SELECT = 7},
-    E_MANAGER = {add_event = function(_, e) ctx.timers[#ctx.timers + 1] = e end},
-    P_BLINDS = {bl_hook = {name = 'The Hook', boss = {min = 1}}, bl_wall = {name = 'The Wall', boss = {min = 2}},
+    TIMERS = {REAL = 0}, SETTINGS = {reduced_motion = opts.reduced or false},
+    ROOM = {T = {x = 0, y = 0, w = 20, h = 11.5}}, UIT = {ROOT = 'ROOT', O = 'O'},
+    C = {CLEAR = {0, 0, 0, 0}, BLACK = {0, 0, 0, 1}, RED = {1, 0, 0, 1}},
+    E_MANAGER = {add_event = function(_, e)
+      e.queued_at = G.TIMERS.REAL
+      ctx.timers[#ctx.timers + 1] = e
+    end},
+    P_BLINDS = {bl_hook = {name = 'The Hook', boss = {min = 1}, pos = {x = 0, y = 7}, boss_colour = {0.6, 0.3, 0.2, 1}},
+      bl_wall = {name = 'The Wall', boss = {min = 2}},
       bl_ox = {name = 'The Ox', boss = {min = 6}}, bl_final_leaf = {name = 'Verdant Leaf', boss = {showdown = true}}},
     blind_select = {},
     blind_select_opts = {boss = boss_box(ctx.chip)},
   }
   _G.FinalBoss = {
     logic = L,
-    config = {dialogue = opts.dialogue ~= false, fx = true, min_ante = opts.min_ante or 1},
-    util = {guard = function(_, fn, ...) return pcall(fn, ...) end,
+    config = {dialogue = opts.dialogue ~= false, fx = opts.fx ~= false, min_ante = opts.min_ante or 1},
+    util = {guard = function(_, fn, ...) return pcall(fn, ...) end, log = function() ctx.logs = ctx.logs + 1 end,
       state = function() G.GAME.FinalBoss = G.GAME.FinalBoss or {}; return G.GAME.FinalBoss end},
     director = {enabled = function() return not G.GAME.FinalBoss.disabled_for_run end},
     registry = {
@@ -67,8 +88,9 @@ local function setup(opts)
     },
     dialogue = {say = function(host, key, vars, pitch, o)
       ctx.said[#ctx.said + 1] = {host = host, key = key, vars = vars, pitch = pitch, opts = o}
+      FinalBoss.dialogue.host = host
       return true
-    end},
+    end, hide = function() ctx.hidden = (ctx.hidden or 0) + 1; FinalBoss.dialogue.host = nil end},
   }
   package.loaded['src.moments'] = nil
   ctx.M = require('src.moments')
@@ -76,6 +98,17 @@ local function setup(opts)
     local queued = ctx.timers
     ctx.timers = {}
     for _, e in ipairs(queued) do e.func() end
+  end
+  --- Advance the REAL clock to t and run the queue like the event manager: an 'after' event once its
+  --- delay has passed since it was queued; a repeating one (returns false) stays queued.
+  function ctx.run(t)
+    G.TIMERS.REAL = t
+    local queued = ctx.timers
+    ctx.timers = {}
+    for _, e in ipairs(queued) do
+      local due = e.trigger ~= 'after' or (e.queued_at or 0) + (e.delay or 0) <= t
+      if not (due and e.func() ~= false) then ctx.timers[#ctx.timers + 1] = e end
+    end
   end
   function ctx.keys()
     local out = {}
@@ -147,51 +180,141 @@ T['on_blind_select: a blind picked before the line is due drops it'] = function(
   eq(G.GAME.FinalBoss.previewed_ante, nil, 'not counted: it was never seen')
 end
 
-T['on_reroll: protest, then the sneer, which counts as the preview'] = function()
+--- A reroll as hooks.lua drives it: the click (old chip still up), then vanilla's swap, then on_reroll.
+local function reroll(ctx, old, new)
+  ctx.M.on_reroll_click(old)
+  G.GAME.round_resets.blind_choices.Boss = new
+  ctx.M.on_reroll(old, new)
+end
+
+T['on_reroll: a copy of the OLD chip protests at the click, the NEW boss sneers once it is gone'] = function()
   local ctx = setup()
-  G.GAME.round_resets.blind_choices.Boss = 'bl_wall'
+  ctx.M.on_reroll_click('bl_hook')
+  eq(ctx.keys(), 'fb_bl_hook_rerolled_out', 'the protest, before the swap')
+  eq(#ctx.copies, 1, 'one copy')
+  local box = ctx.copies[1]
+  eq(ctx.said[1].host, box.sprite, 'said from the copy, not the real chip')
+  eq(ctx.said[1].opts.late, true, 'drawn on top')
+  eq(box.sprite.atlas, 'blind_chips'); eq(box.sprite.pos.y, 7, 'the old boss sprite')
+  eq(box.T.x, 14); eq(box.T.y, 5); eq(box.T.w, 1.4, 'where the old chip was, its size')
+  eq(box.attention_text, true, 'late drawn, above the panel')
+  eq(G.GAME.FinalBoss.previewed_ante, 2, 'counts as the preview')
+  G.GAME.round_resets.blind_choices.Boss = 'bl_wall' -- vanilla's swap, ~0.3 game-seconds later
   ctx.M.on_reroll('bl_hook', 'bl_wall')
-  eq(ctx.keys(), 'fb_bl_hook_rerolled_out')
-  eq(G.GAME.FinalBoss.previewed_ante, 2)
-  ctx.fire_timers()
-  eq(ctx.keys(), 'fb_bl_hook_rerolled_out,fb_bl_wall_rerolled_in')
+  eq(#ctx.said, 1, 'no sneer during the protest')
+  ctx.run(0.1)
+  eq(box.T.x, 14, 'holds first')
+  ctx.run(1.0)
+  eq(box.T.x > 14, true, 'yanked toward the nearest edge (right)')
+  eq(#ctx.said, 1)
+  ctx.run(ctx.M.PROTEST_TIME + 0.01)
+  eq(box.removed, 1, 'the copy is gone'); eq(ctx.M.copy, nil)
+  eq(ctx.hidden, 1, 'its bubble with it')
+  ctx.run(ctx.M.PROTEST_TIME + 0.02)
+  eq(ctx.keys(), 'fb_bl_hook_rerolled_out,fb_bl_wall_rerolled_in', 'then the sneer')
+  eq(ctx.said[2].host, ctx.chip, 'from the real (new) chip')
   eq(ctx.said[2].pitch, 0.7, 'the new boss voice'); eq(ctx.said[2].vars[1], 'Loc bl_wall')
-  ctx.M.on_blind_select(); ctx.fire_timers()
+  ctx.M.on_blind_select(); ctx.run(10); ctx.run(20)
   eq(#ctx.said, 2, 'no second preview this ante')
+end
+
+T['yank_target: the nearest window edge and a spot past it'] = function()
+  local M = setup().M
+  local b = {-1, -1, 21, 12.5}
+  local edge, x, y = M.yank_target(14, 5, 1.4, 1.4, b)
+  eq(edge, 'right'); eq(x, 21 + M.YANK_MARGIN); eq(y, 5)
+  edge, x = M.yank_target(1, 5, 1.4, 1.4, b)
+  eq(edge, 'left'); eq(x, -1 - 1.4 - M.YANK_MARGIN)
+  edge, x, y = M.yank_target(9, 10, 1.4, 1.4, b)
+  eq(edge, 'bottom'); eq(y, 12.5 + M.YANK_MARGIN); eq(x, 9)
+  edge, x, y = M.yank_target(9, 0.5, 1.4, 1.4, b)
+  eq(edge, 'top'); eq(y, -1 - 1.4 - M.YANK_MARGIN)
+end
+
+T['on_reroll: reduced motion or fx off, the copy stays put and dissolves after its line'] = function()
+  for _, o in ipairs({{reduced = true}, {fx = false}}) do
+    local ctx = setup(o)
+    reroll(ctx, 'bl_hook', 'bl_wall')
+    local box = ctx.copies[1]
+    ctx.run(0.5); ctx.run(1.0)
+    eq(box.T.x, 14, 'no slide'); eq(box.T.y, 5, 'no shake')
+    eq(box.sprite.dissolve, 0, 'not yet')
+    ctx.run(ctx.M.PROTEST_TIME - 0.1)
+    eq(box.sprite.dissolve > 0 and box.sprite.dissolve < 1, true, 'dissolving')
+    ctx.run(ctx.M.PROTEST_TIME + 0.01); ctx.run(ctx.M.PROTEST_TIME + 0.02)
+    eq(box.removed, 1); eq(ctx.keys(), 'fb_bl_hook_rerolled_out,fb_bl_wall_rerolled_in')
+  end
 end
 
 T['on_reroll: a pending preview gives way to the reroll'] = function()
   local ctx = setup()
   ctx.M.on_blind_select()
-  G.GAME.round_resets.blind_choices.Boss = 'bl_wall'
-  ctx.M.on_reroll('bl_hook', 'bl_wall')
-  ctx.fire_timers(); ctx.fire_timers()
+  reroll(ctx, 'bl_hook', 'bl_wall')
+  for t = 1, 4 do ctx.run(t) end
   eq(ctx.keys(), 'fb_bl_hook_rerolled_out,fb_bl_wall_rerolled_in')
 end
 
-T['on_reroll: two quick rerolls, only the latest sneer plays'] = function()
+T['on_reroll: two quick rerolls, only the latest sneer plays; the first copy goes'] = function()
   local ctx = setup()
-  ctx.M.on_reroll('bl_hook', 'bl_wall')
-  G.GAME.round_resets.blind_choices.Boss = 'bl_ox'
-  ctx.M.on_reroll('bl_wall', 'bl_ox')
-  ctx.fire_timers()
+  reroll(ctx, 'bl_hook', 'bl_wall')
+  ctx.run(0.5)
+  G.P_BLINDS.bl_wall.pos = {x = 0, y = 9}
+  reroll(ctx, 'bl_wall', 'bl_ox')
+  eq(ctx.copies[1].removed, 1, 'the first copy removed')
+  eq(ctx.copies[2].sprite.pos.y, 9, 'the second copy is the Wall')
+  for t = 1, 6 do ctx.run(t) end
   eq(ctx.keys(), 'fb_bl_hook_rerolled_out,fb_bl_wall_rerolled_out,fb_bl_ox_rerolled_in')
+  eq(ctx.copies[2].removed, 1)
 end
 
-T['on_reroll: a silent outgoing boss lets the new one sneer at once'] = function()
+T['on_reroll: a silent outgoing boss has no copy and lets the new one sneer at once'] = function()
   local ctx = setup{min_ante = 4}
-  G.GAME.round_resets.blind_choices.Boss = 'bl_final_leaf'
-  ctx.M.on_reroll('bl_hook', 'bl_final_leaf')
+  reroll(ctx, 'bl_hook', 'bl_final_leaf')
   eq(ctx.keys(), 'fb_bl_final_leaf_rerolled_in')
+  eq(#ctx.copies, 0)
 end
 
-T['teardown: a pending sneer never plays'] = function()
+T['on_reroll: an unknown old boss gets no copy and no line; the sneer still comes'] = function()
+  local ctx = setup()
+  reroll(ctx, 'bl_modded_gone', 'bl_wall')
+  eq(#ctx.copies, 0); eq(ctx.keys(), 'fb_bl_wall_rerolled_in')
+  eq(G.GAME.FinalBoss.previewed_ante, 2)
+end
+
+T['on_reroll: a copy that fails to build is logged and skipped; the sneer still comes'] = function()
+  local ctx = setup{fail_sprite = true}
+  reroll(ctx, 'bl_hook', 'bl_wall')
+  eq(ctx.logs >= 1, true, 'logged'); eq(ctx.M.copy, nil)
+  eq(ctx.keys(), 'fb_bl_wall_rerolled_in')
+end
+
+T['on_reroll: no line for the old boss, no copy left behind'] = function()
+  local ctx = setup()
+  FinalBoss.registry.resolve = function(key, moment)
+    if moment == 'rerolled_out' then return nil end
+    return 'fb_' .. key .. '_' .. moment
+  end
+  reroll(ctx, 'bl_hook', 'bl_wall')
+  eq(ctx.copies[1].removed, 1); eq(ctx.keys(), 'fb_bl_wall_rerolled_in')
+end
+
+T['on_reroll: no click seen (no protest): the sneer comes at once'] = function()
   local ctx = setup()
   G.GAME.round_resets.blind_choices.Boss = 'bl_wall'
   ctx.M.on_reroll('bl_hook', 'bl_wall')
+  eq(ctx.keys(), 'fb_bl_wall_rerolled_in'); eq(#ctx.copies, 0)
+end
+
+T['teardown: a pending sneer never plays and the flying copy is removed'] = function()
+  local ctx = setup()
+  reroll(ctx, 'bl_hook', 'bl_wall')
+  ctx.run(0.6)
   ctx.M.teardown()
-  ctx.fire_timers()
+  eq(ctx.copies[1].removed, 1, 'copy removed'); eq(ctx.M.copy, nil)
+  eq(ctx.hidden, nil, 'the bubble is left to dialogue.drop_on_teardown')
+  for t = 1, 4 do ctx.run(t) end
   eq(ctx.keys(), 'fb_bl_hook_rerolled_out')
+  eq(ctx.copies[1].removed, 1, 'never touched again')
   G.GAME.round_resets.ante = 3
   ctx.M.on_blind_select()
   ctx.M.teardown()
@@ -201,12 +324,12 @@ end
 
 T['gating: dialogue off, FinalBoss disabled for the run: nothing said'] = function()
   local ctx = setup{dialogue = false}
-  ctx.M.on_blind_select(); ctx.M.on_reroll('bl_hook', 'bl_wall'); ctx.fire_timers()
-  eq(#ctx.said, 0)
+  ctx.M.on_blind_select(); reroll(ctx, 'bl_hook', 'bl_wall'); ctx.fire_timers()
+  eq(#ctx.said, 0); eq(#ctx.copies, 0, 'dialogue off: no copy either')
   ctx = setup()
   G.GAME.FinalBoss.disabled_for_run = true
-  ctx.M.on_blind_select(); ctx.M.on_reroll('bl_hook', 'bl_wall'); ctx.fire_timers()
-  eq(#ctx.said, 0)
+  ctx.M.on_blind_select(); reroll(ctx, 'bl_hook', 'bl_wall'); ctx.fire_timers()
+  eq(#ctx.said, 0); eq(#ctx.copies, 0)
 end
 
 T['speak: a boss with no line, or an unknown blind key, is skipped quietly'] = function()

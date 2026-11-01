@@ -393,9 +393,11 @@ end
 
 -- Boss rerolls (Director's Cut, Retcon, the Boss Tag, button_callbacks.lua:2845-2905). On the
 -- blind-select screen the new boss is picked and its chip rebuilt in a blocking 'after' 0.3 event;
--- the event queued here runs after it (blockable), with the new key and chip in place. Off that
--- screen (no G.blind_select_opts) the swap is immediate and nobody is on screen to speak: the
--- preview plays for the new boss when the screen opens.
+-- the event queued here runs after it (blockable), with the new key and chip in place. 1.4: before
+-- the original runs, the old key and chip are still there: moments.on_reroll_click lets a copy of the
+-- old chip protest, and on_reroll (after the swap) the new boss sneer. Off that screen (no
+-- G.blind_select_opts) the swap is immediate and nobody is on screen to speak: the preview plays for
+-- the new boss when the screen opens.
 local orig_reroll_boss = G.FUNCS and G.FUNCS.reroll_boss
 if orig_reroll_boss then
   G.FUNCS.reroll_boss = function(...)
@@ -403,6 +405,7 @@ if orig_reroll_boss then
     U.guard('reroll_read', function()
       old = G.GAME and G.GAME.round_resets.blind_choices.Boss
       on_screen = G.blind_select_opts and true or false
+      if old and on_screen then FinalBoss.moments.on_reroll_click(old) end
     end)
     local r = pack(orig_reroll_boss(...))
     if old and on_screen then

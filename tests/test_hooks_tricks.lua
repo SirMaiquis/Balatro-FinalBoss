@@ -48,7 +48,10 @@ local function with_hooks(f)
       snapshot = function(card) ctx.order[#ctx.order + 1] = 'snapshot'; return {of = card} end,
       on_consumable = function(card, before) ctx.order[#ctx.order + 1] = 'use'; ctx.use = {card, before} end},
       moments = {on_blind_select = function() ctx.selects = ctx.selects + 1 end,
-        on_reroll = function(old, new) ctx.rerolls[#ctx.rerolls + 1] = old .. '>' .. new end},
+        on_reroll = function(old, new) ctx.rerolls[#ctx.rerolls + 1] = old .. '>' .. new end,
+        on_reroll_click = function(old)
+          ctx.rerolls[#ctx.rerolls + 1] = 'click:' .. old .. '@' .. G.GAME.round_resets.blind_choices.Boss
+        end},
       observe = {on_luck = function(kind, key) ctx.luck[#ctx.luck + 1] = {kind = kind, key = key} end},
     }
     package.loaded['src.hooks'] = nil
@@ -170,14 +173,14 @@ local function run_events(ctx)
   ctx.events = {}
 end
 
-T['reroll_boss: on the blind-select screen, moments hears old and new once the swap ran'] = function()
+T['reroll_boss: on the blind-select screen, moments hears the click, then old and new once the swap ran'] = function()
   with_hooks(function(ctx)
     G.blind_select_opts = {boss = {}}
     ctx.next_boss = 'bl_wall'
     eq(G.FUNCS.reroll_boss(), 'rerolled', 'the original result')
-    eq(#ctx.rerolls, 0, 'not before the swap')
+    eq(table.concat(ctx.rerolls, ','), 'click:bl_hook@bl_hook', 'the click, the old boss still the Boss choice')
     run_events(ctx)
-    eq(table.concat(ctx.rerolls, ','), 'bl_hook>bl_wall')
+    eq(table.concat(ctx.rerolls, ','), 'click:bl_hook@bl_hook,bl_hook>bl_wall', 'then old and new after the swap')
   end)
 end
 
