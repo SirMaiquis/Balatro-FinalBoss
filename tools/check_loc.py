@@ -23,7 +23,7 @@ Text effects (1.4), tags like {E:fb_rage}word{}, in every language and quip line
 Rule 2 applies to quips keys only. A tag holding only s: or X: controls is not a punchline.
 Only with --effects (it fails until the content pass has tagged the lines; Task 13 makes it the default):
   4. no FinalBoss quip keeps the old x* censor form;
-  5. every key whose English line has fb_grawlix has the same number of grawlix tags in each language.
+  5. a language has no more grawlix tags in a key than English has (translators may soften a swear, not add one).
 """
 import pathlib
 import re
@@ -195,13 +195,13 @@ def old_censor_problems(key, lines):
     return []
 
 
-def grawlix_parity_problems(base, data):
-    """Rule 5: every key whose English line has fb_grawlix has as many grawlix tags in this language."""
+def grawlix_extra_problems(base, data):
+    """Rule 5: a language never has more grawlix tags in a quip than English has for that key (a
+    translator may soften a swear, not add one)."""
     out = []
-    for key, lines in base.items():
-        want = grawlix_count(lines)
-        if want and key in data and grawlix_count(data[key]) != want:
-            out.append(f'{key}: {grawlix_count(data[key])} {GRAWLIX} tags, English has {want}')
+    for key, lines in data.items():
+        if key in base and grawlix_count(lines) > grawlix_count(base[key]):
+            out.append(f'{key}: {grawlix_count(lines)} {GRAWLIX} tags, English has {grawlix_count(base[key])}')
     return out
 
 
@@ -260,7 +260,7 @@ def main(names, strict=False):
         if path.name == 'default.lua':
             continue
         if strict:
-            errors.extend(f'{path.name}: {p}' for p in grawlix_parity_problems(base, data))
+            errors.extend(f'{path.name}: {p}' for p in grawlix_extra_problems(base, data))
         for key, base_lines in base.items():
             if key not in data:
                 errors.append(f'{path.name}: missing {key}')

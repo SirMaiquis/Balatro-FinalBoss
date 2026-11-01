@@ -59,14 +59,15 @@ def test_rule4_old_censor_form():
     assert not check_loc.old_censor_problems('dictionary.k', ['sh*t'])
 
 
-def test_rule5_language_missing_a_grawlix():
+def test_rule5_language_may_not_add_a_grawlix():
     base = {'quips.a': ['You {E:fb_grawlix}shit{}'], 'quips.b': ['plain'],
             'quips.c': ['{E:fb_grawlix}a{} {E:fb_grawlix}b{}']}
     lang = {'quips.a': ['Du Mist'], 'quips.b': ['{E:fb_grawlix}x{}'],
-            'quips.c': ['{E:fb_grawlix}a{} {E:fb_grawlix}b{}']}
-    out = check_loc.grawlix_parity_problems(base, lang)
-    assert len(out) == 1 and out[0].startswith('quips.a')
-    assert check_loc.grawlix_parity_problems(base, base) == []
+            'quips.c': ['{E:fb_grawlix}a{} {E:fb_grawlix}b{} {E:fb_grawlix}c{}']}
+    out = check_loc.grawlix_extra_problems(base, lang)
+    assert sorted(p.split(':')[0] for p in out) == ['quips.b', 'quips.c']
+    assert check_loc.grawlix_extra_problems(base, base) == []
+    assert check_loc.grawlix_extra_problems(base, {'quips.a': ['Du Mist']}) == []
 
 
 def test_cjk_line_with_grawlix():
