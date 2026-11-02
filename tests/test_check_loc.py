@@ -52,6 +52,12 @@ def test_rule3_grawlix_single_word():
     assert problems('{E:fb_grawlix}shit{}!') == []
 
 
+def test_no_space_inside_a_tag():
+    for line in ('{E: fb_grawlix}shit{}', '{E:fb_grawlix }shit{}', '{C:mult, E:fb_rage}x{}'):
+        assert any('space inside tag' in p for p in problems(line)), line
+    assert problems('{C:attention,u:attention}word{}') == []
+
+
 def test_rule4_old_censor_form():
     assert check_loc.old_censor_problems('quips.fb_x_1', ['What the sh*t'])
     assert check_loc.old_censor_problems('quips.fb_x_1', ['Oh', 'f***ing'])

@@ -297,4 +297,19 @@ T['textfx: an error leaves the letter as is and is logged once'] = function()
   eq(#logs, 1, 'logged once')
 end
 
+-- setup() replaces these globals; give every textfx test its own copy and put the originals back.
+local function isolated(fn)
+  return function()
+    local saved = {SMODS = rawget(_G, 'SMODS'), G = rawget(_G, 'G'), love = rawget(_G, 'love'),
+      FinalBoss = rawget(_G, 'FinalBoss'), textfx = package.loaded['src.textfx']}
+    local good, err = pcall(fn)
+    _G.SMODS, _G.G, _G.love, _G.FinalBoss = saved.SMODS, saved.G, saved.love, saved.FinalBoss
+    package.loaded['src.textfx'] = saved.textfx
+    if not good then error(err, 0) end
+  end
+end
+for name, fn in pairs(T) do
+  if name:find('^textfx:') then T[name] = isolated(fn) end
+end
+
 return T

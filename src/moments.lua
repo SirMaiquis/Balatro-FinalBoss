@@ -221,7 +221,7 @@ local function build_copy(key, chip)
   local pos = proto.pos or {x = 0, y = 0}
   local sprite = SMODS.create_sprite(x, y, w, h, atlas, {x = pos.x, y = pos.y})
   sprite:define_draw_steps({{shader = 'dissolve', shadow_height = 0.05}, {shader = 'dissolve'}})
-  local box = UIBox{T = {x, y, w, h},
+  local box = UIBox{
     definition = {n = G.UIT.ROOT, config = {align = 'cm', padding = 0, colour = G.C.CLEAR},
       nodes = {{n = G.UIT.O, config = {object = sprite}}}},
     config = {align = 'tli', offset = {x = x - RA.T.x, y = y - RA.T.y}, major = RA, bond = 'Strong',

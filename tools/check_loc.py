@@ -18,7 +18,8 @@ every final boss (FINAL_BOSSES); the moments said outside the fight (OUTSIDE_MOM
 Text effects (1.4), tags like {E:fb_rage}word{}, in every language and quip line:
   1. every {E:<key>} is in logic.TEXT_EFFECTS (or the built-ins 1 and 2);
   2. at most one punchline tag ({C:}, {E:} other than fb_grawlix, {u:}) per line;
-  3. a fb_grawlix tag wraps a single word (no spaces).
+  3. a fb_grawlix tag wraps a single word (no spaces);
+  3b. no whitespace inside any tag ({E: fb_rage} is not found by Balatro).
   4. no FinalBoss quip keeps the old x* censor form (the raw-swear guard).
 Rule 2 applies to quips keys only. A tag holding only s: or X: controls is not a punchline.
 """
@@ -162,6 +163,8 @@ def effect_problems(effects, line, quip=True):
     out, punchlines = [], 0
     matches = list(TAG.finditer(line))
     for i, m in enumerate(matches):
+        if re.search(r'\s', m.group(1)):
+            out.append(f'space inside tag {{{m.group(1)}}} (Balatro keeps it, so the effect is not found)')
         cs = controls(m.group(1))
         keys = [EFFECT_KEY.match(c).group(1).strip() for c in cs if EFFECT_KEY.match(c)]
         for k in keys:

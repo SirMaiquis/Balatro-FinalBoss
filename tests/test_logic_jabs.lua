@@ -185,7 +185,7 @@ T['has_censored: the grawlix tag'] = function()
     eq(logic.has_censored(s), true, s)
   end
   for _, s in ipairs({'{C:mult}Mult{}', '{E:fb_rage}shit{}', 'a {C:attention,u:attention}word{}', '#1# {E:fb_grawlixy}x{}',
-      '{E:fb_swell}hand #2#{}'}) do
+      '{E:fb_swell}hand #2#{}', '{E: fb_grawlix}shit{}', '{E:fb_grawlix }shit{}', '{C:mult, E:fb_grawlix}x{}'}) do
     eq(logic.has_censored(s), false, s)
   end
 end

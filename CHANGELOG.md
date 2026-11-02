@@ -12,15 +12,12 @@ Bosses react to the moment.
 - Boss reroll: the old boss protests and the new one sneers (the sneer counts as that ante's preview).
 - Early loss: lose on a small or big blind and the boss you never reached mocks you from the game-over screen. It never counts as a loss to that boss.
 - New lines for every personality, the five final bosses and the generic boss, in all 15 languages.
-- Punchline effects: each boss line can emphasise one word, and the effect fits the speaker. The bully's word shakes with rage, Venom's rolls in a sweet wave, Crimson Heart's thumps like a heartbeat, and so on for every personality. Game terms show in Balatro's own colours (Mult red, Chips blue, money gold, Lucky green), fear lines tremble, and hype words (CLUTCH, OVERKILL, JACKPOT) come in animated rainbow.
+- Punchline effects: each boss line can emphasise one word, and the effect fits the speaker. The bully's word shakes with rage, Venom's rolls in a sweet wave, Crimson Heart's thumps like a heartbeat, and so on for every personality. Game terms show in Balatro's own colours (Mult red, Chips blue, money gold, Lucky green), fear lines tremble, and hype words inside lines, like Jackpot, glow in Balatro's animated rainbow.
 - The grawlix: swears are shown as cycling comic symbols (#@$%!) shaking in red, with the bleep, instead of asterisks.
 - Both are in all 15 languages. Reduced motion or Screen effects off keeps the colours and stops the motion.
 
 ### Fixes
 - No more crash on some Android devices when a showdown starts ("Shader uniform 'fb_intensity' does not exist"). If the device's graphics driver can't run the screen vignette, it now turns itself off and everything else keeps working.
-- The hype text now stays up for about 2 seconds at any game speed and is readable on any background.
-- OVERKILL! now shows on a hand that is already past 100x in its preview.
-- The reroll protest now comes from the old boss's chip as it is yanked away.
 - The background no longer flickers back to the normal colour and then to the boss colour again on a 100x kill (this bug has been there since 1.3).
 
 ### For mod authors

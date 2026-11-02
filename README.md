@@ -365,7 +365,7 @@ A line can emphasise one word (the punchline) with Balatro's own text tags, so a
 "You call that a {E:fb_rage}hand{}?"
 ```
 
-Stock tags work too and combine: `{C:mult}Mult{}`, `{C:attention,u:attention}word{}` (underlined orange), `{C:dark_edition}CLUTCH{}` (animated rainbow). A tagged word with no `C:` keeps the bubble's normal colour. Tags are invisible to the line-length rule, never change the layout, and keep colour but drop the motion with Balatro's reduced motion setting. Use at most one punchline tag per line.
+Stock tags work too and combine: `{C:mult}Mult{}`, `{C:attention,u:attention}word{}` (underlined orange), `{C:dark_edition}Jackpot{}` (Balatro's animated rainbow). A tagged word with no `C:` keeps the bubble's normal colour. Tags are invisible to the line-length rule and don't change the line's length or wrapping. With Balatro's reduced motion setting on, or FinalBoss's Screen effects (`fx`) off, the words keep their colour but stop moving. Use at most one punchline tag per line.
 
 | Key | Effect |
 |---|---|
@@ -400,13 +400,13 @@ FinalBoss's own roster, by speaker:
 | Generic and modded bosses | colour only (attention orange) |
 
 Precedence, whoever speaks (the first that applies):
-- **Hype words** (CLUTCH, OVERKILL, JACKPOT) use the animated rainbow (`dark_edition`).
+- **Hype words** inside lines, like Jackpot, glow in Balatro's animated rainbow (`dark_edition`). The big hype text on the screen uses the boss's colour.
 - **Game terms** use Balatro's own colours: Mult red (`mult`), Chips blue (`chips`), money gold (`money`), Lucky green (`green`), Tarot / Planet / Spectral their set colours, hand names attention orange.
 - **Fear lines** (`fear_1..3`, `last_words`) use Tremble.
 - Otherwise the speaker's roster effect.
 - **Swears** always use the grawlix, in addition to (not counted as) the line's punchline.
 
-**Swears.** Write the swear in full inside the grawlix tag, around a single word: `{E:fb_grawlix}shit{}`. It shows as one symbol per letter and plays the bleep. The old `sh*t` form still bleeps for compatibility. Check your file with `uv run --with lupa tools/check_loc.py`.
+**Swears.** Write the swear in full inside the grawlix tag, around a single word: `{E:fb_grawlix}shit{}`. It shows as one symbol per letter and plays the bleep. The old `sh*t` form still bleeps for compatibility. `tools/check_loc.py` is for FinalBoss's own translation files (it compares them with `localization/default.lua`), not for a mod's file. A mod's lines just need balanced tags with no spaces inside them (`{E:fb_rage}`, not `{E: fb_rage}`) and effect keys from the table above.
 
 ### Picking lines by situation
 
