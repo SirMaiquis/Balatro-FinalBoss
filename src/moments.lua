@@ -403,6 +403,52 @@ function M.on_early_loss()
     end}))
 end
 
+--- 1.4 near miss: the run ended on key's last hand just short of the requirement (moment 'near_miss'
+--- or 'one_chip', Dir.on_round_end). On the game-over screen the boss's chip laughs (one_chip: a
+--- longer laugh, logic.near_miss_beats) and then says the line, after Jimbo's quip:
+--- - the chip: a showdown avatar is already gloating (cinematic.game_over, called just before); any
+---   other boss gets one spawned beside the panel once the overlay is up, like the early loss.
+--- - the timing: avatar.gloat_cue hands the laugh to the chip's gloat, which runs it a beat after
+---   Jimbo stops talking (his Card_Character's `talking` goes false; logic.gloat_cue_due has the
+---   fallbacks). The cue REPLACES the gloat's own single laugh, so the boss never laughs twice.
+--- config.dialogue gates the line only (the laugh still plays); config.fx off laughs without the hop
+--- (reduced motion is avatar.laugh's own). Every timer is REAL and pause_force (the screen pauses the
+--- game); teardown (token) or the chip leaving with the screen drops what is left.
+function M.on_near_miss(key, moment)
+  if not (G.GAME and FinalBoss.director.enabled()) then return end
+  if not (key and G.P_BLINDS and G.P_BLINDS[key]) then return end
+  local A = FinalBoss.avatar
+  local line = cfg().dialogue and FinalBoss.registry.resolve(key, moment, M.last_variant) or nil
+  local token = bump()
+  local pitch = pitch_of(key)
+  local chip
+  local function say()
+    if M.token ~= token or A.anchor() ~= chip then return end
+    FinalBoss.dialogue.say(G.GAME.blind, line, {name_of(key)}, pitch,
+      {force = true, free = true, popup = true, duration = M.LINE_DURATION})
+  end
+  local function cue()
+    if M.token ~= token or A.anchor() ~= chip then return end
+    local d = A.laugh(pitch, {beats = FinalBoss.logic.near_miss_beats(moment), still = not cfg().fx})
+    if line then after(d or 0, say, true) end
+  end
+  local function hook()
+    chip = A.anchor()
+    return chip ~= nil and A.gloat_cue(cue)
+  end
+  if hook() then return end -- the showdown avatar, gloating already
+  local give_up = FinalBoss.util.now() + M.EARLY_LOSS_WAIT
+  G.E_MANAGER:add_event(Event({timer = 'REAL', pause_force = true, blocking = false, blockable = false,
+    func = function()
+      if M.token ~= token or FinalBoss.util.now() > give_up then return true end
+      if not A.on_game_over_screen() then return false end -- keep waiting
+      FinalBoss.util.guard('near_miss', function()
+        if A.spawn_gloat(key, pitch) then hook() end
+      end)
+      return true
+    end}))
+end
+
 --- Leaving a run (Game:delete_run, which removes every UIBox and clears the event queue): drop
 --- pending lines. dialogue.drop_on_teardown forgets the bubble itself.
 function M.teardown()

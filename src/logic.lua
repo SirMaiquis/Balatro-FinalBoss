@@ -326,25 +326,30 @@ end
 logic.LAUGH = {beats = 5, step = 0.095, hop = 0.25, tilt = 0.2, shake = 0.25, shake_amp = 0.07,
   pitch_hi = 1.35, pitch_lo = 1.0}
 
---- Total length of the laugh in seconds (the beats plus the closing shake).
-function logic.laugh_duration()
-  return logic.LAUGH.beats * logic.LAUGH.step + logic.LAUGH.shake
+--- Total length of the laugh in seconds (the beats plus the closing shake). beats (1.4, the near-miss
+--- laugh): a longer laugh at the same cadence; default LAUGH.beats.
+function logic.laugh_duration(beats)
+  return (beats or logic.LAUGH.beats) * logic.LAUGH.step + logic.LAUGH.shake
 end
 
---- Pitch multiplier of beat i (0-based): steps down evenly from pitch_hi to pitch_lo.
-function logic.laugh_pitch(i)
+--- Pitch multiplier of beat i (0-based): steps down evenly from pitch_hi to pitch_lo over beats
+--- (default LAUGH.beats).
+function logic.laugh_pitch(i, beats)
   local L = logic.LAUGH
-  if L.beats <= 1 then return L.pitch_hi end
-  return L.pitch_hi - (L.pitch_hi - L.pitch_lo) * i / (L.beats - 1)
+  local n = beats or L.beats
+  if n <= 1 then return L.pitch_hi end
+  return L.pitch_hi - (L.pitch_hi - L.pitch_lo) * i / (n - 1)
 end
 
 --- Offsets of the chip `elapsed` seconds into the laugh: (hop, tilt, shake). hop is how far up (>= 0,
 --- table units), tilt the rotation (alternating direction per beat), shake the jitter amplitude.
 --- All zero outside [0, duration): the chip is back exactly on its perch when the laugh is over.
-function logic.laugh_motion(elapsed)
+--- beats: as laugh_duration.
+function logic.laugh_motion(elapsed, beats)
   local L = logic.LAUGH
-  if not elapsed or elapsed < 0 or elapsed >= logic.laugh_duration() then return 0, 0, 0 end
-  local beats_end = L.beats * L.step
+  local n = beats or L.beats
+  if not elapsed or elapsed < 0 or elapsed >= logic.laugh_duration(n) then return 0, 0, 0 end
+  local beats_end = n * L.step
   if elapsed < beats_end then
     local x = elapsed / L.step
     local b = math.floor(x)
@@ -1839,9 +1844,9 @@ end
 -- Every personality has 3 variants of each; tools/check_loc.py also wants 2 generic lines and 2
 -- lines for each of logic.FINAL_BOSSES.
 logic.SITUATION_MOMENTS = {'clutch', 'photo_finish', 'comeback', 'lucky_cards', 'lucky_joker', 'meltdown'}
-logic.OUTSIDE_MOMENTS = {'rerolled_out', 'rerolled_in', 'preview', 'early_loss'}
+logic.OUTSIDE_MOMENTS = {'rerolled_out', 'rerolled_in', 'preview', 'early_loss', 'near_miss', 'one_chip'}
 logic.NEW_MOMENTS_1_4 = {'clutch', 'photo_finish', 'comeback', 'lucky_cards', 'lucky_joker', 'rerolled_out',
-  'rerolled_in', 'preview', 'early_loss', 'meltdown'}
+  'rerolled_in', 'preview', 'early_loss', 'meltdown', 'near_miss', 'one_chip'}
 for _, m in ipairs(logic.NEW_MOMENTS_1_4) do
   logic.PERSONALITY_MOMENTS[#logic.PERSONALITY_MOMENTS + 1] = m
   logic.PERSONALITY_VARIANTS[m] = 3
@@ -1855,6 +1860,46 @@ function logic.preview_due(a)
   if a.tier == nil or a.tier == 'none' then return false end
   if a.ante == a.previewed_ante then return false end
   return true
+end
+
+-- Near-miss losses (1.4): the run ended on a boss's last hand just short of the requirement. The boss
+-- laughs and says the line from its chip beside the game-over panel (moments.on_near_miss).
+logic.NEAR_MISS = 0.95 -- the final score is at least this share of the requirement (and below it)
+logic.ONE_CHIP_BEATS = 10 -- one_chip's longer, gleeful laugh (logic.LAUGH.beats for near_miss)
+
+--- total, required: the final round score and the requirement, plain numbers. 'one_chip' when it fell
+--- exactly 1 chip short (whatever the share), 'near_miss' at NEAR_MISS of it or more, nil otherwise:
+--- a win, anything lower, or an unreadable value (nil, NaN, a string, infinite, required <= 0).
+function logic.near_miss_moment(total, required)
+  if type(total) ~= 'number' or type(required) ~= 'number' then return nil end
+  if total ~= total or required ~= required or required <= 0 then return nil end
+  if required == math.huge or total == -math.huge or total >= required then return nil end
+  if required - total == 1 then return 'one_chip' end
+  if total >= logic.NEAR_MISS * required then return 'near_miss' end
+  return nil
+end
+
+--- The laugh's beats for a near-miss moment.
+function logic.near_miss_beats(moment)
+  if moment == 'one_chip' then return logic.ONE_CHIP_BEATS end
+  return logic.LAUGH.beats
+end
+
+--- When the gloating chip's cue (the near-miss laugh and line) fires on the game-over screen, REAL
+--- seconds. Vanilla puts Jimbo in 'jimbo_spot' 2.5 s after the overlay and he babbles 5 syllables 0.13 s
+--- apart (game.lua update_game_over, card_character.lua say_stuff); his `talking` goes false on the last
+--- one while his bubble stays up. beat: after he finishes. late: no Jimbo by then (losses past the win
+--- ante have none). max: a cap, for a quip that never stops talking (a mod's long quip).
+logic.GLOAT_CUE = {beat = 0.4, late = 3.5, max = 7}
+
+--- a: {elapsed (seconds since the gloat began), started (Jimbo has his bubble), done_for (seconds since
+--- he stopped talking; nil while he talks or before he comes)}.
+function logic.gloat_cue_due(a)
+  local C = logic.GLOAT_CUE
+  if type(a.elapsed) ~= 'number' then return false end
+  if a.done_for and a.done_for >= C.beat then return true end
+  if not a.started and a.elapsed >= C.late then return true end
+  return a.elapsed >= C.max
 end
 
 function logic.personality_variants(moment)

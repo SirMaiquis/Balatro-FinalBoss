@@ -220,6 +220,22 @@ function Dir.on_blind_loaded(blind)
   end
 end
 
+--- 1.4 near miss: the moment ('near_miss' | 'one_chip', logic.near_miss_moment) when the run just ended
+--- on enc's boss, lost on its last hand (st.lost_to, Dir.on_hand_after) by a readable score; else nil.
+--- Only called on a real game over: on_round_end runs after vanilla's end-of-round event, where Mr.
+--- Bones (card.lua: context.game_over and chips / requirement >= 0.25, not debuffed) and any other
+--- smods save (SMODS.saved) have already kept the run going, so a run they save never gets here.
+--- The final score is vanilla's own (G.GAME.chips, what end_round compared); a last hand whose
+--- outcome was unknown (enc.unknown_hand, logic.hand_outcome) or an unreadable number says nothing.
+function Dir.near_miss(enc, st)
+  if not (enc and enc.boss and enc.tier and enc.tier ~= 'none') then return nil end
+  if st.lost_to ~= enc.key or enc.unknown_hand ~= nil then return nil end
+  local blind = G.GAME.blind
+  local proto = blind and blind.config and blind.config.blind
+  if not (proto and proto.key == enc.key) then return nil end
+  return FinalBoss.logic.near_miss_moment(read(G.GAME.chips), read(blind.chips))
+end
+
 --- Runs after vanilla's end-of-round event, so Mr. Bones saves are resolved.
 function Dir.on_round_end()
   Dir.flush_pending()
@@ -251,6 +267,9 @@ function Dir.on_round_end()
       FinalBoss.dialogue.hide(G.GAME.blind) -- no bubble at the game-over screen: Jimbo has the line
       FinalBoss.cinematic.game_over(FinalBoss.registry.get(enc.key).voice.pitch)
     end
+    -- After the showdown avatar starts gloating: a near miss hooks its laugh into that gloat.
+    local near = Dir.near_miss(enc, st)
+    if near then FinalBoss.util.guard('near_miss', FinalBoss.moments.on_near_miss, enc.key, near) end
   else
     st.lost_to = nil
   end

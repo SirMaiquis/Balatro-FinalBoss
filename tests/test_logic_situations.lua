@@ -113,7 +113,7 @@ function T.hype_for_rules()
 end
 
 function T.new_moments_are_personality_moments()
-  eq(#logic.NEW_MOMENTS_1_4, 10, 'ten new moments')
+  eq(#logic.NEW_MOMENTS_1_4, 12, 'twelve new moments')
   local listed = {}
   for _, m in ipairs(logic.PERSONALITY_MOMENTS) do listed[m] = true end
   for _, m in ipairs(logic.NEW_MOMENTS_1_4) do
@@ -132,7 +132,7 @@ function T.new_moment_groups()
   end
   for _, m in ipairs(logic.NEW_MOMENTS_1_4) do eq(seen[m], true, m .. ' grouped') end
   eq(#logic.SITUATION_MOMENTS + #logic.OUTSIDE_MOMENTS, #logic.NEW_MOMENTS_1_4, 'no extras')
-  for _, m in ipairs({'rerolled_out', 'rerolled_in', 'preview', 'early_loss'}) do
+  for _, m in ipairs({'rerolled_out', 'rerolled_in', 'preview', 'early_loss', 'near_miss', 'one_chip'}) do
     local found = false
     for _, o in ipairs(logic.OUTSIDE_MOMENTS) do found = found or o == m end
     eq(found, true, m .. ' is outside the fight')
