@@ -100,6 +100,7 @@ Bosses notice how the fight ended, and a few things around it.
 - **Boss preview.** On the blind-select screen the upcoming boss says something about you, once per ante (ante 1 included, a moment after the screen comes up).
 - **Boss reroll.** Reroll the boss (Retcon, Director's Cut) and the old boss protests, then the new one sneers. The sneer counts as that ante's preview.
 - **Early loss.** Lose a run on a small or big blind and the boss you never reached comes out beside the game-over panel and mocks you. It is not a loss to that boss: nothing goes into memory, nemesis, achievements or stats, and Jimbo's quip stays vanilla.
+- **Near miss.** Lose the run on a boss's last hand with 95% or more of the requirement and, once Jimbo has said his quip, the boss laughs at you from beside the game-over panel and says a "so close" line. Fall exactly 1 chip short and it laughs longer and gets its most savage line. Never when Mr. Bones (or anything else) saves the run, or when the score can't be read.
 
 These follow the usual rules: they need Boss dialogue, never fire for a silent boss, and a line comes at most once per hand in the light tier and never on two hands in a row (the defeat-line moments excepted). Every personality has its own lines, and the five final bosses have lines of their own.
 
@@ -351,6 +352,7 @@ All text lives in `misc.quips` in your mod's localization. Each moment can have 
 | preview | `fb_<blind>_preview_<n>` | per boss, usually left to the personality (blind-select screen, once per ante) |
 | boss reroll | `fb_<blind>_rerolled_out_<n>`, `fb_<blind>_rerolled_in_<n>` | per boss, usually left to the personality (the outgoing boss's protest; the new boss's sneer) |
 | early loss | `fb_<blind>_early_loss_<n>` | per boss, usually left to the personality (the boss you never reached, after you lose on a small or big blind) |
+| near miss, one chip | `fb_<blind>_near_miss_<n>`, `fb_<blind>_one_chip_<n>` | per boss, usually left to the personality (said from the game-over screen after the boss laughs, when you lost its last hand with 95% or more of the requirement; `one_chip` when you were exactly 1 chip short) |
 | personality | `fb_p_<personality>_<moment>_<n>` | shared by every boss of that personality |
 
 `<blind>` is the full blind key, for example `bl_hook`. For each moment FinalBoss tries the boss-specific key first, then the boss's personality (`fb_p_<personality>_<moment>_<n>`), then `fb_generic_<moment>_<n>`, and otherwise skips the moment. The shared nemesis lines have no generic fallback: if none exist, they are skipped. A rematch or nemesis line replaces the name line of a showdown (in light tier it replaces the boss's threat line, and a rematch line does so only about half the time). A raw key is never shown to the player. Generic lines receive the boss name as `#1#`. `#2#` and `#3#` are filled only for the moments noted above (jokers, cards, hands and levels); names can run long, so keep the rest of a `#2#` line short.
