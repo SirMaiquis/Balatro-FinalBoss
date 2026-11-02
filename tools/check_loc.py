@@ -3,7 +3,6 @@
 Usage (repo root):
   uv run --with lupa tools/check_loc.py              # all files
   uv run --with lupa tools/check_loc.py es_419 es_ES # only these
-  uv run --with lupa tools/check_loc.py --effects    # also rule 4 (no x* censor form)
 Checks: every misc.quips / misc.dictionary / misc.achievement_names / misc.achievement_descriptions
 key of default.lua exists, no extra keys,
 colour tags {X:..}...{} balanced (scanned in order), no empty values, #n# placeholders
@@ -20,9 +19,8 @@ Text effects (1.4), tags like {E:fb_rage}word{}, in every language and quip line
   1. every {E:<key>} is in logic.TEXT_EFFECTS (or the built-ins 1 and 2);
   2. at most one punchline tag ({C:}, {E:} other than fb_grawlix, {u:}) per line;
   3. a fb_grawlix tag wraps a single word (no spaces).
+  4. no FinalBoss quip keeps the old x* censor form (the raw-swear guard).
 Rule 2 applies to quips keys only. A tag holding only s: or X: controls is not a punchline.
-Only with --effects, rule 4 (it fails until the content pass has tagged the lines; Task 13 makes it the default):
-  4. no FinalBoss quip keeps the old x* censor form;
 """
 import pathlib
 import re
@@ -194,7 +192,7 @@ def old_censor_problems(key, lines):
     return []
 
 
-def main(names, strict=False):
+def main(names):
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8')
     lua = lupa.LuaRuntime(unpack_returned_tuples=True)
@@ -225,8 +223,7 @@ def main(names, strict=False):
                 if why:
                     errors.append(f'{path.name}: {key}: {why} in {ascii(line)}')
                 errors.extend(f'{path.name}: {key}: {p} in {ascii(line)}' for p in effect_problems(effects, line, key.startswith('quips.')))
-            if strict:
-                errors.extend(f'{path.name}: {key}: {p}' for p in old_censor_problems(key, lines))
+            errors.extend(f'{path.name}: {key}: {p}' for p in old_censor_problems(key, lines))
             if JOKER_KEY.search(key) and '#2#' not in ' '.join(lines):
                 errors.append(f'{path.name}: {key}: joker jab line needs #2#')
             if CARD_KEY.search(key) and '#2#' not in ' '.join(lines):
@@ -266,6 +263,4 @@ def main(names, strict=False):
 
 
 if __name__ == '__main__':
-    args = sys.argv[1:]
-    strict = '--effects' in args
-    sys.exit(main([a for a in args if a != '--effects'], strict))
+    sys.exit(main(sys.argv[1:]))

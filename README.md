@@ -406,7 +406,7 @@ Precedence, whoever speaks (the first that applies):
 - Otherwise the speaker's roster effect.
 - **Swears** always use the grawlix, in addition to (not counted as) the line's punchline.
 
-**Swears.** Write the swear in full inside the grawlix tag, around a single word: `{E:fb_grawlix}shit{}`. It shows as one symbol per letter and plays the bleep. The old `sh*t` form still bleeps for compatibility. Check your file with `uv run --with lupa tools/check_loc.py` (add `--effects` for the strict swear rules).
+**Swears.** Write the swear in full inside the grawlix tag, around a single word: `{E:fb_grawlix}shit{}`. It shows as one symbol per letter and plays the bleep. The old `sh*t` form still bleeps for compatibility. Check your file with `uv run --with lupa tools/check_loc.py`.
 
 ### Picking lines by situation
 
