@@ -240,7 +240,7 @@ return {
             fb_p_bully_read_repeat_1 = {"Encore la {E:fb_rage}MÊME{} main ?", "T'as qu'un seul coup ?"},
             fb_p_bully_read_repeat_2 = {"Disque rayé, minable.", "Je vais le {E:fb_rage}BRISER{}."},
             fb_p_bully_read_discardspam_1 = {"Toutes tes défausses ?", "Tu paniques, tocard ?"},
-            fb_p_bully_read_discardspam_2 = {"Toutes tes défausses", "et TOUJOURS de l'{E:fb_rage}ordure{}."},
+            fb_p_bully_read_discardspam_2 = {"Toutes tes défausses", "et TOUJOURS de la {E:fb_grawlix}merde{}."},
             fb_p_bully_read_onecard_1 = {"Une carte ? {E:fb_rage}UNE{} ?", "Un coup de petit doigt ?"},
             fb_p_bully_read_onecard_2 = {"Une seule carte ?", "{E:fb_rage}Trouillard{}. Pathétique."},
             fb_p_bully_idle_1 = {"Hé ! {E:fb_rage}RÉVEILLE-toi{}.", "J'ai pas toute la journée."},
