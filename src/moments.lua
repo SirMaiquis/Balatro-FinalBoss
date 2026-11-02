@@ -411,7 +411,8 @@ end
 --- - the timing: avatar.gloat_cue hands the laugh to the chip's gloat, which runs it a beat after
 ---   Jimbo stops talking (his Card_Character's `talking` goes false; logic.gloat_cue_due has the
 ---   fallbacks). The cue REPLACES the gloat's own single laugh, so the boss never laughs twice.
---- config.dialogue gates the line only (the laugh still plays); config.fx off laughs without the hop
+--- config.dialogue off (or no line): a gloating showdown avatar still laughs its cue, with no line;
+--- any other boss gets no chip at all (like the early loss); config.fx off laughs without the hop
 --- (reduced motion is avatar.laugh's own). Every timer is REAL and pause_force (the screen pauses the
 --- game); teardown (token) or the chip leaving with the screen drops what is left.
 function M.on_near_miss(key, moment)
@@ -436,7 +437,8 @@ function M.on_near_miss(key, moment)
     chip = A.anchor()
     return chip ~= nil and A.gloat_cue(cue)
   end
-  if hook() then return end -- the showdown avatar, gloating already
+  if hook() then return end -- the showdown avatar, gloating already (dialogue off: one laugh, no line)
+  if not line then return end -- dialogue off or no line: no chip is spawned just to laugh
   local give_up = FinalBoss.util.now() + M.EARLY_LOSS_WAIT
   G.E_MANAGER:add_event(Event({timer = 'REAL', pause_force = true, blocking = false, blockable = false,
     func = function()

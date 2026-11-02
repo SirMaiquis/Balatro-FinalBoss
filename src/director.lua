@@ -254,6 +254,7 @@ function Dir.on_round_end()
   -- it from the game-over screen. Not a loss to anyone: nothing above was recorded for it.
   local proto = G.GAME.blind and G.GAME.blind.config and G.GAME.blind.config.blind
   local early = over and proto and not proto.boss
+  local near = nil -- 1.4: the near-miss moment said on the game-over screen (Dir.near_miss)
   if early then
     FinalBoss.util.guard('early_loss', FinalBoss.moments.on_early_loss)
   end
@@ -268,7 +269,7 @@ function Dir.on_round_end()
       FinalBoss.cinematic.game_over(FinalBoss.registry.get(enc.key).voice.pitch)
     end
     -- After the showdown avatar starts gloating: a near miss hooks its laugh into that gloat.
-    local near = Dir.near_miss(enc, st)
+    near = Dir.near_miss(enc, st)
     if near then FinalBoss.util.guard('near_miss', FinalBoss.moments.on_near_miss, enc.key, near) end
   else
     st.lost_to = nil
@@ -277,6 +278,13 @@ function Dir.on_round_end()
   -- An early loss's line is on the gloat chip and hides itself (moments.on_early_loss); a small or
   -- big blind has no bubble of its own, and this hide would cut that line.
   if early then return end
+  -- A near miss's line comes on the gloat chip after Jimbo and its laugh (~4 s REAL): the 3 s tail
+  -- hide below (dialogue.hide drops the late bubble whatever its host) is never queued for it. The
+  -- fight's own bubble goes now instead (the game-over dim covers it anyway).
+  if near then
+    FinalBoss.util.guard('hide_bubble', FinalBoss.dialogue.hide, G.GAME.blind)
+    return
+  end
   local blind = G.GAME.blind
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = 3, timer = 'REAL', blocking = false, blockable = false,
     func = function() FinalBoss.util.guard('hide_bubble', FinalBoss.dialogue.hide, blind); return true end}))

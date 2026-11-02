@@ -131,12 +131,18 @@ T['on_near_miss: a showdown avatar already gloating gets the cue, no second chip
   eq(ctx.said[1].key, 'fb_bl_final_leaf_near_miss')
 end
 
-T['on_near_miss: dialogue off laughs without a line; fx off laughs still'] = function()
+T['on_near_miss: dialogue off: no chip for a regular boss, one laugh for a gloating showdown; fx off laughs still'] = function()
   local ctx = setup{dialogue = false}
   ctx.M.on_near_miss('bl_hook', 'one_chip')
   G.OVERLAY_MENU = {}
   ctx.run(0.1); ctx.cue(); ctx.run(5)
-  eq(#ctx.laughs, 1); eq(#ctx.said, 0)
+  eq(#ctx.spawned, 0, 'no chip just to laugh'); eq(#ctx.laughs, 0); eq(#ctx.said, 0)
+  eq(#ctx.timers, 0, 'nothing waiting')
+  ctx = setup{dialogue = false, gloating = true}
+  ctx.M.on_near_miss('bl_final_leaf', 'one_chip')
+  ctx.cue(); ctx.run(5)
+  eq(#ctx.spawned, 0); eq(#ctx.laughs, 1, 'the showdown avatar laughs once')
+  eq(ctx.laughs[1].beats, FinalBoss.logic.ONE_CHIP_BEATS); eq(#ctx.said, 0, 'no line')
   ctx = setup{fx = false}
   ctx.M.on_near_miss('bl_hook', 'near_miss')
   G.OVERLAY_MENU = {}
@@ -205,7 +211,7 @@ end
 --- A round end on bl_hook: over (game over) or not (Mr. Bones saved it, or a win), with the final round
 --- score chips against required. o.enc overrides encounter fields.
 local function round_end(o)
-  local ctx = {calls = {}, order = {}}
+  local ctx = {calls = {}, order = {}, events = {}, hides = 0}
   _G.Event = function(t) return t end
   local enc = {key = 'bl_hook', boss = true, tier = 'light', fired = {}}
   for k, v in pairs(o.enc or {}) do enc[k] = v end
@@ -213,7 +219,7 @@ local function round_end(o)
     GAME = {FinalBoss = {encounter = enc, lost_to = o.lost_to == nil and 'bl_hook' or (o.lost_to or nil)},
       blind = {chips = o.required or 1000, config = {blind = {key = 'bl_hook', boss = {min = 1}}}},
       chips = o.chips},
-    E_MANAGER = {add_event = function() end},
+    E_MANAGER = {add_event = function(_, e) ctx.events[#ctx.events + 1] = e end},
     STATES = {GAME_OVER = 4, ROUND_EVAL = 5}, STATE = o.over == false and 5 or 4,
   }
   local noop = function() end
@@ -227,7 +233,7 @@ local function round_end(o)
     phases = {reset = noop},
     memory = {unpresent = noop, on_loss = function() return true end},
     avatar = {set_hud_tremble = noop}, fx = {stop = noop}, arena = {stop = noop},
-    dialogue = {end_intro = noop, hide = noop},
+    dialogue = {end_intro = noop, hide = function() ctx.hides = ctx.hides + 1 end},
     registry = {get = function() return {voice = {pitch = 1}} end},
     cinematic = {game_over = function() ctx.order[#ctx.order + 1] = 'gloat' end},
     moments = {on_early_loss = function() ctx.order[#ctx.order + 1] = 'early' end,
@@ -272,6 +278,22 @@ T['on_round_end: no near miss when the run goes on, or nothing is readable'] = f
     local ctx = round_end(c)
     eq(#ctx.calls, 0, 'case ' .. i)
   end
+end
+
+T['on_round_end: a near miss queues no 3 s tail hide (it would drop its late line); the fight bubble goes at once'] = function()
+  local ctx = round_end{chips = 960}
+  eq(#ctx.calls, 1)
+  eq(#ctx.events, 0, 'no tail hide queued')
+  eq(ctx.hides, 1, 'hidden at once')
+  ctx = round_end{chips = 960, enc = {cinematic = true, showdown = true, tier = 'full'}}
+  eq(#ctx.events, 0, 'showdown: none either')
+  -- No near miss: the tail hide is still queued.
+  ctx = round_end{chips = 500}
+  eq(#ctx.calls, 0)
+  eq(#ctx.events, 1, 'plain boss loss keeps its tail hide')
+  eq(ctx.hides, 0)
+  ctx.events[1].func()
+  eq(ctx.hides, 1)
 end
 
 return T
