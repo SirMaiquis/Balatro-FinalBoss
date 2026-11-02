@@ -59,15 +59,11 @@ def test_rule4_old_censor_form():
     assert not check_loc.old_censor_problems('dictionary.k', ['sh*t'])
 
 
-def test_rule5_language_may_not_add_a_grawlix():
-    base = {'quips.a': ['You {E:fb_grawlix}shit{}'], 'quips.b': ['plain'],
-            'quips.c': ['{E:fb_grawlix}a{} {E:fb_grawlix}b{}']}
-    lang = {'quips.a': ['Du Mist'], 'quips.b': ['{E:fb_grawlix}x{}'],
-            'quips.c': ['{E:fb_grawlix}a{} {E:fb_grawlix}b{} {E:fb_grawlix}c{}']}
-    out = check_loc.grawlix_extra_problems(base, lang)
-    assert sorted(p.split(':')[0] for p in out) == ['quips.b', 'quips.c']
-    assert check_loc.grawlix_extra_problems(base, base) == []
-    assert check_loc.grawlix_extra_problems(base, {'quips.a': ['Du Mist']}) == []
+def test_language_may_have_more_grawlix_than_english():
+    # no parity rule: a translator may censor a swear English does not have
+    assert problems('{E:fb_grawlix}x{}') == []
+    assert not hasattr(check_loc, 'grawlix_extra_problems')
+    assert not hasattr(check_loc, 'grawlix_parity_problems')
 
 
 def test_cjk_line_with_grawlix():

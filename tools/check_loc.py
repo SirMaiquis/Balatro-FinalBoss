@@ -3,7 +3,7 @@
 Usage (repo root):
   uv run --with lupa tools/check_loc.py              # all files
   uv run --with lupa tools/check_loc.py es_419 es_ES # only these
-  uv run --with lupa tools/check_loc.py --effects    # also the strict grawlix rules (4 and 5)
+  uv run --with lupa tools/check_loc.py --effects    # also rule 4 (no x* censor form)
 Checks: every misc.quips / misc.dictionary / misc.achievement_names / misc.achievement_descriptions
 key of default.lua exists, no extra keys,
 colour tags {X:..}...{} balanced (scanned in order), no empty values, #n# placeholders
@@ -21,9 +21,8 @@ Text effects (1.4), tags like {E:fb_rage}word{}, in every language and quip line
   2. at most one punchline tag ({C:}, {E:} other than fb_grawlix, {u:}) per line;
   3. a fb_grawlix tag wraps a single word (no spaces).
 Rule 2 applies to quips keys only. A tag holding only s: or X: controls is not a punchline.
-Only with --effects (it fails until the content pass has tagged the lines; Task 13 makes it the default):
+Only with --effects, rule 4 (it fails until the content pass has tagged the lines; Task 13 makes it the default):
   4. no FinalBoss quip keeps the old x* censor form;
-  5. a language has no more grawlix tags in a key than English has (translators may soften a swear, not add one).
 """
 import pathlib
 import re
@@ -195,16 +194,6 @@ def old_censor_problems(key, lines):
     return []
 
 
-def grawlix_extra_problems(base, data):
-    """Rule 5: a language never has more grawlix tags in a quip than English has for that key (a
-    translator may soften a swear, not add one)."""
-    out = []
-    for key, lines in data.items():
-        if key in base and grawlix_count(lines) > grawlix_count(base[key]):
-            out.append(f'{key}: {grawlix_count(lines)} {GRAWLIX} tags, English has {grawlix_count(base[key])}')
-    return out
-
-
 def main(names, strict=False):
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8')
@@ -259,8 +248,6 @@ def main(names, strict=False):
                     errors.append(f'{path.name}: {key}: {why}')
         if path.name == 'default.lua':
             continue
-        if strict:
-            errors.extend(f'{path.name}: {p}' for p in grawlix_extra_problems(base, data))
         for key, base_lines in base.items():
             if key not in data:
                 errors.append(f'{path.name}: missing {key}')
