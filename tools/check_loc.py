@@ -13,6 +13,15 @@ Every personality (src/logic.lua PERSONALITIES) has a line for every run moment 
 Card lines: used_tarot_<group> (wheel_hit / _miss / _rigged too), used_spectral_<group>,
 used_planet_waste and joker_created need #2#; used_planet_main needs #3#, and no other quip may use
 #3#. In all card lines a string holding #2# has at most 9 other characters.
+1.4 moments (NEW_MOMENTS_1_4): default.lua has fb_generic_<m>_1..2 and fb_<final>_<m>_1..2 for
+every final boss (FINAL_BOSSES); the moments said outside the fight (OUTSIDE_MOMENTS) use no #2#/#3#.
+Text effects (1.4), tags like {E:fb_rage}word{}, in every language and quip line:
+  1. every {E:<key>} is in logic.TEXT_EFFECTS (or the built-ins 1 and 2);
+  2. at most one punchline tag ({C:}, {E:} other than fb_grawlix, {u:}) per line;
+  3. a fb_grawlix tag wraps a single word (no spaces);
+  3b. no whitespace inside any tag ({E: fb_rage} is not found by Balatro).
+  4. no FinalBoss quip keeps the old x* censor form (the raw-swear guard).
+Rule 2 applies to quips keys only. A tag holding only s: or X: controls is not a punchline.
 """
 import pathlib
 import re
@@ -115,6 +124,77 @@ def personality_problems(lua, data):
     return out
 
 
+NEW_MOMENT_VARIANTS = 2  # generic and final-boss lines per 1.4 moment
+
+
+def new_moment_problems(logic, data):
+    """default.lua: every 1.4 moment has generic lines and lines for each vanilla final boss."""
+    out = []
+    finals = list(logic['FINAL_BOSSES'].values())
+    for m in logic['NEW_MOMENTS_1_4'].values():
+        for prefix in [f'fb_generic_{m}'] + [f'fb_{b}_{m}' for b in finals]:
+            for i in range(1, NEW_MOMENT_VARIANTS + 1):
+                key = f'quips.{prefix}_{i}'
+                if key not in data:
+                    out.append(f'missing 1.4 line {key}')
+    return out
+
+
+def outside_key(logic):
+    """Regex for the lines said outside the fight (no card, hand or level to name)."""
+    names = '|'.join(re.escape(m) for m in logic['OUTSIDE_MOMENTS'].values())
+    return re.compile(rf'^quips\.fb_\w+_(?:{names})_\d+$')
+
+
+EFFECT_KEY = re.compile(r'^E:(.*)$')
+BUILTIN_EFFECTS = ('1', '2')
+GRAWLIX = 'fb_grawlix'
+OLD_CENSOR = re.compile(r'[^\W\d_]\*')  # a letter then a star: the pre-1.4 "sh*t" form
+
+
+def controls(tag):
+    """The comma-separated controls of one tag body ('C:attention,u:attention')."""
+    return [c.strip() for c in tag.split(',') if c.strip()]
+
+
+def effect_problems(effects, line, quip=True):
+    """Rules 1-3 for one line. effects: the allowed {E:} keys. Rule 2 (one punchline) only applies
+    to quips (quip=True), not dictionary or achievement strings."""
+    out, punchlines = [], 0
+    matches = list(TAG.finditer(line))
+    for i, m in enumerate(matches):
+        if re.search(r'\s', m.group(1)):
+            out.append(f'space inside tag {{{m.group(1)}}} (Balatro keeps it, so the effect is not found)')
+        cs = controls(m.group(1))
+        keys = [EFFECT_KEY.match(c).group(1).strip() for c in cs if EFFECT_KEY.match(c)]
+        for k in keys:
+            if k not in effects and k not in BUILTIN_EFFECTS:
+                out.append(f'unknown text effect {k!r}')
+        if GRAWLIX in keys:
+            end = matches[i + 1].start() if i + 1 < len(matches) else len(line)
+            word = line[m.end():end]
+            if not word.strip() or re.search(r'\s', word.strip()):
+                out.append(f'{GRAWLIX} must wrap a single word, got {word!r}')
+        elif any(c.startswith(('C:', 'u:')) for c in cs) or keys:
+            punchlines += 1
+    if quip and punchlines > 1:
+        out.append(f'{punchlines} punchline tags in one line (at most 1)')
+    return out
+
+
+def grawlix_count(lines):
+    """Number of fb_grawlix tags in a key's lines."""
+    return sum(GRAWLIX in [c[2:].strip() for c in controls(m.group(1)) if c.startswith('E:')]
+               for line in lines for m in TAG.finditer(line))
+
+
+def old_censor_problems(key, lines):
+    """Rule 4: FinalBoss's own quips no longer use x* (the tag is the censor)."""
+    if key.startswith('quips.') and any(OLD_CENSOR.search(line) for line in lines):
+        return ['old x* censor form (write the swear in full inside {E:fb_grawlix}...{})']
+    return []
+
+
 def main(names):
     if hasattr(sys.stdout, 'reconfigure'):
         sys.stdout.reconfigure(encoding='utf-8')
@@ -126,6 +206,9 @@ def main(names):
         return 1
     paths = ([pathlib.Path(n) if n.endswith('.lua') else LOC / f'{n}.lua' for n in names]
              if names else sorted(LOC.glob('*.lua')))
+    logic = lua.execute((ROOT / 'src' / 'logic.lua').read_text(encoding='utf-8'))
+    outside = outside_key(logic)
+    effects = {str(v) for v in logic['TEXT_EFFECTS'].values()}
     errors = []
     for path in paths:
         try:
@@ -135,11 +218,15 @@ def main(names):
             continue
         errors.extend(f'{path.name}: {p}' for p in problems)
         errors.extend(f'{path.name}: {p}' for p in personality_problems(lua, data))
+        if path.name == 'default.lua':
+            errors.extend(f'{path.name}: {p}' for p in new_moment_problems(logic, data))
         for key, lines in data.items():
             for line in lines:
                 why = tag_problem(line)
                 if why:
                     errors.append(f'{path.name}: {key}: {why} in {ascii(line)}')
+                errors.extend(f'{path.name}: {key}: {p} in {ascii(line)}' for p in effect_problems(effects, line, key.startswith('quips.')))
+            errors.extend(f'{path.name}: {key}: {p}' for p in old_censor_problems(key, lines))
             if JOKER_KEY.search(key) and '#2#' not in ' '.join(lines):
                 errors.append(f'{path.name}: {key}: joker jab line needs #2#')
             if CARD_KEY.search(key) and '#2#' not in ' '.join(lines):
@@ -153,6 +240,8 @@ def main(names):
                 errors.append(f'{path.name}: {key}: planet main line needs #3#')
             if '#3#' in ' '.join(lines) and key.startswith('quips.') and not LEVEL_KEY.search(key):
                 errors.append(f'{path.name}: {key}: #3# is only for used_planet_main')
+            if outside.match(key) and re.search(r'#[23]#', ' '.join(lines)):
+                errors.append(f'{path.name}: {key}: lines said outside the fight take no #2#/#3#')
             if GLOAT_KEY.match(key):
                 why = gloat_problem(lines)
                 if why:

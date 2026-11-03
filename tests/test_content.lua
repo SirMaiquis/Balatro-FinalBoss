@@ -300,11 +300,9 @@ end
 
 -- 1.2 content rules ------------------------------------------------------------------------------------
 
--- Spelled-out swears (prefix match; a trailing '$' means the whole word) and the only censored words
--- the English lines may use (prefix match, so f***ing and a**hole pass).
+-- Swears (prefix match; a trailing '$' means the whole word). Outside a grawlix tag none may appear.
 local EN_SWEARS = {'fuck', 'shit', 'ass$', 'asses$', 'asshole', 'bitch', 'bastard', 'cunt', 'dick$',
   'cock$', 'piss', 'whore', 'slut', 'retard', 'fag'}
-local EN_CENSORED = {'f***', 'sh*t', 'a**'}
 
 local UTF8_PUNCT = {'¡', '¿', '«', '»', '…', '—', '–', '“', '”', '„', '‘', '’', '·'}
 
@@ -317,6 +315,12 @@ local function words(line)
   return out
 end
 
+--- A line without its text tags: a {E:fb_grawlix}word{} is censored, so it is dropped with its word;
+--- every other tag is dropped and its word kept.
+local function bare(line)
+  return (line:gsub('{[^}]*E:fb_grawlix[^}]*}[^{]*{}', ' '):gsub('{[^}]*}', ''))
+end
+
 local function swear_hit(word, entry)
   if entry:sub(-1) == '$' then return word == entry:sub(1, -2) end
   return word:sub(1, #entry) == entry
@@ -327,22 +331,16 @@ local function lines_of(v)
   return {tostring(v)}
 end
 
-T['English lines: no swear spelled out, only f***, sh*t and a** censored'] = function()
+T['English lines: every swear sits in a grawlix tag, no x* censor form left'] = function()
   local quips = load()
   local bad = {}
   for key, v in pairs(quips) do
     for _, line in ipairs(lines_of(v)) do
-      for _, w in ipairs(words(line)) do
+      for _, w in ipairs(words(bare(line))) do
         for _, s in ipairs(EN_SWEARS) do
           if swear_hit(w, s) then bad[#bad + 1] = key .. ' (spelled out): ' .. line end
         end
-        if w:find('*', 1, true) then
-          local ok = false
-          for _, c in ipairs(EN_CENSORED) do
-            if w:sub(1, #c) == c then ok = true end
-          end
-          if not ok then bad[#bad + 1] = key .. ' (censored word not allowed): ' .. line end
-        end
+        if w:find('*', 1, true) then bad[#bad + 1] = key .. ' (old x* censor): ' .. line end
       end
     end
   end
@@ -350,9 +348,43 @@ T['English lines: no swear spelled out, only f***, sh*t and a** censored'] = fun
   assert(#bad == 0, table.concat(bad, '; '))
 end
 
---- True when any line of a quip carries a censored word (a letter next to '*').
+-- The full swears FinalBoss's English lines wrap in the grawlix tag.
+local EN_GRAWLIX_WORDS = {fucking = true, fuck = true, shit = true, shitless = true, shithead = true,
+  ass = true, asshole = true}
+
+--- True when a lower-cased word is a swear: one of the grawlix forms above, or a hit on EN_SWEARS.
+local function is_swear(w)
+  if EN_GRAWLIX_WORDS[w] then return true end
+  for _, s in ipairs(EN_SWEARS) do
+    if swear_hit(w, s) then return true end
+  end
+  return false
+end
+
+T['English lines: a grawlix tag wraps exactly one known swear'] = function()
+  local quips = load()
+  local bad, n = {}, 0
+  for key, v in pairs(quips) do
+    for _, line in ipairs(lines_of(v)) do
+      for tag, word in line:gmatch('{([^}]*)}([^{]*){}') do
+        if tag:find('E:fb_grawlix', 1, true) then
+          n = n + 1
+          if not word:match('^%a+$') or not is_swear(word:lower()) then
+            bad[#bad + 1] = key .. ': "' .. word .. '" in ' .. line
+          end
+        end
+      end
+    end
+  end
+  table.sort(bad)
+  assert(#bad == 0, 'grawlix around a non-swear: ' .. table.concat(bad, '; '))
+  assert(n > 0, 'no grawlix tags found in English')
+end
+
+--- True when any line of a quip carries a censored word (a grawlix tag, or a letter next to '*').
 local function censored(v)
   for _, line in ipairs(lines_of(v)) do
+    if line:find('E:fb_grawlix', 1, true) then return true end
     for _, w in ipairs(words(line)) do
       if w:find('*', 1, true) then return true end
     end
@@ -492,13 +524,13 @@ T['every language: no swear of its list spelled out'] = function()
   for lang, list in pairs(SWEARS) do
     for key, v in pairs(lang_quips(lang)) do
       for _, line in ipairs(lines_of(v)) do
-        for _, w in ipairs(list.words and words(line) or {}) do
+        for _, w in ipairs(list.words and words(bare(line)) or {}) do
           for _, s in ipairs(list.words) do
             if swear_hit(w, s) then bad[#bad + 1] = lang .. ' ' .. key .. ': ' .. line end
           end
         end
         for _, s in ipairs(list.text or {}) do
-          if line:find(s, 1, true) then bad[#bad + 1] = lang .. ' ' .. key .. ': ' .. line end
+          if bare(line):find(s, 1, true) then bad[#bad + 1] = lang .. ' ' .. key .. ': ' .. line end
         end
       end
     end

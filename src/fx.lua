@@ -11,6 +11,17 @@ F.gen = 0      -- bumped by stop() to cancel pending eases
 
 local VARS = {fb_intensity = 0, fb_tint = {array = {F.tint}}} -- reused every frame
 
+-- Some GPU drivers (seen on Android) report the shader's uniforms as missing, and Steamodded
+-- crashes when asked to send one. The vignette only runs where the shader reports both uniforms.
+local usable
+local function vignette_usable(self)
+  if usable == nil then
+    local sh = G.SHADERS and G.SHADERS[self.shader]
+    usable = not not (sh and sh.hasUniform and sh:hasUniform('fb_intensity') and sh:hasUniform('fb_tint'))
+  end
+  return usable
+end
+
 SMODS.Shader{key = 'vignette', path = 'vignette.fs'}
 SMODS.ScreenShader{
   key = 'vignette_screen',
@@ -19,9 +30,11 @@ SMODS.ScreenShader{
   should_apply = function(self)
     if not FinalBoss.config.fx or F.vignette.intensity <= 0.001 then return false end
     local st = G.GAME and G.GAME.FinalBoss
-    return not (st and st.disabled_for_run)
+    if st and st.disabled_for_run then return false end
+    return vignette_usable(self)
   end,
   send_vars = function(self)
+    if not vignette_usable(self) then return {} end
     VARS.fb_intensity = F.vignette.intensity
     VARS.fb_tint.array[1] = F.tint
     return VARS

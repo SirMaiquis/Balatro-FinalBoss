@@ -303,6 +303,35 @@ T['fear_line: a fear line said live on this hand skips the defeat line; else a f
   eq(ctx.O.fear_line({moment = 'defeat', total = 150, required = 100, hand = 3}, {}), nil, 'below 2x')
 end
 
+T['fear_line: a situation beats fear 1 and 2, never fear 3 (1.4)'] = function()
+  local ctx = setup()
+  local function win(o)
+    local p = {moment = 'defeat', won = true, total = 1500, required = 100, hand = 3}
+    for k, v in pairs(o) do p[k] = v end
+    return p
+  end
+  local enc = {}
+  eq(ctx.O.fear_line(win{situation = 'comeback'}, enc), 'comeback', 'final tier 2')
+  eq(enc.fear_said, nil, 'no fear tier booked'); eq(enc.fear_hand, nil)
+  eq(ctx.O.fear_line(win{situation = 'clutch', total = 250}, {}), 'clutch', 'final tier 1')
+  eq(ctx.O.fear_line(win{situation = 'photo_finish', total = 104}, {}), 'photo_finish')
+  enc = {}
+  eq(ctx.O.fear_line(win{situation = 'comeback', total = 1e6}, enc), 'fear_3', 'final tier 3')
+  eq(enc.fear_said, 3); eq(enc.fear_hand, 3)
+  eq(ctx.O.fear_line(win{situation = nil}, {}), 'fear_2', 'no situation: as before')
+  eq(ctx.O.fear_line(win{situation = nil, total = 150}, {}), nil, 'no situation, no tier: the plain line')
+  eq(ctx.O.fear_line(win{situation = 'comeback', total = 1e6}, {fear_said = 3, fear_hand = 3}), false,
+    'a live fear 3 on this hand stands')
+  eq(ctx.O.fear_line(win{situation = 'clutch'}, {fear_said = 2, fear_hand = 1}), 'clutch',
+    'a tier said on an earlier hand')
+end
+
+T['fear_line: a late win (unknown score) says the plain defeat line (1.4)'] = function()
+  local ctx = setup()
+  eq(ctx.O.fear_line({moment = 'defeat', won = true, unknown = true, total = 2500, required = 1000,
+    hand = 2, situation = 'comeback'}, {}), nil)
+end
+
 -- The live fear scale -------------------------------------------------------------------------------
 
 --- A boss fight with a hand scoring: round score 100 of a 1000 requirement, displayed chips x mult.
@@ -355,6 +384,21 @@ T['fear_tick then the defeat line: the same hand skips it, the next hand does no
     'the hand that crossed live')
   eq(ctx.O.fear_line({moment = 'defeat', total = 10000, required = 1000, hand = 2}, ctx.enc), nil,
     'a later winning hand at the same tier says its defeat line')
+end
+
+T['fear_tick: a clutch or comeback candidate holds back fear 1 and 2, never fear 3 (1.4)'] = function()
+  local ctx = fear_setup()
+  ctx.enc.candidate_hand = 1 -- the hand on_hand_after booked (enc.last_hand_seen)
+  ctx.show(100, 19)
+  ctx.show(100, 99)
+  eq(#ctx.fired, 0, 'fear 1 and 2 held back'); eq(#ctx.fx, 0)
+  eq(ctx.enc.fear_said, nil, 'nothing booked'); eq(ctx.enc.fear_hand, nil)
+  ctx.show(1000, 100)
+  eq(#ctx.fired, 1); eq(ctx.fired[1], 'fear_3'); eq(ctx.enc.fear_said, 3); eq(ctx.enc.fear_hand, 1)
+  local other = fear_setup()
+  other.enc.candidate_hand = 0 -- an earlier hand was the candidate
+  other.show(100, 19)
+  eq(other.fired[1], 'fear_1')
 end
 
 T['fear_tick: a jump straight past a tier announces only the top one'] = function()
@@ -562,6 +606,126 @@ T['dev_jab: fakes a run and says its jab now'] = function()
   eq(ctx.O.dev_jab({}), nil, 'the neutral run has no jab')
   local none = setup()
   eq(none.O.dev_jab({dollars = 0}), nil, 'no encounter')
+end
+
+-- Luck (1.4) ---------------------------------------------------------------------------------------
+
+local function luck_fight(o)
+  o = o or {}
+  local ctx = setup{enc = {key = 'bl_hook', boss = true, tier = o.tier or 'light', ended = o.ended or false,
+    fired = {}, last_hand_seen = o.last_hand_seen}}
+  G.STATE = o.state or G.STATES.HAND_PLAYED
+  G.GAME.current_round = {hands_played = 2}
+  ctx.enc = G.GAME.FinalBoss.encounter
+  return ctx
+end
+
+T['on_luck: tallies the hand being scored'] = function()
+  local ctx = luck_fight()
+  ctx.O.on_luck('card'); ctx.O.on_luck('card'); ctx.O.on_luck('dollars'); ctx.O.on_luck('joker', 'j_bloodstone')
+  eq(ctx.enc.luck.cards, 2); eq(ctx.enc.luck.dollars, 1); eq(ctx.enc.luck.joker, 'j_bloodstone')
+  ctx.O.on_luck('nonsense')
+  eq(ctx.enc.luck.cards, 2, 'unknown kinds are ignored')
+end
+
+T['on_luck: ignored outside HAND_PLAYED or with no live encounter for this blind'] = function()
+  local ctx = luck_fight{state = 1}
+  ctx.O.on_luck('card')
+  eq(ctx.enc.luck, nil, 'not while a hand is played')
+  ctx = luck_fight{ended = true}
+  ctx.O.on_luck('card')
+  eq(ctx.enc.luck, nil, 'the fight is over')
+  ctx = luck_fight{tier = 'none'}
+  ctx.O.on_luck('card')
+  eq(ctx.enc.luck, nil, 'no dialogue tier')
+  ctx = luck_fight()
+  G.GAME.blind.config.blind.key = 'bl_other'
+  ctx.O.on_luck('card')
+  eq(ctx.enc.luck, nil, 'another blind')
+  ctx = luck_fight{last_hand_seen = 2}
+  ctx.O.on_luck('card')
+  eq(ctx.enc.luck, nil, 'this hand was already evaluated (context.after ran)')
+  ctx = setup()
+  G.STATE = G.STATES.HAND_PLAYED
+  ctx.O.on_luck('card') -- no encounter: nothing, no error
+end
+
+T['fear_line: also returns the defeat moment chosen; defeat_moment books nothing (1.4)'] = function()
+  local ctx = setup()
+  local win = {moment = 'defeat', total = 15000, required = 1000, hand = 3}
+  local enc = {}
+  eq(ctx.O.defeat_moment(win, enc), 'fear_2'); eq(enc.fear_said, nil, 'nothing booked')
+  local line, choice = ctx.O.fear_line(win, enc)
+  eq(line, 'fear_2'); eq(choice, 'fear_2'); eq(enc.fear_said, 2)
+  line, choice = ctx.O.fear_line({moment = 'defeat', total = 1500, required = 1000, hand = 3}, {})
+  eq(line, nil); eq(choice, 'defeat')
+  line, choice = ctx.O.fear_line(win, {fear_said = 3, fear_hand = 3})
+  eq(line, false); eq(choice, 'fear_3', 'a live fear 3 stands')
+  line, choice = ctx.O.fear_line({moment = 'defeat', total = 1040, required = 1000, situation = 'photo_finish'}, {})
+  eq(line, 'photo_finish'); eq(choice, 'photo_finish')
+  eq(ctx.O.defeat_moment({moment = 'close', total = 500, required = 1000}, {}), nil, 'not a win')
+end
+
+-- 1.4 playtest: a crossing before this hand's context.after (the base preview already shows) ------------
+
+--- The gap: Play was clicked on hand id 2 (observe.on_play), G.STATE is HAND_PLAYED, but on_hand_after
+--- has not booked it yet (enc.last_hand_seen is the previous hand's id, hands_played is still 2).
+--- o.left: hands_left before this hand; o.decremented: vanilla's queued -1 already ran.
+local function gap_setup(o)
+  o = o or {}
+  local ctx = fear_setup()
+  ctx.enc.last_hand_seen = 1
+  G.GAME.current_round.hands_played = 2
+  G.GAME.current_round.hands_left = o.left or 3
+  ctx.O.on_play()
+  if o.decremented then G.GAME.current_round.hands_left = G.GAME.current_round.hands_left - 1 end
+  return ctx
+end
+
+T['on_play: marks the hand being played (its id and hands_left before it)'] = function()
+  local ctx = gap_setup{left = 4}
+  eq(ctx.O.play_mark.id, 2); eq(ctx.O.play_mark.left, 4)
+end
+
+T['fear_tick: a fear 3 crossing before on_hand_after is booked for the hand being played'] = function()
+  local ctx = gap_setup()
+  G.GAME.chips = 0
+  ctx.show(6910, 421) -- the base preview, before evaluate_play: 2.9M of 1000
+  eq(ctx.fired[1], 'fear_3'); eq(ctx.enc.fear_said, 3)
+  eq(ctx.enc.fear_hand, 2, 'this hand, not the previous one')
+  local line, choice = ctx.O.fear_line({moment = 'defeat', total = 3000000, required = 1000, hand = 2}, ctx.enc)
+  eq(line, false, 'said live on this hand: no defeat line'); eq(choice, 'fear_3')
+end
+
+T['fear_tick: a fear 1 crossing before on_hand_after on a candidate hand is held back'] = function()
+  for _, dec in ipairs({false, true}) do
+    local ctx = gap_setup{left = 1, decremented = dec} -- the last hand: a clutch candidate (3 hands)
+    G.GAME.chips = 600
+    ctx.show(100, 15) -- 2100: 2.1x
+    eq(#ctx.fired, 0, 'held back (decrement ran: ' .. tostring(dec) .. ')')
+    eq(ctx.enc.fear_said, nil, 'nothing booked')
+    ctx.show(1000, 100)
+    eq(ctx.fired[1], 'fear_3', 'fear 3 still fires'); eq(ctx.enc.fear_hand, 2)
+  end
+  local ctx = gap_setup{left = 3} -- 600 of 1000 with 2 hands to go: not a candidate
+  G.GAME.chips = 600
+  ctx.show(100, 15)
+  eq(ctx.fired[1], 'fear_1'); eq(ctx.enc.fear_hand, 2)
+  ctx = gap_setup{left = 3} -- 100 < 25% of 1000: a comeback candidate
+  ctx.show(100, 19)
+  eq(#ctx.fired, 0, 'comeback candidate held back')
+end
+
+T['fear_tick: once on_hand_after booked the hand, the play mark is ignored'] = function()
+  local ctx = gap_setup{left = 3}
+  -- context.after ran (last_hand_seen = 2) and vanilla's +1 too (the score animation)
+  ctx.enc.last_hand_seen, ctx.enc.candidate_hand = 2, 2
+  G.GAME.current_round.hands_played = 3
+  ctx.show(100, 19)
+  eq(#ctx.fired, 0, 'on_hand_after\'s candidate mark holds it back')
+  ctx.enc.candidate_hand = nil
+  ctx.show(100, 19)
+  eq(ctx.fired[1], 'fear_1'); eq(ctx.enc.fear_hand, 2)
 end
 
 return T

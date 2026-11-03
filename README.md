@@ -18,7 +18,7 @@ Bosses talk back, and they are savage about it: every boss trash-talks in its ow
 
 **By hand:**
 
-1. Download `FinalBoss-v1.3.0.zip` from the [releases page](https://github.com/SirMaiquis/Balatro-FinalBoss/releases).
+1. Download `FinalBoss-v1.4.0.zip` from the [releases page](https://github.com/SirMaiquis/Balatro-FinalBoss/releases).
 2. Extract it into `%AppData%\Balatro\Mods\` so the files end up in `%AppData%\Balatro\Mods\FinalBoss\`.
 3. Start Balatro. The mod appears in the Mods menu as "Final Boss" with its own config tabs.
 
@@ -68,7 +68,7 @@ Bosses trash-talk. Each one has a personality that sets its voice:
 | Chaos gremlin | manic, giggling | The Wheel, The Flint, The Fish, Amber Acorn |
 | Royal snob | aristocratic disdain | The House, The Arm, The Mouth, The Water, Violet Vessel, Cerulean Bell |
 
-Every boss speaks in its own lines: its threat, its reactions, its defeat line. The personality adds the rest: run jabs, comments on your play, idle taunts, reactions to your tricks, the fear lines, last words and poke reactions. They roast your play, your build and your luck. Swearing is censored with asterisks and a short bleep; there are no slurs and nothing about real people or groups. Turning Boss dialogue off silences everything below.
+Every boss speaks in its own lines: its threat, its reactions, its defeat line. The personality adds the rest: run jabs, comments on your play, idle taunts, reactions to your tricks, the fear lines, last words and poke reactions. They roast your play, your build and your luck. Swearing is censored as a comic grawlix (cycling symbols) and a short bleep; there are no slurs and nothing about real people or groups. Turning Boss dialogue off silences everything below.
 
 - **Intro threat.** The intro line is a threat that hints at the boss's effect (the game already explains it).
 - **Intro jabs.** About one intro in three, when your run gives the boss something to say, a jab replaces the threat: you skipped blinds this ante, rerolled the shop 5+ times since the last boss, have $3 or less or $50 or more, a deck with 75% of one suit, 30 cards or fewer or 70 or more, no jokers or a full joker row, a famous joker (Blueprint, Brainstorm, Baron, DNA, Mime, Cavendish, Triboulet, Perkeo, Yorick, Canio, Sock and Buskin, Hologram), or a famous combo of two jokers you own (about ten pairs, such as Blueprint & Brainstorm, Baron & Mime, Perkeo & Blueprint or Cavendish & Oops! All 6s; when you own a combo, the boss calls out the combo instead of a single famous joker). Any jab that applies may be picked, but never the one you got last. Counter jokers are always called out: Chicot, Luchador, Matador, Mr. Bones. Each vanilla boss has its own line for its main counter (Chicot for final bosses, Luchador for the rest), and since Chicot disables the boss before its intro, that line comes as the boss is disabled. A nemesis line is never replaced by a jab.
@@ -86,6 +86,23 @@ Every boss speaks in its own lines: its threat, its reactions, its defeat line. 
 
   The deaths need Screen effects (`fx`). Reduced motion keeps only the flashes (no slow motion, no flying pieces), and with screen effects off there is no shake or flash, though the last words still come.
 - **Idle taunts.** Choosing cards and touching nothing for 25 seconds makes the boss impatient; a second taunt comes 45 seconds later, never a third. Any key, click, controller button or card selection restarts the clock; menus, pauses and intros stop it.
+
+### Bosses react to the moment
+
+Bosses notice how the fight ended, and a few things around it.
+
+- **Situational defeat lines.** The boss's defeat line depends on how you won. Priority: 100× overkill > comeback > clutch > photo finish > 10× > 2× > plain defeat.
+  - **Comeback:** the score before the winning hand was under 25% of the requirement. Needs at least 2 hands played this blind.
+  - **Clutch:** you won with your last hand. Needs at least 2 hands played this blind.
+  - **Photo finish:** you cleared the requirement by 5% or less.
+- **Luck reactions.** Lucky cards and chance Jokers get a line. Two Lucky card payouts in one hand, or any Lucky $20 payout, gets the card line; a chance Joker hit (a Joker whose odds roll came up) gets the Joker line. Each once per blind, spaced like a big hand.
+- **Hype.** A clutch, a comeback, stacked luck (3 or more Lucky payouts in one hand, or a Lucky $20 payout together with a chance Joker hit) or a 100× overkill gets big screen text and a sting. A clutch or comeback also makes the boss melt down: its chip jolts, the screen shakes and a meltdown line replaces the defeat line (a nemesis keeps its own defeat line, but the visuals still play). Stacked luck on a hand that does not win gets LUCKY! with the jolt and shake, and the hand's own luck line; on a winning hand it is the text and sting only. A photo finish gets the screen text only. At most one per blind. The text, jolt and shake need Screen effects (`fx`); the sting plays without it. Reduced motion keeps the text and the sting and drops the movement.
+- **Boss preview.** On the blind-select screen the upcoming boss says something about you, once per ante (ante 1 included, a moment after the screen comes up).
+- **Boss reroll.** Reroll the boss (Retcon, Director's Cut) and the old boss protests, then the new one sneers. The sneer counts as that ante's preview.
+- **Early loss.** Lose a run on a small or big blind and the boss you never reached comes out beside the game-over panel and mocks you. It is not a loss to that boss: nothing goes into memory, nemesis, achievements or stats, and Jimbo's quip stays vanilla.
+- **Near miss.** Lose the run on a boss's last hand with 95% or more of the requirement and, once Jimbo has said his quip, the boss laughs at you from beside the game-over panel and says a "so close" line. Fall exactly 1 chip short and it laughs longer and gets its most savage line. Never when Mr. Bones (or anything else) saves the run, or when the score can't be read.
+
+These follow the usual rules: they need Boss dialogue, never fire for a silent boss, and a line comes at most once per hand in the light tier and never on two hands in a row (the defeat-line moments excepted). Every personality has its own lines, and the five final bosses have lines of their own.
 
 ### Poke the boss
 
@@ -329,11 +346,69 @@ All text lives in `misc.quips` in your mod's localization. Each moment can have 
 | joker created | `fb_<blind>_joker_created_<n>` | per boss, usually left to the personality (`#2#` is the new joker; once per blind) |
 | reads | `fb_<blind>_read_<trigger>_<n>`, triggers `weakhand`, `repeat`, `discardspam`, `onecard` | per boss, usually left to the personality |
 | poke, hard poke, grab | `fb_<blind>_poked_<n>`, `fb_<blind>_poked_hard_<n>`, `fb_<blind>_grabbed_<n>` | per boss, usually left to the personality |
+| clutch, comeback, photo finish | `fb_<blind>_clutch_<n>`, `fb_<blind>_comeback_<n>`, `fb_<blind>_photo_finish_<n>` | per boss, usually left to the personality (defeat lines: said instead of `defeat` when you won on your last hand, from under 25% of the requirement, or by 5% or less; they use the defeat line's gate and a fear line of 100× still wins) |
+| meltdown | `fb_<blind>_meltdown_<n>` | per boss, usually left to the personality (said instead of the defeat line on a clutch or a comeback) |
+| luck | `fb_<blind>_lucky_cards_<n>`, `fb_<blind>_lucky_joker_<n>` | per boss, usually left to the personality (Lucky card payouts; a chance Joker hit; once per blind each) |
+| preview | `fb_<blind>_preview_<n>` | per boss, usually left to the personality (blind-select screen, once per ante) |
+| boss reroll | `fb_<blind>_rerolled_out_<n>`, `fb_<blind>_rerolled_in_<n>` | per boss, usually left to the personality (the outgoing boss's protest; the new boss's sneer) |
+| early loss | `fb_<blind>_early_loss_<n>` | per boss, usually left to the personality (the boss you never reached, after you lose on a small or big blind) |
+| near miss, one chip | `fb_<blind>_near_miss_<n>`, `fb_<blind>_one_chip_<n>` | per boss, usually left to the personality (said from the game-over screen after the boss laughs, when you lost its last hand with 95% or more of the requirement; `one_chip` when you were exactly 1 chip short) |
 | personality | `fb_p_<personality>_<moment>_<n>` | shared by every boss of that personality |
 
 `<blind>` is the full blind key, for example `bl_hook`. For each moment FinalBoss tries the boss-specific key first, then the boss's personality (`fb_p_<personality>_<moment>_<n>`), then `fb_generic_<moment>_<n>`, and otherwise skips the moment. The shared nemesis lines have no generic fallback: if none exist, they are skipped. A rematch or nemesis line replaces the name line of a showdown (in light tier it replaces the boss's threat line, and a rematch line does so only about half the time). A raw key is never shown to the player. Generic lines receive the boss name as `#1#`. `#2#` and `#3#` are filled only for the moments noted above (jokers, cards, hands and levels); names can run long, so keep the rest of a `#2#` line short.
 
-Writing tips: each quip is 1 or 2 lines, and each line should stay under about 24 visible characters so it fits the speech bubble. A gloat line is spoken by Jimbo on the game-over screen, mocking you with the boss's catchphrase: write only the line itself (no "Name:" header, no quotation marks) and no placeholders. A line with a censored word (a letter followed by `*`, for example `sh*t`) plays a short bleep, so do not use asterisks for actions.
+Writing tips: each quip is 1 or 2 lines, and each line should stay under about 24 visible characters so it fits the speech bubble. A gloat line is spoken by Jimbo on the game-over screen, mocking you with the boss's catchphrase: write only the line itself (no "Name:" header, no quotation marks) and no placeholders. A line with a censored swear plays a short bleep: write the swear in full inside the grawlix tag (see "Text effects" below). The old form, a letter followed by `*` such as `sh*t`, still bleeps for compatibility, so do not use asterisks for actions.
+
+### Text effects
+
+A line can emphasise one word (the punchline) with Balatro's own text tags, so a viewer catches the joke at a glance. Wrap the word like this, with no mod prefix:
+
+```lua
+"You call that a {E:fb_rage}hand{}?"
+```
+
+Stock tags work too and combine: `{C:mult}Mult{}`, `{C:attention,u:attention}word{}` (underlined orange), `{C:dark_edition}Jackpot{}` (Balatro's animated rainbow). A tagged word with no `C:` keeps the bubble's normal colour. Tags are invisible to the line-length rule and don't change the line's length or wrapping. With Balatro's reduced motion setting on, or FinalBoss's Screen effects (`fx`) off, the words keep their colour but stop moving. Use at most one punchline tag per line.
+
+| Key | Effect |
+|---|---|
+| `fb_rage` | hard, fast shake |
+| `fb_fall` | letters drop away one by one |
+| `fb_sweet` | slow pink wave |
+| `fb_glitch` | letters scramble briefly, then settle |
+| `fb_royal` | gold shimmer |
+| `fb_flip` | letters flip over |
+| `fb_drift` | letters sway down like leaves |
+| `fb_swell` | big slow wave |
+| `fb_heartbeat` | the word thumps |
+| `fb_toll` | letters swing like a bell |
+| `fb_tremble` | small nervous shiver (fear lines) |
+| `fb_grawlix` | comic swear: cycling `#@$%!` symbols that shake in red |
+
+FinalBoss's own roster, by speaker:
+
+| Speaker | Effect on the punchline word |
+|---|---|
+| Bully | Rage |
+| Smug | Lecture (`{C:attention,u:attention}`) |
+| Killer | Fall |
+| Venom | Sweet |
+| Chaos | Glitch |
+| Royal | Royal |
+| Amber Acorn | Flip |
+| Verdant Leaf | Drift |
+| Violet Vessel | Swell |
+| Crimson Heart | Heartbeat |
+| Cerulean Bell | Toll |
+| Generic and modded bosses | colour only (attention orange) |
+
+Precedence, whoever speaks (the first that applies):
+- **Hype words** inside lines, like Jackpot, glow in Balatro's animated rainbow (`dark_edition`). The big hype text on the screen uses the boss's colour.
+- **Game terms** use Balatro's own colours: Mult red (`mult`), Chips blue (`chips`), money gold (`money`), Lucky green (`green`), Tarot / Planet / Spectral their set colours, hand names attention orange.
+- **Fear lines** (`fear_1..3`, `last_words`) use Tremble.
+- Otherwise the speaker's roster effect.
+- **Swears** always use the grawlix, in addition to (not counted as) the line's punchline.
+
+**Swears.** Write the swear in full inside the grawlix tag, around a single word: `{E:fb_grawlix}shit{}`. It shows as one symbol per letter and plays the bleep. The old `sh*t` form still bleeps for compatibility. `tools/check_loc.py` is for FinalBoss's own translation files (it compares them with `localization/default.lua`), not for a mod's file. A mod's lines just need balanced tags with no spaces inside them (`{E:fb_rage}`, not `{E: fb_rage}`) and effect keys from the table above.
 
 ### Picking lines by situation
 
@@ -362,6 +437,8 @@ FinalBoss.register_encounter{
 | `hands_left`, `discards_left`, `hands_played` | from the current round |
 | `dollars` | your money |
 | `chips` | the score so far |
+| `chips_before` | the score before the hand being resolved (so a defeat line can tell a comeback from a close call) |
+| `lucky` | `{cards, dollars, joker}`: the Lucky payouts of the hand just played (Lucky mult payouts, Lucky $20 payouts, and `joker`: the key of a chance Joker that hit, `true` when its key couldn't be read, `nil` when none hit) |
 | `required` | the blind's requirement |
 | `hand_type` | the last hand played, for example `'Flush'` |
 | `won` | the winning hand has been played |

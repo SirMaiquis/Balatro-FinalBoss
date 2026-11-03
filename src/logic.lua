@@ -66,14 +66,17 @@ logic.CLOSE_RATIO = 0.75    -- running total >= 75% of the requirement (not yet 
 
 -- Mid-fight reactions (big_hand, close, last_hand, disabled): once each per blind. Light tier: an
 -- in-fight line (the spaced reactions below, 'weak' and the reads) at most once per hand and never on
--- two consecutive hands (logic.line_spaced); last_hand, disabled and defeat are not spaced.
-logic.SPACED = {big_hand = true, close = true}
+-- two consecutive hands (logic.line_spaced); last_hand, disabled and defeat are not spaced. 1.4: the
+-- luck lines (lucky_cards, lucky_joker: once each per blind) are spaced like big_hand.
+logic.SPACED = {big_hand = true, close = true, lucky_cards = true, lucky_joker = true}
 
 local PRIORITY = {'last_hand', 'close', 'big_hand'}
 
 -- Moments whose line always shows (no cooldown, cuts the current line). 'interrupted' is said
 -- when the player plays a hand while the boss's intro is still running (once per encounter).
-logic.FORCED_MOMENTS = {defeat = true, interrupted = true}
+-- clutch, photo_finish, comeback and meltdown (1.4) are defeat lines, said in place of 'defeat'.
+logic.FORCED_MOMENTS = {defeat = true, interrupted = true, clutch = true, photo_finish = true,
+  comeback = true, meltdown = true}
 
 -- Moments that may fire more than once per blind (their own caps live elsewhere: idle, logic.IDLE_MAX).
 logic.REPEATABLE = {idle = true}
@@ -323,25 +326,30 @@ end
 logic.LAUGH = {beats = 5, step = 0.095, hop = 0.25, tilt = 0.2, shake = 0.25, shake_amp = 0.07,
   pitch_hi = 1.35, pitch_lo = 1.0}
 
---- Total length of the laugh in seconds (the beats plus the closing shake).
-function logic.laugh_duration()
-  return logic.LAUGH.beats * logic.LAUGH.step + logic.LAUGH.shake
+--- Total length of the laugh in seconds (the beats plus the closing shake). beats (1.4, the near-miss
+--- laugh): a longer laugh at the same cadence; default LAUGH.beats.
+function logic.laugh_duration(beats)
+  return (beats or logic.LAUGH.beats) * logic.LAUGH.step + logic.LAUGH.shake
 end
 
---- Pitch multiplier of beat i (0-based): steps down evenly from pitch_hi to pitch_lo.
-function logic.laugh_pitch(i)
+--- Pitch multiplier of beat i (0-based): steps down evenly from pitch_hi to pitch_lo over beats
+--- (default LAUGH.beats).
+function logic.laugh_pitch(i, beats)
   local L = logic.LAUGH
-  if L.beats <= 1 then return L.pitch_hi end
-  return L.pitch_hi - (L.pitch_hi - L.pitch_lo) * i / (L.beats - 1)
+  local n = beats or L.beats
+  if n <= 1 then return L.pitch_hi end
+  return L.pitch_hi - (L.pitch_hi - L.pitch_lo) * i / (n - 1)
 end
 
 --- Offsets of the chip `elapsed` seconds into the laugh: (hop, tilt, shake). hop is how far up (>= 0,
 --- table units), tilt the rotation (alternating direction per beat), shake the jitter amplitude.
 --- All zero outside [0, duration): the chip is back exactly on its perch when the laugh is over.
-function logic.laugh_motion(elapsed)
+--- beats: as laugh_duration.
+function logic.laugh_motion(elapsed, beats)
   local L = logic.LAUGH
-  if not elapsed or elapsed < 0 or elapsed >= logic.laugh_duration() then return 0, 0, 0 end
-  local beats_end = L.beats * L.step
+  local n = beats or L.beats
+  if not elapsed or elapsed < 0 or elapsed >= logic.laugh_duration(n) then return 0, 0, 0 end
+  local beats_end = n * L.step
   if elapsed < beats_end then
     local x = elapsed / L.step
     local b = math.floor(x)
@@ -1228,10 +1236,18 @@ end
 --- The bleep over a line with a censored swear: vanilla's short generic1 blip, high and quiet.
 logic.BLEEP = {sound = 'generic1', pitch = 2.4, volume = 0.45}
 
---- Whether a line holds a censored swear: a letter followed by one or more '*' ("f***", "sh*t",
---- "a**"). Any byte of a multi-byte UTF-8 character counts as a letter, so "ク*" and "г*вно" match.
+--- Whether a line holds a censored swear: a word wrapped in the grawlix tag ({E:fb_grawlix}, also
+--- inside a multi-control tag such as {C:mult,E:fb_grawlix}; matched exactly, since Balatro keeps a
+--- space in a control and then finds no effect) or the old form, a letter followed by one
+--- or more '*' ("f***", "sh*t", "a**"), kept for mod authors' lines. Any byte of a multi-byte UTF-8
+--- character counts as a letter, so "ク*" and "г*вно" match.
 function logic.has_censored(text)
   if type(text) ~= 'string' then return false end
+  for tag in text:gmatch('%{([^{}]*)%}') do
+    for control in tag:gmatch('[^,]+') do
+      if control == 'E:fb_grawlix' then return true end
+    end
+  end
   return text:find('[%a\128-\255]%*') ~= nil
 end
 
@@ -1372,6 +1388,115 @@ function logic.fear_watch(a)
   if not (a.boss and not a.ended and a.same_blind and a.hand_played) then return false end
   if a.tier ~= 'light' and a.tier ~= 'full' then return false end
   return not (a.intro or a.cinematic)
+end
+
+-- Win situations, luck and hype (1.4) -----------------------------------------------------------------
+
+--- A win that clears the requirement by at most this fraction counts as a photo finish.
+logic.PHOTO_FINISH = 0.05
+--- A comeback: the score before the winning hand was under this fraction of the requirement.
+logic.COMEBACK_RATIO = 0.25
+--- Clutch and comeback need at least this many hands played this blind (the winning hand included).
+logic.SITUATION_MIN_HANDS = 2
+
+--- The situation a winning hand ended in, or nil. a = {start, total, required, hands_left,
+--- hands_played}: start the round score before the hand, total the score after it, required the blind's
+--- requirement, hands_left the hands remaining after the winning hand, hands_played the hands played
+--- this blind including it. All plain numbers; when any is missing or nan the answer is nil.
+--- Priority when several hold: comeback > clutch > photo_finish. Photo finish has no hand floor.
+function logic.win_situation(a)
+  if type(a) ~= 'table' then return nil end
+  local start, total, required = a.start, a.total, a.required
+  local left, played = a.hands_left, a.hands_played
+  if not (is_reading(start) and is_reading(total) and is_reading(required)
+      and is_reading(left) and is_reading(played)) then
+    return nil
+  end
+  if required <= 0 then return nil end
+  local enough = played >= logic.SITUATION_MIN_HANDS
+  if enough and start < logic.COMEBACK_RATIO * required then return 'comeback' end
+  if enough and left == 0 then return 'clutch' end
+  if total >= required and total - required <= logic.PHOTO_FINISH * required then return 'photo_finish' end
+  return nil
+end
+
+--- Before scoring: could this hand become a clutch or a comeback if it wins? Used to hold back the live
+--- fear 1 and 2 lines so they never spoil the moment. a = {start, required, hands_left, hands_played} as
+--- in win_situation (hands_played counts this hand). False when any is missing.
+function logic.situation_candidate(a)
+  if type(a) ~= 'table' then return false end
+  local start, required, left, played = a.start, a.required, a.hands_left, a.hands_played
+  if not (is_reading(start) and is_reading(required) and is_reading(left) and is_reading(played)) then
+    return false
+  end
+  if required <= 0 or played < logic.SITUATION_MIN_HANDS then return false end
+  return left == 0 or start < logic.COMEBACK_RATIO * required
+end
+
+--- The defeat moment a winning hand earns. a = {situation, fear_tier}: situation from win_situation (or
+--- nil), fear_tier the final total's tier from logic.fear_tier (1 to 3; nil or 0 is below 2x, no tier).
+--- Priority: fear 3 (100x) > comeback > clutch > photo finish > fear 2 > fear 1 > plain defeat.
+function logic.defeat_choice(a)
+  local situation = type(a) == 'table' and a.situation or nil
+  local tier = type(a) == 'table' and a.fear_tier or nil
+  if type(tier) ~= 'number' then tier = 0 end
+  if tier >= 3 then return 'fear_3' end
+  if situation == 'comeback' or situation == 'clutch' or situation == 'photo_finish' then return situation end
+  if tier >= 2 then return 'fear_2' end
+  if tier >= 1 then return 'fear_1' end
+  return 'defeat'
+end
+
+--- A fresh Lucky tally for one hand: cards Lucky mult payouts, dollars Lucky $20 payouts, joker the
+--- center key of a chance Joker that hit (nil when none did).
+function logic.new_luck()
+  return {cards = 0, dollars = 0, joker = nil}
+end
+
+--- Records one lucky event on a tally t. kind 'card' (a Lucky mult payout), 'dollars' (a Lucky $20
+--- payout) or 'joker' (key = the Joker's center key). Unknown kinds are ignored.
+function logic.note_luck(t, kind, key)
+  if type(t) ~= 'table' then return end
+  if kind == 'card' then t.cards = (t.cards or 0) + 1
+  elseif kind == 'dollars' then t.dollars = (t.dollars or 0) + 1
+  elseif kind == 'joker' then t.joker = key or true end
+end
+
+--- The luck moment a tally earns, or nil: 'lucky_cards' when cards + dollars >= 2 or any $20 payout;
+--- else 'lucky_joker' when a chance Joker hit.
+function logic.luck_moment(t)
+  if type(t) ~= 'table' then return nil end
+  local cards, dollars = t.cards or 0, t.dollars or 0
+  if cards + dollars >= 2 or dollars >= 1 then return 'lucky_cards' end
+  if t.joker ~= nil then return 'lucky_joker' end
+  return nil
+end
+
+--- Whether the tally is stacked enough for a hype: 3+ Lucky payouts, or a $20 payout together with a
+--- chance Joker hit in the same hand.
+function logic.luck_stacked(t)
+  if type(t) ~= 'table' then return false end
+  local cards, dollars = t.cards or 0, t.dollars or 0
+  return cards + dollars >= 3 or (dollars >= 1 and t.joker ~= nil)
+end
+
+--- English fallbacks of the hype screen text; the dictionary keys fb_hype_<kind> carry the translations.
+logic.HYPE_TEXT = {clutch = 'CLUTCH!', comeback = 'COMEBACK!', photo_finish = 'PHOTO FINISH!',
+  lucky = 'LUCKY!', overkill = 'OVERKILL!'}
+
+--- The hype for a winning hand: {kind, meltdown} or nil. At most one per blind. a = {said, defeat_moment,
+--- stacked}: said true when this blind already had one; defeat_moment from defeat_choice (nil when the
+--- hand did not kill); stacked from luck_stacked. fear_3 is an overkill and the last words stand as the
+--- meltdown; comeback and clutch melt down; a photo finish is screen text only; stacked luck melts down
+--- on a non-killing hand and is text only on a kill whose defeat has no hype of its own.
+function logic.hype_for(a)
+  if type(a) ~= 'table' or a.said then return nil end
+  local m = a.defeat_moment
+  if m == 'fear_3' then return {kind = 'overkill', meltdown = false} end
+  if m == 'comeback' or m == 'clutch' then return {kind = m, meltdown = true} end
+  if m == 'photo_finish' then return {kind = 'photo_finish', meltdown = false} end
+  if a.stacked then return {kind = 'lucky', meltdown = m == nil} end
+  return nil
 end
 
 --- Slow motion before a tiered death (1.3), keyed by logic.death_tier, in real seconds at
@@ -1532,6 +1657,15 @@ logic.POKE_REACTIONS = {
 logic.POKE_FLASH = 0.08 -- reduced motion: a recipe without a flash gets a short white one instead
 local MOTION = {'juice', 'rot', 'shake', 'shake_amp', 'recoil', 'bounces', 'jiggle'}
 
+--- Reduced motion: strips the movement from recipe r (in place) and makes sure it still flashes.
+local function reduce_reaction(r, reduced)
+  if reduced then
+    for _, k in ipairs(MOTION) do r[k] = nil end
+    if not r.flash then r.flash, r.flash_time = 'white', logic.POKE_FLASH end
+  end
+  return r
+end
+
 --- The physical reaction (a copy of a POKE_REACTIONS recipe) of a personality's chip to kind ('poked',
 --- 'poked_hard' or 'grabbed': the poked recipe without the recoil, since the chip is in the hand).
 --- Unknown personalities react as DEFAULT_PERSONALITY. reduced (reduced motion): flashes and sounds only.
@@ -1540,11 +1674,19 @@ function logic.poke_reaction(personality, kind, reduced)
   local r = {}
   for k, v in pairs(set[kind == 'poked_hard' and 'poked_hard' or 'poked']) do r[k] = v end
   if kind == 'grabbed' then r.recoil = nil end
-  if reduced then
-    for _, k in ipairs(MOTION) do r[k] = nil end
-    if not r.flash then r.flash, r.flash_time = 'white', logic.POKE_FLASH end
-  end
-  return r
+  return reduce_reaction(r, reduced)
+end
+
+--- The boss's meltdown on a clutch, comeback or overkill (1.4): a long jolt, a hard shake and a red flash,
+--- in the shape of a POKE_REACTIONS recipe. Reduced motion: flash only, like poke_reaction.
+logic.MELTDOWN_REACTION = {juice = 0.9, rot = 0.5, shake = 1.4, shake_amp = 0.18, flash = 'red', flash_time = 0.6,
+  jiggle = 2}
+
+--- A copy of MELTDOWN_REACTION (flash only under reduced motion).
+function logic.meltdown_reaction(reduced)
+  local r = {}
+  for k, v in pairs(logic.MELTDOWN_REACTION) do r[k] = v end
+  return reduce_reaction(r, reduced)
 end
 
 -- Tricks: consumables used and jokers created in the fight (1.3) ----------------------------------
@@ -1697,8 +1839,245 @@ for _, m in ipairs({'used_tarot_wheel_hit', 'used_tarot_wheel_miss', 'used_tarot
   logic.PERSONALITY_VARIANTS[m] = 2
 end
 
+-- The 1.4 moments: said in the fight (win situations, luck, the hype meltdown) or outside it, from
+-- the blind-select chip or the game-over screen (no #2#/#3#: no card or hand to name there).
+-- Every personality has 3 variants of each; tools/check_loc.py also wants 2 generic lines and 2
+-- lines for each of logic.FINAL_BOSSES.
+logic.SITUATION_MOMENTS = {'clutch', 'photo_finish', 'comeback', 'lucky_cards', 'lucky_joker', 'meltdown'}
+logic.OUTSIDE_MOMENTS = {'rerolled_out', 'rerolled_in', 'preview', 'early_loss', 'near_miss', 'one_chip'}
+logic.NEW_MOMENTS_1_4 = {'clutch', 'photo_finish', 'comeback', 'lucky_cards', 'lucky_joker', 'rerolled_out',
+  'rerolled_in', 'preview', 'early_loss', 'meltdown', 'near_miss', 'one_chip'}
+for _, m in ipairs(logic.NEW_MOMENTS_1_4) do
+  logic.PERSONALITY_MOMENTS[#logic.PERSONALITY_MOMENTS + 1] = m
+  logic.PERSONALITY_VARIANTS[m] = 3
+end
+
+--- args: {ante, previewed_ante (the ante whose preview, or reroll sneer, was said; nil = none),
+--- tier (logic.decide_tier for the upcoming boss, as at its intro; nil = unreadable boss)}. Once per
+--- ante, never for a silent boss. Ante 1 previews on its first screen too: moments.lua only waits
+--- longer there, for the run-start wipe to clear.
+function logic.preview_due(a)
+  if a.tier == nil or a.tier == 'none' then return false end
+  if a.ante == a.previewed_ante then return false end
+  return true
+end
+
+-- Near-miss losses (1.4): the run ended on a boss's last hand just short of the requirement. The boss
+-- laughs and says the line from its chip beside the game-over panel (moments.on_near_miss).
+logic.NEAR_MISS = 0.95 -- the final score is at least this share of the requirement (and below it)
+logic.ONE_CHIP_BEATS = 10 -- one_chip's longer, gleeful laugh (logic.LAUGH.beats for near_miss)
+
+--- total, required: the final round score and the requirement, plain numbers. 'one_chip' when it fell
+--- exactly 1 chip short (whatever the share), 'near_miss' at NEAR_MISS of it or more, nil otherwise:
+--- a win, anything lower, or an unreadable value (nil, NaN, a string, infinite, required <= 0).
+function logic.near_miss_moment(total, required)
+  if type(total) ~= 'number' or type(required) ~= 'number' then return nil end
+  if total ~= total or required ~= required or required <= 0 then return nil end
+  if required == math.huge or total == -math.huge or total >= required then return nil end
+  if required - total == 1 then return 'one_chip' end
+  if total >= logic.NEAR_MISS * required then return 'near_miss' end
+  return nil
+end
+
+--- The laugh's beats for a near-miss moment.
+function logic.near_miss_beats(moment)
+  if moment == 'one_chip' then return logic.ONE_CHIP_BEATS end
+  return logic.LAUGH.beats
+end
+
+--- When the gloating chip's cue (the near-miss laugh and line) fires on the game-over screen, REAL
+--- seconds. Vanilla puts Jimbo in 'jimbo_spot' 2.5 s after the overlay and he babbles 5 syllables 0.13 s
+--- apart (game.lua update_game_over, card_character.lua say_stuff); his `talking` goes false on the last
+--- one while his bubble stays up. beat: after he finishes. late: no Jimbo by then (losses past the win
+--- ante have none). max: a cap, for a quip that never stops talking (a mod's long quip).
+logic.GLOAT_CUE = {beat = 0.4, late = 3.5, max = 7}
+
+--- a: {elapsed (seconds since the gloat began), started (Jimbo has his bubble), done_for (seconds since
+--- he stopped talking; nil while he talks or before he comes)}.
+function logic.gloat_cue_due(a)
+  local C = logic.GLOAT_CUE
+  if type(a.elapsed) ~= 'number' then return false end
+  if a.done_for and a.done_for >= C.beat then return true end
+  if not a.started and a.elapsed >= C.late then return true end
+  return a.elapsed >= C.max
+end
+
 function logic.personality_variants(moment)
   return logic.PERSONALITY_VARIANTS[moment] or 1
+end
+
+------------------------------------------------------------------------------------------------
+-- Punchline text effects (1.4, spec addendum 2026-11-01). src/textfx.lua registers each key as an
+-- SMODS.DynaTextEffect, used in lines as {E:fb_rage}. Per-letter motion is in letter heights:
+-- dx > 0 is right, dy > 0 is down (textfx converts to DynaText offsets), r in radians, scale a factor.
+
+logic.TEXT_EFFECTS = {'fb_rage', 'fb_fall', 'fb_sweet', 'fb_glitch', 'fb_royal', 'fb_flip', 'fb_drift',
+  'fb_swell', 'fb_heartbeat', 'fb_toll', 'fb_tremble', 'fb_grawlix'}
+
+--- Comic swear symbols, one per letter of the censored word.
+logic.GRAWLIX = {'#', '@', '$', '%', '!', '&', '*'}
+--- Glyphs fb_glitch flashes in place of a letter during a burst.
+logic.GLITCH_GLYPHS = {'#', '%', '/', '?', '0', '1', '7', 'X', '=', '<', '>'}
+
+--- Deterministic noise in [-1, 1] from a time step, a letter index and a channel.
+local function noise(step, index, ch)
+  local v = math.sin(step * 12.9898 + index * 78.233 + ch * 37.719) * 43758.5453
+  return (v - math.floor(v)) * 2 - 1
+end
+
+--- 1 at c, falling to 0 at c +- w (smooth parabola bump).
+local function bump(u, c, w)
+  local x = (u - c) / w
+  return math.max(0, 1 - x * x)
+end
+
+local GLITCH_PERIOD, GLITCH_BURST = 2.3, 0.2 -- seconds: a short scramble once per period
+
+local function glitch_burst(t)
+  return (t % GLITCH_PERIOD) < GLITCH_BURST
+end
+
+local MOTION = {}
+
+-- Bully: hard fast jitter, a new random pose 30 times a second.
+function MOTION.fb_rage(m, t, i)
+  local s = math.floor(t * 30)
+  m.dx, m.dy, m.r = 0.1 * noise(s, i, 1), 0.08 * noise(s, i, 2), 0.1 * noise(s, i, 3)
+end
+
+-- Fear lines: a small nervous shiver.
+function MOTION.fb_tremble(m, t, i)
+  m.dx = 0.035 * math.sin(t * 47 + i * 1.7)
+  m.dy = 0.025 * math.sin(t * 53 + i * 2.3)
+  m.r = 0.03 * math.sin(t * 41 + i)
+end
+
+-- Killer: the letters sag down one after the other, tip a little, then climb back.
+function MOTION.fb_fall(m, t, i)
+  local u = ((t - i * 0.12) % 3) / 3
+  local sag
+  if u < 0.2 then sag = u / 0.2
+  elseif u < 0.55 then sag = 1
+  elseif u < 0.75 then sag = 1 - (u - 0.55) / 0.2
+  else sag = 0 end
+  sag = sag * sag * (3 - 2 * sag) -- smoothstep
+  m.dy = 0.25 * sag
+  m.r = 0.15 * sag * (i % 2 == 0 and 1 or -1)
+end
+
+-- Venom: slow sweet wave.
+function MOTION.fb_sweet(m, t, i)
+  local a = t * 3 + i * 0.6
+  m.dy = 0.1 * math.sin(a)
+  m.r = 0.04 * math.cos(a)
+end
+
+-- Chaos: still most of the time; a short scramble burst with small offsets.
+function MOTION.fb_glitch(m, t, i)
+  if not glitch_burst(t) then return end
+  local s = math.floor(t * 40)
+  m.dx, m.dy = 0.08 * noise(s, i, 4), 0.04 * noise(s, i, 5)
+end
+
+-- Royal: the colour does the work (effect_colour); the letters only breathe with the glint.
+function MOTION.fb_royal(m, t, i)
+  m.scale = 1 + 0.04 * math.max(0, math.sin(2 * t - i * 0.6)) ^ 4
+end
+
+-- Amber Acorn: every 2.5 s the letters do a quick full spin with a hop, one after another.
+function MOTION.fb_flip(m, t, i)
+  local u = ((t - i * 0.08) % 2.5) / 0.35
+  if u >= 1 then return end
+  local e = u * u * (3 - 2 * u)
+  m.r = 2 * math.pi * e
+  m.dy = -0.15 * math.sin(math.pi * u)
+end
+
+-- Verdant Leaf: a slow leaf sway, down and up, tilting as it goes.
+function MOTION.fb_drift(m, t, i)
+  local a = t * 1.6 + i * 0.7
+  m.dy = 0.12 * math.sin(a)
+  m.dx = 0.06 * math.sin(t * 0.8 + i * 0.7 + 1)
+  m.r = 0.15 * math.cos(a)
+end
+
+-- Violet Vessel: a big slow wave rolling across the word, letters swelling at the crest.
+function MOTION.fb_swell(m, t, i)
+  local w = math.sin(t * 2.2 - i * 0.55)
+  m.dy = -0.18 * w
+  m.scale = 1 + 0.12 * math.max(0, w)
+end
+
+-- Crimson Heart: lub-dub, the whole word at once, then rest.
+function MOTION.fb_heartbeat(m, t)
+  local u = t % 1.1
+  m.scale = 1 + 0.22 * (bump(u, 0.08, 0.08) + 0.75 * bump(u, 0.3, 0.08))
+end
+
+-- Cerulean Bell: the word swings like a bell from its middle (count = letters in the word).
+function MOTION.fb_toll(m, t, i, count)
+  local theta = 0.12 * math.sin(t * 2.2)
+  local from_mid = i - ((count or i) + 1) / 2
+  m.r = theta
+  m.dy = 0.55 * from_mid * math.sin(theta) -- letters ~0.55 heights wide: the line tilts as one
+end
+
+-- Swears: red cycling symbols that shake.
+function MOTION.fb_grawlix(m, t, i)
+  local s = math.floor(t * 25)
+  m.dx, m.dy, m.r = 0.06 * noise(s, i, 6), 0.05 * noise(s, i, 7), 0.08 * noise(s, i, 8)
+end
+
+--- Per-letter motion of `effect` at time t (G.TIMERS.REAL) for letter `index` of `count`.
+--- reduced (reduced motion / fx off): no motion. Fills `out` when given (no per-frame tables).
+--- Returns {dx, dy, r, scale} as named fields; unknown effects do not move.
+function logic.letter_motion(effect, t, index, reduced, count, out)
+  local m = out or {}
+  m.dx, m.dy, m.r, m.scale = 0, 0, 0, 1
+  local f = MOTION[effect]
+  if f and not reduced then f(m, t or 0, index or 1, count) end
+  return m
+end
+
+local GOLD, GLINT = {0.918, 0.753, 0.345}, {1, 0.96, 0.78}
+
+--- Colour override for `effect` at time t for letter `index` (optional), or nil to keep the
+--- line's colour. Pink for fb_sweet, gold with a travelling glint for fb_royal, red for
+--- fb_grawlix. Callers pass t = 0 under reduced motion for a still colour. Fills `out` when given.
+function logic.effect_colour(effect, t, index, out)
+  local c = out or {}
+  if effect == 'fb_sweet' then
+    c[1], c[2], c[3] = 1, 0.45, 0.72
+  elseif effect == 'fb_grawlix' then
+    c[1], c[2], c[3] = 0.996, 0.373, 0.333 -- G.C.RED
+  elseif effect == 'fb_royal' then
+    local w = (0.5 + 0.5 * math.sin(2 * (t or 0) - (index or 1) * 0.6)) ^ 4 * 0.6
+    for k = 1, 3 do c[k] = GOLD[k] + (GLINT[k] - GOLD[k]) * w end
+  else
+    return nil
+  end
+  c[4] = 1
+  return c
+end
+
+--- The grawlix symbol for letter `index`: cycles 8 times a second; neighbours always differ
+--- (index * 3 steps through all 7 symbols). reduced: a fixed symbol per letter.
+function logic.grawlix_symbol(index, t, reduced)
+  local n = #logic.GRAWLIX
+  local step = reduced and 0 or math.floor((t or 0) * 8)
+  return logic.GRAWLIX[((index or 1) * 3 + step) % n + 1]
+end
+
+--- fb_glitch: the glyph to show instead of letter `index` at time t, or nil for the real letter.
+--- Only during a burst (GLITCH_BURST of every GLITCH_PERIOD seconds), about half the letters at a
+--- time, reshuffled 20 times a second. Never under reduced motion.
+function logic.glitch_glyph(index, t, reduced)
+  if reduced or not glitch_burst(t or 0) then return nil end
+  local s = math.floor(t * 20)
+  if noise(s, index or 1, 9) < 0 then return nil end
+  local n = #logic.GLITCH_GLYPHS
+  local k = math.floor((noise(s, index or 1, 10) + 1) * 0.5 * n) % n + 1
+  return logic.GLITCH_GLYPHS[k]
 end
 
 return logic

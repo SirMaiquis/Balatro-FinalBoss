@@ -1,5 +1,31 @@
 # Changelog
 
+## 1.4.0
+
+Bosses react to the moment.
+
+### New
+- Situational defeat lines: win on your last hand and the boss says a clutch line; win from under 25% of the requirement (a comeback) or by 5% or less (a photo finish) and it says those instead. Clutch and comeback need at least 2 hands played. A 100x overkill still wins over all of them.
+- Luck reactions: a line when Lucky cards pay out 2+ times in one hand or the $20 payout hits; a chance Joker paying off gets its own line. Guaranteed rolls (such as with Oops! All 6s) don't count. Once per blind each.
+- Hype: a clutch, a comeback, stacked luck (3+ Lucky payouts, or a Lucky $20 with a chance Joker hit) or a 100x overkill gets big screen text and a sting. A clutch or comeback also makes the boss melt down (a jolt, a screen shake and a meltdown line instead of its defeat line; a nemesis keeps its own defeat line, but the visuals still play). Stacked luck on a hand that doesn't win gets the jolt and shake too; on a winning hand it is the text and sting only. A photo finish gets the text only. At most one per blind.
+- Boss preview: on the blind-select screen the upcoming boss talks about you, once per ante.
+- Boss reroll: the old boss protests and the new one sneers (the sneer counts as that ante's preview).
+- Early loss: lose on a small or big blind and the boss you never reached mocks you from the game-over screen. It never counts as a loss to that boss.
+- Near miss: lose on a boss's last hand with 95% or more of the requirement and the boss laughs at you from the game-over screen with a "so close" line, after Jimbo's quip. Exactly 1 chip short gets a longer laugh and its most savage line. Never when Mr. Bones saves the run.
+- New lines for every personality, the five final bosses and the generic boss, in all 15 languages.
+- Punchline effects: each boss line can emphasise one word, and the effect fits the speaker. The bully's word shakes with rage, Venom's rolls in a sweet wave, Crimson Heart's thumps like a heartbeat, and so on for every personality. Game terms show in Balatro's own colours (Mult red, Chips blue, money gold, Lucky green), fear lines tremble, and hype words inside lines, like Jackpot, glow in Balatro's animated rainbow.
+- The grawlix: swears are shown as cycling comic symbols (#@$%!) shaking in red, with the bleep, instead of asterisks.
+- Both are in all 15 languages. Reduced motion or Screen effects off keeps the colours and stops the motion.
+
+### Fixes
+- No more crash on some Android devices when a showdown starts ("Shader uniform 'fb_intensity' does not exist"). If the device's graphics driver can't run the screen vignette, it now turns itself off and everything else keeps working.
+- The background no longer flickers back to the normal colour and then to the boss colour again on a 100x kill (this bug has been there since 1.3).
+
+### For mod authors
+- New line keys: `clutch`, `comeback`, `photo_finish`, `meltdown`, `lucky_cards`, `lucky_joker`, `preview`, `rerolled_out`, `rerolled_in`, `early_loss`, `near_miss` and `one_chip` (`fb_<blind>_<moment>_<n>`, with personality and generic fallbacks). See "Line keys" in the README.
+- The `line` hook's `info` has two new fields: `chips_before` (the score before the hand being resolved) and `lucky` (`{cards, dollars, joker}` of the hand just played).
+- Text-effect tags for lines: `{E:fb_rage}word{}` and the other `fb_` effects, plus Balatro's stock colour tags (`{C:mult}`, `{C:chips}`, `{C:attention,u:attention}` and so on). Use one punchline tag per line; tags don't count toward the line-length rule. Write swears in full inside `{E:fb_grawlix}shit{}`; the old `sh*t` form still bleeps. See "Text effects" in the README for the full list and precedence.
+
 ## 1.3.1
 
 ### New

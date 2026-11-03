@@ -107,4 +107,59 @@ T['text_of: joins a list, passes a string, empty when missing'] = function()
   eq(ctx.D.text_of('fb_a'), 'one two'); eq(ctx.D.text_of('fb_s'), 'solo'); eq(ctx.D.text_of('fb_x'), '')
 end
 
+T['show late (1.4 blind-select chip): hosted on the chip, drawn late, even with an avatar up'] = function()
+  local ctx = setup()
+  local boxes = {}
+  G.UIDEF = {speech_bubble = function() return {} end}
+  G.E_MANAGER = {add_event = function() end}
+  _G.Event = function(def) return def end
+  _G.UIBox = function(args)
+    local b = {args = args, states = {}, removed = false}
+    function b:set_role(r) self.role = r end
+    function b:remove() self.removed = true end
+    boxes[#boxes + 1] = b
+    return b
+  end
+  local talking = {}
+  FinalBoss.avatar = {anchor = function() return {children = {}} end, side = function() return 'right' end,
+    set_talking = function(on) talking[#talking + 1] = on end, talk_bump = function() end}
+  local chip = {children = {}, juice_up = function(self) self.juiced = true end}
+  ctx.D.show(chip, 'fb_x', {'Name'}, 1, {late = true})
+  local b = boxes[1]
+  eq(b.args.config.parent, nil, 'no parent: late draw pass')
+  eq(b.attention_text, true)
+  eq(b.role.major, chip, 'follows the chip')
+  eq(b.args.config.align, 'bm')
+  eq(ctx.D.avatar_bubble, b); eq(ctx.D.host, chip)
+  eq(chip.children.fb_bubble, nil)
+  eq(chip.juiced, true, 'the chip babbles')
+  for _, on in ipairs(talking) do eq(on, false, 'the avatar is not made to talk') end
+  ctx.D.hide(chip)
+  eq(b.removed, true); eq(ctx.D.avatar_bubble, nil)
+end
+
+T['show popup (1.4 early loss): on the avatar chip, registered in G.I.POPUP above the game-over dim'] = function()
+  local ctx = setup()
+  local boxes = {}
+  G.UIDEF = {speech_bubble = function() return {} end}
+  G.E_MANAGER = {add_event = function() end}
+  _G.Event = function(def) return def end
+  _G.UIBox = function(args)
+    local b = {args = args, states = {}}
+    function b:set_role(r) self.role = r end
+    function b:remove() end
+    boxes[#boxes + 1] = b
+    return b
+  end
+  local avatar = {children = {}}
+  FinalBoss.avatar = {anchor = function() return avatar end, side = function() return 'right' end,
+    set_talking = function() end, talk_bump = function() end, gloat_align = function() return 'tm' end}
+  ctx.D.show(ctx.blind, 'fb_x', {}, 1, {popup = true})
+  eq(boxes[1].args.config.instance_type, 'POPUP')
+  eq(boxes[1].args.config.align, 'tm', 'placed clear of the panel (avatar.gloat_align)')
+  eq(boxes[1].role.major, avatar, 'hangs from the chip'); eq(ctx.D.host, avatar)
+  ctx.D.show(ctx.blind, 'fb_y', {}, 1, {})
+  eq(boxes[2].args.config.instance_type, nil, 'other lines stay in G.I.UIBOX')
+end
+
 return T

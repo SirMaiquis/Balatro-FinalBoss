@@ -34,12 +34,13 @@ V.tremble = 0 -- tremble level (logic.TREMBLE): 0 still, 1 the finale's, 2 / 3 t
 V.wound = 0
 V.laugh_id = 0 -- bumped per laugh: a newer laugh silences the older one's remaining beats
 V.laugh_start, V.laugh_until = 0, 0 -- REAL-time window the update reads for hops, tilt and shake
+V.laugh_beats = FinalBoss.logic.LAUGH.beats -- the current laugh's beats (1.4: the near-miss laugh is longer)
 V.anger_until = 0 -- REAL-time end of the interrupted shake (also a poke's shake: V.poke)
 V.anger_amp, V.anger_time = V.ANGER_SHAKE, V.ANGER_TIME -- that shake's starting amplitude and length
 V.grabbed = false -- 1.2: the player is dragging the chip (poke.lua); only the sprite follows the cursor
 V.grab_dx, V.grab_dy = 0, 0 -- the sprite's offset from the perch while grabbed
 V.giggle_at = -1e9 -- REAL time of the last poke giggle (chaos), so spam clicks do not stack laughs
-V.gloating = nil  -- game over: {pitch, laughed, t0}; the chip sits beside the panel and laughs once
+V.gloating = nil  -- game over: {pitch, laughed, t0, cue}; the chip sits beside the panel and laughs once
 V.stance = 1      -- 1.1 phase stance (logic.stance): roam speed and aura
 V.auras = {}      -- slot ('stance' | 'nemesis') -> Particles attached to the chip
 V.roar_start, V.roar_until = 0, 0 -- REAL-time window of the phase roar
@@ -122,7 +123,7 @@ function Avatar:move(dt)
   -- never fights it), written straight to VT since the sprite's spring would smooth a 0.1 s hop
   -- away. Offsets are zero outside the window, so the chip ends exactly on its bob.
   if not calm and now() < V.laugh_until then
-    local hop, tilt, shake = FinalBoss.logic.laugh_motion(now() - V.laugh_start)
+    local hop, tilt, shake = FinalBoss.logic.laugh_motion(now() - V.laugh_start, V.laugh_beats)
     s.T.x = s.T.x + (shake > 0 and (math.random() - 0.5) * 2 * shake or 0)
     s.T.y = s.T.y - hop + (shake > 0 and (math.random() - 0.5) * 2 * shake or 0)
     s.T.r = s.T.r + tilt
@@ -240,21 +241,27 @@ local function go_to(i, instant)
   if FinalBoss.dialogue and FinalBoss.dialogue.follow_avatar then FinalBoss.dialogue.follow_avatar() end
 end
 
+--- The chip for a blind prototype (G.P_BLINDS entry) at x, y: V.obj, VT hard-set.
+local function build(proto, x, y, size)
+  local c = proto.boss_colour or G.C.RED
+  local sprite_pos = copy_table(proto.pos or {x = 0, y = 0})
+  -- SMODS.create_sprite: exact art, frames and sprite class, also for modded bosses.
+  local sprite = SMODS.create_sprite(x, y, size, size, proto.atlas or 'blind_chips', sprite_pos,
+    proto.sprite_args)
+  V.obj = Avatar(x, y, size, size, sprite, {c[1], c[2], c[3], 1})
+  V.obj:hard_set_VT()
+  return V.obj, c
+end
+
 function V.spawn(blind, opts)
   opts = opts or {}
   V.hud_blind = nil -- a respawn keeps the chip dissolved: no restore ease to fight the new one
   V.remove()
   local proto = blind and blind.config and blind.config.blind
   if not proto then return end
-  local c = proto.boss_colour or G.C.RED
   local x, y = perch_xy(V.RINGSIDE)
   local start_y = opts.fall and (y - G.ROOM.T.h - V.SIZE) or y
-  local sprite_pos = copy_table(proto.pos or {x = 0, y = 0})
-  -- SMODS.create_sprite: exact art, frames and sprite class, also for modded bosses.
-  local sprite = SMODS.create_sprite(x, start_y, V.SIZE, V.SIZE, proto.atlas or 'blind_chips', sprite_pos,
-    proto.sprite_args)
-  V.obj = Avatar(x, start_y, V.SIZE, V.SIZE, sprite, {c[1], c[2], c[3], 1})
-  V.obj:hard_set_VT()
+  local _, c = build(proto, x, start_y, V.SIZE)
   -- The boss "steps out": dissolve its HUD chip while the avatar is on the table. The blind's own
   -- dissolve field is what Blind:draw reads; states.visible is re-shown every frame by the HUD.
   V.hud_blind = blind
@@ -312,11 +319,19 @@ local function gloat_spot(m)
   return math.min(G.ROOM.T.w / 2 + V.GLOAT_FALLBACK_DX, G.ROOM.T.w + V.ROOM_MARGIN - S), G.ROOM.T.h / 2 - S / 2, S
 end
 
---- Jimbo has said his quip (vanilla puts a Card_Character with a speech bubble in 'jimbo_spot').
-local function jimbo_speaking(m)
+--- Jimbo once he has his quip: vanilla puts a Card_Character with a speech bubble in 'jimbo_spot'
+--- (until then the spot holds a plain Moveable); nil before. His `talking` is true while he babbles
+--- (Card_Character:say_stuff sets it in the same event that adds the bubble) and false after the last
+--- syllable; the bubble stays up.
+local function jimbo(m)
   local spot = m and m:get_UIE_by_ID('jimbo_spot')
   local j = spot and spot.config and spot.config.object
-  return (j and j.children and j.children.speech_bubble) and true or false
+  if j and j.children and j.children.speech_bubble then return j end
+  return nil
+end
+
+local function jimbo_speaking(m)
+  return jimbo(m) ~= nil
 end
 
 local function place_gloat(o, x, y, size)
@@ -352,6 +367,46 @@ function V.gloat(pitch)
   place_gloat(o, gloat_spot(V.gloating.menu))
 end
 
+--- 1.4: where a line on the gloating chip hangs: above it when the chip sits right of the panel (to
+--- its left would cover the panel), to its left when gloat_rect put it above the panel (near the top
+--- edge, no room above).
+function V.gloat_align()
+  local o, g = V.obj, V.gloating
+  local T = o and g and game_over_panel(g.menu)
+  if T and o.T.x < T.x + T.w then return 'cl' end
+  return 'tm'
+end
+
+--- 1.4 near miss: fn replaces the gloating chip's single laugh (it laughs itself, V.laugh) and runs a
+--- beat after Jimbo finishes his quip, or at the fallbacks of logic.gloat_cue_due. One laugh, never
+--- two: false (fn never runs) when the chip is not gloating, is leaving, or has laughed already.
+function V.gloat_cue(fn)
+  local g = V.obj and V.gloating
+  if not g or g.leaving or g.laughed then return false end
+  g.cue = fn
+  return true
+end
+
+--- 1.4: vanilla's game-over overlay is up.
+function V.on_game_over_screen()
+  return is_game_over_menu(G.OVERLAY_MENU)
+end
+
+--- 1.4 early loss: a chip for blind_key (no live encounter, no HUD chip to dissolve) slides in from
+--- the right edge to its gloat spot beside the game-over panel, then gloats like the showdown's
+--- (V.gloat: pause-proof, above the dim, leaves with the screen). True when it was built.
+function V.spawn_gloat(blind_key, pitch)
+  local proto = G.P_BLINDS and G.P_BLINDS[blind_key]
+  if not proto then return false end
+  V.hud_blind = nil
+  V.remove()
+  local x, y, size = gloat_spot(V.on_game_over_screen() and G.OVERLAY_MENU or nil)
+  local start_x = reduced() and x or (G.ROOM.T.w + V.ROOM_MARGIN + size)
+  build(proto, start_x, y, size)
+  V.gloat(pitch)
+  return true
+end
+
 local function gloat_tick()
   local o, g = V.obj, V.gloating
   if g.leaving then return end
@@ -359,10 +414,26 @@ local function gloat_tick()
   if not g.menu and is_game_over_menu(m) then g.menu = m end
   if g.menu and m ~= g.menu then -- the game-over screen is gone: dissolve away (REAL timer, runs paused)
     g.leaving = true
+    -- 1.4 early loss: a line still up on the chip goes with it.
+    local D = FinalBoss.dialogue
+    if D and D.host == o then D.hide() end
     V.fade_out(V.GLOAT_LEAVE)
     return
   end
   place_gloat(o, gloat_spot(g.menu)) -- live: the panel slides in, and the window may be resized
+  -- 1.4 near miss (V.gloat_cue): the cue laughs and talks instead of the single laugh below, a beat
+  -- after Jimbo has finished his quip (logic.gloat_cue_due has the fallbacks).
+  if g.cue then
+    local j = g.menu and jimbo(g.menu)
+    if j and not j.talking then g.jimbo_done = g.jimbo_done or now() end
+    if FinalBoss.logic.gloat_cue_due{elapsed = now() - g.t0, started = j ~= nil,
+        done_for = g.jimbo_done and (now() - g.jimbo_done) or nil} then
+      local cue = g.cue
+      g.cue, g.laughed = nil, true
+      FinalBoss.util.guard('gloat_cue', cue)
+    end
+    return
+  end
   -- Laugh once, a beat after Jimbo starts talking (not over his babble); without Jimbo (losses
   -- past the win ante) GLOAT_LAUGH_LATE after the game over.
   if not g.laugh_at and g.menu and jimbo_speaking(g.menu) then g.laugh_at = now() + V.GLOAT_LAUGH_DELAY end
@@ -414,31 +485,37 @@ end
 --- Laugh: ONE syllable (fixed for the whole laugh) repeated LAUGH.beats times at an even, fast
 --- cadence, pitch stepping down, louder than talking, after a low accent. Not reduced: the chip hops,
 --- tilts and shakes (see Avatar:move). Reduced: sound and a flash pulse on every other beat.
+--- opts (1.4, the near-miss laugh): beats (a longer laugh, same cadence; default LAUGH.beats), still
+--- (no hop, tilt or shake, like reduced motion: config.fx off).
 --- Returns the laugh's total duration in seconds.
-function V.laugh(pitch)
-  local o = V.obj
-  if not o then return V.LAUGH_DURATION end
+function V.laugh(pitch, opts)
+  opts = opts or {}
   local L = FinalBoss.logic.LAUGH
+  local beats = opts.beats or L.beats
+  local duration = FinalBoss.logic.laugh_duration(beats)
+  local o = V.obj
+  if not o then return duration end
   V.laugh_id = V.laugh_id + 1
   local id = V.laugh_id
   local syllable = 'voice' .. math.random(1, 11)
-  local calm = reduced()
+  local calm = reduced() or opts.still
+  V.laugh_beats = beats
   if not calm then
     V.laugh_start = now()
-    V.laugh_until = V.laugh_start + V.LAUGH_DURATION
+    V.laugh_until = V.laugh_start + duration
   end
-  V.next_roam = math.max(V.next_roam, now() + V.LAUGH_DURATION + 1.5) -- no glide mid-laugh
+  V.next_roam = math.max(V.next_roam, now() + duration + 1.5) -- no glide mid-laugh
   local a = V.LAUGH_ACCENT
   play_sound(a.sound, a.pitch, a.volume)
-  for i = 0, L.beats - 1 do
+  for i = 0, beats - 1 do
     after(i * L.step, function()
       if V.obj ~= o or V.laugh_id ~= id then return end
-      play_sound(syllable, (pitch or 1) * FinalBoss.logic.laugh_pitch(i), V.LAUGH_VOLUME)
+      play_sound(syllable, (pitch or 1) * FinalBoss.logic.laugh_pitch(i, beats), V.LAUGH_VOLUME)
       -- vanilla juice_up is a no-op under reduced motion: pulse with a brief flash instead
       if calm and i % 2 == 0 then flash(o, 0.08) end
     end)
   end
-  return V.LAUGH_DURATION
+  return duration
 end
 
 function V.set_wound(stage)

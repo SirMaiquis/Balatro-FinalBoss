@@ -38,6 +38,15 @@ end
 
 --- The `line` hook's info (1.3.1): a fresh plain table of live values, read as the line is chosen
 --- (registry.resolve). Every field is nil-safe; tier, showdown and won need this boss's encounter.
+--- 1.4: chips_before, the round score before the hand being resolved (booked at context.after, so it
+--- holds while the hand scores and while its reaction is said, which runs after Dir.pending is taken;
+--- nil before the first hand or when unreadable); lucky ({cards, dollars, joker}: the Lucky tally of
+--- the same hand, observe.on_luck, a fresh copy; nil before the first hand).
+local function lucky_copy(l)
+  if type(l) ~= 'table' then return nil end
+  return {cards = l.cards or 0, dollars = l.dollars or 0, joker = l.joker}
+end
+
 function Dir.line_info(blind_key)
   local game = G and G.GAME or {}
   local st = game.FinalBoss or {}
@@ -58,6 +67,8 @@ function Dir.line_info(blind_key)
     hand_type = game.last_hand_played,
     won = enc ~= nil and enc.win_hand ~= nil,
     lost = st.lost_to ~= nil and st.lost_to == blind_key,
+    chips_before = enc and enc.chips_before,
+    lucky = enc and lucky_copy(enc.hand_luck),
   }
 end
 
@@ -209,6 +220,22 @@ function Dir.on_blind_loaded(blind)
   end
 end
 
+--- 1.4 near miss: the moment ('near_miss' | 'one_chip', logic.near_miss_moment) when the run just ended
+--- on enc's boss, lost on its last hand (st.lost_to, Dir.on_hand_after) by a readable score; else nil.
+--- Only called on a real game over: on_round_end runs after vanilla's end-of-round event, where Mr.
+--- Bones (card.lua: context.game_over and chips / requirement >= 0.25, not debuffed) and any other
+--- smods save (SMODS.saved) have already kept the run going, so a run they save never gets here.
+--- The final score is vanilla's own (G.GAME.chips, what end_round compared); a last hand whose
+--- outcome was unknown (enc.unknown_hand, logic.hand_outcome) or an unreadable number says nothing.
+function Dir.near_miss(enc, st)
+  if not (enc and enc.boss and enc.tier and enc.tier ~= 'none') then return nil end
+  if st.lost_to ~= enc.key or enc.unknown_hand ~= nil then return nil end
+  local blind = G.GAME.blind
+  local proto = blind and blind.config and blind.config.blind
+  if not (proto and proto.key == enc.key) then return nil end
+  return FinalBoss.logic.near_miss_moment(read(G.GAME.chips), read(blind.chips))
+end
+
 --- Runs after vanilla's end-of-round event, so Mr. Bones saves are resolved.
 function Dir.on_round_end()
   Dir.flush_pending()
@@ -223,6 +250,14 @@ function Dir.on_round_end()
     end
   end
   FinalBoss.memory.unpresent() -- after the loss is recorded (memory's safe: a visual error is only logged)
+  -- 1.4: died to a small or big blind (vanilla's have no config.blind.boss): the upcoming boss mocks
+  -- it from the game-over screen. Not a loss to anyone: nothing above was recorded for it.
+  local proto = G.GAME.blind and G.GAME.blind.config and G.GAME.blind.config.blind
+  local early = over and proto and not proto.boss
+  local near = nil -- 1.4: the near-miss moment said on the game-over screen (Dir.near_miss)
+  if early then
+    FinalBoss.util.guard('early_loss', FinalBoss.moments.on_early_loss)
+  end
   if not enc then return end
   if over then
     FinalBoss.avatar.set_hud_tremble(false)
@@ -233,10 +268,23 @@ function Dir.on_round_end()
       FinalBoss.dialogue.hide(G.GAME.blind) -- no bubble at the game-over screen: Jimbo has the line
       FinalBoss.cinematic.game_over(FinalBoss.registry.get(enc.key).voice.pitch)
     end
+    -- After the showdown avatar starts gloating: a near miss hooks its laugh into that gloat.
+    near = Dir.near_miss(enc, st)
+    if near then FinalBoss.util.guard('near_miss', FinalBoss.moments.on_near_miss, enc.key, near) end
   else
     st.lost_to = nil
   end
   FinalBoss.dialogue.end_intro()
+  -- An early loss's line is on the gloat chip and hides itself (moments.on_early_loss); a small or
+  -- big blind has no bubble of its own, and this hide would cut that line.
+  if early then return end
+  -- A near miss's line comes on the gloat chip after Jimbo and its laugh (~4 s REAL): the 3 s tail
+  -- hide below (dialogue.hide drops the late bubble whatever its host) is never queued for it. The
+  -- fight's own bubble goes now instead (the game-over dim covers it anyway).
+  if near then
+    FinalBoss.util.guard('hide_bubble', FinalBoss.dialogue.hide, G.GAME.blind)
+    return
+  end
   local blind = G.GAME.blind
   G.E_MANAGER:add_event(Event({trigger = 'after', delay = 3, timer = 'REAL', blocking = false, blockable = false,
     func = function() FinalBoss.util.guard('hide_bubble', FinalBoss.dialogue.hide, blind); return true end}))
@@ -326,6 +374,24 @@ function Dir.on_hand_after(context)
   local won, unknown, total = FinalBoss.logic.hand_outcome{oneshot = SMODS.last_hand_oneshot,
     own = own_win(blind), start = chips, delta = delta, required = required}
   local hands_left = cr.hands_left
+  -- 1.4 situations. hands_played above is the id, NOT a count of this blind's hands: vanilla queues its
+  -- +1 after evaluate_play (functions/state_events.lua:512, :524), so at context.after it does not yet
+  -- count this hand; the count with it is hands_played + 1. hands_left is already this hand's -1
+  -- (ease_hands_played at play time). A hand that could end as a clutch or comeback holds back the
+  -- live fear 1 and 2 lines (observe.fear_tick), so they never spoil its defeat line. Booked here, by
+  -- the id fear_tick reads (enc.last_hand_seen): context.after runs inside evaluate_play, before the
+  -- score animation events it queued, which is when fear_tick watches the climb.
+  local played = hands_played + 1
+  local candidate = FinalBoss.logic.situation_candidate{start = chips, required = required,
+    hands_left = hands_left, hands_played = played}
+  -- A candidate hand whose score turns out unknown loses its live fear 1/2 line (cosmetic; no tier is knowable).
+  enc.candidate_hand = candidate and hands_played or nil
+  enc.chips_before = chips -- the line hook's chips_before (Dir.line_info) until the next hand
+  -- 1.4 luck: what this hand rolled while it scored (observe.on_luck, before context.after); the next
+  -- hand starts a fresh tally. hand_luck is the line hook's lucky until the next hand.
+  local luck = enc.luck or FinalBoss.logic.new_luck()
+  enc.luck = FinalBoss.logic.new_luck()
+  enc.hand_luck = luck
   -- Set before the game-over screen picks its quip; cleared in on_round_end if the run continues.
   if hands_left == 0 and not won then st.lost_to = enc.key end
   if won then -- the winning hand (achievements read these at blind_defeated; start may be nil)
@@ -346,14 +412,21 @@ function Dir.on_hand_after(context)
   local hand_type = (context and context.scoring_name) or G.GAME.last_hand_played
   enc.type_streak = FinalBoss.logic.next_streak(enc.last_type, enc.type_streak, hand_type)
   enc.last_type = hand_type
-  local played = context and context.full_hand
+  local cards = context and context.full_hand
+  -- 1.4: the situation the winning hand ended in (logic.win_situation assumes a win: only a known one).
+  local situation = nil
+  if won and not unknown then
+    situation = FinalBoss.logic.win_situation{start = chips, total = total, required = required,
+      hands_left = hands_left, hands_played = played}
+  end
   -- The reaction waits until the game shows the score (Dir.tick -> logic.score_landed), or the
   -- boss would spoil it. Everything above is decided now.
   -- delta, total and required may be nil (unknown: logic.hand_outcome); every reader checks.
   local p = {start = chips, delta = delta, total = total, required = required, moment = moment,
     won = won, unknown = unknown, enc = enc, blind = blind, t0 = FinalBoss.util.now(), queued_done = false, hand = hands_played,
-    hands_left = hands_left, hand_type = hand_type, streak = enc.type_streak,
-    cards_played = played and #played or (G.play and #G.play.cards or 0),
+    hands_left = hands_left, hand_type = hand_type, streak = enc.type_streak, situation = situation,
+    luck = luck,
+    cards_played = cards and #cards or (G.play and #G.play.cards or 0),
     discards_left = cr.discards_left, discards_used = cr.discards_used}
   Dir.pending = p
   -- Completion signal in queue order: context.after runs inside evaluate_play (state_events.lua)
@@ -390,15 +463,17 @@ Dir.FEAR_JOLT = 0.35 -- the terrified crossing's jolt on the showdown avatar (an
 --- at 2, violent at 3, logic.tremble), and at 3 it also gets a long white flash and a hard jolt.
 --- Reduced motion: flashes only (fx.shake is a no-op there,
 --- the trembles stay still, fear_reaction strips the motion). Screen effects follow config.fx (fx.play).
---- The flash restores to the neutral colour ('') on the winning hand, like the finale. Sore (1):
---- nothing. They play with dialogue off too.
+--- The flash always restores to the boss's own colour (nil), even on the winning hand: the hand is
+--- still scoring and the boss still alive, so restoring to the neutral green here would flash the
+--- background boss colour -> green -> boss colour again before the death. Only the death and
+--- finale flashes restore to the neutral colour (''). Sore (1): nothing. They play with dialogue off too.
 function Dir.fear_fx(enc, blind, tier)
   if type(tier) ~= 'number' or tier < 2 then return end
   local V = FinalBoss.avatar
   local reduced = G.SETTINGS.reduced_motion
   if tier >= 3 then
     FinalBoss.fx.play('shake', blind, Dir.FEAR_SHAKE)
-    FinalBoss.fx.play('flash', blind, enc.win_hand and '' or nil)
+    FinalBoss.fx.play('flash', blind)
   end
   local fx = FinalBoss.config.fx -- screen effects off: the plain tremble, no flash or jolt
   if V.exists() then V.set_tremble(fx and tier or 1) else V.set_hud_tremble(true) end
@@ -426,13 +501,30 @@ local function react(p)
     -- (the moment stays unfired); the hit, damage number and laugh above still play, and a weak
     -- hit's transformation waits for the laugh (wait) so laugh, roar and line never overlap.
     -- A powerless (disabled) boss gets mad there instead: anger and its disabled line, same rules.
+    -- A phase-change hand returns before Dir.hype: its stacked luck gets no LUCKY! (the blind's hype stays free).
     if FinalBoss.phases.check(enc, blind, p, wait) then return end
   end
   -- This hand interrupted the intro: its interrupted line replaces the moment line (the moment
   -- stays unfired, so a later hand can still trigger it), except the defeat line, which always
   -- plays (and may replace the interrupted bubble). The stage hit above still played.
+  -- 1.4: an interrupted hand that does not win gets no hype either (its luck line is replaced too, and
+  -- the blind's one hype stays for a later hand); a phase change above returned before it, as it is
+  -- never a kill. A killing hand is never replaced, so its hype plays below.
   if FinalBoss.logic.moment_replaced(enc.interrupt_hand, p.hand, p.moment) then return end
+  local L = FinalBoss.logic
+  local kill = p.moment == 'defeat'
+  -- 1.4: stacked luck on a hand that does not win: LUCKY! with the meltdown visuals; the hand's own
+  -- line (its luck line, or its moment's) is said, not the meltdown line.
+  if not kill then Dir.hype(enc, blind, nil, p.luck) end
   if not p.moment then
+    -- 1.4: Lucky card payouts or a chance Joker hit: the luck line is this hand's one line, under the
+    -- normal gate (logic.can_fire: once per blind, spaced like big_hand). Gated out, the hand may
+    -- still get its comment.
+    local luck = L.luck_moment(p.luck)
+    if luck and L.can_fire(luck, enc.tier, enc.fired, p.hand, enc.last_line_hand) then
+      fire_after(enc, wait, luck, {hand = p.hand})
+      return
+    end
     -- 1.2: a hand that fired nothing else may get a run comment: the weak-hit line (after the
     -- laugh, like a phase line) or a read of how you play. Dir.fire checks the comment gate again
     -- when the line is said.
@@ -441,23 +533,52 @@ local function react(p)
     return
   end
   -- The nemesis's own defeat line (1.1) always replaces the defeat line, even a fear line said live.
-  -- Else the live fear scale (1.3, observe.fear_tick) decides: a fear line already said on this hand
-  -- stands and the defeat line is skipped (the death follows); a tier the live scale never announced
-  -- gets its fear line now, with its visuals (Dir.fear_fx); otherwise the plain defeat line. Any of
+  -- Else observe.fear_line picks it (logic.defeat_choice): a fear line already said on this hand
+  -- stands and the defeat line is skipped (the death follows); 1.4: a comeback, clutch or photo
+  -- finish (p.situation) beats fear 1 and 2; a tier the live scale never announced gets its fear line
+  -- now, with its visuals (Dir.fear_fx, fear lines only); otherwise the plain defeat line. Any of
   -- them is said as the defeat moment, forced like the defeat line.
   -- The 100x death (logic.last_words_due) replaces any of them with the boss's last words, said as
   -- the freeze starts: here with the finale (started by stage_hit above), else by Dir.chip_death.
+  -- 1.4 hype (Dir.hype) on a killing hand, from the defeat moment chosen (a luck line is dropped
+  -- there): a comeback or clutch melts down and the meltdown line replaces its defeat line; a photo
+  -- finish and stacked luck show their text with the defeat line; a 100x kill (fear 3, live or
+  -- fallback) is an overkill and the last words stand. A nemesis keeps its own line, but its kill still
+  -- plays the hype.
+  local O = FinalBoss.observe
   local line = FinalBoss.memory.defeat_line(enc, p.moment)
-  if not line then
-    line = FinalBoss.observe.fear_line(p, enc)
-    if line then FinalBoss.util.guard('fear_fx', Dir.fear_fx, enc, blind, enc.fear_said) end
-    if p.moment == 'defeat' and FinalBoss.logic.last_words_due(Dir.death_tier(enc, p.total, p.required)) then
+  local nemesis = line ~= nil
+  local choice
+  if nemesis then
+    if kill then choice = O.defeat_moment(p, enc) end
+  else
+    line, choice = O.fear_line(p, enc)
+    if line and line:find('^fear_') then FinalBoss.util.guard('fear_fx', Dir.fear_fx, enc, blind, enc.fear_said) end
+  end
+  local h = kill and Dir.hype(enc, blind, choice or 'defeat', p.luck)
+  if h and h.meltdown and not nemesis then line = 'meltdown' end
+  if not nemesis then
+    if kill and L.last_words_due(Dir.death_tier(enc, p.total, p.required)) then
       if enc.finale then Dir.last_words(enc) end
       return
     end
     if line == false then return end
   end
   fire_after(enc, wait, p.moment, {line = line, hand = p.hand})
+end
+
+--- The hype (1.4) of a scored hand: logic.hype_for, at most one per blind (enc.hype_said, plain saved
+--- data). defeat_moment: the killing hand's defeat moment (O.fear_line's choice, 'defeat' for the plain
+--- line), nil when the hand does not win; luck: the hand's tally (logic.luck_stacked). Plays the text,
+--- sting and meltdown visuals (FinalBoss.hype.play, which never says a line). Returns the hype
+--- ({kind, meltdown}) or nil.
+function Dir.hype(enc, blind, defeat_moment, luck)
+  local L = FinalBoss.logic
+  local h = L.hype_for{said = enc.hype_said, defeat_moment = defeat_moment, stacked = L.luck_stacked(luck)}
+  if not h then return nil end
+  enc.hype_said = true
+  FinalBoss.hype.play(h.kind, {meltdown = h.meltdown, blind = blind, enc = enc})
+  return h
 end
 
 --- The death a winning hand earns (1.3, logic.death_tier): the fear tier said live this blind, or
@@ -680,13 +801,14 @@ local resetting = false -- re-entrancy guard: a failing step must not recurse vi
 function Dir.reset_stage()
   Dir.pending = nil -- dropped, never run
   FinalBoss.observe.arrival = nil
+  FinalBoss.observe.play_mark = nil
   if resetting then return end
   resetting = true
   local ok, err = pcall(function()
     for _, step in ipairs({FinalBoss.cinematic.reset, FinalBoss.hpbar.remove, FinalBoss.avatar.remove,
         FinalBoss.arena.reset, FinalBoss.fx.reset, FinalBoss.effects.reset, FinalBoss.moves.reset,
         FinalBoss.phases.reset, FinalBoss.phases.clear_twists, FinalBoss.music.unduck,
-        FinalBoss.memory.unpresent, FinalBoss.poke.reset,
+        FinalBoss.memory.unpresent, FinalBoss.poke.reset, FinalBoss.hype.remove,
         function() FinalBoss.avatar.set_hud_tremble(false) end}) do
       local sok, serr = pcall(step)
       if not sok then FinalBoss.util.log('error', 'reset_stage step failed: ' .. tostring(serr)) end
